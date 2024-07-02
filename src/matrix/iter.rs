@@ -1,5 +1,6 @@
-use super::index::{AxisIndex, Index};
+use super::index::Index;
 use super::order::Order;
+use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -49,7 +50,7 @@ impl<T> Matrix<T> {
                 unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(n)) }
             })),
             Order::ColMajor => Box::new((0..self.minor()).map(|n| -> VectorIter<&T> {
-                unsafe { Box::new(self.iter_nth_minor_axis_vector_unchecked(n)) }
+                Box::new(self.iter_nth_minor_axis_vector_unchecked(n))
             })),
         }
     }
@@ -84,7 +85,7 @@ impl<T> Matrix<T> {
     pub fn iter_cols(&self) -> MatrixIter<&T> {
         match self.order {
             Order::RowMajor => Box::new((0..self.minor()).map(|n| -> VectorIter<&T> {
-                unsafe { Box::new(self.iter_nth_minor_axis_vector_unchecked(n)) }
+                Box::new(self.iter_nth_minor_axis_vector_unchecked(n))
             })),
             Order::ColMajor => Box::new((0..self.major()).map(|n| -> VectorIter<&T> {
                 unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(n)) }
@@ -417,6 +418,50 @@ where
     }
 }
 
+impl<T, V> FromIterator<V> for Matrix<T>
+where
+    V: IntoIterator<Item = T>,
+{
+    /// Creates a new [`Matrix<T>`] instance from an iterator over matrix rows.
+    ///
+    /// # Panics
+    ///
+    /// Panics if length in each iteration is inconsistent.
+    fn from_iter<M>(iter: M) -> Self
+    where
+        M: IntoIterator<Item = V>,
+    {
+        let mut data = Vec::with_capacity(0x1000);
+        let mut data_len;
+        let mut nrows;
+        let ncols;
+        let mut iter = iter.into_iter();
+        match iter.next() {
+            None => {
+                return Self::empty();
+            }
+            Some(row) => {
+                nrows = 1;
+                data.extend(row);
+                data_len = data.len();
+                ncols = data_len;
+            }
+        }
+        for row in iter {
+            data.extend(row);
+            if data.len() - data_len != ncols {
+                panic!("{}", Error::LengthInconsistent);
+            }
+            data_len = data.len();
+            nrows += 1;
+        }
+        data.shrink_to_fit();
+        let order = Order::default();
+        let shape = AxisShape::from_shape_unchecked(Shape::new(nrows, ncols), order);
+        Self { order, shape, data }
+    }
+}
+
 impl<T> Matrix<T> {
     /// # Safety
     ///
@@ -468,21 +513,12 @@ impl<T> Matrix<T> {
         }
     }
 
-    /// # Safety
-    ///
-    /// Calling this method when `n >= self.minor()` is *[undefined behavior]*.
-    /// To be more specific, the last element accessed will be out of bounds,
-    /// while other elements might either be incorrect or out of bounds.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    pub(super) unsafe fn iter_nth_minor_axis_vector_unchecked(
+    pub(super) fn iter_nth_minor_axis_vector_unchecked(
         &self,
         n: usize,
     ) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
-        (0..self.major()).map(move |m| {
-            let index = AxisIndex::new(m, n);
-            unsafe { self.get_unchecked(index) }
-        })
+        let step = self.major_stride();
+        self.data.iter().skip(n).step_by(step)
     }
 
     pub(super) fn iter_nth_minor_axis_vector(
@@ -492,13 +528,10 @@ impl<T> Matrix<T> {
         if n >= self.minor() {
             Err(Error::IndexOutOfBounds)
         } else {
-            unsafe { Ok(self.iter_nth_minor_axis_vector_unchecked(n)) }
+            Ok(self.iter_nth_minor_axis_vector_unchecked(n))
         }
     }
 
-    /// # Safety
-    ///
-    /// Calling this method when `n >= self.minor()` is safe but incorrect.
     pub(super) fn iter_nth_minor_axis_vector_unchecked_mut(
         &mut self,
         n: usize,
@@ -1009,5 +1042,23 @@ mod tests {
 
         let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
         assert_eq!(sum, 15);
+    }
+
+    #[test]
+    fn test_from_iterator() {
+        let expected = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let iterable = [[0, 1, 2], [3, 4, 5]];
+        assert_eq!(Matrix::from_iter(iterable), expected);
+
+        let iterable = [[0, 1], [2, 3], [4, 5]];
+        assert_ne!(Matrix::from_iter(iterable), expected);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_from_iterator_fails() {
+        let iterable = [vec![0, 1, 2], vec![3, 4]];
+        Matrix::from_iter(iterable);
     }
 }

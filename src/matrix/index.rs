@@ -23,30 +23,24 @@ pub unsafe trait MatrixIndex<T>: internal::Sealed {
     /// if in bounds.
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output>;
 
-    /// Returns a reference to the output at this location without
-    /// doing bounds checking.
+    /// Returns a reference to the output at this location,
+    /// without performing any bounds checking.
     ///
     /// # Safety
     ///
     /// Calling this method with an out-of-bounds index is *[undefined behavior]*.
     ///
-    /// For a safe alternative see [`get`].
-    ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    /// [`get`]: MatrixIndex::get
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output;
 
-    /// Returns a mutable reference to the output at this location without
-    /// doing bounds checking.
+    /// Returns a mutable reference to the output at this location,
+    /// without performing any bounds checking.
     ///
     /// # Safety
     ///
     /// Calling this method with an out-of-bounds index is *[undefined behavior]*.
     ///
-    /// For a safe alternative see [`get_mut`].
-    ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    /// [`get_mut`]: MatrixIndex::get_mut
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output;
 
     /// Returns a reference to the output at this location.
@@ -112,7 +106,7 @@ impl<T> Matrix<T> {
     }
 
     /// Returns a reference to the [`MatrixIndex::Output`]
-    /// at given location without doing bounds checking.
+    /// at given location, without performing any bounds checking.
     ///
     /// # Safety
     ///
@@ -139,7 +133,7 @@ impl<T> Matrix<T> {
     }
 
     /// Returns a mutable reference to the [`MatrixIndex::Output`]
-    /// at given location without doing bounds checking.
+    /// at given location, without performing any bounds checking.
     ///
     /// # Safety
     ///
@@ -317,10 +311,6 @@ pub(super) struct AxisIndex {
 }
 
 impl AxisIndex {
-    pub(super) fn new(major: usize, minor: usize) -> Self {
-        Self { major, minor }
-    }
-
     pub(super) fn is_out_of_bounds(&self, shape: AxisShape) -> bool {
         self.major >= shape.major() || self.minor >= shape.minor()
     }
