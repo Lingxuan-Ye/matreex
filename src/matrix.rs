@@ -391,7 +391,7 @@ impl<T> Matrix<T> {
                 let self_upper = self_lower + minor;
                 self.data[self_lower..self_upper]
                     .iter_mut()
-                    .zip(unsafe { other.iter_nth_minor_axis_vector_unchecked(i) })
+                    .zip(other.iter_nth_minor_axis_vector_unchecked(i))
                     .for_each(|(x, y)| *x = y.clone());
             }
         }

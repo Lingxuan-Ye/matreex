@@ -90,47 +90,6 @@ impl<T: Clone> From<&[T]> for Matrix<T> {
     }
 }
 
-impl<T, V> FromIterator<V> for Matrix<T>
-where
-    V: IntoIterator<Item = T>,
-{
-    /// Creates a new [`Matrix<T>`] instance from an iterator over matrix rows.
-    ///
-    /// # Panics
-    ///
-    /// Panics if length in each iteration is inconsistent.
-    fn from_iter<M: IntoIterator<Item = V>>(iter: M) -> Self {
-        let mut data = Vec::with_capacity(0x1000);
-        let mut data_len;
-        let mut nrows;
-        let ncols;
-        let mut iter = iter.into_iter();
-        match iter.next() {
-            None => {
-                return Self::empty();
-            }
-            Some(row) => {
-                nrows = 1;
-                data.extend(row);
-                data_len = data.len();
-                ncols = data_len;
-            }
-        }
-        for row in iter {
-            data.extend(row);
-            if data.len() - data_len != ncols {
-                panic!("{}", Error::LengthInconsistent);
-            }
-            data_len = data.len();
-            nrows += 1;
-        }
-        data.shrink_to_fit();
-        let order = Order::default();
-        let shape = AxisShape::from_shape_unchecked(Shape::new(nrows, ncols), order);
-        Self { order, shape, data }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -225,23 +184,5 @@ mod tests {
         let vec = vec![0; 6];
         assert_ne!(Matrix::from(&vec[..]), expected);
         assert_ne!(Matrix::from_slice(&vec), expected);
-    }
-
-    #[test]
-    fn test_from_iterator() {
-        let expected = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let iterable = [[0, 1, 2], [3, 4, 5]];
-        assert_eq!(Matrix::from_iter(iterable), expected);
-
-        let iterable = [[0, 1], [2, 3], [4, 5]];
-        assert_ne!(Matrix::from_iter(iterable), expected);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_from_iterator_fails() {
-        let iterable = [vec![0, 1, 2], vec![3, 4]];
-        Matrix::from_iter(iterable);
     }
 }
