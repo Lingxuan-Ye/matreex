@@ -2,7 +2,7 @@ use super::order::Order;
 use crate::error::{Error, Result};
 
 /// Any type that implements this trait can be used as the `shape` argument
-/// in the constructors of [`Matrix`].
+/// in the constructors of [`Matrix<T>`].
 ///
 /// # Examples
 ///
@@ -14,7 +14,7 @@ use crate::error::{Error, Result};
 /// let baz = Matrix::<i32>::new([2, 3]);
 /// ```
 ///
-/// [`Matrix`]: crate::matrix::Matrix
+/// [`Matrix<T>`]: crate::matrix::Matrix<T>
 pub trait ShapeLike {
     /// Returns the number of rows.
     fn nrows(&self) -> usize;
@@ -34,14 +34,14 @@ pub trait ShapeLike {
     }
 }
 
-/// A structure that represents the shape of a [`Matrix`].
+/// A structure that represents the shape of a [`Matrix<T>`].
 ///
 /// # Notes
 ///
 /// You might prefer using `(usize, usize)` instead when constructing
 /// matrices. Refer to [`ShapeLike`] for more information.
 ///
-/// [`Matrix`]: crate::matrix::Matrix
+/// [`Matrix<T>`]: crate::matrix::Matrix<T>
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Shape {
     /// Number of rows.
@@ -67,7 +67,7 @@ impl Shape {
 }
 
 impl std::fmt::Display for Shape {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({}, {})", self.nrows, self.ncols)
     }
 }
@@ -139,7 +139,7 @@ impl AxisShape {
             Order::RowMajor => (self.major, self.minor),
             Order::ColMajor => (self.minor, self.major),
         };
-        Shape::new(nrows, ncols)
+        Shape { nrows, ncols }
     }
 
     pub(super) fn interpret_nrows(&self, order: Order) -> usize {

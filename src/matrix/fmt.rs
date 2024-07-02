@@ -16,7 +16,7 @@ macro_rules! write_dim {
 }
 
 impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let shape = self.shape();
         let nrows = shape.nrows;
         let ncols = shape.ncols;
@@ -111,7 +111,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
 }
 
 impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let shape = self.shape();
         let nrows = shape.nrows;
         let ncols = shape.ncols;

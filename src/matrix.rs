@@ -1,4 +1,4 @@
-//! This module defines [`Matrix`] and all its related components.
+//! This module defines [`Matrix<T>`] and all its related components.
 
 use self::iter::VectorIter;
 use self::order::Order;
@@ -18,7 +18,7 @@ mod fmt;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
-/// [`Matrix`] means matrix.
+/// [`Matrix<T>`] means ... matrix.
 ///
 /// Instead of using constructor methods, you may prefer to create a
 /// matrix using the [`matrix!`] macro:
@@ -38,7 +38,7 @@ pub struct Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    /// Creates a new [`Matrix`] instance with default values.
+    /// Creates a new [`Matrix<T>`] instance with default values.
     ///
     /// # Panics
     ///
@@ -67,7 +67,7 @@ impl<T> Matrix<T> {
     /// ```
     pub fn new<S: ShapeLike>(shape: S) -> Self
     where
-        T: Default,
+        T: Clone + Default,
     {
         match Self::build(shape) {
             Err(error) => panic!("{error}"),
@@ -75,7 +75,7 @@ impl<T> Matrix<T> {
         }
     }
 
-    /// Builds a new [`Matrix`] instance with default values.
+    /// Builds a new [`Matrix<T>`] instance with default values.
     ///
     /// # Errors
     ///
@@ -98,16 +98,16 @@ impl<T> Matrix<T> {
     /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self>
     where
-        T: Default,
+        T: Clone + Default,
     {
         let order = Order::default();
         let shape = AxisShape::try_from_shape(shape, order)?;
         let size = Self::check_size(shape.size())?;
-        let data = std::iter::repeat_with(T::default).take(size).collect();
+        let data = vec![T::default(); size];
         Ok(Self { order, shape, data })
     }
 
-    /// Creates an empty [`Matrix`] instance.
+    /// Creates an empty [`Matrix<T>`] instance.
     ///
     /// # Examples
     ///
@@ -892,6 +892,12 @@ mod tests {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
         assert_eq!(Matrix::build((2, 3)).unwrap(), expected);
         assert_ne!(Matrix::build((3, 2)).unwrap(), expected);
+
+        assert_eq!(
+            Matrix::<()>::build((usize::MAX, 2)).unwrap_err(),
+            Error::SizeOverflow
+        );
+        assert!(Matrix::<()>::build((isize::MAX as usize + 1, 1)).is_ok());
 
         assert_eq!(
             Matrix::<u8>::build((usize::MAX, 2)).unwrap_err(),

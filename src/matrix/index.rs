@@ -3,7 +3,7 @@ use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
-/// A helper trait used for [`Matrix`] indexing.
+/// A helper trait used for [`Matrix<T>`] indexing.
 ///
 /// # Safety
 ///
@@ -186,7 +186,7 @@ where
     }
 }
 
-/// Any type that implements this trait can be used to index a [`Matrix`].
+/// Any type that implements this trait can be used to index a [`Matrix<T>`].
 ///
 /// # Examples
 ///
@@ -213,7 +213,7 @@ pub trait IndexLike {
     }
 }
 
-/// A structure that represents the index of an element in a [`Matrix`].
+/// A structure that represents the index of an element in a [`Matrix<T>`].
 ///
 /// # Notes
 ///
@@ -244,7 +244,7 @@ impl Index {
 }
 
 impl std::fmt::Display for Index {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({}, {})", self.row, self.col)
     }
 }

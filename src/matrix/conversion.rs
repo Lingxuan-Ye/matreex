@@ -4,7 +4,7 @@ use super::Matrix;
 use crate::error::{Error, Result};
 
 impl<T> Matrix<T> {
-    /// Creates a new [`Matrix`] instance from the given 2D array.
+    /// Creates a new [`Matrix<T>`] instance from the given 2D array.
     ///
     /// # Examples
     ///
@@ -18,7 +18,7 @@ impl<T> Matrix<T> {
         Self::from(value)
     }
 
-    /// Creates a new [`Matrix`] instance from the given slice.
+    /// Creates a new [`Matrix<T>`] instance from the given slice.
     ///
     /// # Notes
     ///
@@ -94,7 +94,7 @@ impl<T, V> FromIterator<V> for Matrix<T>
 where
     V: IntoIterator<Item = T>,
 {
-    /// Creates a new [`Matrix`] instance from an iterator over matrix rows.
+    /// Creates a new [`Matrix<T>`] instance from an iterator over matrix rows.
     ///
     /// # Panics
     ///
