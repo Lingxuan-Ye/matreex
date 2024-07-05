@@ -1,5 +1,8 @@
 //! This module serves for error handling.
 
+/// An alias for [`std::result::Result`].
+pub type Result<T> = std::result::Result<T, Error>;
+
 /// An enum for error types.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Error {
@@ -39,6 +42,3 @@ impl std::fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
-
-/// An alias for [`core::result::Result`].
-pub type Result<T> = core::result::Result<T, Error>;
