@@ -3,49 +3,20 @@ use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 
-impl<T> Matrix<T> {
-    /// Creates a new [`Matrix<T>`] instance from the given 2D array.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let array = [[0, 1, 2], [3, 4, 5]];
-    /// let matrix = Matrix::from_2darray(array);
-    /// ```
-    pub fn from_2darray<const R: usize, const C: usize>(value: [[T; C]; R]) -> Self {
-        Self::from(value)
-    }
-
-    /// Creates a new [`Matrix<T>`] instance from the given slice.
-    ///
-    /// # Notes
-    ///
-    /// The matrix returned will always have `1` row and `src.len()` columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Matrix};
-    ///
-    /// let slice = [0, 1, 2, 3, 4, 5];
-    /// let matrix = Matrix::from_slice(&slice);
-    ///
-    /// assert_eq!(matrix, matrix![[0, 1, 2, 3, 4, 5]]);
-    /// ```
-    pub fn from_slice(value: &[T]) -> Self
-    where
-        T: Clone,
-    {
-        Self::from(value)
-    }
-}
-
 impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     fn from(value: [[T; C]; R]) -> Self {
         let order = Order::default();
         let shape = AxisShape::from_shape_unchecked(Shape::new(R, C), order);
+        let data = value.into_iter().flatten().collect();
+        Self { order, shape, data }
+    }
+}
+
+impl<T: Clone, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
+    fn from(value: Vec<[T; C]>) -> Self {
+        let order = Order::default();
+        let nrows = value.len();
+        let shape = AxisShape::from_shape_unchecked(Shape::new(nrows, C), order);
         let data = value.into_iter().flatten().collect();
         Self { order, shape, data }
     }
@@ -58,6 +29,46 @@ impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
         let shape = AxisShape::from_shape_unchecked(Shape::new(nrows, C), order);
         let data = value.iter().flatten().cloned().collect();
         Self { order, shape, data }
+    }
+}
+
+impl<T: Clone, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
+    type Error = Error;
+
+    fn try_from(value: [Vec<T>; C]) -> Result<Self> {
+        let order = Order::default();
+        let nrows = C;
+        let ncols = value.first().map_or(0, |row| row.len());
+        let shape = AxisShape::try_from_shape(Shape::new(nrows, ncols), order)?;
+        Self::check_size(shape.size())?;
+        let mut data = Vec::with_capacity(shape.size());
+        for row in value {
+            if row.len() != ncols {
+                return Err(Error::LengthInconsistent);
+            }
+            data.extend(row);
+        }
+        Ok(Self { order, shape, data })
+    }
+}
+
+impl<T: Clone> TryFrom<Vec<Vec<T>>> for Matrix<T> {
+    type Error = Error;
+
+    fn try_from(value: Vec<Vec<T>>) -> Result<Self> {
+        let order = Order::default();
+        let nrows = value.len();
+        let ncols = value.first().map_or(0, |row| row.len());
+        let shape = AxisShape::try_from_shape(Shape::new(nrows, ncols), order)?;
+        Self::check_size(shape.size())?;
+        let mut data = Vec::with_capacity(shape.size());
+        for row in value {
+            if row.len() != ncols {
+                return Err(Error::LengthInconsistent);
+            }
+            data.extend(row);
+        }
+        Ok(Self { order, shape, data })
     }
 }
 
@@ -81,6 +92,24 @@ impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
     }
 }
 
+impl<T: Clone, const N: usize> From<[T; N]> for Matrix<T> {
+    fn from(value: [T; N]) -> Self {
+        let order = Order::default();
+        let shape = AxisShape::from_shape_unchecked(Shape::new(1, N), order);
+        let data = value.to_vec();
+        Self { order, shape, data }
+    }
+}
+
+impl<T: Clone> From<Vec<T>> for Matrix<T> {
+    fn from(value: Vec<T>) -> Self {
+        let order = Order::default();
+        let shape = AxisShape::from_shape_unchecked(Shape::new(1, value.len()), order);
+        let data = value;
+        Self { order, shape, data }
+    }
+}
+
 impl<T: Clone> From<&[T]> for Matrix<T> {
     fn from(value: &[T]) -> Self {
         let order = Order::default();
@@ -100,89 +129,101 @@ mod tests {
         let order = Order::default();
         let shape = AxisShape::from_shape_unchecked(Shape::new(2, 3), order);
         let data = vec![0, 1, 2, 3, 4, 5];
-        let expected = Matrix { order, shape, data };
+        let mut expected = Matrix { order, shape, data };
 
         let array = [[0, 1, 2], [3, 4, 5]];
         assert_eq!(Matrix::from(array), expected);
-        assert_eq!(Matrix::from_2darray(array), expected);
+        assert_eq!(Matrix::from(array.to_vec()), expected);
+        assert_eq!(Matrix::from(&array[..]), expected);
         assert_eq!(matrix![[0, 1, 2], [3, 4, 5]], expected);
 
-        let array = [[0, 1], [2, 3], [4, 5]];
+        let array = [[0, 3], [1, 4], [2, 5]];
         assert_ne!(Matrix::from(array), expected);
-        assert_ne!(Matrix::from_2darray(array), expected);
-        assert_ne!(matrix![[0, 1], [2, 3], [4, 5]], expected);
+        assert_ne!(Matrix::from(array.to_vec()), expected);
+        assert_ne!(Matrix::from(&array[..]), expected);
+        assert_ne!(matrix![[0, 3], [1, 4], [2, 5]], expected);
+        expected.transpose().set_order(order);
+        assert_eq!(Matrix::from(array), expected);
+        assert_eq!(Matrix::from(array.to_vec()), expected);
+        assert_eq!(Matrix::from(&array[..]), expected);
+        assert_eq!(matrix![[0, 3], [1, 4], [2, 5]], expected);
     }
 
     #[test]
-    fn test_from_slice_of_arrays() {
-        let expected = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let arrays = [[0, 1, 2], [3, 4, 5]];
-        assert_eq!(Matrix::from(&arrays[..]), expected);
-
-        let arrays = [[0, 1, 2]];
-        assert_ne!(Matrix::from(&arrays[..]), expected);
-
-        let arrays = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
-        assert_ne!(Matrix::from(&arrays[..]), expected);
-
-        let arrays = [[0, 1], [2, 3], [4, 5]];
-        assert_ne!(Matrix::from(&arrays[..]), expected);
-    }
-
-    #[test]
-    fn test_try_from_slice_of_vecs() {
+    fn test_try_from_array_of_arrays() {
         const MAX: usize = isize::MAX as usize;
 
         let expected = matrix![[0, 1, 2], [3, 4, 5]];
 
-        let vecs = [vec![0, 1, 2], vec![3, 4, 5]];
-        assert_eq!(Matrix::try_from(&vecs[..]).unwrap(), expected);
+        let aoa = [vec![0, 1, 2], vec![3, 4, 5]];
+        assert_eq!(Matrix::try_from(aoa.clone()).unwrap(), expected);
+        assert_eq!(Matrix::try_from(aoa.to_vec()).unwrap(), expected);
+        assert_eq!(Matrix::try_from(&aoa[..]).unwrap(), expected);
 
-        let vecs = [vec![0, 1, 2]];
-        assert_ne!(Matrix::try_from(&vecs[..]).unwrap(), expected);
+        let aoa = [vec![0, 1, 2]];
+        assert_ne!(Matrix::try_from(aoa.clone()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(aoa.to_vec()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(&aoa[..]).unwrap(), expected);
 
-        let vecs = [vec![0, 1, 2], vec![3, 4, 5], vec![6, 7, 8]];
-        assert_ne!(Matrix::try_from(&vecs[..]).unwrap(), expected);
+        let aoa = [vec![0, 1, 2], vec![3, 4, 5], vec![6, 7, 8]];
+        assert_ne!(Matrix::try_from(aoa.clone()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(aoa.to_vec()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(&aoa[..]).unwrap(), expected);
 
-        let vecs = [vec![0, 1], vec![2, 3], vec![4, 5]];
-        assert_ne!(Matrix::try_from(&vecs[..]).unwrap(), expected);
+        let aoa = [vec![0, 1], vec![2, 3], vec![4, 5]];
+        assert_ne!(Matrix::try_from(aoa.clone()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(aoa.to_vec()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(&aoa[..]).unwrap(), expected);
 
-        let vecs = [vec![(); MAX], vec![(); MAX]];
-        assert!(Matrix::<()>::try_from(&vecs[..]).is_ok());
+        let aoa = [vec![(); MAX], vec![(); MAX]];
+        assert!(Matrix::<()>::try_from(aoa.clone()).is_ok());
+        assert!(Matrix::<()>::try_from(aoa.to_vec()).is_ok());
+        assert!(Matrix::<()>::try_from(&aoa[..]).is_ok());
 
-        let vecs = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
-        assert_eq!(Matrix::<()>::try_from(&vecs[..]), Err(Error::SizeOverflow));
+        let aoa = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
+        assert_eq!(
+            Matrix::<()>::try_from(aoa.clone()),
+            Err(Error::SizeOverflow)
+        );
+        assert_eq!(
+            Matrix::<()>::try_from(aoa.to_vec()),
+            Err(Error::SizeOverflow)
+        );
+        assert_eq!(Matrix::<()>::try_from(&aoa[..]), Err(Error::SizeOverflow));
 
         // unable to cover (run out of memory)
-        // let vecs = [vec![0u8; MAX], vec![0u8; MAX]];
-        // assert_eq!(Matrix::<u8>::try_from(&vecs[..]), Err(Error::CapacityExceeded));
+        // let aoa = [vec![0u8; MAX], vec![0u8; MAX]];
+        // assert_eq!(Matrix::<u8>::try_from(aoa.clone()), Err(Error::CapacityExceeded));
+        // assert_eq!(Matrix::<u8>::try_from(aoa.to_vec()), Err(Error::CapacityExceeded));
+        // assert_eq!(Matrix::<u8>::try_from(&aoa[..]), Err(Error::CapacityExceeded));
 
-        let vecs = [vec![0, 1, 2], vec![3, 4]];
+        let aoa = [vec![0, 1, 2], vec![3, 4]];
         assert_eq!(
-            Matrix::<i32>::try_from(&vecs[..]),
+            Matrix::<i32>::try_from(aoa.clone()),
+            Err(Error::LengthInconsistent)
+        );
+        assert_eq!(
+            Matrix::<i32>::try_from(aoa.to_vec()),
+            Err(Error::LengthInconsistent)
+        );
+        assert_eq!(
+            Matrix::<i32>::try_from(&aoa[..]),
             Err(Error::LengthInconsistent)
         );
     }
 
     #[test]
-    fn test_from_slice() {
+    fn test_from_1darray() {
         let expected = matrix![[0, 1, 2, 3, 4, 5]];
 
         let array = [0, 1, 2, 3, 4, 5];
+        assert_eq!(Matrix::from(array), expected);
+        assert_eq!(Matrix::from(array.to_vec()), expected);
         assert_eq!(Matrix::from(&array[..]), expected);
-        assert_eq!(Matrix::from_slice(&array), expected);
 
         let array = [0; 6];
+        assert_ne!(Matrix::from(array), expected);
+        assert_ne!(Matrix::from(array.to_vec()), expected);
         assert_ne!(Matrix::from(&array[..]), expected);
-        assert_ne!(Matrix::from_slice(&array), expected);
-
-        let vec = vec![0, 1, 2, 3, 4, 5];
-        assert_eq!(Matrix::from(&vec[..]), expected);
-        assert_eq!(Matrix::from_slice(&vec), expected);
-
-        let vec = vec![0; 6];
-        assert_ne!(Matrix::from(&vec[..]), expected);
-        assert_ne!(Matrix::from_slice(&vec), expected);
     }
 }
