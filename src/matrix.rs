@@ -55,14 +55,14 @@ impl<T> Matrix<T> {
     /// ```
     ///
     /// ```should_panic
-    /// use matreex::Matrix;
-    ///
+    /// # use matreex::Matrix;
+    /// #
     /// let matrix = Matrix::<u8>::new((usize::MAX, 2));
     /// ```
     ///
     /// ```should_panic
-    /// use matreex::Matrix;
-    ///
+    /// # use matreex::Matrix;
+    /// #
     /// let matrix = Matrix::<u8>::new((isize::MAX as usize + 1, 1));
     /// ```
     pub fn new<S: ShapeLike>(shape: S) -> Self
@@ -114,7 +114,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<i32>::empty();
+    /// let matrix = Matrix::<u8>::empty();
     /// assert_eq!(matrix.nrows(), 0);
     /// assert_eq!(matrix.ncols(), 0);
     /// assert!(matrix.is_empty());
@@ -126,36 +126,102 @@ impl<T> Matrix<T> {
 
 impl<T> Matrix<T> {
     /// Returns the order of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Order};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.order(), Order::default());
+    /// ```
     pub fn order(&self) -> Order {
         self.order
     }
 
     /// Returns the shape of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Shape};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.shape(), Shape::new(2, 3));
+    /// ```
     pub fn shape(&self) -> Shape {
         self.shape.interpret(self.order)
     }
 
     /// Returns the number of rows in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Shape};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.nrows(), 2);
+    /// ```
     pub fn nrows(&self) -> usize {
         self.shape.interpret_nrows(self.order)
     }
 
     /// Returns the number of columns in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Shape};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.ncols(), 3);
+    /// ```
     pub fn ncols(&self) -> usize {
         self.shape.interpret_ncols(self.order)
     }
 
     /// Returns the total number of elements in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Shape};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.size(), 6);
+    /// ```
     pub fn size(&self) -> usize {
         self.data.len()
     }
 
     /// Returns `true` if the matrix contains no elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Matrix, Shape};
+    ///
+    /// let matrix: Matrix<u8> = matrix![];
+    /// assert!(matrix.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
     /// Returns the capacity of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert!(matrix.capacity() >= 6);
+    ///
+    /// matrix.resize((1, 10)).unwrap();
+    /// assert!(matrix.capacity() >= 10);
+    /// ```
     pub fn capacity(&self) -> usize {
         self.data.capacity()
     }
@@ -337,7 +403,20 @@ impl<T> Matrix<T> {
     }
 
     /// Shrinks the capacity of the matrix as much as possible.
-    pub fn shrink_capacity_to_fit(&mut self) -> &mut Self {
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert!(matrix.capacity() >= 6);
+    ///
+    /// matrix.resize((1, 3)).unwrap();
+    /// matrix.shrink_to_fit();
+    /// assert!(matrix.capacity() >= 3);
+    /// ```
+    pub fn shrink_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
         self
     }
@@ -349,7 +428,22 @@ impl<T> Matrix<T> {
     ///
     /// If the current capacity is less than the lower limit,
     /// this is a no-op.
-    pub fn shrink_capacity_to(&mut self, min_capacity: usize) -> &mut Self {
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert!(matrix.capacity() >= 6);
+    ///
+    /// matrix.resize((1, 3)).unwrap();
+    /// matrix.shrink_to(4);
+    /// assert!(matrix.capacity() >= 4);
+    /// matrix.shrink_to(0);
+    /// assert!(matrix.capacity() >= 3);
+    /// ```
+    pub fn shrink_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
         self
     }
