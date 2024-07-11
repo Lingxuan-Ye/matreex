@@ -1,8 +1,8 @@
 use super::order::Order;
 use crate::error::{Error, Result};
 
-/// Any type that implements this trait can be used as the `shape` argument
-/// in the constructors of [`Matrix<T>`].
+/// Any type implementing this trait can be a `shape` argument for
+/// [`Matrix<T>`] constructors.
 ///
 /// # Examples
 ///
@@ -34,12 +34,12 @@ pub trait ShapeLike {
     }
 }
 
-/// A structure that represents the shape of a [`Matrix<T>`].
+/// A structure representing the shape of a [`Matrix<T>`].
 ///
 /// # Notes
 ///
-/// You might prefer using `(usize, usize)` instead when constructing
-/// matrices. Refer to [`ShapeLike`] for more information.
+/// You might prefer `(usize, usize)` for constructing matrices.
+/// Refer to [`ShapeLike`] for more information.
 ///
 /// [`Matrix<T>`]: crate::matrix::Matrix<T>
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

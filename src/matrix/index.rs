@@ -180,7 +180,7 @@ where
     }
 }
 
-/// Any type that implements this trait can be used to index a [`Matrix<T>`].
+/// Any type implementing this trait can index a [`Matrix<T>`].
 ///
 /// # Examples
 ///
@@ -207,11 +207,11 @@ pub trait IndexLike {
     }
 }
 
-/// A structure that represents the index of an element in a [`Matrix<T>`].
+/// A structure representing the index of an element in a [`Matrix<T>`].
 ///
 /// # Notes
 ///
-/// You might prefer using `(usize, usize)` for matrix indexing instead.
+/// You might prefer `(usize, usize)` for matrix indexing.
 /// Refer to [`IndexLike`] for more information.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Index {
