@@ -1,5 +1,6 @@
 use super::index::Index;
 use super::Matrix;
+use ansi_term::Style;
 
 const LEFT_DELIMITER: &str = "[";
 const RIGHT_DELIMITER: &str = "]";
@@ -11,7 +12,7 @@ const INNER_GAP: usize = 1;
 
 macro_rules! write_dim {
     ($dst:expr, $($arg:tt)*) => {
-        std::write!($dst, "\u{001b}[2m{}\u{001b}[22m", std::format_args!($($arg)*))
+        write!($dst, "{}", Style::new().dimmed().paint(format!($($arg)*)))
     };
 }
 
@@ -237,7 +238,7 @@ mod tests {
     fn test_debug() {
         let matrix = matrix![[Mock(0), Mock(1), Mock(2)], [Mock(3), Mock(4), Mock(5)]];
         let result = format!("{:?}", matrix);
-        let expected = "Matrix {\n    order: RowMajor\n    shape: AxisShape { major: 2, minor: 3 }\n    data:\n        [       \u{1b}[2m0\u{1b}[22m        \u{1b}[2m1\u{1b}[22m        \u{1b}[2m2\u{1b}[22m      \n            \u{1b}[2m0\u{1b}[22m  [\u{1b}[2m0\u{1b}[22m        \u{1b}[2m1\u{1b}[22m +      \u{1b}[2m2\u{1b}[22m +    ]\n                                    ++   \n                                         \n                                         \n                                         \n            \u{1b}[2m1\u{1b}[22m  [\u{1b}[2m3\u{1b}[22m +      \u{1b}[2m4\u{1b}[22m +      \u{1b}[2m5\u{1b}[22m +    ]\n                  ++       ++       ++   \n                  +++      +++      +++  \n                           ++++     ++++ \n                                    +++++\n        ]\n}\n";
+        let expected = "Matrix {\n    order: RowMajor\n    shape: AxisShape { major: 2, minor: 3 }\n    data:\n        [       \u{1b}[2m0\u{1b}[0m        \u{1b}[2m1\u{1b}[0m        \u{1b}[2m2\u{1b}[0m      \n            \u{1b}[2m0\u{1b}[0m  [\u{1b}[2m0\u{1b}[0m        \u{1b}[2m1\u{1b}[0m +      \u{1b}[2m2\u{1b}[0m +    ]\n                                    ++   \n                                         \n                                         \n                                         \n            \u{1b}[2m1\u{1b}[0m  [\u{1b}[2m3\u{1b}[0m +      \u{1b}[2m4\u{1b}[0m +      \u{1b}[2m5\u{1b}[0m +    ]\n                  ++       ++       ++   \n                  +++      +++      +++  \n                           ++++     ++++ \n                                    +++++\n        ]\n}\n";
         assert_eq!(result, expected);
     }
 
