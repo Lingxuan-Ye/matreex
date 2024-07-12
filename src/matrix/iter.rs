@@ -104,14 +104,18 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let mut row_1 = matrix.iter_nth_row(1).unwrap();
+    /// let mut row_1 = matrix.iter_nth_row(1)?;
     /// assert_eq!(row_1.next(), Some(&3));
     /// assert_eq!(row_1.next(), Some(&4));
     /// assert_eq!(row_1.next(), Some(&5));
     /// assert_eq!(row_1.next(), None);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn iter_nth_row(&self, n: usize) -> Result<VectorIter<&T>> {
         match self.order {
@@ -132,13 +136,17 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// for element in matrix.iter_nth_row_mut(1).unwrap() {
+    /// for element in matrix.iter_nth_row_mut(1)? {
     ///    *element += 1;
     /// }
     /// assert_eq!(matrix, matrix![[0, 1, 2], [4, 5, 6]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn iter_nth_row_mut(&mut self, n: usize) -> Result<VectorIter<&mut T>> {
         match self.order {
@@ -158,13 +166,17 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let mut col_1 = matrix.iter_nth_col(1).unwrap();
+    /// let mut col_1 = matrix.iter_nth_col(1)?;
     /// assert_eq!(col_1.next(), Some(&1));
     /// assert_eq!(col_1.next(), Some(&4));
     /// assert_eq!(col_1.next(), None);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn iter_nth_col(&self, n: usize) -> Result<VectorIter<&T>> {
         match self.order {
@@ -185,13 +197,17 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// for element in matrix.iter_nth_col_mut(1).unwrap() {
+    /// for element in matrix.iter_nth_col_mut(1)? {
     ///    *element += 1;
     /// }
     /// assert_eq!(matrix, matrix![[0, 2, 2], [3, 5, 5]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn iter_nth_col_mut(&mut self, n: usize) -> Result<VectorIter<&mut T>> {
         match self.order {
