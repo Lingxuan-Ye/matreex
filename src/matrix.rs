@@ -20,8 +20,8 @@ use rayon::prelude::*;
 
 /// [`Matrix<T>`] means ... matrix.
 ///
-/// Instead of using constructor methods, you may prefer to create a
-/// matrix using the [`matrix!`] macro:
+/// Instead of using constructor methods, you might prefer to create a
+/// matrix with the [`matrix!`] macro:
 ///
 /// ```
 /// use matreex::matrix;
@@ -215,12 +215,16 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert!(matrix.capacity() >= 6);
     ///
-    /// matrix.resize((1, 10)).unwrap();
+    /// matrix.resize((1, 10))?;
     /// assert!(matrix.capacity() >= 10);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn capacity(&self) -> usize {
         self.data.capacity()
@@ -345,21 +349,25 @@ impl<T> Matrix<T> {
     ///
     /// Reducing the size does not automatically shrink the capacity.
     /// This choice is made to avoid potential reallocation.
-    /// Consider explicitly calling [`Matrix::shrink_capacity_to_fit`]
+    /// Consider explicitly calling [`Matrix::shrink_to_fit`]
     /// if needed.
     ///
     /// # Examples
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// matrix.resize((2, 2)).unwrap();
+    /// matrix.resize((2, 2))?;
     /// assert_eq!(matrix, matrix![[0, 1], [2, 3]]);
     ///
-    /// matrix.resize((2, 3)).unwrap();
+    /// matrix.resize((2, 3))?;
     /// assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn resize<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self>
     where
@@ -383,14 +391,18 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::{matrix, Error};
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// matrix.reshape((3, 2)).unwrap();
+    /// matrix.reshape((3, 2))?;
     /// assert_eq!(matrix, matrix![[0, 1], [2, 3], [4, 5]]);
     ///
     /// let result = matrix.reshape((2, 2));
     /// assert_eq!(result, Err(Error::SizeMismatch));
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
         match shape.size() {
@@ -408,13 +420,17 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert!(matrix.capacity() >= 6);
     ///
-    /// matrix.resize((1, 3)).unwrap();
+    /// matrix.resize((1, 3))?;
     /// matrix.shrink_to_fit();
     /// assert!(matrix.capacity() >= 3);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn shrink_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
@@ -433,15 +449,19 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert!(matrix.capacity() >= 6);
     ///
-    /// matrix.resize((1, 3)).unwrap();
+    /// matrix.resize((1, 3))?;
     /// matrix.shrink_to(4);
     /// assert!(matrix.capacity() >= 4);
     /// matrix.shrink_to(0);
     /// assert!(matrix.capacity() >= 3);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn shrink_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
@@ -727,12 +747,16 @@ impl<L> Matrix<L> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     ///
-    /// lhs.elementwise_operation_assign(&rhs, |(x, y)| *x += y).unwrap();
+    /// lhs.elementwise_operation_assign(&rhs, |(x, y)| *x += y)?;
     /// assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn elementwise_operation_assign<R, F>(
         &mut self,
