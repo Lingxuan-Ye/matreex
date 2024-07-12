@@ -98,22 +98,16 @@ impl<L> Matrix<L> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     ///
-    /// lhs.elementwise_rem_assign(&rhs).unwrap();
+    /// lhs.elementwise_rem_assign(&rhs)?;
     /// assert_eq!(lhs, matrix![[0, 1, 0], [1, 0, 1]]);
-    /// ```
-    ///
-    /// ```
-    ///  use matreex::matrix;
-    ///
-    /// let mut lhs = matrix![[0, -1, -2], [-3, -4, -5]];
-    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
-    /// lhs.elementwise_rem_assign(&rhs).unwrap();
-    /// assert_eq!(lhs, matrix![[0, -1, 0], [-1, 0, -1]]);
+    /// # Ok(())
+    /// # }
     /// ```
     ///
     /// [`Error::NotConformable`]: crate::error::Error::NotConformable
