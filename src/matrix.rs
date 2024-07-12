@@ -20,8 +20,8 @@ use rayon::prelude::*;
 
 /// [`Matrix<T>`] means ... matrix.
 ///
-/// Instead of using constructor methods, you may prefer to create a
-/// matrix using the [`matrix!`] macro:
+/// Instead of using constructor methods, you might prefer to create a
+/// matrix with the [`matrix!`] macro:
 ///
 /// ```
 /// use matreex::matrix;
