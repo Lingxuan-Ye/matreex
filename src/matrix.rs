@@ -256,12 +256,6 @@ impl<T> Matrix<T> {
 impl<T> Matrix<T> {
     /// Transposes the matrix.
     ///
-    /// # Notes
-    ///
-    /// For performance reasons, this method transposes the matrix simply
-    /// by changing its order, rather than physically rearranging the data.
-    /// This may be considered as having a side effect.
-    ///
     /// # Examples
     ///
     /// ```
@@ -279,7 +273,23 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix[(2, 1)], 5);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
-        self.order.switch();
+        let size = self.size();
+        let mut visited = vec![false; size];
+
+        for index in 0..size {
+            if visited[index] {
+                continue;
+            }
+            let mut current = index;
+            while !visited[current] {
+                visited[current] = true;
+                let next = Self::transpose_flattened_index(current, self.shape);
+                self.data.swap(index, next);
+                current = next;
+            }
+        }
+
+        self.shape.transpose();
         self
     }
 
@@ -303,24 +313,8 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix.order(), expected);
     /// ```
     pub fn switch_order(&mut self) -> &mut Self {
-        let size = self.size();
-        let mut visited = vec![false; size];
-
-        for index in 0..size {
-            if visited[index] {
-                continue;
-            }
-            let mut current = index;
-            while !visited[current] {
-                visited[current] = true;
-                let next = Self::transpose_flattened_index(current, self.shape);
-                self.data.swap(index, next);
-                current = next;
-            }
-        }
-
+        self.transpose();
         self.order.switch();
-        self.shape.transpose();
         self
     }
 

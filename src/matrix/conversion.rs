@@ -142,7 +142,7 @@ mod tests {
         assert_ne!(Matrix::from(array.to_vec()), expected);
         assert_ne!(Matrix::from(&array[..]), expected);
         assert_ne!(matrix![[0, 3], [1, 4], [2, 5]], expected);
-        expected.transpose().set_order(order);
+        expected.transpose();
         assert_eq!(Matrix::from(array), expected);
         assert_eq!(Matrix::from(array.to_vec()), expected);
         assert_eq!(Matrix::from(&array[..]), expected);
