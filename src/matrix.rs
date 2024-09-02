@@ -263,13 +263,17 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// matrix.transpose();
-    /// // column 0
+    ///
+    /// // row 0
     /// assert_eq!(matrix[(0, 0)], 0);
-    /// assert_eq!(matrix[(1, 0)], 1);
-    /// assert_eq!(matrix[(2, 0)], 2);
-    /// // column 1
     /// assert_eq!(matrix[(0, 1)], 3);
+    ///
+    /// // row 1
+    /// assert_eq!(matrix[(1, 0)], 1);
     /// assert_eq!(matrix[(1, 1)], 4);
+    ///
+    /// // row 2
+    /// assert_eq!(matrix[(2, 0)], 2);
     /// assert_eq!(matrix[(2, 1)], 5);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
@@ -318,6 +322,48 @@ impl<T> Matrix<T> {
         self
     }
 
+    /// Switches the order of the matrix without rearranging the underlying
+    /// data. As a result, the matrix appears transposed when accessed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Order};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut expected = Order::default();
+    /// assert_eq!(matrix.order(), expected);
+    ///
+    /// matrix.switch_order_without_rearrangement();
+    /// expected.switch();
+    /// assert_eq!(matrix.order(), expected);
+    /// // row 0
+    /// assert_eq!(matrix[(0, 0)], 0);
+    /// assert_eq!(matrix[(0, 1)], 3);
+    /// // row 1
+    /// assert_eq!(matrix[(1, 0)], 1);
+    /// assert_eq!(matrix[(1, 1)], 4);
+    /// // row 2
+    /// assert_eq!(matrix[(2, 0)], 2);
+    /// assert_eq!(matrix[(2, 1)], 5);
+    ///
+    /// matrix.switch_order_without_rearrangement();
+    /// expected.switch();
+    /// assert_eq!(matrix.order(), expected);
+    /// // row 0
+    /// assert_eq!(matrix[(0, 0)], 0);
+    /// assert_eq!(matrix[(0, 1)], 1);
+    /// assert_eq!(matrix[(0, 2)], 2);
+    /// // row 1
+    /// assert_eq!(matrix[(1, 0)], 3);
+    /// assert_eq!(matrix[(1, 1)], 4);
+    /// assert_eq!(matrix[(1, 2)], 5);
+    /// ```
+    pub fn switch_order_without_rearrangement(&mut self) -> &mut Self {
+        self.order.switch();
+        self
+    }
+
     /// Sets the order of the matrix.
     ///
     /// # Examples
@@ -337,6 +383,48 @@ impl<T> Matrix<T> {
     pub fn set_order(&mut self, order: Order) -> &mut Self {
         if order != self.order {
             self.switch_order();
+        }
+        self
+    }
+
+    /// Sets the order of the matrix without rearranging the underlying
+    /// data. As a result, when the order is changed, the matrix appears
+    /// transposed when accessed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Order};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.order(), Order::default());
+    ///
+    /// matrix.set_order_without_rearrangement(Order::RowMajor);
+    /// assert_eq!(matrix.order(), Order::RowMajor);
+    /// // row 0
+    /// assert_eq!(matrix[(0, 0)], 0);
+    /// assert_eq!(matrix[(0, 1)], 1);
+    /// assert_eq!(matrix[(0, 2)], 2);
+    /// // row 1
+    /// assert_eq!(matrix[(1, 0)], 3);
+    /// assert_eq!(matrix[(1, 1)], 4);
+    /// assert_eq!(matrix[(1, 2)], 5);
+    ///
+    /// matrix.set_order_without_rearrangement(Order::ColMajor);
+    /// assert_eq!(matrix.order(), Order::ColMajor);
+    /// // row 0
+    /// assert_eq!(matrix[(0, 0)], 0);
+    /// assert_eq!(matrix[(0, 1)], 3);
+    /// // row 1
+    /// assert_eq!(matrix[(1, 0)], 1);
+    /// assert_eq!(matrix[(1, 1)], 4);
+    /// // row 2
+    /// assert_eq!(matrix[(2, 0)], 2);
+    /// assert_eq!(matrix[(2, 1)], 5);
+    /// ```
+    pub fn set_order_without_rearrangement(&mut self, order: Order) -> &mut Self {
+        if order != self.order {
+            self.switch_order_without_rearrangement();
         }
         self
     }
