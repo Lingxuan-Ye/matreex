@@ -422,39 +422,7 @@ impl<T> Matrix<T> {
     }
 
     #[inline]
-    pub(super) fn reindex_to_different_order_unchecked(
-        index: usize,
-        src_shape: AxisShape,
-    ) -> usize {
-        // This implementation is based on the idea that the element at the
-        // same position remains the same across different orders. Assuming
-        // that the original order is `src_order`, and given that the `Index`
-        // instance representing the position is invariant, we have:
-        //
-        // ```
-        // let src_flattened_index = index;
-        // let src_axis_index = AxisIndex::from_flattened(src_flattened_index, src_shape);
-        //
-        // // invariant
-        // let position = match src_order {
-        //     Order::RowMajor => Index::new(src_axis_index.major, src_axis_index.minor),
-        //     Order::ColMajor => Index::new(src_axis_index.minor, src_axis_index.major),
-        // };
-        //
-        // let dest_order = src_order.switch();
-        // let dest_axis_index = match dest_order {
-        //     Order::RowMajor => AxisIndex::new(position.row, position.col),
-        //     Order::ColMajor => AxisIndex::new(position.col, position.row),
-        // };
-        // let mut dest_shape = src_shape;
-        // dest_shape.transpose();
-        // let dest_flattened_index = dest_axis_index.into_flattened_unchecked(dest_shape);
-        // dest_flattened_index
-        // ```
-        //
-        // Note that the variable `dest_axis_index` is always the transpose of
-        // `src_axis_index`, which allows us to simplify the code to the
-        // following:
+    pub(super) fn transpose_flattened_index(index: usize, src_shape: AxisShape) -> usize {
         let mut index = AxisIndex::from_flattened(index, src_shape);
         index.transpose();
 

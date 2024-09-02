@@ -13,9 +13,9 @@ use crate::matrix::Matrix;
 /// ```
 #[macro_export]
 macro_rules! matrix {
-    [] => {{
+    [] => {
         $crate::matrix::Matrix::empty()
-    }};
+    };
 
     [$elem:expr; $n:expr] => {
         $crate::matrix::Matrix::__from_2darray([$elem; $n])
@@ -52,9 +52,9 @@ impl<T> Matrix<T> {
 /// ```
 #[macro_export]
 macro_rules! row_vec {
-    [] => {{
+    [] => {
         $crate::matrix::Matrix::from([[]])
-    }};
+    };
 
     [$elem:expr; $n:expr] => {
         $crate::matrix::Matrix::from([[$elem; $n]])

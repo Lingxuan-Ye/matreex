@@ -7,11 +7,12 @@ pub enum Order {
 }
 
 impl Order {
-    pub fn switch(self) -> Self {
-        match self {
+    pub fn switch(&mut self) -> &mut Self {
+        *self = match self {
             Self::RowMajor => Self::ColMajor,
             Self::ColMajor => Self::RowMajor,
-        }
+        };
+        self
     }
 }
 
@@ -21,7 +22,12 @@ mod tests {
 
     #[test]
     fn test_switch() {
-        assert_eq!(Order::RowMajor.switch(), Order::ColMajor);
-        assert_eq!(Order::ColMajor.switch(), Order::RowMajor);
+        let mut order = Order::RowMajor;
+
+        order.switch();
+        assert_eq!(order, Order::ColMajor);
+
+        order.switch();
+        assert_eq!(order, Order::RowMajor);
     }
 }

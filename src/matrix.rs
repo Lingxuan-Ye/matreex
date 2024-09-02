@@ -67,7 +67,7 @@ impl<T> Matrix<T> {
     /// ```
     pub fn new<S: ShapeLike>(shape: S) -> Self
     where
-        T: Clone + Default,
+        T: Default,
     {
         match Self::build(shape) {
             Err(error) => panic!("{error}"),
@@ -98,12 +98,13 @@ impl<T> Matrix<T> {
     /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self>
     where
-        T: Clone + Default,
+        T: Default,
     {
         let order = Order::default();
         let shape = AxisShape::try_from_shape(shape, order)?;
         let size = Self::check_size(shape.size())?;
-        let data = vec![T::default(); size];
+        let mut data = Vec::with_capacity(size);
+        data.resize_with(size, T::default);
         Ok(Self { order, shape, data })
     }
 
@@ -255,12 +256,6 @@ impl<T> Matrix<T> {
 impl<T> Matrix<T> {
     /// Transposes the matrix.
     ///
-    /// # Notes
-    ///
-    /// For performance reasons, this method transposes the matrix simply
-    /// by changing its order, rather than physically rearranging the data.
-    /// This may be considered as having a side effect.
-    ///
     /// # Examples
     ///
     /// ```
@@ -268,17 +263,37 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// matrix.transpose();
-    /// // column 0
+    ///
+    /// // row 0
     /// assert_eq!(matrix[(0, 0)], 0);
-    /// assert_eq!(matrix[(1, 0)], 1);
-    /// assert_eq!(matrix[(2, 0)], 2);
-    /// // column 1
     /// assert_eq!(matrix[(0, 1)], 3);
+    ///
+    /// // row 1
+    /// assert_eq!(matrix[(1, 0)], 1);
     /// assert_eq!(matrix[(1, 1)], 4);
+    ///
+    /// // row 2
+    /// assert_eq!(matrix[(2, 0)], 2);
     /// assert_eq!(matrix[(2, 1)], 5);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
-        self.order = self.order.switch();
+        let size = self.size();
+        let mut visited = vec![false; size];
+
+        for index in 0..size {
+            if visited[index] {
+                continue;
+            }
+            let mut current = index;
+            while !visited[current] {
+                visited[current] = true;
+                let next = Self::transpose_flattened_index(current, self.shape);
+                self.data.swap(index, next);
+                current = next;
+            }
+        }
+
+        self.shape.transpose();
         self
     }
 
@@ -290,33 +305,62 @@ impl<T> Matrix<T> {
     /// use matreex::{matrix, Order};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(matrix.order(), Order::default());
+    /// let mut expected = Order::default();
+    /// assert_eq!(matrix.order(), expected);
     ///
     /// matrix.switch_order();
-    /// assert_eq!(matrix.order(), Order::default().switch());
+    /// expected.switch();
+    /// assert_eq!(matrix.order(), expected);
     ///
     /// matrix.switch_order();
-    /// assert_eq!(matrix.order(), Order::default());
+    /// expected.switch();
+    /// assert_eq!(matrix.order(), expected);
     /// ```
     pub fn switch_order(&mut self) -> &mut Self {
-        let size = self.size();
-        let mut visited = vec![false; size];
+        self.transpose();
+        self.order.switch();
+        self
+    }
 
-        for index in 0..size {
-            if visited[index] {
-                continue;
-            }
-            let mut current = index;
-            while !visited[current] {
-                visited[current] = true;
-                let next = Self::reindex_to_different_order_unchecked(current, self.shape);
-                self.data.swap(index, next);
-                current = next;
-            }
-        }
-
-        self.order = self.order.switch();
-        self.shape.transpose();
+    /// Switches the order of the matrix without rearranging the underlying
+    /// data. As a result, the matrix appears transposed when accessed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Order};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut expected = Order::default();
+    /// assert_eq!(matrix.order(), expected);
+    ///
+    /// matrix.switch_order_without_rearrangement();
+    /// expected.switch();
+    /// assert_eq!(matrix.order(), expected);
+    /// // row 0
+    /// assert_eq!(matrix[(0, 0)], 0);
+    /// assert_eq!(matrix[(0, 1)], 3);
+    /// // row 1
+    /// assert_eq!(matrix[(1, 0)], 1);
+    /// assert_eq!(matrix[(1, 1)], 4);
+    /// // row 2
+    /// assert_eq!(matrix[(2, 0)], 2);
+    /// assert_eq!(matrix[(2, 1)], 5);
+    ///
+    /// matrix.switch_order_without_rearrangement();
+    /// expected.switch();
+    /// assert_eq!(matrix.order(), expected);
+    /// // row 0
+    /// assert_eq!(matrix[(0, 0)], 0);
+    /// assert_eq!(matrix[(0, 1)], 1);
+    /// assert_eq!(matrix[(0, 2)], 2);
+    /// // row 1
+    /// assert_eq!(matrix[(1, 0)], 3);
+    /// assert_eq!(matrix[(1, 1)], 4);
+    /// assert_eq!(matrix[(1, 2)], 5);
+    /// ```
+    pub fn switch_order_without_rearrangement(&mut self) -> &mut Self {
+        self.order.switch();
         self
     }
 
@@ -339,6 +383,48 @@ impl<T> Matrix<T> {
     pub fn set_order(&mut self, order: Order) -> &mut Self {
         if order != self.order {
             self.switch_order();
+        }
+        self
+    }
+
+    /// Sets the order of the matrix without rearranging the underlying
+    /// data. As a result, when the order is changed, the matrix appears
+    /// transposed when accessed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Order};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.order(), Order::default());
+    ///
+    /// matrix.set_order_without_rearrangement(Order::RowMajor);
+    /// assert_eq!(matrix.order(), Order::RowMajor);
+    /// // row 0
+    /// assert_eq!(matrix[(0, 0)], 0);
+    /// assert_eq!(matrix[(0, 1)], 1);
+    /// assert_eq!(matrix[(0, 2)], 2);
+    /// // row 1
+    /// assert_eq!(matrix[(1, 0)], 3);
+    /// assert_eq!(matrix[(1, 1)], 4);
+    /// assert_eq!(matrix[(1, 2)], 5);
+    ///
+    /// matrix.set_order_without_rearrangement(Order::ColMajor);
+    /// assert_eq!(matrix.order(), Order::ColMajor);
+    /// // row 0
+    /// assert_eq!(matrix[(0, 0)], 0);
+    /// assert_eq!(matrix[(0, 1)], 3);
+    /// // row 1
+    /// assert_eq!(matrix[(1, 0)], 1);
+    /// assert_eq!(matrix[(1, 1)], 4);
+    /// // row 2
+    /// assert_eq!(matrix[(2, 0)], 2);
+    /// assert_eq!(matrix[(2, 1)], 5);
+    /// ```
+    pub fn set_order_without_rearrangement(&mut self, order: Order) -> &mut Self {
+        if order != self.order {
+            self.switch_order_without_rearrangement();
         }
         self
     }
@@ -676,7 +762,7 @@ impl<L> Matrix<L> {
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = Self::reindex_to_different_order_unchecked(index, self.shape);
+                    let index = Self::transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op((left, right))
                 })
@@ -726,7 +812,7 @@ impl<L> Matrix<L> {
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = Self::reindex_to_different_order_unchecked(index, self.shape);
+                    let index = Self::transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op((left, right))
                 })
@@ -772,7 +858,7 @@ impl<L> Matrix<L> {
             self.data.iter_mut().zip(rhs.data.iter()).for_each(op);
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = Self::reindex_to_different_order_unchecked(index, self.shape);
+                let index = Self::transpose_flattened_index(index, self.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) };
                 op((left, right))
             });
@@ -1012,12 +1098,6 @@ mod tests {
         assert_ne!(Matrix::build((3, 2)).unwrap(), expected);
 
         assert_eq!(
-            Matrix::<()>::build((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
-        assert!(Matrix::<()>::build((isize::MAX as usize + 1, 1)).is_ok());
-
-        assert_eq!(
             Matrix::<u8>::build((usize::MAX, 2)).unwrap_err(),
             Error::SizeOverflow
         );
@@ -1034,6 +1114,24 @@ mod tests {
             Matrix::<i32>::build((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
             Error::CapacityExceeded
         );
+
+        // The following test cases for zero-sized types are impractical to
+        // run in debug mode, and since `#[cfg(not(debug_assertions))]` does
+        // not strictly match release mode, these tests are commented out.
+
+        // assert_eq!(
+        //     Matrix::<()>::build((usize::MAX, 2)).unwrap_err(),
+        //     Error::SizeOverflow
+        // );
+        // assert!(Matrix::<()>::build((isize::MAX as usize + 1, 1)).is_ok());
+
+        // #[derive(Debug, Default)]
+        // struct Foo;
+        // assert_eq!(
+        //     Matrix::<Foo>::build((usize::MAX, 2)).unwrap_err(),
+        //     Error::SizeOverflow
+        // );
+        // assert!(Matrix::<Foo>::build((isize::MAX as usize + 1, 1)).is_ok());
     }
 
     #[test]
@@ -1049,27 +1147,47 @@ mod tests {
     fn test_transpose() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        matrix.transpose();
-
-        // column 0
-        assert_eq!(matrix[(0, 0)], 0);
-        assert_eq!(matrix[(1, 0)], 1);
-        assert_eq!(matrix[(2, 0)], 2);
-        // column 1
-        assert_eq!(matrix[(0, 1)], 3);
-        assert_eq!(matrix[(1, 1)], 4);
-        assert_eq!(matrix[(2, 1)], 5);
+        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.major(), 2);
+        assert_eq!(matrix.minor(), 3);
 
         matrix.transpose();
 
-        // row 0
-        assert_eq!(matrix[(0, 0)], 0);
-        assert_eq!(matrix[(0, 1)], 1);
-        assert_eq!(matrix[(0, 2)], 2);
-        // row 1
-        assert_eq!(matrix[(1, 0)], 3);
-        assert_eq!(matrix[(1, 1)], 4);
-        assert_eq!(matrix[(1, 2)], 5);
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 3);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 1);
+            assert_eq!(matrix[(1, 1)], 4);
+
+            // row 2
+            assert_eq!(matrix[(2, 0)], 2);
+            assert_eq!(matrix[(2, 1)], 5);
+
+            assert_eq!(matrix.order, Order::RowMajor);
+            assert_eq!(matrix.major(), 3);
+            assert_eq!(matrix.minor(), 2);
+        }
+
+        matrix.transpose();
+
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 1);
+            assert_eq!(matrix[(0, 2)], 2);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 3);
+            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 2)], 5);
+
+            assert_eq!(matrix.order, Order::RowMajor);
+            assert_eq!(matrix.major(), 2);
+            assert_eq!(matrix.minor(), 3);
+        }
     }
 
     #[test]
@@ -1082,7 +1200,6 @@ mod tests {
 
         matrix.switch_order();
 
-        // ColMajor
         {
             // row 0
             assert_eq!(matrix[(0, 0)], 0);
@@ -1101,7 +1218,53 @@ mod tests {
 
         matrix.switch_order();
 
-        // RowMajor
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 1);
+            assert_eq!(matrix[(0, 2)], 2);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 3);
+            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 2)], 5);
+
+            assert_eq!(matrix.order, Order::RowMajor);
+            assert_eq!(matrix.major(), 2);
+            assert_eq!(matrix.minor(), 3);
+        }
+    }
+
+    #[test]
+    fn test_switch_order_without_rearrangement() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.major(), 2);
+        assert_eq!(matrix.minor(), 3);
+
+        matrix.switch_order_without_rearrangement();
+
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 3);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 1);
+            assert_eq!(matrix[(1, 1)], 4);
+
+            // row 2
+            assert_eq!(matrix[(2, 0)], 2);
+            assert_eq!(matrix[(2, 1)], 5);
+
+            assert_eq!(matrix.order, Order::ColMajor);
+            assert_eq!(matrix.major(), 2);
+            assert_eq!(matrix.minor(), 3);
+        }
+
+        matrix.switch_order_without_rearrangement();
+
         {
             // row 0
             assert_eq!(matrix[(0, 0)], 0);
@@ -1129,7 +1292,6 @@ mod tests {
 
         matrix.set_order(Order::ColMajor);
 
-        // ColMajor
         {
             // row 0
             assert_eq!(matrix[(0, 0)], 0);
@@ -1148,7 +1310,6 @@ mod tests {
 
         matrix.set_order(Order::RowMajor);
 
-        // RowMajor
         {
             // row 0
             assert_eq!(matrix[(0, 0)], 0);
@@ -1161,6 +1322,53 @@ mod tests {
             assert_eq!(matrix[(1, 2)], 5);
 
             assert_eq!(matrix.order, Order::RowMajor);
+            assert_eq!(matrix.major(), 2);
+            assert_eq!(matrix.minor(), 3);
+        }
+    }
+
+    #[test]
+    fn test_set_order_without_rearrangement() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.major(), 2);
+        assert_eq!(matrix.minor(), 3);
+
+        matrix.set_order_without_rearrangement(Order::RowMajor);
+
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 1);
+            assert_eq!(matrix[(0, 2)], 2);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 3);
+            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 2)], 5);
+
+            assert_eq!(matrix.order, Order::RowMajor);
+            assert_eq!(matrix.major(), 2);
+            assert_eq!(matrix.minor(), 3);
+        }
+
+        matrix.set_order_without_rearrangement(Order::ColMajor);
+
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 3);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 1);
+            assert_eq!(matrix[(1, 1)], 4);
+
+            // row 2
+            assert_eq!(matrix[(2, 0)], 2);
+            assert_eq!(matrix[(2, 1)], 5);
+
+            assert_eq!(matrix.order, Order::ColMajor);
             assert_eq!(matrix.major(), 2);
             assert_eq!(matrix.minor(), 3);
         }
