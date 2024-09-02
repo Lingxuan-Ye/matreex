@@ -279,7 +279,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix[(2, 1)], 5);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
-        self.order = self.order.switch();
+        self.order.switch();
         self
     }
 
@@ -291,13 +291,16 @@ impl<T> Matrix<T> {
     /// use matreex::{matrix, Order};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(matrix.order(), Order::default());
+    /// let mut expected = Order::default();
+    /// assert_eq!(matrix.order(), expected);
     ///
     /// matrix.switch_order();
-    /// assert_eq!(matrix.order(), Order::default().switch());
+    /// expected.switch();
+    /// assert_eq!(matrix.order(), expected);
     ///
     /// matrix.switch_order();
-    /// assert_eq!(matrix.order(), Order::default());
+    /// expected.switch();
+    /// assert_eq!(matrix.order(), expected);
     /// ```
     pub fn switch_order(&mut self) -> &mut Self {
         let size = self.size();
@@ -316,7 +319,7 @@ impl<T> Matrix<T> {
             }
         }
 
-        self.order = self.order.switch();
+        self.order.switch();
         self.shape.transpose();
         self
     }
