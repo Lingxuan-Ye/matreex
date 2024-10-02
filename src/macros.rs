@@ -1,5 +1,3 @@
-use crate::matrix::Matrix;
-
 /// Creates a new [`Matrix<T>`] instance from literal.
 ///
 /// # Examples
@@ -11,26 +9,21 @@ use crate::matrix::Matrix;
 /// let bar = matrix![[0; 3]; 2];
 /// let baz = matrix![[0, 1, 2], [3, 4, 5]];
 /// ```
+///
+/// [`Matrix<T>`]: crate::matrix::Matrix
 #[macro_export]
 macro_rules! matrix {
     [] => {
         $crate::matrix::Matrix::empty()
     };
 
-    [$elem:expr; $n:expr] => {
-        $crate::matrix::Matrix::__from_2darray([$elem; $n])
+    [$col:expr; $n:expr] => {
+        $crate::matrix::Matrix::from([$col; $n])
     };
 
     [$($col:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::__from_2darray([$($col,)+])
+        $crate::matrix::Matrix::from([$($col,)+])
     };
-}
-
-impl<T> Matrix<T> {
-    #[doc(hidden)]
-    pub fn __from_2darray<const R: usize, const C: usize>(value: [[T; C]; R]) -> Self {
-        Self::from(value)
-    }
 }
 
 /// Creates a new row vector from literal.
@@ -60,8 +53,8 @@ macro_rules! row_vec {
         $crate::matrix::Matrix::from([[$elem; $n]])
     };
 
-    [$($x:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from([[$($x),+]])
+    [$($elem:expr),+ $(,)?] => {
+        $crate::matrix::Matrix::from([[$($elem),+]])
     };
 }
 
@@ -87,7 +80,6 @@ macro_rules! col_vec {
     [] => {{
         let mut matrix = $crate::matrix::Matrix::from([[]]);
         matrix.transpose();
-        matrix.set_order($crate::matrix::order::Order::default());
         matrix
     }};
 
@@ -95,8 +87,8 @@ macro_rules! col_vec {
         $crate::matrix::Matrix::from([[$elem]; $n])
     };
 
-    [$($x:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from([$([$x]),+])
+    [$($elem:expr),+ $(,)?] => {
+        $crate::matrix::Matrix::from([$([$elem]),+])
     };
 }
 
@@ -114,6 +106,8 @@ macro_rules! col_vec {
 /// you do need to treat some concrete type of [`Matrix<T>`] as a scalar,
 /// you can wrap it in a newtype and implement all the necessary trait
 /// bounds for it.
+///
+/// [`Matrix<T>`]: crate::matrix::Matrix
 #[macro_export]
 macro_rules! impl_scalar_add {
     ($($t:ty)*) => {
@@ -324,6 +318,8 @@ macro_rules! impl_scalar_add {
 /// you do need to treat some concrete type of [`Matrix<T>`] as a scalar,
 /// you can wrap it in a newtype and implement all the necessary trait
 /// bounds for it.
+///
+/// [`Matrix<T>`]: crate::matrix::Matrix
 #[macro_export]
 macro_rules! impl_scalar_sub {
     ($($t:ty)*) => {
@@ -534,6 +530,8 @@ macro_rules! impl_scalar_sub {
 /// you do need to treat some concrete type of [`Matrix<T>`] as a scalar,
 /// you can wrap it in a newtype and implement all the necessary trait
 /// bounds for it.
+///
+/// [`Matrix<T>`]: crate::matrix::Matrix
 #[macro_export]
 macro_rules! impl_scalar_mul {
     ($($t:ty)*) => {
@@ -744,6 +742,8 @@ macro_rules! impl_scalar_mul {
 /// you do need to treat some concrete type of [`Matrix<T>`] as a scalar,
 /// you can wrap it in a newtype and implement all the necessary trait
 /// bounds for it.
+///
+/// [`Matrix<T>`]: crate::matrix::Matrix
 #[macro_export]
 macro_rules! impl_scalar_div {
     ($($t:ty)*) => {
@@ -954,6 +954,8 @@ macro_rules! impl_scalar_div {
 /// you do need to treat some concrete type of [`Matrix<T>`] as a scalar,
 /// you can wrap it in a newtype and implement all the necessary trait
 /// bounds for it.
+///
+/// [`Matrix<T>`]: crate::matrix::Matrix
 #[macro_export]
 macro_rules! impl_scalar_rem {
     ($($t:ty)*) => {
