@@ -92,33 +92,6 @@ impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
     }
 }
 
-impl<T: Clone, const N: usize> From<[T; N]> for Matrix<T> {
-    fn from(value: [T; N]) -> Self {
-        let order = Order::default();
-        let shape = AxisShape::from_shape_unchecked(Shape::new(1, N), order);
-        let data = value.to_vec();
-        Self { order, shape, data }
-    }
-}
-
-impl<T: Clone> From<Vec<T>> for Matrix<T> {
-    fn from(value: Vec<T>) -> Self {
-        let order = Order::default();
-        let shape = AxisShape::from_shape_unchecked(Shape::new(1, value.len()), order);
-        let data = value;
-        Self { order, shape, data }
-    }
-}
-
-impl<T: Clone> From<&[T]> for Matrix<T> {
-    fn from(value: &[T]) -> Self {
-        let order = Order::default();
-        let shape = AxisShape::from_shape_unchecked(Shape::new(1, value.len()), order);
-        let data = value.to_vec();
-        Self { order, shape, data }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -210,20 +183,5 @@ mod tests {
             Matrix::<i32>::try_from(&aoa[..]),
             Err(Error::LengthInconsistent)
         );
-    }
-
-    #[test]
-    fn test_from_1darray() {
-        let expected = matrix![[0, 1, 2, 3, 4, 5]];
-
-        let array = [0, 1, 2, 3, 4, 5];
-        assert_eq!(Matrix::from(array), expected);
-        assert_eq!(Matrix::from(array.to_vec()), expected);
-        assert_eq!(Matrix::from(&array[..]), expected);
-
-        let array = [0; 6];
-        assert_ne!(Matrix::from(array), expected);
-        assert_ne!(Matrix::from(array.to_vec()), expected);
-        assert_ne!(Matrix::from(&array[..]), expected);
     }
 }
