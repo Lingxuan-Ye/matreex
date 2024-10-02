@@ -80,7 +80,6 @@ macro_rules! col_vec {
     [] => {{
         let mut matrix = $crate::matrix::Matrix::from([[]]);
         matrix.transpose();
-        matrix.set_order($crate::matrix::order::Order::default());
         matrix
     }};
 
