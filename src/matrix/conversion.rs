@@ -12,7 +12,7 @@ impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     }
 }
 
-impl<T: Clone, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
+impl<T, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
     fn from(value: Vec<[T; C]>) -> Self {
         let order = Order::default();
         let nrows = value.len();
@@ -32,7 +32,7 @@ impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
     }
 }
 
-impl<T: Clone, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
+impl<T, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
     type Error = Error;
 
     fn try_from(value: [Vec<T>; C]) -> Result<Self> {
@@ -52,7 +52,7 @@ impl<T: Clone, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
     }
 }
 
-impl<T: Clone> TryFrom<Vec<Vec<T>>> for Matrix<T> {
+impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
     type Error = Error;
 
     fn try_from(value: Vec<Vec<T>>) -> Result<Self> {
