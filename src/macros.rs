@@ -17,8 +17,8 @@ macro_rules! matrix {
         $crate::matrix::Matrix::empty()
     };
 
-    [$elem:expr; $n:expr] => {
-        $crate::matrix::Matrix::from([$elem; $n])
+    [$col:expr; $n:expr] => {
+        $crate::matrix::Matrix::from([$col; $n])
     };
 
     [$($col:expr),+ $(,)?] => {
@@ -53,8 +53,8 @@ macro_rules! row_vec {
         $crate::matrix::Matrix::from([[$elem; $n]])
     };
 
-    [$($x:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from([[$($x),+]])
+    [$($elem:expr),+ $(,)?] => {
+        $crate::matrix::Matrix::from([[$($elem),+]])
     };
 }
 
@@ -87,8 +87,8 @@ macro_rules! col_vec {
         $crate::matrix::Matrix::from([[$elem]; $n])
     };
 
-    [$($x:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from([$([$x]),+])
+    [$($elem:expr),+ $(,)?] => {
+        $crate::matrix::Matrix::from([$([$elem]),+])
     };
 }
 
