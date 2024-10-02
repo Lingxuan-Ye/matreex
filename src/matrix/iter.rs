@@ -442,25 +442,25 @@ where
     ///
     /// # Panics
     ///
-    /// Panics if length in each iteration is inconsistent.
+    /// Panics if length in each iteration is inconsistent, or memory runs out.
     fn from_iter<M>(iter: M) -> Self
     where
         M: IntoIterator<Item = V>,
     {
-        let mut data = Vec::with_capacity(0x1000);
-        let mut data_len;
         let mut nrows;
         let ncols;
+        let mut data_len;
+        let mut data = Vec::new();
         let mut iter = iter.into_iter();
         match iter.next() {
             None => {
                 return Self::empty();
             }
             Some(row) => {
-                nrows = 1;
                 data.extend(row);
+                nrows = 1;
+                ncols = data.len();
                 data_len = data.len();
-                ncols = data_len;
             }
         }
         for row in iter {
@@ -468,8 +468,8 @@ where
             if data.len() - data_len != ncols {
                 panic!("{}", Error::LengthInconsistent);
             }
-            data_len = data.len();
             nrows += 1;
+            data_len = data.len();
         }
         data.shrink_to_fit();
         let order = Order::default();
