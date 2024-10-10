@@ -98,7 +98,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
-    /// the number of rows in the matrix.
+    ///   the number of rows in the matrix.
     ///
     /// # Examples
     ///
@@ -130,7 +130,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
-    /// the number of rows in the matrix.
+    ///   the number of rows in the matrix.
     ///
     /// # Examples
     ///
@@ -160,7 +160,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
-    /// the number of columns in the matrix.
+    ///   the number of columns in the matrix.
     ///
     /// # Examples
     ///
@@ -191,7 +191,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
-    /// the number of columns in the matrix.
+    ///   the number of columns in the matrix.
     ///
     /// # Examples
     ///
