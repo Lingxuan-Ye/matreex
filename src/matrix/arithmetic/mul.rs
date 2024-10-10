@@ -208,12 +208,11 @@ impl<L> Matrix<L> {
             Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        match dot_product(
-                            unsafe { self.iter_nth_major_axis_vector_unchecked(row) },
-                            unsafe { rhs.iter_nth_major_axis_vector_unchecked(col) },
-                        ) {
-                            None => unreachable!(),
-                            Some(element) => data.push(element),
+                        unsafe {
+                            data.push(dot_product(
+                                self.iter_nth_major_axis_vector_unchecked(row),
+                                rhs.iter_nth_major_axis_vector_unchecked(col),
+                            ));
                         }
                     }
                 }
@@ -222,12 +221,11 @@ impl<L> Matrix<L> {
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        match dot_product(
-                            unsafe { self.iter_nth_major_axis_vector_unchecked(row) },
-                            unsafe { rhs.iter_nth_major_axis_vector_unchecked(col) },
-                        ) {
-                            None => unreachable!(),
-                            Some(element) => data.push(element),
+                        unsafe {
+                            data.push(dot_product(
+                                self.iter_nth_major_axis_vector_unchecked(row),
+                                rhs.iter_nth_major_axis_vector_unchecked(col),
+                            ));
                         }
                     }
                 }
@@ -238,13 +236,14 @@ impl<L> Matrix<L> {
     }
 }
 
-impl_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
-
+/// # Safety
+///
+/// None of the arguments should be empty.
 #[inline]
-fn dot_product<'a, L, R, U>(
+unsafe fn dot_product<'a, L, R, U>(
     lhs: impl ExactSizeDoubleEndedIterator<Item = &'a L>,
     rhs: impl ExactSizeDoubleEndedIterator<Item = &'a R>,
-) -> Option<U>
+) -> U
 where
     L: Mul<R, Output = U> + Clone + 'a,
     R: Clone + 'a,
@@ -253,7 +252,10 @@ where
     lhs.zip(rhs)
         .map(|(left, right)| left.clone() * right.clone())
         .reduce(|accumulator, product| accumulator + product)
+        .unwrap_unchecked()
 }
+
+impl_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
 
 #[cfg(test)]
 mod tests {
