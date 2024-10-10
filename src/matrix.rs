@@ -471,7 +471,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::SizeMismatch`] if the size of the new shape does not
-    /// match the current size of the matrix.
+    ///   match the current size of the matrix.
     ///
     /// # Examples
     ///
@@ -961,11 +961,12 @@ impl<L> Matrix<L> {
             Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        let element = op(
-                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
-                            unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
-                        );
-                        data.push(element);
+                        unsafe {
+                            data.push(op(
+                                Box::new(self.iter_nth_major_axis_vector_unchecked(row)),
+                                Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)),
+                            ));
+                        }
                     }
                 }
             }
@@ -973,11 +974,12 @@ impl<L> Matrix<L> {
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        let element = op(
-                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
-                            unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
-                        );
-                        data.push(element);
+                        unsafe {
+                            data.push(op(
+                                Box::new(self.iter_nth_major_axis_vector_unchecked(row)),
+                                Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)),
+                            ));
+                        }
                     }
                 }
             }
