@@ -471,7 +471,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::SizeMismatch`] if the size of the new shape does not
-    /// match the current size of the matrix.
+    ///   match the current size of the matrix.
     ///
     /// # Examples
     ///
