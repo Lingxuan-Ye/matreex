@@ -421,9 +421,8 @@ impl<T> Matrix<T> {
     /// # Notes
     ///
     /// Reducing the size does not automatically shrink the capacity.
-    /// This choice is made to avoid potential reallocation.
-    /// Consider explicitly calling [`Matrix::shrink_to_fit`]
-    /// if needed.
+    /// This choice is made to avoid potential reallocation. Consider
+    /// explicitly calling [`Matrix::shrink_to_fit`] if needed.
     ///
     /// # Examples
     ///
