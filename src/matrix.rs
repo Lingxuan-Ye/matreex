@@ -51,7 +51,11 @@ impl<T> Matrix<T> {
     /// assert!(matrix.is_empty());
     /// ```
     pub fn new() -> Self {
-        Default::default()
+        Self {
+            order: Order::default(),
+            shape: AxisShape::default(),
+            data: Vec::new(),
+        }
     }
 
     /// Creates a new [`Matrix<T>`] with the specified shape, filled with
