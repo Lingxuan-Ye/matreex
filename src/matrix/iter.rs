@@ -454,7 +454,7 @@ where
         let mut iter = iter.into_iter();
         match iter.next() {
             None => {
-                return Self::empty();
+                return Self::new();
             }
             Some(row) => {
                 data.extend(row);
