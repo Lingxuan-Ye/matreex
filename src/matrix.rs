@@ -38,43 +38,6 @@ pub struct Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    /// Creates a new [`Matrix<T>`] instance with default values.
-    ///
-    /// # Panics
-    ///
-    /// Panics if size exceeds [`usize::MAX`], or total bytes stored
-    /// exceeds [`isize::MAX`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Matrix};
-    ///
-    /// let matrix = Matrix::new((2, 3));
-    /// assert_eq!(matrix, matrix![[0, 0, 0], [0, 0, 0]]);
-    /// ```
-    ///
-    /// ```should_panic
-    /// # use matreex::Matrix;
-    /// #
-    /// let matrix = Matrix::<u8>::new((usize::MAX, 2));
-    /// ```
-    ///
-    /// ```should_panic
-    /// # use matreex::Matrix;
-    /// #
-    /// let matrix = Matrix::<u8>::new((isize::MAX as usize + 1, 1));
-    /// ```
-    pub fn new<S: ShapeLike>(shape: S) -> Self
-    where
-        T: Default,
-    {
-        match Self::build(shape) {
-            Err(error) => panic!("{error}"),
-            Ok(matrix) => matrix,
-        }
-    }
-
     /// Builds a new [`Matrix<T>`] instance with default values.
     ///
     /// # Errors
@@ -707,16 +670,20 @@ impl<L> Matrix<L> {
     ///
     /// ```
     /// use matreex::{Error, Matrix};
+    /// # use matreex::Result;
     ///
-    /// let lhs = Matrix::<i32>::new((2, 3));
+    /// # fn main() -> Result<()> {
+    /// let lhs = Matrix::<i32>::build((2, 3))?;
     ///
-    /// let rhs = Matrix::<i32>::new((2, 3));
+    /// let rhs = Matrix::<i32>::build((2, 3))?;
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::new((3, 2));
+    /// let rhs = Matrix::<i32>::build((3, 2))?;
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert_eq!(result, Err(Error::NotConformable));
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn ensure_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> Result<&Self> {
         if self.shape() != rhs.shape() {
@@ -880,16 +847,20 @@ impl<L> Matrix<L> {
     ///
     /// ```
     /// use matreex::{Error, Matrix};
+    /// # use matreex::Result;
     ///
-    /// let lhs = Matrix::<i32>::new((2, 3));
+    /// # fn main() -> Result<()> {
+    /// let lhs = Matrix::<i32>::build((2, 3))?;
     ///
-    /// let rhs = Matrix::<i32>::new((3, 2));
+    /// let rhs = Matrix::<i32>::build((3, 2))?;
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::new((2, 3));
+    /// let rhs = Matrix::<i32>::build((2, 3))?;
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert_eq!(result, Err(Error::NotConformable));
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn ensure_multiplication_like_operation_conformable<R>(
         &self,
@@ -1085,13 +1056,6 @@ mod tests {
 
     // All tests are based on the assumption that
     // the default order is `RowMajor`.
-
-    #[test]
-    fn test_new() {
-        let expected = matrix![[0, 0, 0], [0, 0, 0]];
-        assert_eq!(Matrix::new((2, 3)), expected);
-        assert_ne!(Matrix::new((3, 2)), expected);
-    }
 
     #[test]
     fn test_build() {
@@ -1575,8 +1539,8 @@ mod tests {
 
     #[test]
     fn test_ensure_elementwise_operation_conformable() {
-        let mut lhs = Matrix::<i32>::new((2, 3));
-        let mut rhs = Matrix::<i32>::new((2, 3));
+        let mut lhs = Matrix::<i32>::build((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::build((2, 3)).unwrap();
 
         // RowMajor & RowMajor
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
@@ -1600,11 +1564,11 @@ mod tests {
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::new((2, 2));
+        let rhs = Matrix::<i32>::build((2, 2)).unwrap();
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert_eq!(result, Err(Error::NotConformable));
 
-        let rhs = Matrix::<i32>::new((3, 2));
+        let rhs = Matrix::<i32>::build((3, 2)).unwrap();
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert_eq!(result, Err(Error::NotConformable));
     }
@@ -1769,8 +1733,8 @@ mod tests {
 
     #[test]
     fn test_ensure_multiplication_like_operation_conformable() {
-        let mut lhs = Matrix::<i32>::new((2, 3));
-        let mut rhs = Matrix::<i32>::new((3, 2));
+        let mut lhs = Matrix::<i32>::build((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::build((3, 2)).unwrap();
 
         // RowMajor & RowMajor
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
@@ -1794,19 +1758,19 @@ mod tests {
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::new((3, 1));
+        let rhs = Matrix::<i32>::build((3, 1)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::new((3, 3));
+        let rhs = Matrix::<i32>::build((3, 3)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::new((2, 2));
+        let rhs = Matrix::<i32>::build((2, 2)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert_eq!(result, Err(Error::NotConformable));
 
-        let rhs = Matrix::<i32>::new((2, 3));
+        let rhs = Matrix::<i32>::build((2, 3)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert_eq!(result, Err(Error::NotConformable));
     }
