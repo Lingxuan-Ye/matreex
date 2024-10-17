@@ -7,6 +7,18 @@ pub enum Order {
 }
 
 impl Order {
+    /// Switches to the other memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Order;
+    ///
+    /// let mut order = Order::RowMajor;
+    ///
+    /// order.switch();
+    /// assert_eq!(order, Order::ColMajor);
+    /// ```
     pub fn switch(&mut self) -> &mut Self {
         *self = match self {
             Self::RowMajor => Self::ColMajor,

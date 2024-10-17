@@ -13,7 +13,7 @@
 //!
 //! # FAQs
 //!
-//! ## Why `matreex` instead of `matrix`?
+//! ## Why named `matreex`?
 //!
 //! Hmm ... Who knows? Could be a name conflict.
 

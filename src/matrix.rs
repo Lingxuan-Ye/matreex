@@ -20,9 +20,6 @@ use rayon::prelude::*;
 
 /// [`Matrix<T>`] means ... matrix.
 ///
-/// Instead of using constructor methods, you might prefer to create a
-/// matrix with the [`matrix!`] macro:
-///
 /// ```
 /// use matreex::matrix;
 ///
@@ -38,14 +35,14 @@ pub struct Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    /// Creates an new, empty [`Matrix<T>`] instance.
+    /// Creates a new, empty [`Matrix<T>`].
     ///
     /// # Examples
     ///
     /// ```
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<u8>::new();
+    /// let matrix = Matrix::<i32>::new();
     /// assert_eq!(matrix.nrows(), 0);
     /// assert_eq!(matrix.ncols(), 0);
     /// assert!(matrix.is_empty());
@@ -58,15 +55,15 @@ impl<T> Matrix<T> {
         }
     }
 
-    /// Creates a new, empty [`Matrix<T>`] instance with at least the
-    /// specified capacity.
+    /// Creates a new, empty [`Matrix<T>`] with at least the specified
+    /// capacity.
     ///
     /// # Examples
     ///
     /// ```
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<u8>::with_capacity(10);
+    /// let matrix = Matrix::<i32>::with_capacity(10);
     /// assert_eq!(matrix.nrows(), 0);
     /// assert_eq!(matrix.ncols(), 0);
     /// assert!(matrix.is_empty());
@@ -149,7 +146,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Shape};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.nrows(), 2);
@@ -163,7 +160,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Shape};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.ncols(), 3);
@@ -177,7 +174,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Shape};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.size(), 6);
@@ -191,9 +188,9 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Matrix, Shape};
+    /// use matreex::{matrix, Matrix};
     ///
-    /// let matrix: Matrix<u8> = matrix![];
+    /// let matrix: Matrix<i32> = matrix![];
     /// assert!(matrix.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
@@ -424,9 +421,8 @@ impl<T> Matrix<T> {
     /// # Notes
     ///
     /// Reducing the size does not automatically shrink the capacity.
-    /// This choice is made to avoid potential reallocation.
-    /// Consider explicitly calling [`Matrix::shrink_to_fit`]
-    /// if needed.
+    /// This choice is made to avoid potential reallocation. Consider
+    /// explicitly calling [`Matrix::shrink_to_fit`] if needed.
     ///
     /// # Examples
     ///
@@ -550,7 +546,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
     /// let other = matrix![[1, 1], [1, 1], [1, 1]];
