@@ -149,39 +149,30 @@ mod tests {
         assert_ne!(Matrix::try_from(&aoa[..]).unwrap(), expected);
 
         let aoa = [vec![(); MAX], vec![(); MAX]];
-        assert!(Matrix::<()>::try_from(aoa.clone()).is_ok());
-        assert!(Matrix::<()>::try_from(aoa.to_vec()).is_ok());
-        assert!(Matrix::<()>::try_from(&aoa[..]).is_ok());
+        assert!(Matrix::try_from(aoa.clone()).is_ok());
+        assert!(Matrix::try_from(aoa.to_vec()).is_ok());
+        assert!(Matrix::try_from(&aoa[..]).is_ok());
 
         let aoa = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
-        assert_eq!(
-            Matrix::<()>::try_from(aoa.clone()),
-            Err(Error::SizeOverflow)
-        );
-        assert_eq!(
-            Matrix::<()>::try_from(aoa.to_vec()),
-            Err(Error::SizeOverflow)
-        );
-        assert_eq!(Matrix::<()>::try_from(&aoa[..]), Err(Error::SizeOverflow));
+        assert_eq!(Matrix::try_from(aoa.clone()), Err(Error::SizeOverflow));
+        assert_eq!(Matrix::try_from(aoa.to_vec()), Err(Error::SizeOverflow));
+        assert_eq!(Matrix::try_from(&aoa[..]), Err(Error::SizeOverflow));
 
         // unable to cover (run out of memory)
         // let aoa = [vec![0u8; MAX], vec![0u8; MAX]];
-        // assert_eq!(Matrix::<u8>::try_from(aoa.clone()), Err(Error::CapacityExceeded));
-        // assert_eq!(Matrix::<u8>::try_from(aoa.to_vec()), Err(Error::CapacityExceeded));
-        // assert_eq!(Matrix::<u8>::try_from(&aoa[..]), Err(Error::CapacityExceeded));
+        // assert_eq!(Matrix::try_from(aoa.clone()), Err(Error::CapacityExceeded));
+        // assert_eq!(Matrix::try_from(aoa.to_vec()), Err(Error::CapacityExceeded));
+        // assert_eq!(Matrix::try_from(&aoa[..]), Err(Error::CapacityExceeded));
 
         let aoa = [vec![0, 1, 2], vec![3, 4]];
         assert_eq!(
-            Matrix::<i32>::try_from(aoa.clone()),
+            Matrix::try_from(aoa.clone()),
             Err(Error::LengthInconsistent)
         );
         assert_eq!(
-            Matrix::<i32>::try_from(aoa.to_vec()),
+            Matrix::try_from(aoa.to_vec()),
             Err(Error::LengthInconsistent)
         );
-        assert_eq!(
-            Matrix::<i32>::try_from(&aoa[..]),
-            Err(Error::LengthInconsistent)
-        );
+        assert_eq!(Matrix::try_from(&aoa[..]), Err(Error::LengthInconsistent));
     }
 }
