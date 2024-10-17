@@ -58,6 +58,28 @@ impl<T> Matrix<T> {
         }
     }
 
+    /// Creates a new, empty [`Matrix<T>`] instance with at least the
+    /// specified capacity.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Matrix;
+    ///
+    /// let matrix = Matrix::<u8>::with_capacity(10);
+    /// assert_eq!(matrix.nrows(), 0);
+    /// assert_eq!(matrix.ncols(), 0);
+    /// assert!(matrix.is_empty());
+    /// assert!(matrix.capacity() >= 10);
+    /// ```
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            order: Order::default(),
+            shape: AxisShape::default(),
+            data: Vec::with_capacity(capacity),
+        }
+    }
+
     /// Creates a new [`Matrix<T>`] with the specified shape, filled with
     /// default values.
     ///
@@ -1069,6 +1091,16 @@ mod tests {
         assert_eq!(matrix.nrows(), 0);
         assert_eq!(matrix.ncols(), 0);
         assert!(matrix.is_empty());
+    }
+
+    #[test]
+    fn test_with_capacity() {
+        let matrix = Matrix::<i32>::with_capacity(10);
+        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.nrows(), 0);
+        assert_eq!(matrix.ncols(), 0);
+        assert!(matrix.is_empty());
+        assert!(matrix.capacity() >= 10);
     }
 
     #[test]
