@@ -56,7 +56,7 @@ pub struct Shape {
 }
 
 impl Shape {
-    /// Creates a new [`Shape`] instance.
+    /// Creates a new [`Shape`].
     ///
     /// # Examples
     ///

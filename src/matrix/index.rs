@@ -223,7 +223,7 @@ pub struct Index {
 }
 
 impl Index {
-    /// Creates a new [`Index`] instance.
+    /// Creates a new [`Index`].
     ///
     /// # Examples
     ///

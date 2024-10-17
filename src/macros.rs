@@ -1,4 +1,4 @@
-/// Creates a new [`Matrix<T>`] instance from literal.
+/// Creates a new [`Matrix<T>`] from literal.
 ///
 /// # Examples
 ///

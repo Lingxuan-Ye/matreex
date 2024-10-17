@@ -20,9 +20,6 @@ use rayon::prelude::*;
 
 /// [`Matrix<T>`] means ... matrix.
 ///
-/// Instead of using constructor methods, you might prefer to create a
-/// matrix with the [`matrix!`] macro:
-///
 /// ```
 /// use matreex::matrix;
 ///
@@ -38,7 +35,7 @@ pub struct Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    /// Creates a new, empty [`Matrix<T>`] instance.
+    /// Creates a new, empty [`Matrix<T>`].
     ///
     /// # Examples
     ///
@@ -58,8 +55,8 @@ impl<T> Matrix<T> {
         }
     }
 
-    /// Creates a new, empty [`Matrix<T>`] instance with at least the
-    /// specified capacity.
+    /// Creates a new, empty [`Matrix<T>`] with at least the specified
+    /// capacity.
     ///
     /// # Examples
     ///
