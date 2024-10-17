@@ -19,6 +19,6 @@ assert_eq!(lhs * rhs, matrix![[10, 13], [28, 40]]);
 
 ## FAQs
 
-### Why `matreex` instead of `matrix`?
+### Why named `matreex`?
 
 Hmm ... Who knows? Could be a name conflict.

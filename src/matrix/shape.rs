@@ -8,10 +8,14 @@ use crate::error::{Error, Result};
 ///
 /// ```
 /// use matreex::{Matrix, Shape};
+/// # use matreex::Result;
 ///
-/// let foo = Matrix::<i32>::new(Shape::new(2, 3));
-/// let bar = Matrix::<i32>::new((2, 3));
-/// let baz = Matrix::<i32>::new([2, 3]);
+/// # fn main() -> Result<()> {
+/// let foo = Matrix::<i32>::with_shape(Shape::new(2, 3))?;
+/// let bar = Matrix::<i32>::with_shape((2, 3))?;
+/// let baz = Matrix::<i32>::with_shape([2, 3])?;
+/// # Ok(())
+/// # }
 /// ```
 ///
 /// [`Matrix<T>`]: crate::matrix::Matrix<T>
@@ -52,7 +56,7 @@ pub struct Shape {
 }
 
 impl Shape {
-    /// Creates a new [`Shape`] instance.
+    /// Creates a new [`Shape`].
     ///
     /// # Examples
     ///

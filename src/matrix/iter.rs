@@ -438,7 +438,7 @@ impl<T, V> FromIterator<V> for Matrix<T>
 where
     V: IntoIterator<Item = T>,
 {
-    /// Creates a new [`Matrix<T>`] instance from an iterator over matrix rows.
+    /// Creates a new [`Matrix<T>`] from an iterator over matrix rows.
     ///
     /// # Panics
     ///
@@ -454,7 +454,7 @@ where
         let mut iter = iter.into_iter();
         match iter.next() {
             None => {
-                return Self::empty();
+                return Self::new();
             }
             Some(row) => {
                 data.extend(row);

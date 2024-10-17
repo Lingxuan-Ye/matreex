@@ -1,4 +1,4 @@
-/// Creates a new [`Matrix<T>`] instance from literal.
+/// Creates a new [`Matrix<T>`] from literal.
 ///
 /// # Examples
 ///
@@ -14,7 +14,7 @@
 #[macro_export]
 macro_rules! matrix {
     [] => {
-        $crate::matrix::Matrix::empty()
+        $crate::matrix::Matrix::new()
     };
 
     [$col:expr; $n:expr] => {

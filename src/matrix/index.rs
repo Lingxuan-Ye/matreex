@@ -117,7 +117,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// unsafe { assert_eq!(matrix.get_unchecked((1, 1)), &4); }
@@ -144,7 +144,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
+    /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// unsafe { assert_eq!(matrix.get_unchecked_mut((1, 1)), &mut 4); }
@@ -223,7 +223,7 @@ pub struct Index {
 }
 
 impl Index {
-    /// Creates a new [`Index`] instance.
+    /// Creates a new [`Index`].
     ///
     /// # Examples
     ///
