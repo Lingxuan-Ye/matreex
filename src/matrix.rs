@@ -38,6 +38,22 @@ pub struct Matrix<T> {
 }
 
 impl<T> Matrix<T> {
+    /// Creates an new, empty [`Matrix<T>`] instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Matrix;
+    ///
+    /// let matrix = Matrix::<u8>::new();
+    /// assert_eq!(matrix.nrows(), 0);
+    /// assert_eq!(matrix.ncols(), 0);
+    /// assert!(matrix.is_empty());
+    /// ```
+    pub fn new() -> Self {
+        Default::default()
+    }
+
     /// Builds a new [`Matrix<T>`] instance with default values.
     ///
     /// # Errors
@@ -69,22 +85,6 @@ impl<T> Matrix<T> {
         let mut data = Vec::with_capacity(size);
         data.resize_with(size, T::default);
         Ok(Self { order, shape, data })
-    }
-
-    /// Creates an empty [`Matrix<T>`] instance.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let matrix = Matrix::<u8>::empty();
-    /// assert_eq!(matrix.nrows(), 0);
-    /// assert_eq!(matrix.ncols(), 0);
-    /// assert!(matrix.is_empty());
-    /// ```
-    pub fn empty() -> Self {
-        Self::default()
     }
 }
 
@@ -1058,6 +1058,15 @@ mod tests {
     // the default order is `RowMajor`.
 
     #[test]
+    fn test_new() {
+        let matrix = Matrix::<i32>::new();
+        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.nrows(), 0);
+        assert_eq!(matrix.ncols(), 0);
+        assert!(matrix.is_empty());
+    }
+
+    #[test]
     fn test_build() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
         assert_eq!(Matrix::build((2, 3)).unwrap(), expected);
@@ -1098,15 +1107,6 @@ mod tests {
         //     Error::SizeOverflow
         // );
         // assert!(Matrix::<Foo>::build((isize::MAX as usize + 1, 1)).is_ok());
-    }
-
-    #[test]
-    fn test_empty() {
-        let matrix = Matrix::<i32>::empty();
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.nrows(), 0);
-        assert_eq!(matrix.ncols(), 0);
-        assert!(matrix.is_empty());
     }
 
     #[test]

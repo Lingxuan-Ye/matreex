@@ -14,7 +14,7 @@
 #[macro_export]
 macro_rules! matrix {
     [] => {
-        $crate::matrix::Matrix::empty()
+        $crate::matrix::Matrix::new()
     };
 
     [$col:expr; $n:expr] => {
