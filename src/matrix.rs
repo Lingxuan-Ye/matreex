@@ -42,7 +42,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<u8>::new();
+    /// let matrix = Matrix::<i32>::new();
     /// assert_eq!(matrix.nrows(), 0);
     /// assert_eq!(matrix.ncols(), 0);
     /// assert!(matrix.is_empty());
@@ -63,7 +63,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<u8>::with_capacity(10);
+    /// let matrix = Matrix::<i32>::with_capacity(10);
     /// assert_eq!(matrix.nrows(), 0);
     /// assert_eq!(matrix.ncols(), 0);
     /// assert!(matrix.is_empty());
@@ -190,7 +190,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{matrix, Matrix, Shape};
     ///
-    /// let matrix: Matrix<u8> = matrix![];
+    /// let matrix: Matrix<i32> = matrix![];
     /// assert!(matrix.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
