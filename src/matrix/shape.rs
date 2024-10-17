@@ -11,9 +11,9 @@ use crate::error::{Error, Result};
 /// # use matreex::Result;
 ///
 /// # fn main() -> Result<()> {
-/// let foo = Matrix::<i32>::build(Shape::new(2, 3))?;
-/// let bar = Matrix::<i32>::build((2, 3))?;
-/// let baz = Matrix::<i32>::build([2, 3])?;
+/// let foo = Matrix::<i32>::with_shape(Shape::new(2, 3))?;
+/// let bar = Matrix::<i32>::with_shape((2, 3))?;
+/// let baz = Matrix::<i32>::with_shape([2, 3])?;
 /// # Ok(())
 /// # }
 /// ```
