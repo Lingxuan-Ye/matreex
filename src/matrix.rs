@@ -38,7 +38,7 @@ pub struct Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    /// Creates an new, empty [`Matrix<T>`] instance.
+    /// Creates a new, empty [`Matrix<T>`] instance.
     ///
     /// # Examples
     ///
