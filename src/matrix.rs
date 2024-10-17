@@ -146,7 +146,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Shape};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.nrows(), 2);
@@ -160,7 +160,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Shape};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.ncols(), 3);
@@ -174,7 +174,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Shape};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.size(), 6);
@@ -188,7 +188,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Matrix, Shape};
+    /// use matreex::{matrix, Matrix};
     ///
     /// let matrix: Matrix<i32> = matrix![];
     /// assert!(matrix.is_empty());
@@ -547,7 +547,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
     /// let other = matrix![[1, 1], [1, 1], [1, 1]];
