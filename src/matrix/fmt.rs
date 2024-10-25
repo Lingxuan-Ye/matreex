@@ -1,6 +1,7 @@
 use super::index::Index;
 use super::Matrix;
 use ansi_term::Colour;
+use std::collections::VecDeque;
 
 const LEFT_DELIMITER: &str = "[";
 const RIGHT_DELIMITER: &str = "]";
@@ -175,7 +176,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
     }
 }
 
-struct Lines(std::collections::VecDeque<String>);
+struct Lines(VecDeque<String>);
 
 impl Lines {
     fn from_debug<T: std::fmt::Debug>(element: T) -> Self {
