@@ -1,6 +1,6 @@
 use super::index::Index;
 use super::Matrix;
-use ansi_term::Style;
+use ansi_term::Colour;
 
 const LEFT_DELIMITER: &str = "[";
 const RIGHT_DELIMITER: &str = "]";
@@ -10,9 +10,9 @@ const OUTER_GAP: usize = 2;
 const INTER_GAP: usize = 2;
 const INNER_GAP: usize = 1;
 
-macro_rules! write_dim {
+macro_rules! write_index {
     ($dst:expr, $($arg:tt)*) => {
-        write!($dst, "{}", Style::new().dimmed().paint(format!($($arg)*)))
+        write!($dst, "{}", Colour::Green.dimmed().paint(format!($($arg)*)))
     };
 }
 
@@ -53,7 +53,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
             if col != 0 {
                 write!(f, "{SPACE:INTER_GAP$}")?;
             }
-            write_dim!(f, "{col:>index_width$}")?;
+            write_index!(f, "{col:>index_width$}")?;
             write!(f, "{SPACE:INNER_GAP$}")?;
             write!(f, "{SPACE:<element_width$}")?;
         }
@@ -63,7 +63,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
             // first line of the element representation
             write!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}")?;
             write!(f, "{SPACE:TAB_SIZE$}")?;
-            write_dim!(f, "{row:>index_width$}")?;
+            write_index!(f, "{row:>index_width$}")?;
             write!(f, "{SPACE:OUTER_GAP$}")?;
             write!(f, "{LEFT_DELIMITER}")?;
             for col in 0..ncols {
@@ -72,7 +72,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                 }
                 let index =
                     Self::flatten_index_unchecked(Index::new(row, col), self.order, self.shape);
-                write_dim!(f, "{index:>index_width$}")?;
+                write_index!(f, "{index:>index_width$}")?;
                 write!(f, "{SPACE:INNER_GAP$}")?;
                 match cache[index].next() {
                     None => write!(f, "{SPACE:<element_width$}")?,
