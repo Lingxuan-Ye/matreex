@@ -1,6 +1,5 @@
 use super::shape::Shape;
 use super::Matrix;
-use ansi_term::Colour;
 use std::collections::VecDeque;
 
 const LEFT_DELIMITER: &str = "[";
@@ -11,9 +10,17 @@ const OUTER_GAP: usize = 2;
 const INTER_GAP: usize = 2;
 const INNER_GAP: usize = 1;
 
+#[cfg(not(feature = "pretty_debug"))]
 macro_rules! write_index {
     ($dst:expr, $($arg:tt)*) => {
-        write!($dst, "{}", Colour::Green.dimmed().paint(format!($($arg)*)))
+        write!($dst, $($arg)*)
+    };
+}
+
+#[cfg(feature = "pretty_debug")]
+macro_rules! write_index {
+    ($dst:expr, $($arg:tt)*) => {
+        write!($dst, "{}", ansi_term::Colour::Green.dimmed().paint(format!($($arg)*)))
     };
 }
 
