@@ -1,6 +1,5 @@
 use super::index::Index;
 use super::order::Order;
-use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -296,7 +295,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Index};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -306,7 +305,7 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_elements_with_index(
         &self,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &T)> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, &T)> {
         self.data.iter().enumerate().map(|(index, element)| {
             let index = Self::unflatten_index(index, self.order, self.shape);
             (index, element)
@@ -329,14 +328,14 @@ impl<T> Matrix<T> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
     /// for (index, element) in matrix.iter_elements_mut_with_index() {
-    ///     *element += index.row as i32 + index.col as i32;
+    ///     *element += index.row() as i32 + index.col() as i32;
     /// }
     ///
     /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
     /// ```
     pub fn iter_elements_mut_with_index(
         &mut self,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &mut T)> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, &mut T)> {
         self.data.iter_mut().enumerate().map(|(index, element)| {
             let index = Self::unflatten_index(index, self.order, self.shape);
             (index, element)
@@ -354,7 +353,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Index};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -364,7 +363,7 @@ impl<T> Matrix<T> {
     /// ```
     pub fn into_iter_elements_with_index(
         self,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, T)> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, T)> {
         self.data
             .into_iter()
             .enumerate()
@@ -421,7 +420,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Index};
+    /// use matreex::matrix;
     /// use rayon::iter::ParallelIterator;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
@@ -431,50 +430,6 @@ where
     /// ```
     pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T> {
         self.data.into_par_iter()
-    }
-}
-
-impl<T, V> FromIterator<V> for Matrix<T>
-where
-    V: IntoIterator<Item = T>,
-{
-    /// Creates a new [`Matrix<T>`] from an iterator over matrix rows.
-    ///
-    /// # Panics
-    ///
-    /// Panics if length in each iteration is inconsistent, or memory runs out.
-    fn from_iter<M>(iter: M) -> Self
-    where
-        M: IntoIterator<Item = V>,
-    {
-        let mut nrows;
-        let ncols;
-        let mut data_len;
-        let mut data = Vec::new();
-        let mut iter = iter.into_iter();
-        match iter.next() {
-            None => {
-                return Self::new();
-            }
-            Some(row) => {
-                data.extend(row);
-                nrows = 1;
-                ncols = data.len();
-                data_len = data.len();
-            }
-        }
-        for row in iter {
-            data.extend(row);
-            if data.len() - data_len != ncols {
-                panic!("{}", Error::LengthInconsistent);
-            }
-            nrows += 1;
-            data_len = data.len();
-        }
-        data.shrink_to_fit();
-        let order = Order::default();
-        let shape = AxisShape::from_shape_unchecked(Shape::new(nrows, ncols), order);
-        Self { order, shape, data }
     }
 }
 
@@ -985,14 +940,14 @@ mod tests {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
         for (index, element) in matrix.iter_elements_mut_with_index() {
-            *element += index.row as i32 + index.col as i32;
+            *element += index.row() as i32 + index.col() as i32;
         }
         assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
 
         matrix.switch_order();
 
         for (index, element) in matrix.iter_elements_mut_with_index() {
-            *element -= index.row as i32 + index.col as i32;
+            *element -= index.row() as i32 + index.col() as i32;
         }
         matrix.switch_order();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
@@ -1058,23 +1013,5 @@ mod tests {
 
         let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
         assert_eq!(sum, 15);
-    }
-
-    #[test]
-    fn test_from_iterator() {
-        let expected = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let iterable = [[0, 1, 2], [3, 4, 5]];
-        assert_eq!(Matrix::from_iter(iterable), expected);
-
-        let iterable = [[0, 1], [2, 3], [4, 5]];
-        assert_ne!(Matrix::from_iter(iterable), expected);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_from_iterator_fails() {
-        let iterable = [vec![0, 1, 2], vec![3, 4]];
-        Matrix::from_iter(iterable);
     }
 }
