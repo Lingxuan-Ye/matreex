@@ -185,15 +185,14 @@ where
 /// # Examples
 ///
 /// ```
-/// use matreex::{matrix, Index};
+/// use matreex::matrix;
 ///
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 ///
-/// assert_eq!(matrix[Index::new(1, 1)], 4);
 /// assert_eq!(matrix[(1, 1)], 4);
 /// assert_eq!(matrix[[1, 1]], 4);
 /// ```
-pub trait IndexLike {
+pub trait Index {
     /// Returns the row of the index.
     fn row(&self) -> usize;
 
@@ -207,53 +206,7 @@ pub trait IndexLike {
     }
 }
 
-/// A structure representing the index of an element in a [`Matrix<T>`].
-///
-/// # Notes
-///
-/// You might prefer `(usize, usize)` for matrix indexing.
-/// Refer to [`IndexLike`] for more information.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Index {
-    /// The row index of the element.
-    pub row: usize,
-
-    /// The column index of the element.
-    pub col: usize,
-}
-
-impl Index {
-    /// Creates a new [`Index`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Index;
-    ///
-    /// let index = Index::new(2, 3);
-    /// ```
-    pub fn new(row: usize, col: usize) -> Self {
-        Self { row, col }
-    }
-}
-
-impl std::fmt::Display for Index {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {})", self.row, self.col)
-    }
-}
-
-impl IndexLike for Index {
-    fn row(&self) -> usize {
-        self.row
-    }
-
-    fn col(&self) -> usize {
-        self.col
-    }
-}
-
-impl IndexLike for (usize, usize) {
+impl Index for (usize, usize) {
     fn row(&self) -> usize {
         self.0
     }
@@ -263,7 +216,7 @@ impl IndexLike for (usize, usize) {
     }
 }
 
-impl IndexLike for [usize; 2] {
+impl Index for [usize; 2] {
     fn row(&self) -> usize {
         self[0]
     }
@@ -275,7 +228,7 @@ impl IndexLike for [usize; 2] {
 
 unsafe impl<T, I> MatrixIndex<T> for I
 where
-    I: IndexLike,
+    I: Index,
 {
     type Output = T;
 
@@ -321,11 +274,11 @@ impl AxisIndex {
     }
 }
 
-// For `IndexLike`, `AxisIndex`, and `usize` (flattened index), we assume that
+// For `Index`, `AxisIndex`, and `usize` (flattened index), we assume that
 // the flattened index is always valid. Therefore, in the conversions among
 // these three, only conversions to a flattened index require boundary checks.
 impl AxisIndex {
-    pub(super) fn from_index<I: IndexLike>(index: I, order: Order) -> Self {
+    pub(super) fn from_index<I: Index>(index: I, order: Order) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (index.row(), index.col()),
             Order::ColMajor => (index.col(), index.row()),
@@ -340,10 +293,10 @@ impl AxisIndex {
         Self { major, minor }
     }
 
-    pub(super) fn to_index(self, order: Order) -> Index {
+    pub(super) fn to_index(self, order: Order) -> impl Index {
         match order {
-            Order::RowMajor => Index::new(self.major, self.minor),
-            Order::ColMajor => Index::new(self.minor, self.major),
+            Order::RowMajor => (self.major, self.minor),
+            Order::ColMajor => (self.minor, self.major),
         }
     }
 
@@ -400,11 +353,11 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
 }
 
 impl<T> Matrix<T> {
-    pub(super) fn unflatten_index(index: usize, order: Order, shape: AxisShape) -> Index {
+    pub(super) fn unflatten_index(index: usize, order: Order, shape: AxisShape) -> impl Index {
         AxisIndex::from_flattened(index, shape).to_index(order)
     }
 
-    pub(super) fn flatten_index_unchecked<I: IndexLike>(
+    pub(super) fn flatten_index_unchecked<I: Index>(
         index: I,
         order: Order,
         shape: AxisShape,
@@ -413,7 +366,7 @@ impl<T> Matrix<T> {
     }
 
     #[allow(dead_code)]
-    pub(super) fn try_flatten_index<I: IndexLike>(
+    pub(super) fn try_flatten_index<I: Index>(
         index: I,
         order: Order,
         shape: AxisShape,
@@ -436,7 +389,7 @@ impl<T> Matrix<T> {
 mod internal {
     pub trait Sealed {}
 
-    impl<I: super::IndexLike> Sealed for I {}
+    impl<I: super::Index> Sealed for I {}
 
     impl Sealed for super::AxisIndex {}
 }
@@ -534,15 +487,8 @@ mod tests {
     }
 
     #[test]
-    fn test_trait_index_like() {
+    fn test_trait_index() {
         let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(Index::new(2, 3).row(), 2);
-        assert_eq!(Index::new(2, 3).col(), 3);
-        assert!(!Index::new(1, 2).is_out_of_bounds(&matrix));
-        assert!(Index::new(1, 3).is_out_of_bounds(&matrix));
-        assert!(Index::new(2, 2).is_out_of_bounds(&matrix));
-        assert!(Index::new(2, 3).is_out_of_bounds(&matrix));
 
         assert_eq!((2, 3).row(), 2);
         assert_eq!((2, 3).col(), 3);
@@ -557,18 +503,5 @@ mod tests {
         assert!([1, 3].is_out_of_bounds(&matrix));
         assert!([2, 2].is_out_of_bounds(&matrix));
         assert!([2, 3].is_out_of_bounds(&matrix));
-    }
-
-    #[test]
-    fn test_struct_index_new() {
-        let expected = Index { row: 2, col: 3 };
-        assert_eq!(Index::new(2, 3), expected);
-        assert_ne!(Index::new(3, 2), expected);
-    }
-
-    #[test]
-    fn test_struct_index_display() {
-        assert_eq!(Index::new(2, 3).to_string(), "(2, 3)");
-        assert_eq!(Index::new(3, 2).to_string(), "(3, 2)");
     }
 }
