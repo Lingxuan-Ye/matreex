@@ -3,61 +3,6 @@ use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
-/// A helper trait used for [`Matrix<T>`] indexing.
-///
-/// # Safety
-///
-/// Marking this trait as `unsafe` originates from a poor imitation
-/// of [`SliceIndex`]. In another words, I have no idea what I'm doing.
-///
-/// [`SliceIndex`]: core::slice::SliceIndex
-pub unsafe trait MatrixIndex<T>: internal::Sealed {
-    /// The output type returned by methods.
-    type Output;
-
-    /// Returns a reference to the output at this location,
-    /// if in bounds.
-    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output>;
-
-    /// Returns a mutable reference to the output at this location,
-    /// if in bounds.
-    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output>;
-
-    /// Returns a reference to the output at this location,
-    /// without performing any bounds checking.
-    ///
-    /// # Safety
-    ///
-    /// Calling this method with an out-of-bounds index is *[undefined behavior]*.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output;
-
-    /// Returns a mutable reference to the output at this location,
-    /// without performing any bounds checking.
-    ///
-    /// # Safety
-    ///
-    /// Calling this method with an out-of-bounds index is *[undefined behavior]*.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output;
-
-    /// Returns a reference to the output at this location.
-    ///
-    /// # Panics
-    ///
-    /// Panics if out of bounds.
-    fn index(self, matrix: &Matrix<T>) -> &Self::Output;
-
-    /// Returns a mutable reference to the output at this location.
-    ///
-    /// # Panics
-    ///
-    /// Panics if out of bounds.
-    fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output;
-}
-
 impl<T> Matrix<T> {
     /// Returns a reference to the [`MatrixIndex::Output`]
     /// at given location.
@@ -178,6 +123,61 @@ where
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         index.index_mut(self)
     }
+}
+
+/// A helper trait used for [`Matrix<T>`] indexing.
+///
+/// # Safety
+///
+/// Marking this trait as `unsafe` originates from a poor imitation
+/// of [`SliceIndex`]. In another words, I have no idea what I'm doing.
+///
+/// [`SliceIndex`]: core::slice::SliceIndex
+pub unsafe trait MatrixIndex<T>: internal::Sealed {
+    /// The output type returned by methods.
+    type Output;
+
+    /// Returns a reference to the output at this location,
+    /// if in bounds.
+    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output>;
+
+    /// Returns a mutable reference to the output at this location,
+    /// if in bounds.
+    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output>;
+
+    /// Returns a reference to the output at this location,
+    /// without performing any bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Calling this method with an out-of-bounds index is *[undefined behavior]*.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output;
+
+    /// Returns a mutable reference to the output at this location,
+    /// without performing any bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Calling this method with an out-of-bounds index is *[undefined behavior]*.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output;
+
+    /// Returns a reference to the output at this location.
+    ///
+    /// # Panics
+    ///
+    /// Panics if out of bounds.
+    fn index(self, matrix: &Matrix<T>) -> &Self::Output;
+
+    /// Returns a mutable reference to the output at this location.
+    ///
+    /// # Panics
+    ///
+    /// Panics if out of bounds.
+    fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output;
 }
 
 /// Any type implementing this trait can index a [`Matrix<T>`].
