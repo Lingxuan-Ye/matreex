@@ -1,6 +1,6 @@
 use super::super::iter::ExactSizeDoubleEndedIterator;
 use super::super::order::Order;
-use super::super::shape::{AxisShape, Shape};
+use super::super::shape::AxisShape;
 use super::super::Matrix;
 use crate::error::Result;
 use crate::impl_scalar_mul;
@@ -192,7 +192,7 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let order = self.order;
-        let shape = AxisShape::try_from_shape(Shape::new(nrows, ncols), order)?;
+        let shape = AxisShape::try_from_shape((nrows, ncols), order)?;
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
 

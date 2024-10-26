@@ -1,6 +1,6 @@
 use super::index::Index;
 use super::order::Order;
-use super::shape::{AxisShape, Shape};
+use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -473,7 +473,7 @@ where
         }
         data.shrink_to_fit();
         let order = Order::default();
-        let shape = AxisShape::from_shape_unchecked(Shape::new(nrows, ncols), order);
+        let shape = AxisShape::from_shape_unchecked((nrows, ncols), order);
         Self { order, shape, data }
     }
 }

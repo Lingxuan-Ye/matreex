@@ -1,3 +1,4 @@
+use super::shape::Shape;
 use super::Matrix;
 use ansi_term::Colour;
 use std::collections::VecDeque;
@@ -19,8 +20,8 @@ macro_rules! write_index {
 impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let shape = self.shape();
-        let nrows = shape.nrows;
-        let ncols = shape.ncols;
+        let nrows = shape.nrows();
+        let ncols = shape.ncols();
         let size = self.size();
         let index_width = size.to_string().chars().count();
         let mut element_width = 0;
@@ -112,8 +113,8 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
 impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let shape = self.shape();
-        let nrows = shape.nrows;
-        let ncols = shape.ncols;
+        let nrows = shape.nrows();
+        let ncols = shape.ncols();
         let size = self.size();
         let mut element_width = 0;
         let mut element_hight = 0;

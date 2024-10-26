@@ -1,5 +1,5 @@
 use super::order::Order;
-use super::shape::AxisShape;
+use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -202,7 +202,7 @@ pub trait Index {
     /// Returns `true` if the index is out of bounds for given matrix.
     fn is_out_of_bounds<T>(&self, matrix: &Matrix<T>) -> bool {
         let shape = matrix.shape();
-        self.row() >= shape.nrows || self.col() >= shape.ncols
+        self.row() >= shape.nrows() || self.col() >= shape.ncols()
     }
 }
 
