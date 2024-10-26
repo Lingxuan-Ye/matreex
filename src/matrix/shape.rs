@@ -7,19 +7,18 @@ use crate::error::{Error, Result};
 /// # Examples
 ///
 /// ```
-/// use matreex::{Matrix, Shape};
+/// use matreex::Matrix;
 /// # use matreex::Result;
 ///
 /// # fn main() -> Result<()> {
-/// let foo = Matrix::<i32>::with_shape(Shape::new(2, 3))?;
-/// let bar = Matrix::<i32>::with_shape((2, 3))?;
-/// let baz = Matrix::<i32>::with_shape([2, 3])?;
+/// let foo = Matrix::<i32>::with_shape((2, 3))?;
+/// let bar = Matrix::<i32>::with_shape([2, 3])?;
 /// # Ok(())
 /// # }
 /// ```
 ///
 /// [`Matrix<T>`]: crate::matrix::Matrix<T>
-pub trait ShapeLike {
+pub trait Shape {
     /// Returns the number of rows.
     fn nrows(&self) -> usize;
 
@@ -36,57 +35,14 @@ pub trait ShapeLike {
             .checked_mul(self.ncols())
             .ok_or(Error::SizeOverflow)
     }
-}
 
-/// A structure representing the shape of a [`Matrix<T>`].
-///
-/// # Notes
-///
-/// You might prefer `(usize, usize)` for constructing matrices.
-/// Refer to [`ShapeLike`] for more information.
-///
-/// [`Matrix<T>`]: crate::matrix::Matrix<T>
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Shape {
-    /// Number of rows.
-    pub nrows: usize,
-
-    /// Number of columns.
-    pub ncols: usize,
-}
-
-impl Shape {
-    /// Creates a new [`Shape`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Shape;
-    ///
-    /// let shape = Shape::new(2, 3);
-    /// ```
-    pub fn new(nrows: usize, ncols: usize) -> Self {
-        Self { nrows, ncols }
+    /// Returns `true` if this shape has the same rows and columns as `other`.
+    fn equal<S: Shape>(&self, other: &S) -> bool {
+        self.nrows() == other.nrows() && self.ncols() == other.ncols()
     }
 }
 
-impl std::fmt::Display for Shape {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {})", self.nrows, self.ncols)
-    }
-}
-
-impl ShapeLike for Shape {
-    fn nrows(&self) -> usize {
-        self.nrows
-    }
-
-    fn ncols(&self) -> usize {
-        self.ncols
-    }
-}
-
-impl ShapeLike for (usize, usize) {
+impl Shape for (usize, usize) {
     fn nrows(&self) -> usize {
         self.0
     }
@@ -96,7 +52,7 @@ impl ShapeLike for (usize, usize) {
     }
 }
 
-impl ShapeLike for [usize; 2] {
+impl Shape for [usize; 2] {
     fn nrows(&self) -> usize {
         self[0]
     }
@@ -138,12 +94,11 @@ impl AxisShape {
         self
     }
 
-    pub(super) fn interpret(&self, order: Order) -> Shape {
-        let (nrows, ncols) = match order {
+    pub(super) fn interpret(&self, order: Order) -> impl Shape {
+        match order {
             Order::RowMajor => (self.major, self.minor),
             Order::ColMajor => (self.minor, self.major),
-        };
-        Shape { nrows, ncols }
+        }
     }
 
     pub(super) fn interpret_nrows(&self, order: Order) -> usize {
@@ -160,7 +115,7 @@ impl AxisShape {
         }
     }
 
-    pub(super) fn from_shape_unchecked<S: ShapeLike>(shape: S, order: Order) -> Self {
+    pub(super) fn from_shape_unchecked<S: Shape>(shape: S, order: Order) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (shape.nrows(), shape.ncols()),
             Order::ColMajor => (shape.ncols(), shape.nrows()),
@@ -168,7 +123,7 @@ impl AxisShape {
         Self { major, minor }
     }
 
-    pub(super) fn try_from_shape<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
+    pub(super) fn try_from_shape<S: Shape>(shape: S, order: Order) -> Result<Self> {
         shape.size()?;
         Ok(Self::from_shape_unchecked(shape, order))
     }
@@ -179,12 +134,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_trait_shape_like() {
-        assert_eq!(Shape::new(2, 3).nrows(), 2);
-        assert_eq!(Shape::new(2, 3).ncols(), 3);
-        assert_eq!(Shape::new(2, 3).size(), Ok(6));
-        assert_eq!(Shape::new(2, usize::MAX).size(), Err(Error::SizeOverflow));
-
+    fn test_trait_shape() {
         assert_eq!((2, 3).nrows(), 2);
         assert_eq!((2, 3).ncols(), 3);
         assert_eq!((2, 3).size(), Ok(6));
@@ -194,18 +144,7 @@ mod tests {
         assert_eq!([2, 3].ncols(), 3);
         assert_eq!([2, 3].size(), Ok(6));
         assert_eq!([2, usize::MAX].size(), Err(Error::SizeOverflow));
-    }
 
-    #[test]
-    fn test_struct_shape_new() {
-        let expected = Shape { nrows: 2, ncols: 3 };
-        assert_eq!(Shape::new(2, 3), expected);
-        assert_ne!(Shape::new(3, 2), expected);
-    }
-
-    #[test]
-    fn test_struct_shape_display() {
-        assert_eq!(Shape::new(2, 3).to_string(), "(2, 3)");
-        assert_eq!(Shape::new(3, 2).to_string(), "(3, 2)");
+        assert!(Shape::equal(&(2, 3), &[2, 3]));
     }
 }

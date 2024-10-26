@@ -2,7 +2,7 @@
 
 use self::iter::VectorIter;
 use self::order::Order;
-use self::shape::{AxisShape, Shape, ShapeLike};
+use self::shape::{AxisShape, Shape};
 use crate::error::{Error, Result};
 
 pub mod index;
@@ -11,7 +11,7 @@ pub mod order;
 pub mod shape;
 
 mod arithmetic;
-mod conversion;
+mod convert;
 mod default;
 mod fmt;
 
@@ -99,7 +99,7 @@ impl<T> Matrix<T> {
     /// let result = Matrix::<u8>::with_shape((isize::MAX as usize + 1, 1));
     /// assert_eq!(result, Err(Error::CapacityExceeded));
     /// ```
-    pub fn with_shape<S: ShapeLike>(shape: S) -> Result<Self>
+    pub fn with_shape<S: Shape>(shape: S) -> Result<Self>
     where
         T: Default,
     {
@@ -135,9 +135,11 @@ impl<T> Matrix<T> {
     /// use matreex::{matrix, Shape};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(matrix.shape(), Shape::new(2, 3));
+    /// let shape = matrix.shape();
+    /// assert_eq!(shape.nrows(), 2);
+    /// assert_eq!(shape.ncols(), 3);
     /// ```
-    pub fn shape(&self) -> Shape {
+    pub fn shape(&self) -> impl Shape {
         self.shape.interpret(self.order)
     }
 
@@ -441,7 +443,7 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn resize<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self>
+    pub fn resize<S: Shape>(&mut self, shape: S) -> Result<&mut Self>
     where
         T: Default,
     {
@@ -476,7 +478,7 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
+    pub fn reshape<S: Shape>(&mut self, shape: S) -> Result<&mut Self> {
         match shape.size() {
             Ok(size) if (self.size() == size) => {
                 self.shape = AxisShape::from_shape_unchecked(shape, self.order);
@@ -709,10 +711,10 @@ impl<L> Matrix<L> {
     /// # }
     /// ```
     pub fn ensure_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> Result<&Self> {
-        if self.shape() != rhs.shape() {
-            Err(Error::NotConformable)
-        } else {
+        if self.shape().equal(&rhs.shape()) {
             Ok(self)
+        } else {
+            Err(Error::NotConformable)
         }
     }
 
@@ -889,10 +891,10 @@ impl<L> Matrix<L> {
         &self,
         rhs: &Matrix<R>,
     ) -> Result<&Self> {
-        if self.ncols() != rhs.nrows() {
-            Err(Error::NotConformable)
-        } else {
+        if self.ncols() == rhs.nrows() {
             Ok(self)
+        } else {
+            Err(Error::NotConformable)
         }
     }
 
@@ -939,7 +941,7 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let order = self.order;
-        let shape = AxisShape::try_from_shape(Shape::new(nrows, ncols), order)?;
+        let shape = AxisShape::try_from_shape((nrows, ncols), order)?;
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
 
