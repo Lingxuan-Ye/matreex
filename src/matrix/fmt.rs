@@ -209,4 +209,15 @@ impl Iterator for Lines {
     fn next(&mut self) -> Option<Self::Item> {
         self.0.pop_front()
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = self.0.len();
+        (len, Some(len))
+    }
+}
+
+impl ExactSizeIterator for Lines {
+    fn len(&self) -> usize {
+        self.0.len()
+    }
 }
