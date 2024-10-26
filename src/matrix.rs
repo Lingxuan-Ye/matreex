@@ -11,7 +11,7 @@ pub mod order;
 pub mod shape;
 
 mod arithmetic;
-mod conversion;
+mod convert;
 mod default;
 mod fmt;
 
