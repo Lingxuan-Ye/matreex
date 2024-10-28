@@ -79,7 +79,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_mul(&rhs);
     /// assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
     /// ```
@@ -110,7 +109,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_mul_consume_self(&rhs);
     /// assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
     /// ```
@@ -140,7 +138,6 @@ impl<L> Matrix<L> {
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// lhs.elementwise_mul_assign(&rhs)?;
     /// assert_eq!(lhs, matrix![[0, 2, 4], [6, 8, 10]]);
     /// # Ok(())
@@ -175,7 +172,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
-    ///
     /// let result = lhs.mat_mul(rhs);
     /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
     /// ```

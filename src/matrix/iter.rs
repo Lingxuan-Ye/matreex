@@ -139,7 +139,6 @@ impl<T> Matrix<T> {
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// for element in matrix.iter_nth_row_mut(1)? {
     ///    *element += 1;
     /// }
@@ -169,7 +168,6 @@ impl<T> Matrix<T> {
     ///
     /// # fn main() -> Result<()> {
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// let mut col_1 = matrix.iter_nth_col(1)?;
     /// assert_eq!(col_1.next(), Some(&1));
     /// assert_eq!(col_1.next(), Some(&4));
@@ -200,7 +198,6 @@ impl<T> Matrix<T> {
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// for element in matrix.iter_nth_col_mut(1)? {
     ///    *element += 1;
     /// }
@@ -228,9 +225,8 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// let mut data: Vec<&i32> = matrix.iter_elements().collect();
-    /// data.sort();  // order of elements is not guaranteed
+    /// data.sort(); // sort because the order of the elements is not guaranteed
     /// assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
     /// ```
     pub fn iter_elements(&self) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
@@ -251,7 +247,6 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// for element in matrix.iter_elements_mut() {
     ///     *element += 1;
     /// }
@@ -275,9 +270,8 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// let mut data: Vec<i32> = matrix.into_iter_elements().collect();
-    /// data.sort();  // order of elements is not guaranteed
+    /// data.sort(); // sort because the order of the elements is not guaranteed
     /// assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
     /// ```
     pub fn into_iter_elements(self) -> impl ExactSizeDoubleEndedIterator<Item = T> {
@@ -298,7 +292,6 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// for (index, element) in matrix.iter_elements_with_index() {
     ///     assert_eq!(element, &matrix[index]);
     /// }
@@ -326,11 +319,9 @@ impl<T> Matrix<T> {
     /// use matreex::{matrix, Index};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// for (index, element) in matrix.iter_elements_mut_with_index() {
     ///     *element += index.row() as i32 + index.col() as i32;
     /// }
-    ///
     /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
     /// ```
     pub fn iter_elements_mut_with_index(
@@ -356,7 +347,6 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// for (index, element) in matrix.clone().into_iter_elements_with_index() {
     ///     assert_eq!(element, matrix[index]);
     /// }
@@ -388,7 +378,6 @@ where
     /// use rayon::iter::ParallelIterator;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// let sum = matrix.par_iter_elements().sum::<i32>();
     /// assert_eq!(sum, 15);
     /// ```
@@ -406,7 +395,6 @@ where
     /// use rayon::iter::ParallelIterator;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// matrix.par_iter_elements_mut().for_each(|element| *element += 1);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
@@ -424,7 +412,6 @@ where
     /// use rayon::iter::ParallelIterator;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// let sum = matrix.into_par_iter_elements().sum::<i32>();
     /// assert_eq!(sum, 15);
     /// ```

@@ -97,7 +97,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_sub(&rhs);
     /// assert_eq!(result, Ok(matrix![[-2, -1, 0], [1, 2, 3]]));
     /// ```
@@ -128,7 +127,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_sub_consume_self(&rhs);
     /// assert_eq!(result, Ok(matrix![[-2, -1, 0], [1, 2, 3]]));
     /// ```
@@ -158,7 +156,6 @@ impl<L> Matrix<L> {
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// lhs.elementwise_sub_assign(&rhs)?;
     /// assert_eq!(lhs, matrix![[-2, -1, 0], [1, 2, 3]]);
     /// # Ok(())
