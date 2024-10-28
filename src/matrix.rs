@@ -351,15 +351,16 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let mut expected = Order::default();
-    /// assert_eq!(matrix.order(), expected);
+    /// let order = matrix.order();
     ///
     /// matrix.switch_order();
-    /// expected.switch();
-    /// assert_eq!(matrix.order(), expected);
+    /// assert_ne!(matrix.order(), order);
+    ///
+    /// matrix.switch_order();
+    /// assert_eq!(matrix.order(), order);
     /// ```
     pub fn switch_order(&mut self) -> &mut Self {
         self.transpose();
@@ -373,15 +374,12 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let mut expected = Order::default();
-    /// assert_eq!(matrix.order(), expected);
-    ///
+    /// let order = matrix.order();
     /// matrix.switch_order_without_rearrangement();
-    /// expected.switch();
-    /// assert_eq!(matrix.order(), expected);
+    /// assert_ne!(matrix.order(), order);
     ///
     /// // row 0
     /// assert_eq!(matrix[(0, 0)], 0);
@@ -408,7 +406,6 @@ impl<T> Matrix<T> {
     /// use matreex::{matrix, Order};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(matrix.order(), Order::default());
     ///
     /// matrix.set_order(Order::RowMajor);
     /// assert_eq!(matrix.order(), Order::RowMajor);
@@ -430,15 +427,13 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let mut expected = Order::default();
-    /// assert_eq!(matrix.order(), expected);
-    ///
-    /// expected.switch();
-    /// matrix.set_order_without_rearrangement(expected);
-    /// assert_eq!(matrix.order(), expected);
+    /// let mut order = matrix.order();
+    /// order.switch();
+    /// matrix.set_order_without_rearrangement(order);
+    /// assert_eq!(matrix.order(), order);
     ///
     /// // row 0
     /// assert_eq!(matrix[(0, 0)], 0);
@@ -1110,13 +1105,10 @@ mod tests {
     use super::*;
     use crate::matrix;
 
-    // All tests are based on the assumption that
-    // the default order is `RowMajor`.
-
     #[test]
     fn test_new() {
         let matrix = Matrix::<i32>::new();
-        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.order, Order::default());
         assert_eq!(matrix.nrows(), 0);
         assert_eq!(matrix.ncols(), 0);
         assert!(matrix.is_empty());
@@ -1125,7 +1117,7 @@ mod tests {
     #[test]
     fn test_with_capacity() {
         let matrix = Matrix::<i32>::with_capacity(10);
-        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.order, Order::default());
         assert_eq!(matrix.nrows(), 0);
         assert_eq!(matrix.ncols(), 0);
         assert!(matrix.is_empty());
@@ -1135,6 +1127,7 @@ mod tests {
     #[test]
     fn test_with_shape() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
+
         assert_eq!(Matrix::with_shape((2, 3)).unwrap(), expected);
         assert_ne!(Matrix::with_shape((3, 2)).unwrap(), expected);
 
@@ -1209,10 +1202,9 @@ mod tests {
     #[test]
     fn test_transpose() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
+        let order = matrix.order;
+        let major = matrix.major();
+        let minor = matrix.minor();
 
         matrix.transpose();
 
@@ -1229,9 +1221,9 @@ mod tests {
             assert_eq!(matrix[(2, 0)], 2);
             assert_eq!(matrix[(2, 1)], 5);
 
-            assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 3);
-            assert_eq!(matrix.minor(), 2);
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), minor);
+            assert_eq!(matrix.minor(), major);
         }
 
         matrix.transpose();
@@ -1247,19 +1239,18 @@ mod tests {
             assert_eq!(matrix[(1, 1)], 4);
             assert_eq!(matrix[(1, 2)], 5);
 
-            assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
     }
 
     #[test]
     fn test_switch_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
+        let order = matrix.order;
+        let major = matrix.major();
+        let minor = matrix.minor();
 
         matrix.switch_order();
 
@@ -1274,9 +1265,9 @@ mod tests {
             assert_eq!(matrix[(1, 1)], 4);
             assert_eq!(matrix[(1, 2)], 5);
 
-            assert_eq!(matrix.order, Order::ColMajor);
-            assert_eq!(matrix.major(), 3);
-            assert_eq!(matrix.minor(), 2);
+            assert_ne!(matrix.order, order);
+            assert_eq!(matrix.major(), minor);
+            assert_eq!(matrix.minor(), major);
         }
 
         matrix.switch_order();
@@ -1292,19 +1283,18 @@ mod tests {
             assert_eq!(matrix[(1, 1)], 4);
             assert_eq!(matrix[(1, 2)], 5);
 
-            assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
     }
 
     #[test]
     fn test_switch_order_without_rearrangement() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
+        let order = matrix.order;
+        let major = matrix.major();
+        let minor = matrix.minor();
 
         matrix.switch_order_without_rearrangement();
 
@@ -1321,9 +1311,9 @@ mod tests {
             assert_eq!(matrix[(2, 0)], 2);
             assert_eq!(matrix[(2, 1)], 5);
 
-            assert_eq!(matrix.order, Order::ColMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_ne!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
 
         matrix.switch_order_without_rearrangement();
@@ -1339,37 +1329,17 @@ mod tests {
             assert_eq!(matrix[(1, 1)], 4);
             assert_eq!(matrix[(1, 2)], 5);
 
-            assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
     }
 
     #[test]
     fn test_set_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
-
-        matrix.set_order(Order::ColMajor);
-
-        {
-            // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 1);
-            assert_eq!(matrix[(0, 2)], 2);
-
-            // row 1
-            assert_eq!(matrix[(1, 0)], 3);
-            assert_eq!(matrix[(1, 1)], 4);
-            assert_eq!(matrix[(1, 2)], 5);
-
-            assert_eq!(matrix.order, Order::ColMajor);
-            assert_eq!(matrix.major(), 3);
-            assert_eq!(matrix.minor(), 2);
-        }
+        let major = matrix.major();
+        let minor = matrix.minor();
 
         matrix.set_order(Order::RowMajor);
 
@@ -1385,20 +1355,11 @@ mod tests {
             assert_eq!(matrix[(1, 2)], 5);
 
             assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
-    }
 
-    #[test]
-    fn test_set_order_without_rearrangement() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
-
-        matrix.set_order_without_rearrangement(Order::RowMajor);
+        matrix.set_order(Order::ColMajor);
 
         {
             // row 0
@@ -1411,12 +1372,39 @@ mod tests {
             assert_eq!(matrix[(1, 1)], 4);
             assert_eq!(matrix[(1, 2)], 5);
 
-            assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.order, Order::ColMajor);
+            assert_eq!(matrix.major(), minor);
+            assert_eq!(matrix.minor(), major);
+        }
+    }
+
+    #[test]
+    fn test_set_order_without_rearrangement() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut order = matrix.order();
+        let major = matrix.major();
+        let minor = matrix.minor();
+
+        matrix.set_order_without_rearrangement(order);
+
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 1);
+            assert_eq!(matrix[(0, 2)], 2);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 3);
+            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 2)], 5);
+
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
 
-        matrix.set_order_without_rearrangement(Order::ColMajor);
+        order.switch();
+        matrix.set_order_without_rearrangement(order);
 
         {
             // row 0
@@ -1431,9 +1419,9 @@ mod tests {
             assert_eq!(matrix[(2, 0)], 2);
             assert_eq!(matrix[(2, 1)], 5);
 
-            assert_eq!(matrix.order, Order::ColMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
     }
 
@@ -1639,25 +1627,25 @@ mod tests {
         let mut lhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
         let mut rhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
 
-        // RowMajor & RowMajor
+        // default order & default order
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
@@ -1677,26 +1665,26 @@ mod tests {
         let op = |(x, y): (&i32, &i32)| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor & RowMajor
+        // default order & default order
         let output = lhs.elementwise_operation(&rhs, op).unwrap();
         assert_eq!(output, expected);
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         let output = lhs.elementwise_operation(&rhs, op).unwrap();
         assert_eq!(output, expected);
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         let mut output = lhs.elementwise_operation(&rhs, op).unwrap();
         output.switch_order();
         assert_eq!(output, expected);
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         let mut output = lhs.elementwise_operation(&rhs, op).unwrap();
         output.switch_order();
         assert_eq!(output, expected);
@@ -1717,7 +1705,7 @@ mod tests {
         let op = |(x, y): (i32, &i32)| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor & RowMajor
+        // default order & default order
         {
             let lhs = lhs.clone();
             let output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
@@ -1726,7 +1714,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         {
             let lhs = lhs.clone();
             let output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
@@ -1735,7 +1723,7 @@ mod tests {
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         {
             let lhs = lhs.clone();
             let mut output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
@@ -1745,7 +1733,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         {
             let lhs = lhs.clone();
             let mut output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
@@ -1779,7 +1767,7 @@ mod tests {
         let op = |(x, y): (&mut i32, &i32)| *x += y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor & RowMajor
+        // default order & default order
         {
             let mut lhs = lhs.clone();
             lhs.elementwise_operation_assign(&rhs, op).unwrap();
@@ -1788,7 +1776,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         {
             let mut lhs = lhs.clone();
             lhs.elementwise_operation_assign(&rhs, op).unwrap();
@@ -1797,7 +1785,7 @@ mod tests {
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         {
             let mut lhs = lhs.clone();
             lhs.elementwise_operation_assign(&rhs, op).unwrap();
@@ -1807,7 +1795,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         {
             let mut lhs = lhs.clone();
             lhs.elementwise_operation_assign(&rhs, op).unwrap();
@@ -1833,25 +1821,25 @@ mod tests {
         let mut lhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
         let mut rhs = Matrix::<i32>::with_shape((3, 2)).unwrap();
 
-        // RowMajor & RowMajor
+        // default order & default order
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
@@ -1884,7 +1872,7 @@ mod tests {
         };
         let expected = matrix![[10, 13], [28, 40]];
 
-        // RowMajor & RowMajor
+        // default order & default order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -1894,7 +1882,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -1904,7 +1892,7 @@ mod tests {
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -1915,7 +1903,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -1962,13 +1950,13 @@ mod tests {
         let op = |x: &i32, y: &i32| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor
+        // default order
         let output = matrix.scalar_operation(&scalar, op);
         assert_eq!(output, expected);
 
         matrix.switch_order();
 
-        // ColMajor
+        // alternative order
         let mut output = matrix.scalar_operation(&scalar, op);
         output.switch_order();
         assert_eq!(output, expected);
@@ -1981,7 +1969,7 @@ mod tests {
         let op = |x: i32, y: &i32| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor
+        // default order
         {
             let matrix = matrix.clone();
             let output = matrix.scalar_operation_consume_self(&scalar, op);
@@ -1990,7 +1978,7 @@ mod tests {
 
         matrix.switch_order();
 
-        // ColMajor
+        // alternative order
         {
             let matrix = matrix.clone();
             let mut output = matrix.scalar_operation_consume_self(&scalar, op);
@@ -2006,7 +1994,7 @@ mod tests {
         let op = |x: &mut i32, y: &i32| *x += y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor
+        // default order
         {
             let mut matrix = matrix.clone();
             matrix.scalar_operation_assign(&scalar, op);
@@ -2015,7 +2003,7 @@ mod tests {
 
         matrix.switch_order();
 
-        // ColMajor
+        // alternative order
         {
             let mut matrix = matrix.clone();
             matrix.scalar_operation_assign(&scalar, op);
