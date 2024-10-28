@@ -714,7 +714,7 @@ impl<L> Matrix<L> {
         if self.shape().equal(&rhs.shape()) {
             Ok(self)
         } else {
-            Err(Error::NotConformable)
+            Err(Error::ShapeNotConformable)
         }
     }
 
@@ -894,7 +894,7 @@ impl<L> Matrix<L> {
         if self.ncols() == rhs.nrows() {
             Ok(self)
         } else {
-            Err(Error::NotConformable)
+            Err(Error::ShapeNotConformable)
         }
     }
 
@@ -1601,11 +1601,11 @@ mod tests {
 
         let rhs = Matrix::<i32>::with_shape((2, 2)).unwrap();
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::NotConformable));
+        assert_eq!(result, Err(Error::ShapeNotConformable));
 
         let rhs = Matrix::<i32>::with_shape((3, 2)).unwrap();
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::NotConformable));
+        assert_eq!(result, Err(Error::ShapeNotConformable));
     }
 
     #[test]
@@ -1641,11 +1641,11 @@ mod tests {
 
         let rhs = matrix![[2, 2], [2, 2]];
         let error = lhs.elementwise_operation(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::NotConformable);
+        assert_eq!(error, Error::ShapeNotConformable);
 
         let rhs = matrix![[2, 2], [2, 2], [2, 2]];
         let error = lhs.elementwise_operation(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::NotConformable);
+        assert_eq!(error, Error::ShapeNotConformable);
     }
 
     #[test]
@@ -1697,7 +1697,7 @@ mod tests {
             let error = lhs
                 .elementwise_operation_consume_self(&rhs, op)
                 .unwrap_err();
-            assert_eq!(error, Error::NotConformable);
+            assert_eq!(error, Error::ShapeNotConformable);
         }
 
         {
@@ -1706,7 +1706,7 @@ mod tests {
             let error = lhs
                 .elementwise_operation_consume_self(&rhs, op)
                 .unwrap_err();
-            assert_eq!(error, Error::NotConformable);
+            assert_eq!(error, Error::ShapeNotConformable);
         }
     }
 
@@ -1757,12 +1757,12 @@ mod tests {
 
         let rhs = matrix![[2, 2], [2, 2]];
         let error = lhs.elementwise_operation_assign(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::NotConformable);
+        assert_eq!(error, Error::ShapeNotConformable);
         assert_eq!(lhs, unchanged);
 
         let rhs = matrix![[2, 2], [2, 2], [2, 2]];
         let error = lhs.elementwise_operation_assign(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::NotConformable);
+        assert_eq!(error, Error::ShapeNotConformable);
         assert_eq!(lhs, unchanged);
     }
 
@@ -1803,11 +1803,11 @@ mod tests {
 
         let rhs = Matrix::<i32>::with_shape((2, 2)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::NotConformable));
+        assert_eq!(result, Err(Error::ShapeNotConformable));
 
         let rhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::NotConformable));
+        assert_eq!(result, Err(Error::ShapeNotConformable));
     }
 
     #[test]
@@ -1882,14 +1882,14 @@ mod tests {
             let lhs = lhs.clone();
             let rhs = matrix![[0, 1], [2, 3]];
             let error = lhs.multiplication_like_operation(rhs, op).unwrap_err();
-            assert_eq!(error, Error::NotConformable);
+            assert_eq!(error, Error::ShapeNotConformable);
         }
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[0, 1, 3], [4, 5, 6]];
             let error = lhs.multiplication_like_operation(rhs, op).unwrap_err();
-            assert_eq!(error, Error::NotConformable);
+            assert_eq!(error, Error::ShapeNotConformable);
         }
     }
 

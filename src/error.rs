@@ -24,7 +24,7 @@ pub enum Error {
     IndexOutOfBounds,
 
     /// Error when shape is not conformable.
-    NotConformable,
+    ShapeNotConformable,
 }
 
 impl std::fmt::Display for Error {
@@ -35,7 +35,7 @@ impl std::fmt::Display for Error {
             Self::CapacityExceeded => "capacity exceeds",
             Self::LengthInconsistent => "length inconsistent",
             Self::IndexOutOfBounds => "index out of bounds",
-            Self::NotConformable => "shape not conformable",
+            Self::ShapeNotConformable => "shape not conformable",
         };
         write!(f, "{content}")
     }
