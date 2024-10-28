@@ -1650,12 +1650,16 @@ mod tests {
         assert!(result.is_ok());
 
         let rhs = Matrix::<i32>::with_shape((2, 2)).unwrap();
-        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::ShapeNotConformable));
+        let error = lhs
+            .ensure_elementwise_operation_conformable(&rhs)
+            .unwrap_err();
+        assert_eq!(error, Error::ShapeNotConformable);
 
         let rhs = Matrix::<i32>::with_shape((3, 2)).unwrap();
-        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::ShapeNotConformable));
+        let error = lhs
+            .ensure_elementwise_operation_conformable(&rhs)
+            .unwrap_err();
+        assert_eq!(error, Error::ShapeNotConformable);
     }
 
     #[test]
@@ -1852,12 +1856,16 @@ mod tests {
         assert!(result.is_ok());
 
         let rhs = Matrix::<i32>::with_shape((2, 2)).unwrap();
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::ShapeNotConformable));
+        let error = lhs
+            .ensure_multiplication_like_operation_conformable(&rhs)
+            .unwrap_err();
+        assert_eq!(error, Error::ShapeNotConformable);
 
         let rhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::ShapeNotConformable));
+        let error = lhs
+            .ensure_multiplication_like_operation_conformable(&rhs)
+            .unwrap_err();
+        assert_eq!(error, Error::ShapeNotConformable);
     }
 
     #[test]
