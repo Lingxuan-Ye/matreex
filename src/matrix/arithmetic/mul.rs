@@ -328,14 +328,14 @@ mod tests {
             let lhs = lhs.clone();
             let rhs = matrix![[0, 1], [2, 3]];
             let error = lhs.mat_mul(rhs).unwrap_err();
-            assert_eq!(error, Error::NotConformable);
+            assert_eq!(error, Error::ShapeNotConformable);
         }
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[0, 1, 3], [4, 5, 6]];
             let error = lhs.mat_mul(rhs).unwrap_err();
-            assert_eq!(error, Error::NotConformable);
+            assert_eq!(error, Error::ShapeNotConformable);
         }
     }
 }
