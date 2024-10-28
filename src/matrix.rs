@@ -750,7 +750,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -767,7 +767,7 @@ impl<L> Matrix<L> {
     ///
     /// let rhs = Matrix::<i32>::with_shape((3, 2))?;
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-    /// assert_eq!(result, Err(Error::NotConformable));
+    /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// # Ok(())
     /// # }
     /// ```
@@ -783,7 +783,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -829,7 +829,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -880,7 +880,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -927,7 +927,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -944,7 +944,7 @@ impl<L> Matrix<L> {
     ///
     /// let rhs = Matrix::<i32>::with_shape((2, 3))?;
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-    /// assert_eq!(result, Err(Error::NotConformable));
+    /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// # Ok(())
     /// # }
     /// ```
@@ -963,7 +963,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///

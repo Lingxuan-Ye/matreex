@@ -84,7 +84,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -102,7 +102,7 @@ impl<L> Matrix<L> {
     /// assert_eq!(result, Ok(matrix![[-2, -1, 0], [1, 2, 3]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_sub<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Sub<R, Output = U> + Clone,
@@ -115,7 +115,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -133,7 +133,7 @@ impl<L> Matrix<L> {
     /// assert_eq!(result, Ok(matrix![[-2, -1, 0], [1, 2, 3]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_sub_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Sub<R, Output = U>,
@@ -147,7 +147,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -165,7 +165,7 @@ impl<L> Matrix<L> {
     /// # }
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_sub_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
     where
         L: SubAssign<R>,
