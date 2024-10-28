@@ -479,13 +479,14 @@ impl<T> Matrix<T> {
     /// # }
     /// ```
     pub fn reshape<S: Shape>(&mut self, shape: S) -> Result<&mut Self> {
-        match shape.size() {
-            Ok(size) if (self.size() == size) => {
-                self.shape = AxisShape::from_shape_unchecked(shape, self.order);
-                Ok(self)
-            }
-            _ => Err(Error::SizeMismatch),
+        let Ok(size) = shape.size() else {
+            return Err(Error::SizeMismatch);
+        };
+        if self.size() != size {
+            return Err(Error::SizeMismatch);
         }
+        self.shape = AxisShape::from_shape_unchecked(shape, self.order);
+        Ok(self)
     }
 
     /// Shrinks the capacity of the matrix as much as possible.
