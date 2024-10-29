@@ -111,6 +111,29 @@ impl<T> Matrix<T> {
         Ok(Self { order, shape, data })
     }
 
+    /// Creates a new [`Matrix<T>`] from its component parts.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeMismatch`] if the size of `shape` does not match
+    ///   the length of `data`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Error, Matrix, Order};
+    ///
+    /// let order = Order::default();
+    /// let data = vec![0, 1, 2, 3, 4, 5];
+    ///
+    /// let shape = (2, 3);
+    /// let result = Matrix::from_parts(order, shape, data.clone());
+    /// assert_eq!(result, Ok(matrix![[0, 1, 2], [3, 4, 5]]));
+    ///
+    /// let shape = (2, 2);
+    /// let result = Matrix::from_parts(order, shape, data.clone());
+    /// assert_eq!(result, Err(Error::SizeMismatch));
+    /// ```
     pub fn from_parts<S: Shape>(order: Order, shape: S, data: Vec<T>) -> Result<Self> {
         let Ok(size) = shape.size() else {
             return Err(Error::SizeMismatch);
