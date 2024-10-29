@@ -1176,6 +1176,15 @@ mod tests {
     }
 
     #[test]
+    fn test_from_parts_unchecked() {
+        let order = Order::default();
+        let shape = (2, 3);
+        let data = vec![0, 1, 2, 3, 4, 5];
+        let result = unsafe { Matrix::from_parts_unchecked(order, shape, data) };
+        assert_eq!(result, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[test]
     fn test_transpose() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
