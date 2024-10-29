@@ -264,7 +264,7 @@ mod tests {
         let mut rhs = matrix![[0, 1], [2, 3], [4, 5]];
         let expected = matrix![[10, 13], [28, 40]];
 
-        // RowMajor & RowMajor
+        // default order & default order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -274,7 +274,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order &  alternative order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -284,7 +284,7 @@ mod tests {
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -295,7 +295,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
