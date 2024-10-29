@@ -1176,6 +1176,28 @@ mod tests {
     }
 
     #[test]
+    fn test_from_parts() {
+        let order = Order::default();
+        let data = vec![0, 1, 2, 3, 4, 5];
+
+        let shape = (2, 3);
+        let matrix = Matrix::from_parts(order, shape, data.clone()).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        let shape = (2, 2);
+        let error = Matrix::from_parts(order, shape, data.clone()).unwrap_err();
+        assert_eq!(error, Error::SizeMismatch);
+
+        let shape = (usize::MAX, 2);
+        let error = Matrix::from_parts(order, shape, data.clone()).unwrap_err();
+        assert_eq!(error, Error::SizeMismatch);
+
+        let shape = (isize::MAX as usize + 1, 1);
+        let error = Matrix::from_parts(order, shape, data.clone()).unwrap_err();
+        assert_eq!(error, Error::SizeMismatch);
+    }
+
+    #[test]
     fn test_from_parts_unchecked() {
         let order = Order::default();
         let shape = (2, 3);
