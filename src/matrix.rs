@@ -110,6 +110,21 @@ impl<T> Matrix<T> {
         data.resize_with(size, T::default);
         Ok(Self { order, shape, data })
     }
+
+    pub fn from_parts<S: Shape>(order: Order, shape: S, data: Vec<T>) -> Result<Self> {
+        let Ok(size) = shape.size() else {
+            return Err(Error::SizeMismatch);
+        };
+        if data.len() != size {
+            return Err(Error::SizeMismatch);
+        }
+        unsafe { Ok(Self::from_parts_unchecked(order, shape, data)) }
+    }
+
+    pub unsafe fn from_parts_unchecked<S: Shape>(order: Order, shape: S, data: Vec<T>) -> Self {
+        let shape = AxisShape::from_shape_unchecked(shape, order);
+        Self { order, shape, data }
+    }
 }
 
 impl<T> Matrix<T> {
