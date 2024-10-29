@@ -66,7 +66,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -79,12 +79,11 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_mul(&rhs);
     /// assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_mul<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Mul<R, Output = U> + Clone,
@@ -97,7 +96,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -110,12 +109,11 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_mul_consume_self(&rhs);
     /// assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_mul_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Mul<R, Output = U>,
@@ -129,7 +127,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -140,14 +138,13 @@ impl<L> Matrix<L> {
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// lhs.elementwise_mul_assign(&rhs)?;
     /// assert_eq!(lhs, matrix![[0, 2, 4], [6, 8, 10]]);
     /// # Ok(())
     /// # }
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_mul_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
     where
         L: MulAssign<R>,
@@ -160,7 +157,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -175,12 +172,11 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
-    ///
     /// let result = lhs.mat_mul(rhs);
     /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn mat_mul<R, U>(mut self, mut rhs: Matrix<R>) -> Result<Matrix<U>>
     where
         L: std::ops::Mul<R, Output = U> + Clone,

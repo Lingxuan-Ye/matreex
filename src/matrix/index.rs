@@ -65,7 +65,7 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// unsafe { assert_eq!(matrix.get_unchecked((1, 1)), &4); }
+    /// assert_eq!(unsafe { matrix.get_unchecked((1, 1)) }, &4);
     /// ```
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
@@ -92,7 +92,7 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// unsafe { assert_eq!(matrix.get_unchecked_mut((1, 1)), &mut 4); }
+    /// assert_eq!(unsafe { matrix.get_unchecked_mut((1, 1)) }, &mut 4);
     /// ```
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
@@ -189,8 +189,11 @@ pub unsafe trait MatrixIndex<T>: internal::Sealed {
 ///
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 ///
-/// assert_eq!(matrix[(1, 1)], 4);
-/// assert_eq!(matrix[[1, 1]], 4);
+/// let index = (0, 0);
+/// assert_eq!(matrix[index], 0);
+///
+/// let index = [1, 1];
+/// assert_eq!(matrix[index], 4);
 /// ```
 pub trait Index {
     /// Returns the row of the index.

@@ -8,7 +8,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -21,7 +21,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_div(&rhs);
     /// assert_eq!(result, Ok(matrix![[0, 0, 1], [1, 2, 2]]));
     /// ```
@@ -31,12 +30,11 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, -1, -2], [-3, -4, -5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_div(&rhs);
     /// assert_eq!(result, Ok(matrix![[0, 0, -1], [-1, -2, -2]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_div<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Div<R, Output = U> + Clone,
@@ -49,7 +47,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -62,7 +60,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_div_consume_self(&rhs);
     /// assert_eq!(result, Ok(matrix![[0, 0, 1], [1, 2, 2]]));
     /// ```
@@ -77,7 +74,7 @@ impl<L> Matrix<L> {
     /// assert_eq!(result, Ok(matrix![[0, 0, -1], [-1, -2, -2]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_div_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Div<R, Output = U>,
@@ -91,7 +88,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -102,14 +99,13 @@ impl<L> Matrix<L> {
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// lhs.elementwise_div_assign(&rhs)?;
     /// assert_eq!(lhs, matrix![[0, 0, 1], [1, 2, 2]]);
     /// # Ok(())
     /// # }
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_div_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
     where
         L: DivAssign<R>,

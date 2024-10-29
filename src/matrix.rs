@@ -111,6 +111,29 @@ impl<T> Matrix<T> {
         Ok(Self { order, shape, data })
     }
 
+    /// Creates a new [`Matrix<T>`] from its component parts.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeMismatch`] if the size of `shape` does not match
+    ///   the length of `data`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Error, Matrix, Order};
+    ///
+    /// let order = Order::default();
+    /// let data = vec![0, 1, 2, 3, 4, 5];
+    ///
+    /// let shape = (2, 3);
+    /// let result = Matrix::from_parts(order, shape, data.clone());
+    /// assert_eq!(result, Ok(matrix![[0, 1, 2], [3, 4, 5]]));
+    ///
+    /// let shape = (2, 2);
+    /// let result = Matrix::from_parts(order, shape, data.clone());
+    /// assert_eq!(result, Err(Error::SizeMismatch));
+    /// ```
     pub fn from_parts<S: Shape>(order: Order, shape: S, data: Vec<T>) -> Result<Self> {
         let Ok(size) = shape.size() else {
             return Err(Error::SizeMismatch);
@@ -121,6 +144,28 @@ impl<T> Matrix<T> {
         unsafe { Ok(Self::from_parts_unchecked(order, shape, data)) }
     }
 
+    /// Creates a new [`Matrix<T>`] from its component parts, without
+    /// checking if the size matches.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that the size of `shape` matches the length
+    /// of `data`. If the length is greater, extra elements will not be
+    /// accessible. If the size is greater, accessing the matrix may result
+    /// in out-of-bounds memory access, leading to *[undefined behavior]*.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Matrix, Order};
+    ///
+    /// let order = Order::default();
+    /// let shape = (2, 3);
+    /// let data = vec![0, 1, 2, 3, 4, 5];
+    /// let result = unsafe { Matrix::from_parts_unchecked(order, shape, data) };
+    /// assert_eq!(result, matrix![[0, 1, 2], [3, 4, 5]]);
+    /// ```
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     pub unsafe fn from_parts_unchecked<S: Shape>(order: Order, shape: S, data: Vec<T>) -> Self {
         let shape = AxisShape::from_shape_unchecked(shape, order);
         Self { order, shape, data }
@@ -315,10 +360,6 @@ impl<T> Matrix<T> {
     /// matrix.switch_order();
     /// expected.switch();
     /// assert_eq!(matrix.order(), expected);
-    ///
-    /// matrix.switch_order();
-    /// expected.switch();
-    /// assert_eq!(matrix.order(), expected);
     /// ```
     pub fn switch_order(&mut self) -> &mut Self {
         self.transpose();
@@ -341,27 +382,18 @@ impl<T> Matrix<T> {
     /// matrix.switch_order_without_rearrangement();
     /// expected.switch();
     /// assert_eq!(matrix.order(), expected);
+    ///
     /// // row 0
     /// assert_eq!(matrix[(0, 0)], 0);
     /// assert_eq!(matrix[(0, 1)], 3);
+    ///
     /// // row 1
     /// assert_eq!(matrix[(1, 0)], 1);
     /// assert_eq!(matrix[(1, 1)], 4);
+    ///
     /// // row 2
     /// assert_eq!(matrix[(2, 0)], 2);
     /// assert_eq!(matrix[(2, 1)], 5);
-    ///
-    /// matrix.switch_order_without_rearrangement();
-    /// expected.switch();
-    /// assert_eq!(matrix.order(), expected);
-    /// // row 0
-    /// assert_eq!(matrix[(0, 0)], 0);
-    /// assert_eq!(matrix[(0, 1)], 1);
-    /// assert_eq!(matrix[(0, 2)], 2);
-    /// // row 1
-    /// assert_eq!(matrix[(1, 0)], 3);
-    /// assert_eq!(matrix[(1, 1)], 4);
-    /// assert_eq!(matrix[(1, 2)], 5);
     /// ```
     pub fn switch_order_without_rearrangement(&mut self) -> &mut Self {
         self.order.switch();
@@ -401,27 +433,21 @@ impl<T> Matrix<T> {
     /// use matreex::{matrix, Order};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(matrix.order(), Order::default());
+    /// let mut expected = Order::default();
+    /// assert_eq!(matrix.order(), expected);
     ///
-    /// matrix.set_order_without_rearrangement(Order::RowMajor);
-    /// assert_eq!(matrix.order(), Order::RowMajor);
-    /// // row 0
-    /// assert_eq!(matrix[(0, 0)], 0);
-    /// assert_eq!(matrix[(0, 1)], 1);
-    /// assert_eq!(matrix[(0, 2)], 2);
-    /// // row 1
-    /// assert_eq!(matrix[(1, 0)], 3);
-    /// assert_eq!(matrix[(1, 1)], 4);
-    /// assert_eq!(matrix[(1, 2)], 5);
+    /// expected.switch();
+    /// matrix.set_order_without_rearrangement(expected);
+    /// assert_eq!(matrix.order(), expected);
     ///
-    /// matrix.set_order_without_rearrangement(Order::ColMajor);
-    /// assert_eq!(matrix.order(), Order::ColMajor);
     /// // row 0
     /// assert_eq!(matrix[(0, 0)], 0);
     /// assert_eq!(matrix[(0, 1)], 3);
+    ///
     /// // row 1
     /// assert_eq!(matrix[(1, 0)], 1);
     /// assert_eq!(matrix[(1, 1)], 4);
+    ///
     /// // row 2
     /// assert_eq!(matrix[(2, 0)], 2);
     /// assert_eq!(matrix[(2, 1)], 5);
@@ -548,6 +574,7 @@ impl<T> Matrix<T> {
     /// matrix.resize((1, 3))?;
     /// matrix.shrink_to(4);
     /// assert!(matrix.capacity() >= 4);
+    ///
     /// matrix.shrink_to(0);
     /// assert!(matrix.capacity() >= 3);
     /// # Ok(())
@@ -568,7 +595,6 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
     /// let other = matrix![[1, 1], [1, 1], [1, 1]];
-    ///
     /// matrix.overwrite_with(&other);
     /// assert_eq!(matrix, matrix![[1, 1, 0], [1, 1, 0]]);
     /// ```
@@ -613,7 +639,6 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// matrix.apply(|x| *x += 1);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
@@ -634,7 +659,6 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// let matrix_f64 = matrix_i32.map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
@@ -663,7 +687,6 @@ where
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// matrix.par_apply(|x| *x += 1);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
@@ -684,7 +707,6 @@ where
     /// use matreex::matrix;
     ///
     /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// let matrix_f64 = matrix_i32.par_map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
@@ -705,7 +727,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -722,7 +744,7 @@ impl<L> Matrix<L> {
     ///
     /// let rhs = Matrix::<i32>::with_shape((3, 2))?;
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-    /// assert_eq!(result, Err(Error::NotConformable));
+    /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// # Ok(())
     /// # }
     /// ```
@@ -738,7 +760,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -751,7 +773,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_operation(&rhs, |(x, y)| x + y);
     /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
@@ -784,7 +805,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -797,7 +818,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_operation_consume_self(&rhs, |(x, y)| x + y);
     /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
@@ -835,7 +855,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -846,7 +866,6 @@ impl<L> Matrix<L> {
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// lhs.elementwise_operation_assign(&rhs, |(x, y)| *x += y)?;
     /// assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
     /// # Ok(())
@@ -882,7 +901,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -899,7 +918,7 @@ impl<L> Matrix<L> {
     ///
     /// let rhs = Matrix::<i32>::with_shape((2, 3))?;
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-    /// assert_eq!(result, Err(Error::NotConformable));
+    /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// # Ok(())
     /// # }
     /// ```
@@ -918,7 +937,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -939,7 +958,6 @@ impl<L> Matrix<L> {
     /// let op = |vl: VectorIter<&i32>, vr: VectorIter<&i32>| {
     ///     vl.zip(vr).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
     /// };
-    ///
     /// let result = lhs.multiplication_like_operation(rhs, op);
     /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
     /// ```
@@ -1011,7 +1029,6 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let scalar = 2;
-    ///
     /// let result = matrix.scalar_operation(&scalar, |x, y| x + y);
     /// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
@@ -1038,7 +1055,6 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let scalar = 2;
-    ///
     /// let result = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
     /// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
@@ -1066,7 +1082,6 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let scalar = 2;
-    ///
     /// matrix.scalar_operation_assign(&scalar, |x, y| *x += y);
     /// assert_eq!(matrix, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
