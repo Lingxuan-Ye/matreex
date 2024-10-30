@@ -768,19 +768,23 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_operation(&rhs, |(x, y)| x + y);
+    /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     pub fn elementwise_operation<R, F, U>(&self, rhs: &Matrix<R>, mut op: F) -> Result<Matrix<U>>
     where
-        F: FnMut((&L, &R)) -> U,
+        F: FnMut(&L, &R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
         let order = self.order;
         let shape = self.shape;
         let data = if self.order == rhs.order {
-            self.data.iter().zip(rhs.data.iter()).map(op).collect()
+            self.data
+                .iter()
+                .zip(rhs.data.iter())
+                .map(|(left, right)| op(left, right))
+                .collect()
         } else {
             self.data
                 .iter()
@@ -788,7 +792,7 @@ impl<L> Matrix<L> {
                 .map(|(index, left)| {
                     let index = Self::transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
-                    op((left, right))
+                    op(left, right)
                 })
                 .collect()
         };
@@ -813,7 +817,7 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_operation_consume_self(&rhs, |(x, y)| x + y);
+    /// let result = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     pub fn elementwise_operation_consume_self<R, F, U>(
@@ -822,14 +826,18 @@ impl<L> Matrix<L> {
         mut op: F,
     ) -> Result<Matrix<U>>
     where
-        F: FnMut((L, &R)) -> U,
+        F: FnMut(L, &R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
         let order = self.order;
         let shape = self.shape;
         let data = if self.order == rhs.order {
-            self.data.into_iter().zip(rhs.data.iter()).map(op).collect()
+            self.data
+                .into_iter()
+                .zip(rhs.data.iter())
+                .map(|(left, right)| op(left, right))
+                .collect()
         } else {
             self.data
                 .into_iter()
@@ -837,7 +845,7 @@ impl<L> Matrix<L> {
                 .map(|(index, left)| {
                     let index = Self::transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
-                    op((left, right))
+                    op(left, right)
                 })
                 .collect()
         };
@@ -861,7 +869,7 @@ impl<L> Matrix<L> {
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// lhs.elementwise_operation_assign(&rhs, |(x, y)| *x += y)?;
+    /// lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)?;
     /// assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
     /// # Ok(())
     /// # }
@@ -872,17 +880,20 @@ impl<L> Matrix<L> {
         mut op: F,
     ) -> Result<&mut Self>
     where
-        F: FnMut((&mut L, &R)),
+        F: FnMut(&mut L, &R),
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
         if self.order == rhs.order {
-            self.data.iter_mut().zip(rhs.data.iter()).for_each(op);
+            self.data
+                .iter_mut()
+                .zip(rhs.data.iter())
+                .for_each(|(left, right)| op(left, right));
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
                 let index = Self::transpose_flattened_index(index, self.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) };
-                op((left, right))
+                op(left, right)
             });
         }
 
@@ -1666,7 +1677,7 @@ mod tests {
     fn test_elementwise_operation() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |(x, y): (&i32, &i32)| x + y;
+        let op = |x: &i32, y: &i32| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
         // default order & default order
@@ -1706,7 +1717,7 @@ mod tests {
     fn test_elementwise_operation_consume_self() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |(x, y): (i32, &i32)| x + y;
+        let op = |x, y: &i32| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
         // default order & default order
@@ -1768,7 +1779,7 @@ mod tests {
     fn test_elementwise_operation_assign() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |(x, y): (&mut i32, &i32)| *x += y;
+        let op = |x: &mut i32, y: &i32| *x += y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
         // default order & default order

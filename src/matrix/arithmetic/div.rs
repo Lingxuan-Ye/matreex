@@ -40,7 +40,7 @@ impl<L> Matrix<L> {
         L: Div<R, Output = U> + Clone,
         R: Clone,
     {
-        self.elementwise_operation(rhs, |(left, right)| left.clone() / right.clone())
+        self.elementwise_operation(rhs, |left, right| left.clone() / right.clone())
     }
 
     /// Performs elementwise division on two matrices, consuming `self`.
@@ -80,7 +80,7 @@ impl<L> Matrix<L> {
         L: Div<R, Output = U>,
         R: Clone,
     {
-        self.elementwise_operation_consume_self(rhs, |(left, right)| left / right.clone())
+        self.elementwise_operation_consume_self(rhs, |left, right| left / right.clone())
     }
 
     /// Performs elementwise division on two matrices, assigning the result
@@ -111,7 +111,7 @@ impl<L> Matrix<L> {
         L: DivAssign<R>,
         R: Clone,
     {
-        self.elementwise_operation_assign(rhs, |(left, right)| *left /= right.clone())
+        self.elementwise_operation_assign(rhs, |left, right| *left /= right.clone())
     }
 }
 
