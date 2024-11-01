@@ -1,7 +1,7 @@
 use super::order::Order;
 use super::shape::{AxisShape, Shape};
 use super::Matrix;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 impl<T> Matrix<T> {
     /// Creates a new, empty [`Matrix<T>`].
@@ -146,80 +146,10 @@ impl<T> Matrix<T> {
     }
 }
 
-/// Methods in this impl block are primarily for internal use.
-/// Changes to these methods will not be considered breaking changes.
-#[doc(hidden)]
-impl<T> Matrix<T> {
-    /// Creates a new [`Matrix<T>`] from its component parts, without
-    /// checking if the size matches.
-    ///
-    /// # Safety
-    ///
-    /// The caller must ensure that the size of `shape` matches the length
-    /// of `data`. If the length is greater, extra elements will not be
-    /// accessible. If the size is greater, accessing the matrix may result
-    /// in out-of-bounds memory access, leading to *[undefined behavior]*.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Matrix, Order};
-    ///
-    /// let order = Order::default();
-    /// let shape = (2, 3);
-    /// let data = vec![0, 1, 2, 3, 4, 5];
-    /// let result = unsafe { Matrix::from_parts_unchecked(order, shape, data) };
-    /// assert_eq!(result, matrix![[0, 1, 2], [3, 4, 5]]);
-    /// ```
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    pub unsafe fn from_parts_unchecked<S>(order: Order, shape: S, data: Vec<T>) -> Self
-    where
-        S: Shape,
-    {
-        let shape = AxisShape::from_shape_unchecked(shape, order);
-        Self { order, shape, data }
-    }
-
-    /// Creates a new [`Matrix<T>`] from its component parts.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeMismatch`] if the size of `shape` does not match
-    ///   the length of `data`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Error, Matrix, Order};
-    ///
-    /// let order = Order::default();
-    /// let data = vec![0, 1, 2, 3, 4, 5];
-    ///
-    /// let shape = (2, 3);
-    /// let result = Matrix::from_parts(order, shape, data.clone());
-    /// assert_eq!(result, Ok(matrix![[0, 1, 2], [3, 4, 5]]));
-    ///
-    /// let shape = (2, 2);
-    /// let result = Matrix::from_parts(order, shape, data.clone());
-    /// assert_eq!(result, Err(Error::SizeMismatch));
-    /// ```
-    pub fn from_parts<S>(order: Order, shape: S, data: Vec<T>) -> Result<Self>
-    where
-        S: Shape,
-    {
-        let Ok(size) = shape.size() else {
-            return Err(Error::SizeMismatch);
-        };
-        if data.len() != size {
-            return Err(Error::SizeMismatch);
-        }
-        unsafe { Ok(Self::from_parts_unchecked(order, shape, data)) }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::Error;
     use crate::matrix;
 
     #[test]
@@ -320,36 +250,5 @@ mod tests {
         );
 
         // assert!(Matrix::<()>::with_default((isize::MAX as usize + 1, 1)).is_ok());
-    }
-
-    #[test]
-    fn test_from_parts_unchecked() {
-        let order = Order::default();
-        let shape = (2, 3);
-        let data = vec![0, 1, 2, 3, 4, 5];
-        let result = unsafe { Matrix::from_parts_unchecked(order, shape, data) };
-        assert_eq!(result, matrix![[0, 1, 2], [3, 4, 5]]);
-    }
-
-    #[test]
-    fn test_from_parts() {
-        let order = Order::default();
-        let data = vec![0, 1, 2, 3, 4, 5];
-
-        let shape = (2, 3);
-        let matrix = Matrix::from_parts(order, shape, data.clone()).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-
-        let shape = (2, 2);
-        let error = Matrix::from_parts(order, shape, data.clone()).unwrap_err();
-        assert_eq!(error, Error::SizeMismatch);
-
-        let shape = (usize::MAX, 2);
-        let error = Matrix::from_parts(order, shape, data.clone()).unwrap_err();
-        assert_eq!(error, Error::SizeMismatch);
-
-        let shape = (isize::MAX as usize + 1, 1);
-        let error = Matrix::from_parts(order, shape, data.clone()).unwrap_err();
-        assert_eq!(error, Error::SizeMismatch);
     }
 }
