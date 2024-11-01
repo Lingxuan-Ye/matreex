@@ -4,6 +4,15 @@ use super::Matrix;
 use crate::error::{Error, Result};
 
 impl<T> Matrix<T> {
+    /// Creates a new single-row [`Matrix<T>`] from a vector.
+    ///
+    /// # Examples
+    /// ```
+    /// use matreex::{matrix, Matrix};
+    ///
+    /// let row_vec = Matrix::from_row(vec![0, 1, 2]);
+    /// assert_eq!(row_vec, matrix![[0, 1, 2]]);
+    /// ```
     pub fn from_row(row: Vec<T>) -> Self {
         let order = Order::default();
         let shape = AxisShape::from_shape_unchecked((1, row.len()), order);
@@ -11,6 +20,15 @@ impl<T> Matrix<T> {
         Self { order, shape, data }
     }
 
+    /// Creates a new single-column [`Matrix<T>`] from a vector.
+    ///
+    /// # Examples
+    /// ```
+    /// use matreex::{matrix, Matrix};
+    ///
+    /// let col_vec = Matrix::from_col(vec![0, 1, 2]);
+    /// assert_eq!(col_vec, matrix![[0], [1], [2]]);
+    /// ```
     pub fn from_col(col: Vec<T>) -> Self {
         let order = Order::default();
         let shape = AxisShape::from_shape_unchecked((col.len(), 1), order);
