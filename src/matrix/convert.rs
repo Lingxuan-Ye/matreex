@@ -10,6 +10,13 @@ impl<T> Matrix<T> {
         let data = row;
         Self { order, shape, data }
     }
+
+    pub fn from_col(col: Vec<T>) -> Self {
+        let order = Order::default();
+        let shape = AxisShape::from_shape_unchecked((col.len(), 1), order);
+        let data = col;
+        Self { order, shape, data }
+    }
 }
 
 impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
