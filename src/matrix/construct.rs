@@ -46,6 +46,18 @@ impl<T> Matrix<T> {
         }
     }
 
+    pub fn with_value<S>(shape: S, value: T) -> Result<Self>
+    where
+        T: Clone,
+        S: Shape,
+    {
+        let order = Order::default();
+        let shape = AxisShape::try_from_shape(shape, order)?;
+        let size = Self::check_size(shape.size())?;
+        let data = vec![value; size];
+        Ok(Self { order, shape, data })
+    }
+
     /// Creates a new [`Matrix<T>`] with the specified shape, filled with
     /// default values.
     ///
