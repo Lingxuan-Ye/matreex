@@ -17,12 +17,12 @@ macro_rules! matrix {
         $crate::matrix::Matrix::new()
     };
 
-    [$col:expr; $n:expr] => {
-        $crate::matrix::Matrix::from([$col; $n])
+    [$row:expr; $n:expr] => {
+        $crate::matrix::Matrix::from([$row; $n])
     };
 
-    [$($col:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from([$($col,)+])
+    [$($row:expr),+ $(,)?] => {
+        $crate::matrix::Matrix::from([$($row,)+])
     };
 }
 
