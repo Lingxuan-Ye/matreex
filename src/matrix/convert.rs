@@ -130,38 +130,30 @@ impl<T, V> FromIterator<V> for Matrix<T>
 where
     V: IntoIterator<Item = T>,
 {
-    /// Creates a new [`Matrix<T>`] from an iterator over matrix rows.
+    /// Creates a new [`Matrix<T>`] from an iterator over rows.
     ///
     /// # Panics
     ///
-    /// Panics if length in each iteration is inconsistent, or memory runs out.
+    /// Panics if rows have inconsistent lengths or if memory allocation fails.
     fn from_iter<M>(iter: M) -> Self
     where
         M: IntoIterator<Item = V>,
     {
-        let mut nrows;
-        let ncols;
-        let mut data_len;
-        let mut data = Vec::new();
         let mut iter = iter.into_iter();
-        match iter.next() {
-            None => {
-                return Self::new();
-            }
-            Some(row) => {
-                data.extend(row);
-                nrows = 1;
-                ncols = data.len();
-                data_len = data.len();
-            }
-        }
+        let Some(row) = iter.next() else {
+            return Self::new();
+        };
+        let mut data: Vec<T> = row.into_iter().collect(); // could panic for running out of memory
+        let mut nrows = 1;
+        let ncols = data.len();
+        let mut size = ncols;
         for row in iter {
-            data.extend(row);
-            if data.len() - data_len != ncols {
+            data.extend(row); // could panic for running out of memory
+            if data.len() - size != ncols {
                 panic!("{}", Error::LengthInconsistent);
             }
             nrows += 1;
-            data_len = data.len();
+            size = data.len();
         }
         data.shrink_to_fit();
         let order = Order::default();
