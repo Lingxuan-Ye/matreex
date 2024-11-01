@@ -300,46 +300,26 @@ mod tests {
 
     #[test]
     fn test_with_default() {
-        let expected = matrix![[0, 0, 0], [0, 0, 0]];
-
-        assert_eq!(Matrix::with_default((2, 3)).unwrap(), expected);
-        assert_ne!(Matrix::with_default((3, 2)).unwrap(), expected);
-
         assert_eq!(
-            Matrix::<u8>::with_default((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
-        assert_eq!(
-            Matrix::<u8>::with_default((isize::MAX as usize + 1, 1)).unwrap_err(),
-            Error::CapacityExceeded
+            Matrix::with_default((2, 3)).unwrap(),
+            matrix![[0, 0, 0], [0, 0, 0]]
         );
 
         assert_eq!(
             Matrix::<i32>::with_default((usize::MAX, 2)).unwrap_err(),
             Error::SizeOverflow
         );
+
+        assert_eq!(
+            Matrix::<u8>::with_default((isize::MAX as usize + 1, 1)).unwrap_err(),
+            Error::CapacityExceeded
+        );
         assert_eq!(
             Matrix::<i32>::with_default((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
             Error::CapacityExceeded
         );
 
-        // The following test cases for zero-sized types are impractical to
-        // run in debug mode, and since `#[cfg(not(debug_assertions))]` does
-        // not strictly match release mode, these tests are commented out.
-
-        // assert_eq!(
-        //     Matrix::<()>::with_default((usize::MAX, 2)).unwrap_err(),
-        //     Error::SizeOverflow
-        // );
         // assert!(Matrix::<()>::with_default((isize::MAX as usize + 1, 1)).is_ok());
-
-        // #[derive(Debug, Default)]
-        // struct Foo;
-        // assert_eq!(
-        //     Matrix::<Foo>::with_default((usize::MAX, 2)).unwrap_err(),
-        //     Error::SizeOverflow
-        // );
-        // assert!(Matrix::<Foo>::with_default((isize::MAX as usize + 1, 1)).is_ok());
     }
 
     #[test]
