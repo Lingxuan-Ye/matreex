@@ -342,9 +342,10 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn resize<S: Shape>(&mut self, shape: S) -> Result<&mut Self>
+    pub fn resize<S>(&mut self, shape: S) -> Result<&mut Self>
     where
         T: Default,
+        S: Shape,
     {
         let shape = AxisShape::try_from_shape(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
@@ -377,7 +378,10 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn reshape<S: Shape>(&mut self, shape: S) -> Result<&mut Self> {
+    pub fn reshape<S>(&mut self, shape: S) -> Result<&mut Self>
+    where
+        S: Shape,
+    {
         let Ok(size) = shape.size() else {
             return Err(Error::SizeMismatch);
         };

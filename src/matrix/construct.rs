@@ -68,9 +68,10 @@ impl<T> Matrix<T> {
     /// let result = Matrix::<u8>::with_shape((isize::MAX as usize + 1, 1));
     /// assert_eq!(result, Err(Error::CapacityExceeded));
     /// ```
-    pub fn with_shape<S: Shape>(shape: S) -> Result<Self>
+    pub fn with_shape<S>(shape: S) -> Result<Self>
     where
         T: Default,
+        S: Shape,
     {
         let order = Order::default();
         let shape = AxisShape::try_from_shape(shape, order)?;
@@ -103,7 +104,10 @@ impl<T> Matrix<T> {
     /// let result = Matrix::from_parts(order, shape, data.clone());
     /// assert_eq!(result, Err(Error::SizeMismatch));
     /// ```
-    pub fn from_parts<S: Shape>(order: Order, shape: S, data: Vec<T>) -> Result<Self> {
+    pub fn from_parts<S>(order: Order, shape: S, data: Vec<T>) -> Result<Self>
+    where
+        S: Shape,
+    {
         let Ok(size) = shape.size() else {
             return Err(Error::SizeMismatch);
         };
@@ -135,7 +139,10 @@ impl<T> Matrix<T> {
     /// assert_eq!(result, matrix![[0, 1, 2], [3, 4, 5]]);
     /// ```
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    pub unsafe fn from_parts_unchecked<S: Shape>(order: Order, shape: S, data: Vec<T>) -> Self {
+    pub unsafe fn from_parts_unchecked<S>(order: Order, shape: S, data: Vec<T>) -> Self
+    where
+        S: Shape,
+    {
         let shape = AxisShape::from_shape_unchecked(shape, order);
         Self { order, shape, data }
     }
