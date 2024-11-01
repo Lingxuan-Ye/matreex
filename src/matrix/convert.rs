@@ -3,6 +3,15 @@ use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
+impl<T> Matrix<T> {
+    pub fn from_row(row: Vec<T>) -> Self {
+        let order = Order::default();
+        let shape = AxisShape::from_shape_unchecked((1, row.len()), order);
+        let data = row;
+        Self { order, shape, data }
+    }
+}
+
 impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     fn from(value: [[T; C]; R]) -> Self {
         let order = Order::default();
