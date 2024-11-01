@@ -12,10 +12,10 @@ use crate::error::{Error, Result};
 ///
 /// # fn main() -> Result<()> {
 /// let shape = (2, 3);
-/// let matrix = Matrix::<i32>::with_shape(shape)?;
+/// let matrix = Matrix::<i32>::with_default(shape)?;
 ///
 /// let shape = [3; 2];
-/// let matrix = Matrix::<i32>::with_shape(shape)?;
+/// let matrix = Matrix::<i32>::with_default(shape)?;
 /// # Ok(())
 /// # }
 /// ```

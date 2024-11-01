@@ -11,6 +11,7 @@ pub mod order;
 pub mod shape;
 
 mod arithmetic;
+mod construct;
 mod convert;
 mod default;
 mod fmt;
@@ -32,144 +33,6 @@ pub struct Matrix<T> {
     order: Order,
     shape: AxisShape,
     data: Vec<T>,
-}
-
-impl<T> Matrix<T> {
-    /// Creates a new, empty [`Matrix<T>`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let matrix = Matrix::<i32>::new();
-    /// assert_eq!(matrix.nrows(), 0);
-    /// assert_eq!(matrix.ncols(), 0);
-    /// assert!(matrix.is_empty());
-    /// ```
-    pub fn new() -> Self {
-        Self {
-            order: Order::default(),
-            shape: AxisShape::default(),
-            data: Vec::new(),
-        }
-    }
-
-    /// Creates a new, empty [`Matrix<T>`] with at least the specified
-    /// capacity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let matrix = Matrix::<i32>::with_capacity(10);
-    /// assert_eq!(matrix.nrows(), 0);
-    /// assert_eq!(matrix.ncols(), 0);
-    /// assert!(matrix.is_empty());
-    /// assert!(matrix.capacity() >= 10);
-    /// ```
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            order: Order::default(),
-            shape: AxisShape::default(),
-            data: Vec::with_capacity(capacity),
-        }
-    }
-
-    /// Creates a new [`Matrix<T>`] with the specified shape, filled with
-    /// default values.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityExceeded`] if total bytes stored exceeds [`isize::MAX`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Error, Matrix};
-    ///
-    /// let result = Matrix::with_shape((2, 3));
-    /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
-    ///
-    /// let result = Matrix::<u8>::with_shape((usize::MAX, 2));
-    /// assert_eq!(result, Err(Error::SizeOverflow));
-    ///
-    /// let result = Matrix::<u8>::with_shape((isize::MAX as usize + 1, 1));
-    /// assert_eq!(result, Err(Error::CapacityExceeded));
-    /// ```
-    pub fn with_shape<S: Shape>(shape: S) -> Result<Self>
-    where
-        T: Default,
-    {
-        let order = Order::default();
-        let shape = AxisShape::try_from_shape(shape, order)?;
-        let size = Self::check_size(shape.size())?;
-        let mut data = Vec::with_capacity(size);
-        data.resize_with(size, T::default);
-        Ok(Self { order, shape, data })
-    }
-
-    /// Creates a new [`Matrix<T>`] from its component parts.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeMismatch`] if the size of `shape` does not match
-    ///   the length of `data`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Error, Matrix, Order};
-    ///
-    /// let order = Order::default();
-    /// let data = vec![0, 1, 2, 3, 4, 5];
-    ///
-    /// let shape = (2, 3);
-    /// let result = Matrix::from_parts(order, shape, data.clone());
-    /// assert_eq!(result, Ok(matrix![[0, 1, 2], [3, 4, 5]]));
-    ///
-    /// let shape = (2, 2);
-    /// let result = Matrix::from_parts(order, shape, data.clone());
-    /// assert_eq!(result, Err(Error::SizeMismatch));
-    /// ```
-    pub fn from_parts<S: Shape>(order: Order, shape: S, data: Vec<T>) -> Result<Self> {
-        let Ok(size) = shape.size() else {
-            return Err(Error::SizeMismatch);
-        };
-        if data.len() != size {
-            return Err(Error::SizeMismatch);
-        }
-        unsafe { Ok(Self::from_parts_unchecked(order, shape, data)) }
-    }
-
-    /// Creates a new [`Matrix<T>`] from its component parts, without
-    /// checking if the size matches.
-    ///
-    /// # Safety
-    ///
-    /// The caller must ensure that the size of `shape` matches the length
-    /// of `data`. If the length is greater, extra elements will not be
-    /// accessible. If the size is greater, accessing the matrix may result
-    /// in out-of-bounds memory access, leading to *[undefined behavior]*.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Matrix, Order};
-    ///
-    /// let order = Order::default();
-    /// let shape = (2, 3);
-    /// let data = vec![0, 1, 2, 3, 4, 5];
-    /// let result = unsafe { Matrix::from_parts_unchecked(order, shape, data) };
-    /// assert_eq!(result, matrix![[0, 1, 2], [3, 4, 5]]);
-    /// ```
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    pub unsafe fn from_parts_unchecked<S: Shape>(order: Order, shape: S, data: Vec<T>) -> Self {
-        let shape = AxisShape::from_shape_unchecked(shape, order);
-        Self { order, shape, data }
-    }
 }
 
 impl<T> Matrix<T> {
@@ -479,9 +342,10 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn resize<S: Shape>(&mut self, shape: S) -> Result<&mut Self>
+    pub fn resize<S>(&mut self, shape: S) -> Result<&mut Self>
     where
         T: Default,
+        S: Shape,
     {
         let shape = AxisShape::try_from_shape(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
@@ -514,7 +378,10 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn reshape<S: Shape>(&mut self, shape: S) -> Result<&mut Self> {
+    pub fn reshape<S>(&mut self, shape: S) -> Result<&mut Self>
+    where
+        S: Shape,
+    {
         let Ok(size) = shape.size() else {
             return Err(Error::SizeMismatch);
         };
@@ -666,13 +533,7 @@ impl<T> Matrix<T> {
         let data = self.data.into_iter().map(f).collect();
         Matrix { order, shape, data }
     }
-}
 
-#[cfg(feature = "rayon")]
-impl<T> Matrix<T>
-where
-    T: Sync + Send,
-{
     /// Applies a closure to each element of the matrix in parallel,
     /// modifying the matrix in place.
     ///
@@ -685,8 +546,10 @@ where
     /// matrix.par_apply(|x| *x += 1);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[cfg(feature = "rayon")]
     pub fn par_apply<F>(&mut self, f: F) -> &mut Self
     where
+        T: Send,
         F: Fn(&mut T) + Sync + Send,
     {
         self.data.par_iter_mut().for_each(f);
@@ -705,8 +568,10 @@ where
     /// let matrix_f64 = matrix_i32.par_map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
+    #[cfg(feature = "rayon")]
     pub fn par_map<U, F>(self, f: F) -> Matrix<U>
     where
+        T: Send,
         U: Send,
         F: Fn(T) -> U + Sync + Send,
     {
@@ -731,13 +596,13 @@ impl<L> Matrix<L> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let lhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let lhs = Matrix::<i32>::with_default((2, 3))?;
     ///
-    /// let rhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let rhs = Matrix::<i32>::with_default((2, 3))?;
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::with_shape((3, 2))?;
+    /// let rhs = Matrix::<i32>::with_default((3, 2))?;
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// # Ok(())
@@ -768,19 +633,23 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_operation(&rhs, |(x, y)| x + y);
+    /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     pub fn elementwise_operation<R, F, U>(&self, rhs: &Matrix<R>, mut op: F) -> Result<Matrix<U>>
     where
-        F: FnMut((&L, &R)) -> U,
+        F: FnMut(&L, &R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
         let order = self.order;
         let shape = self.shape;
         let data = if self.order == rhs.order {
-            self.data.iter().zip(rhs.data.iter()).map(op).collect()
+            self.data
+                .iter()
+                .zip(rhs.data.iter())
+                .map(|(left, right)| op(left, right))
+                .collect()
         } else {
             self.data
                 .iter()
@@ -788,7 +657,7 @@ impl<L> Matrix<L> {
                 .map(|(index, left)| {
                     let index = Self::transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
-                    op((left, right))
+                    op(left, right)
                 })
                 .collect()
         };
@@ -813,7 +682,7 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_operation_consume_self(&rhs, |(x, y)| x + y);
+    /// let result = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     pub fn elementwise_operation_consume_self<R, F, U>(
@@ -822,14 +691,18 @@ impl<L> Matrix<L> {
         mut op: F,
     ) -> Result<Matrix<U>>
     where
-        F: FnMut((L, &R)) -> U,
+        F: FnMut(L, &R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
         let order = self.order;
         let shape = self.shape;
         let data = if self.order == rhs.order {
-            self.data.into_iter().zip(rhs.data.iter()).map(op).collect()
+            self.data
+                .into_iter()
+                .zip(rhs.data.iter())
+                .map(|(left, right)| op(left, right))
+                .collect()
         } else {
             self.data
                 .into_iter()
@@ -837,7 +710,7 @@ impl<L> Matrix<L> {
                 .map(|(index, left)| {
                     let index = Self::transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
-                    op((left, right))
+                    op(left, right)
                 })
                 .collect()
         };
@@ -861,7 +734,7 @@ impl<L> Matrix<L> {
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// lhs.elementwise_operation_assign(&rhs, |(x, y)| *x += y)?;
+    /// lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)?;
     /// assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
     /// # Ok(())
     /// # }
@@ -872,17 +745,20 @@ impl<L> Matrix<L> {
         mut op: F,
     ) -> Result<&mut Self>
     where
-        F: FnMut((&mut L, &R)),
+        F: FnMut(&mut L, &R),
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
         if self.order == rhs.order {
-            self.data.iter_mut().zip(rhs.data.iter()).for_each(op);
+            self.data
+                .iter_mut()
+                .zip(rhs.data.iter())
+                .for_each(|(left, right)| op(left, right));
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
                 let index = Self::transpose_flattened_index(index, self.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) };
-                op((left, right))
+                op(left, right)
             });
         }
 
@@ -905,13 +781,13 @@ impl<L> Matrix<L> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let lhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let lhs = Matrix::<i32>::with_default((2, 3))?;
     ///
-    /// let rhs = Matrix::<i32>::with_shape((3, 2))?;
+    /// let rhs = Matrix::<i32>::with_default((3, 2))?;
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let rhs = Matrix::<i32>::with_default((2, 3))?;
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// # Ok(())
@@ -1104,100 +980,6 @@ impl<T> Matrix<T> {
 mod tests {
     use super::*;
     use crate::matrix;
-
-    #[test]
-    fn test_new() {
-        let matrix = Matrix::<i32>::new();
-        assert_eq!(matrix.order, Order::default());
-        assert_eq!(matrix.nrows(), 0);
-        assert_eq!(matrix.ncols(), 0);
-        assert!(matrix.is_empty());
-    }
-
-    #[test]
-    fn test_with_capacity() {
-        let matrix = Matrix::<i32>::with_capacity(10);
-        assert_eq!(matrix.order, Order::default());
-        assert_eq!(matrix.nrows(), 0);
-        assert_eq!(matrix.ncols(), 0);
-        assert!(matrix.is_empty());
-        assert!(matrix.capacity() >= 10);
-    }
-
-    #[test]
-    fn test_with_shape() {
-        let expected = matrix![[0, 0, 0], [0, 0, 0]];
-
-        assert_eq!(Matrix::with_shape((2, 3)).unwrap(), expected);
-        assert_ne!(Matrix::with_shape((3, 2)).unwrap(), expected);
-
-        assert_eq!(
-            Matrix::<u8>::with_shape((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
-        assert_eq!(
-            Matrix::<u8>::with_shape((isize::MAX as usize + 1, 1)).unwrap_err(),
-            Error::CapacityExceeded
-        );
-
-        assert_eq!(
-            Matrix::<i32>::with_shape((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
-        assert_eq!(
-            Matrix::<i32>::with_shape((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
-            Error::CapacityExceeded
-        );
-
-        // The following test cases for zero-sized types are impractical to
-        // run in debug mode, and since `#[cfg(not(debug_assertions))]` does
-        // not strictly match release mode, these tests are commented out.
-
-        // assert_eq!(
-        //     Matrix::<()>::with_shape((usize::MAX, 2)).unwrap_err(),
-        //     Error::SizeOverflow
-        // );
-        // assert!(Matrix::<()>::with_shape((isize::MAX as usize + 1, 1)).is_ok());
-
-        // #[derive(Debug, Default)]
-        // struct Foo;
-        // assert_eq!(
-        //     Matrix::<Foo>::with_shape((usize::MAX, 2)).unwrap_err(),
-        //     Error::SizeOverflow
-        // );
-        // assert!(Matrix::<Foo>::with_shape((isize::MAX as usize + 1, 1)).is_ok());
-    }
-
-    #[test]
-    fn test_from_parts() {
-        let order = Order::default();
-        let data = vec![0, 1, 2, 3, 4, 5];
-
-        let shape = (2, 3);
-        let matrix = Matrix::from_parts(order, shape, data.clone()).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-
-        let shape = (2, 2);
-        let error = Matrix::from_parts(order, shape, data.clone()).unwrap_err();
-        assert_eq!(error, Error::SizeMismatch);
-
-        let shape = (usize::MAX, 2);
-        let error = Matrix::from_parts(order, shape, data.clone()).unwrap_err();
-        assert_eq!(error, Error::SizeMismatch);
-
-        let shape = (isize::MAX as usize + 1, 1);
-        let error = Matrix::from_parts(order, shape, data.clone()).unwrap_err();
-        assert_eq!(error, Error::SizeMismatch);
-    }
-
-    #[test]
-    fn test_from_parts_unchecked() {
-        let order = Order::default();
-        let shape = (2, 3);
-        let data = vec![0, 1, 2, 3, 4, 5];
-        let result = unsafe { Matrix::from_parts_unchecked(order, shape, data) };
-        assert_eq!(result, matrix![[0, 1, 2], [3, 4, 5]]);
-    }
 
     #[test]
     fn test_transpose() {
@@ -1624,8 +1406,8 @@ mod tests {
 
     #[test]
     fn test_ensure_elementwise_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
+        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
 
         // default order & default order
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
@@ -1649,13 +1431,13 @@ mod tests {
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((2, 2)).unwrap();
+        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
         let error = lhs
             .ensure_elementwise_operation_conformable(&rhs)
             .unwrap_err();
         assert_eq!(error, Error::ShapeNotConformable);
 
-        let rhs = Matrix::<i32>::with_shape((3, 2)).unwrap();
+        let rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
         let error = lhs
             .ensure_elementwise_operation_conformable(&rhs)
             .unwrap_err();
@@ -1666,7 +1448,7 @@ mod tests {
     fn test_elementwise_operation() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |(x, y): (&i32, &i32)| x + y;
+        let op = |x: &i32, y: &i32| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
         // default order & default order
@@ -1706,7 +1488,7 @@ mod tests {
     fn test_elementwise_operation_consume_self() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |(x, y): (i32, &i32)| x + y;
+        let op = |x, y: &i32| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
         // default order & default order
@@ -1768,7 +1550,7 @@ mod tests {
     fn test_elementwise_operation_assign() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |(x, y): (&mut i32, &i32)| *x += y;
+        let op = |x: &mut i32, y: &i32| *x += y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
         // default order & default order
@@ -1822,8 +1604,8 @@ mod tests {
 
     #[test]
     fn test_ensure_multiplication_like_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_shape((3, 2)).unwrap();
+        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
 
         // default order & default order
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
@@ -1847,21 +1629,21 @@ mod tests {
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((3, 1)).unwrap();
+        let rhs = Matrix::<i32>::with_default((3, 1)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((3, 3)).unwrap();
+        let rhs = Matrix::<i32>::with_default((3, 3)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((2, 2)).unwrap();
+        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
         let error = lhs
             .ensure_multiplication_like_operation_conformable(&rhs)
             .unwrap_err();
         assert_eq!(error, Error::ShapeNotConformable);
 
-        let rhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
+        let rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
         let error = lhs
             .ensure_multiplication_like_operation_conformable(&rhs)
             .unwrap_err();
