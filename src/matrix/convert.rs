@@ -195,6 +195,7 @@ mod tests {
 
     #[test]
     fn test_from_sequence_of_arrays() {
+        // avoid using `matrix!` to prevent circular validation
         let order = Order::default();
         let shape = AxisShape::from_shape_unchecked((2, 3), order);
         let data = vec![0, 1, 2, 3, 4, 5];
