@@ -242,6 +242,31 @@ mod tests {
     }
 
     #[test]
+    fn test_with_value() {
+        assert_eq!(
+            Matrix::with_value((2, 3), 0).unwrap(),
+            matrix![[0, 0, 0], [0, 0, 0]]
+        );
+
+        assert_eq!(
+            Matrix::<i32>::with_value((usize::MAX, 2), 0).unwrap_err(),
+            Error::SizeOverflow
+        );
+
+        assert_eq!(
+            Matrix::<u8>::with_value((isize::MAX as usize + 1, 1), 0).unwrap_err(),
+            Error::CapacityExceeded
+        );
+        assert_eq!(
+            Matrix::<i32>::with_value((isize::MAX as usize / 4 + 1, 1), 0).unwrap_err(),
+            Error::CapacityExceeded
+        );
+
+        // zero-sized types
+        assert!(Matrix::<()>::with_value((isize::MAX as usize + 1, 1), ()).is_ok());
+    }
+
+    #[test]
     fn test_with_default() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
 
