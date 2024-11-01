@@ -46,6 +46,31 @@ impl<T> Matrix<T> {
         }
     }
 
+    pub fn with_value<S>(shape: S, value: T) -> Result<Self>
+    where
+        T: Clone,
+        S: Shape,
+    {
+        let order = Order::default();
+        let shape = AxisShape::try_from_shape(shape, order)?;
+        let size = Self::check_size(shape.size())?;
+        let data = vec![value; size];
+        Ok(Self { order, shape, data })
+    }
+
+    pub fn with_initializer<S, F>(shape: S, initializer: F) -> Result<Self>
+    where
+        S: Shape,
+        F: FnMut() -> T,
+    {
+        let order = Order::default();
+        let shape = AxisShape::try_from_shape(shape, order)?;
+        let size = Self::check_size(shape.size())?;
+        let mut data = Vec::with_capacity(size);
+        data.resize_with(size, initializer);
+        Ok(Self { order, shape, data })
+    }
+
     /// Creates a new [`Matrix<T>`] with the specified shape, filled with
     /// default values.
     ///
@@ -73,12 +98,7 @@ impl<T> Matrix<T> {
         T: Default,
         S: Shape,
     {
-        let order = Order::default();
-        let shape = AxisShape::try_from_shape(shape, order)?;
-        let size = Self::check_size(shape.size())?;
-        let mut data = Vec::with_capacity(size);
-        data.resize_with(size, T::default);
-        Ok(Self { order, shape, data })
+        Self::with_initializer(shape, T::default)
     }
 }
 
