@@ -116,7 +116,7 @@ impl<T> Matrix<T> {
     }
 
     /// Creates a new [`Matrix<T>`] with the specified shape, filled with
-    /// default values.
+    /// the default value.
     ///
     /// # Errors
     ///
