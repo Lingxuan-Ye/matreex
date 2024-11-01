@@ -46,6 +46,28 @@ impl<T> Matrix<T> {
         }
     }
 
+    /// Creates a new [`Matrix<T>`] with the specified shape, filled with
+    /// the given value.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityExceeded`] if total bytes stored exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Error, Matrix};
+    ///
+    /// let result = Matrix::with_value((2, 3), 0);
+    /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
+    ///
+    /// let result = Matrix::<u8>::with_value((usize::MAX, 2), 0);
+    /// assert_eq!(result, Err(Error::SizeOverflow));
+    ///
+    /// let result = Matrix::<u8>::with_value((isize::MAX as usize + 1, 1), 0);
+    /// assert_eq!(result, Err(Error::CapacityExceeded));
+    /// ```
     pub fn with_value<S>(shape: S, value: T) -> Result<Self>
     where
         T: Clone,
