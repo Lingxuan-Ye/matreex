@@ -176,7 +176,26 @@ mod tests {
     use crate::matrix;
 
     #[test]
+    fn test_from_row() {
+        let row_vec: Matrix<i32> = Matrix::from_row(Vec::new());
+        assert_eq!(row_vec, Matrix::with_default((1, 0)).unwrap());
+
+        let row_vec = Matrix::from_row(vec![0, 1, 2]);
+        assert_eq!(row_vec, matrix![[0, 1, 2]]);
+    }
+
+    #[test]
+    fn test_from_col() {
+        let col_vec: Matrix<i32> = Matrix::from_col(Vec::new());
+        assert_eq!(col_vec, Matrix::with_default((0, 1)).unwrap());
+
+        let col_vec = Matrix::from_col(vec![0, 1, 2]);
+        assert_eq!(col_vec, matrix![[0], [1], [2]]);
+    }
+
+    #[test]
     fn test_from_sequence_of_arrays() {
+        // avoid using `matrix!` to prevent circular validation
         let order = Order::default();
         let shape = AxisShape::from_shape_unchecked((2, 3), order);
         let data = vec![0, 1, 2, 3, 4, 5];
