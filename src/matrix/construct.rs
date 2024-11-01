@@ -267,6 +267,38 @@ mod tests {
     }
 
     #[test]
+    fn test_with_initializer() {
+        assert_eq!(
+            Matrix::with_initializer((2, 3), Default::default).unwrap(),
+            matrix![[0, 0, 0], [0, 0, 0]]
+        );
+
+        assert_eq!(
+            Matrix::<i32>::with_initializer((usize::MAX, 2), Default::default).unwrap_err(),
+            Error::SizeOverflow
+        );
+
+        assert_eq!(
+            Matrix::<u8>::with_initializer((isize::MAX as usize + 1, 1), Default::default)
+                .unwrap_err(),
+            Error::CapacityExceeded
+        );
+        assert_eq!(
+            Matrix::<i32>::with_initializer((isize::MAX as usize / 4 + 1, 1), Default::default)
+                .unwrap_err(),
+            Error::CapacityExceeded
+        );
+
+        // The following test case for zero-sized types is impractical to
+        // run in debug mode, and since `#[cfg(not(debug_assertions))]` does
+        // not strictly match release mode, these tests are commented out.
+
+        // assert!(
+        //     Matrix::<()>::with_initializer((isize::MAX as usize + 1, 1), Default::default).is_ok()
+        // );
+    }
+
+    #[test]
     fn test_with_default() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
 
