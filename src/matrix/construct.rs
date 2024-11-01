@@ -59,16 +59,16 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{matrix, Error, Matrix};
     ///
-    /// let result = Matrix::with_shape((2, 3));
+    /// let result = Matrix::with_default((2, 3));
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     ///
-    /// let result = Matrix::<u8>::with_shape((usize::MAX, 2));
+    /// let result = Matrix::<u8>::with_default((usize::MAX, 2));
     /// assert_eq!(result, Err(Error::SizeOverflow));
     ///
-    /// let result = Matrix::<u8>::with_shape((isize::MAX as usize + 1, 1));
+    /// let result = Matrix::<u8>::with_default((isize::MAX as usize + 1, 1));
     /// assert_eq!(result, Err(Error::CapacityExceeded));
     /// ```
-    pub fn with_shape<S>(shape: S) -> Result<Self>
+    pub fn with_default<S>(shape: S) -> Result<Self>
     where
         T: Default,
         S: Shape,
@@ -178,27 +178,27 @@ mod tests {
     }
 
     #[test]
-    fn test_with_shape() {
+    fn test_with_default() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
 
-        assert_eq!(Matrix::with_shape((2, 3)).unwrap(), expected);
-        assert_ne!(Matrix::with_shape((3, 2)).unwrap(), expected);
+        assert_eq!(Matrix::with_default((2, 3)).unwrap(), expected);
+        assert_ne!(Matrix::with_default((3, 2)).unwrap(), expected);
 
         assert_eq!(
-            Matrix::<u8>::with_shape((usize::MAX, 2)).unwrap_err(),
+            Matrix::<u8>::with_default((usize::MAX, 2)).unwrap_err(),
             Error::SizeOverflow
         );
         assert_eq!(
-            Matrix::<u8>::with_shape((isize::MAX as usize + 1, 1)).unwrap_err(),
+            Matrix::<u8>::with_default((isize::MAX as usize + 1, 1)).unwrap_err(),
             Error::CapacityExceeded
         );
 
         assert_eq!(
-            Matrix::<i32>::with_shape((usize::MAX, 2)).unwrap_err(),
+            Matrix::<i32>::with_default((usize::MAX, 2)).unwrap_err(),
             Error::SizeOverflow
         );
         assert_eq!(
-            Matrix::<i32>::with_shape((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
+            Matrix::<i32>::with_default((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
             Error::CapacityExceeded
         );
 
@@ -207,18 +207,18 @@ mod tests {
         // not strictly match release mode, these tests are commented out.
 
         // assert_eq!(
-        //     Matrix::<()>::with_shape((usize::MAX, 2)).unwrap_err(),
+        //     Matrix::<()>::with_default((usize::MAX, 2)).unwrap_err(),
         //     Error::SizeOverflow
         // );
-        // assert!(Matrix::<()>::with_shape((isize::MAX as usize + 1, 1)).is_ok());
+        // assert!(Matrix::<()>::with_default((isize::MAX as usize + 1, 1)).is_ok());
 
         // #[derive(Debug, Default)]
         // struct Foo;
         // assert_eq!(
-        //     Matrix::<Foo>::with_shape((usize::MAX, 2)).unwrap_err(),
+        //     Matrix::<Foo>::with_default((usize::MAX, 2)).unwrap_err(),
         //     Error::SizeOverflow
         // );
-        // assert!(Matrix::<Foo>::with_shape((isize::MAX as usize + 1, 1)).is_ok());
+        // assert!(Matrix::<Foo>::with_default((isize::MAX as usize + 1, 1)).is_ok());
     }
 
     #[test]

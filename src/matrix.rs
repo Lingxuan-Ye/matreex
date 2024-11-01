@@ -596,13 +596,13 @@ impl<L> Matrix<L> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let lhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let lhs = Matrix::<i32>::with_default((2, 3))?;
     ///
-    /// let rhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let rhs = Matrix::<i32>::with_default((2, 3))?;
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::with_shape((3, 2))?;
+    /// let rhs = Matrix::<i32>::with_default((3, 2))?;
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// # Ok(())
@@ -781,13 +781,13 @@ impl<L> Matrix<L> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let lhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let lhs = Matrix::<i32>::with_default((2, 3))?;
     ///
-    /// let rhs = Matrix::<i32>::with_shape((3, 2))?;
+    /// let rhs = Matrix::<i32>::with_default((3, 2))?;
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let rhs = Matrix::<i32>::with_default((2, 3))?;
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// # Ok(())
@@ -1406,8 +1406,8 @@ mod tests {
 
     #[test]
     fn test_ensure_elementwise_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
+        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
 
         // default order & default order
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
@@ -1431,13 +1431,13 @@ mod tests {
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((2, 2)).unwrap();
+        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
         let error = lhs
             .ensure_elementwise_operation_conformable(&rhs)
             .unwrap_err();
         assert_eq!(error, Error::ShapeNotConformable);
 
-        let rhs = Matrix::<i32>::with_shape((3, 2)).unwrap();
+        let rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
         let error = lhs
             .ensure_elementwise_operation_conformable(&rhs)
             .unwrap_err();
@@ -1604,8 +1604,8 @@ mod tests {
 
     #[test]
     fn test_ensure_multiplication_like_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_shape((3, 2)).unwrap();
+        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
 
         // default order & default order
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
@@ -1629,21 +1629,21 @@ mod tests {
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((3, 1)).unwrap();
+        let rhs = Matrix::<i32>::with_default((3, 1)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((3, 3)).unwrap();
+        let rhs = Matrix::<i32>::with_default((3, 3)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((2, 2)).unwrap();
+        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
         let error = lhs
             .ensure_multiplication_like_operation_conformable(&rhs)
             .unwrap_err();
         assert_eq!(error, Error::ShapeNotConformable);
 
-        let rhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
+        let rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
         let error = lhs
             .ensure_multiplication_like_operation_conformable(&rhs)
             .unwrap_err();
