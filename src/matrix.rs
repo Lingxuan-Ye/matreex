@@ -11,6 +11,7 @@ pub mod order;
 pub mod shape;
 
 mod arithmetic;
+mod construct;
 mod convert;
 mod default;
 mod fmt;
@@ -32,84 +33,6 @@ pub struct Matrix<T> {
     order: Order,
     shape: AxisShape,
     data: Vec<T>,
-}
-
-impl<T> Matrix<T> {
-    /// Creates a new, empty [`Matrix<T>`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let matrix = Matrix::<i32>::new();
-    /// assert_eq!(matrix.nrows(), 0);
-    /// assert_eq!(matrix.ncols(), 0);
-    /// assert!(matrix.is_empty());
-    /// ```
-    pub fn new() -> Self {
-        Self {
-            order: Order::default(),
-            shape: AxisShape::default(),
-            data: Vec::new(),
-        }
-    }
-
-    /// Creates a new, empty [`Matrix<T>`] with at least the specified
-    /// capacity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let matrix = Matrix::<i32>::with_capacity(10);
-    /// assert_eq!(matrix.nrows(), 0);
-    /// assert_eq!(matrix.ncols(), 0);
-    /// assert!(matrix.is_empty());
-    /// assert!(matrix.capacity() >= 10);
-    /// ```
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            order: Order::default(),
-            shape: AxisShape::default(),
-            data: Vec::with_capacity(capacity),
-        }
-    }
-
-    /// Creates a new [`Matrix<T>`] with the specified shape, filled with
-    /// default values.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityExceeded`] if total bytes stored exceeds [`isize::MAX`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Error, Matrix};
-    ///
-    /// let result = Matrix::with_shape((2, 3));
-    /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
-    ///
-    /// let result = Matrix::<u8>::with_shape((usize::MAX, 2));
-    /// assert_eq!(result, Err(Error::SizeOverflow));
-    ///
-    /// let result = Matrix::<u8>::with_shape((isize::MAX as usize + 1, 1));
-    /// assert_eq!(result, Err(Error::CapacityExceeded));
-    /// ```
-    pub fn with_shape<S: Shape>(shape: S) -> Result<Self>
-    where
-        T: Default,
-    {
-        let order = Order::default();
-        let shape = AxisShape::try_from_shape(shape, order)?;
-        let size = Self::check_size(shape.size())?;
-        let mut data = Vec::with_capacity(size);
-        data.resize_with(size, T::default);
-        Ok(Self { order, shape, data })
-    }
 }
 
 impl<T> Matrix<T> {
@@ -291,19 +214,16 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let mut expected = Order::default();
-    /// assert_eq!(matrix.order(), expected);
+    /// let order = matrix.order();
     ///
     /// matrix.switch_order();
-    /// expected.switch();
-    /// assert_eq!(matrix.order(), expected);
+    /// assert_ne!(matrix.order(), order);
     ///
     /// matrix.switch_order();
-    /// expected.switch();
-    /// assert_eq!(matrix.order(), expected);
+    /// assert_eq!(matrix.order(), order);
     /// ```
     pub fn switch_order(&mut self) -> &mut Self {
         self.transpose();
@@ -317,36 +237,24 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let mut expected = Order::default();
-    /// assert_eq!(matrix.order(), expected);
-    ///
+    /// let order = matrix.order();
     /// matrix.switch_order_without_rearrangement();
-    /// expected.switch();
-    /// assert_eq!(matrix.order(), expected);
+    /// assert_ne!(matrix.order(), order);
+    ///
     /// // row 0
     /// assert_eq!(matrix[(0, 0)], 0);
     /// assert_eq!(matrix[(0, 1)], 3);
+    ///
     /// // row 1
     /// assert_eq!(matrix[(1, 0)], 1);
     /// assert_eq!(matrix[(1, 1)], 4);
+    ///
     /// // row 2
     /// assert_eq!(matrix[(2, 0)], 2);
     /// assert_eq!(matrix[(2, 1)], 5);
-    ///
-    /// matrix.switch_order_without_rearrangement();
-    /// expected.switch();
-    /// assert_eq!(matrix.order(), expected);
-    /// // row 0
-    /// assert_eq!(matrix[(0, 0)], 0);
-    /// assert_eq!(matrix[(0, 1)], 1);
-    /// assert_eq!(matrix[(0, 2)], 2);
-    /// // row 1
-    /// assert_eq!(matrix[(1, 0)], 3);
-    /// assert_eq!(matrix[(1, 1)], 4);
-    /// assert_eq!(matrix[(1, 2)], 5);
     /// ```
     pub fn switch_order_without_rearrangement(&mut self) -> &mut Self {
         self.order.switch();
@@ -361,7 +269,6 @@ impl<T> Matrix<T> {
     /// use matreex::{matrix, Order};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(matrix.order(), Order::default());
     ///
     /// matrix.set_order(Order::RowMajor);
     /// assert_eq!(matrix.order(), Order::RowMajor);
@@ -383,30 +290,22 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(matrix.order(), Order::default());
+    /// let mut order = matrix.order();
+    /// order.switch();
+    /// matrix.set_order_without_rearrangement(order);
+    /// assert_eq!(matrix.order(), order);
     ///
-    /// matrix.set_order_without_rearrangement(Order::RowMajor);
-    /// assert_eq!(matrix.order(), Order::RowMajor);
-    /// // row 0
-    /// assert_eq!(matrix[(0, 0)], 0);
-    /// assert_eq!(matrix[(0, 1)], 1);
-    /// assert_eq!(matrix[(0, 2)], 2);
-    /// // row 1
-    /// assert_eq!(matrix[(1, 0)], 3);
-    /// assert_eq!(matrix[(1, 1)], 4);
-    /// assert_eq!(matrix[(1, 2)], 5);
-    ///
-    /// matrix.set_order_without_rearrangement(Order::ColMajor);
-    /// assert_eq!(matrix.order(), Order::ColMajor);
     /// // row 0
     /// assert_eq!(matrix[(0, 0)], 0);
     /// assert_eq!(matrix[(0, 1)], 3);
+    ///
     /// // row 1
     /// assert_eq!(matrix[(1, 0)], 1);
     /// assert_eq!(matrix[(1, 1)], 4);
+    ///
     /// // row 2
     /// assert_eq!(matrix[(2, 0)], 2);
     /// assert_eq!(matrix[(2, 1)], 5);
@@ -443,9 +342,10 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn resize<S: Shape>(&mut self, shape: S) -> Result<&mut Self>
+    pub fn resize<S>(&mut self, shape: S) -> Result<&mut Self>
     where
         T: Default,
+        S: Shape,
     {
         let shape = AxisShape::try_from_shape(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
@@ -478,14 +378,18 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn reshape<S: Shape>(&mut self, shape: S) -> Result<&mut Self> {
-        match shape.size() {
-            Ok(size) if (self.size() == size) => {
-                self.shape = AxisShape::from_shape_unchecked(shape, self.order);
-                Ok(self)
-            }
-            _ => Err(Error::SizeMismatch),
+    pub fn reshape<S>(&mut self, shape: S) -> Result<&mut Self>
+    where
+        S: Shape,
+    {
+        let Ok(size) = shape.size() else {
+            return Err(Error::SizeMismatch);
+        };
+        if self.size() != size {
+            return Err(Error::SizeMismatch);
         }
+        self.shape = AxisShape::from_shape_unchecked(shape, self.order);
+        Ok(self)
     }
 
     /// Shrinks the capacity of the matrix as much as possible.
@@ -532,6 +436,7 @@ impl<T> Matrix<T> {
     /// matrix.resize((1, 3))?;
     /// matrix.shrink_to(4);
     /// assert!(matrix.capacity() >= 4);
+    ///
     /// matrix.shrink_to(0);
     /// assert!(matrix.capacity() >= 3);
     /// # Ok(())
@@ -552,7 +457,6 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
     /// let other = matrix![[1, 1], [1, 1], [1, 1]];
-    ///
     /// matrix.overwrite_with(&other);
     /// assert_eq!(matrix, matrix![[1, 1, 0], [1, 1, 0]]);
     /// ```
@@ -597,7 +501,6 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// matrix.apply(|x| *x += 1);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
@@ -618,7 +521,6 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// let matrix_f64 = matrix_i32.map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
@@ -631,13 +533,7 @@ impl<T> Matrix<T> {
         let data = self.data.into_iter().map(f).collect();
         Matrix { order, shape, data }
     }
-}
 
-#[cfg(feature = "rayon")]
-impl<T> Matrix<T>
-where
-    T: Sync + Send,
-{
     /// Applies a closure to each element of the matrix in parallel,
     /// modifying the matrix in place.
     ///
@@ -647,12 +543,13 @@ where
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// matrix.par_apply(|x| *x += 1);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[cfg(feature = "rayon")]
     pub fn par_apply<F>(&mut self, f: F) -> &mut Self
     where
+        T: Send,
         F: Fn(&mut T) + Sync + Send,
     {
         self.data.par_iter_mut().for_each(f);
@@ -668,12 +565,13 @@ where
     /// use matreex::matrix;
     ///
     /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// let matrix_f64 = matrix_i32.par_map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
+    #[cfg(feature = "rayon")]
     pub fn par_map<U, F>(self, f: F) -> Matrix<U>
     where
+        T: Send,
         U: Send,
         F: Fn(T) -> U + Sync + Send,
     {
@@ -689,7 +587,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -698,15 +596,15 @@ impl<L> Matrix<L> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let lhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let lhs = Matrix::<i32>::with_default((2, 3))?;
     ///
-    /// let rhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let rhs = Matrix::<i32>::with_default((2, 3))?;
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::with_shape((3, 2))?;
+    /// let rhs = Matrix::<i32>::with_default((3, 2))?;
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-    /// assert_eq!(result, Err(Error::NotConformable));
+    /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// # Ok(())
     /// # }
     /// ```
@@ -714,7 +612,7 @@ impl<L> Matrix<L> {
         if self.shape().equal(&rhs.shape()) {
             Ok(self)
         } else {
-            Err(Error::NotConformable)
+            Err(Error::ShapeNotConformable)
         }
     }
 
@@ -722,7 +620,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -735,20 +633,23 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
-    /// let result = lhs.elementwise_operation(&rhs, |(x, y)| x + y);
+    /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     pub fn elementwise_operation<R, F, U>(&self, rhs: &Matrix<R>, mut op: F) -> Result<Matrix<U>>
     where
-        F: FnMut((&L, &R)) -> U,
+        F: FnMut(&L, &R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
         let order = self.order;
         let shape = self.shape;
         let data = if self.order == rhs.order {
-            self.data.iter().zip(rhs.data.iter()).map(op).collect()
+            self.data
+                .iter()
+                .zip(rhs.data.iter())
+                .map(|(left, right)| op(left, right))
+                .collect()
         } else {
             self.data
                 .iter()
@@ -756,7 +657,7 @@ impl<L> Matrix<L> {
                 .map(|(index, left)| {
                     let index = Self::transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
-                    op((left, right))
+                    op(left, right)
                 })
                 .collect()
         };
@@ -768,7 +669,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -781,8 +682,7 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
-    /// let result = lhs.elementwise_operation_consume_self(&rhs, |(x, y)| x + y);
+    /// let result = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     pub fn elementwise_operation_consume_self<R, F, U>(
@@ -791,14 +691,18 @@ impl<L> Matrix<L> {
         mut op: F,
     ) -> Result<Matrix<U>>
     where
-        F: FnMut((L, &R)) -> U,
+        F: FnMut(L, &R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
         let order = self.order;
         let shape = self.shape;
         let data = if self.order == rhs.order {
-            self.data.into_iter().zip(rhs.data.iter()).map(op).collect()
+            self.data
+                .into_iter()
+                .zip(rhs.data.iter())
+                .map(|(left, right)| op(left, right))
+                .collect()
         } else {
             self.data
                 .into_iter()
@@ -806,7 +710,7 @@ impl<L> Matrix<L> {
                 .map(|(index, left)| {
                     let index = Self::transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
-                    op((left, right))
+                    op(left, right)
                 })
                 .collect()
         };
@@ -819,7 +723,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -830,8 +734,7 @@ impl<L> Matrix<L> {
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
-    /// lhs.elementwise_operation_assign(&rhs, |(x, y)| *x += y)?;
+    /// lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)?;
     /// assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
     /// # Ok(())
     /// # }
@@ -842,17 +745,20 @@ impl<L> Matrix<L> {
         mut op: F,
     ) -> Result<&mut Self>
     where
-        F: FnMut((&mut L, &R)),
+        F: FnMut(&mut L, &R),
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
         if self.order == rhs.order {
-            self.data.iter_mut().zip(rhs.data.iter()).for_each(op);
+            self.data
+                .iter_mut()
+                .zip(rhs.data.iter())
+                .for_each(|(left, right)| op(left, right));
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
                 let index = Self::transpose_flattened_index(index, self.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) };
-                op((left, right))
+                op(left, right)
             });
         }
 
@@ -866,7 +772,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -875,15 +781,15 @@ impl<L> Matrix<L> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let lhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let lhs = Matrix::<i32>::with_default((2, 3))?;
     ///
-    /// let rhs = Matrix::<i32>::with_shape((3, 2))?;
+    /// let rhs = Matrix::<i32>::with_default((3, 2))?;
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::with_shape((2, 3))?;
+    /// let rhs = Matrix::<i32>::with_default((2, 3))?;
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-    /// assert_eq!(result, Err(Error::NotConformable));
+    /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// # Ok(())
     /// # }
     /// ```
@@ -894,7 +800,7 @@ impl<L> Matrix<L> {
         if self.ncols() == rhs.nrows() {
             Ok(self)
         } else {
-            Err(Error::NotConformable)
+            Err(Error::ShapeNotConformable)
         }
     }
 
@@ -902,7 +808,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -923,7 +829,6 @@ impl<L> Matrix<L> {
     /// let op = |vl: VectorIter<&i32>, vr: VectorIter<&i32>| {
     ///     vl.zip(vr).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
     /// };
-    ///
     /// let result = lhs.multiplication_like_operation(rhs, op);
     /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
     /// ```
@@ -995,7 +900,6 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let scalar = 2;
-    ///
     /// let result = matrix.scalar_operation(&scalar, |x, y| x + y);
     /// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
@@ -1022,7 +926,6 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let scalar = 2;
-    ///
     /// let result = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
     /// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
@@ -1050,7 +953,6 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let scalar = 2;
-    ///
     /// matrix.scalar_operation_assign(&scalar, |x, y| *x += y);
     /// assert_eq!(matrix, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
@@ -1079,78 +981,12 @@ mod tests {
     use super::*;
     use crate::matrix;
 
-    // All tests are based on the assumption that
-    // the default order is `RowMajor`.
-
-    #[test]
-    fn test_new() {
-        let matrix = Matrix::<i32>::new();
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.nrows(), 0);
-        assert_eq!(matrix.ncols(), 0);
-        assert!(matrix.is_empty());
-    }
-
-    #[test]
-    fn test_with_capacity() {
-        let matrix = Matrix::<i32>::with_capacity(10);
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.nrows(), 0);
-        assert_eq!(matrix.ncols(), 0);
-        assert!(matrix.is_empty());
-        assert!(matrix.capacity() >= 10);
-    }
-
-    #[test]
-    fn test_with_shape() {
-        let expected = matrix![[0, 0, 0], [0, 0, 0]];
-        assert_eq!(Matrix::with_shape((2, 3)).unwrap(), expected);
-        assert_ne!(Matrix::with_shape((3, 2)).unwrap(), expected);
-
-        assert_eq!(
-            Matrix::<u8>::with_shape((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
-        assert_eq!(
-            Matrix::<u8>::with_shape((isize::MAX as usize + 1, 1)).unwrap_err(),
-            Error::CapacityExceeded
-        );
-
-        assert_eq!(
-            Matrix::<i32>::with_shape((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
-        assert_eq!(
-            Matrix::<i32>::with_shape((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
-            Error::CapacityExceeded
-        );
-
-        // The following test cases for zero-sized types are impractical to
-        // run in debug mode, and since `#[cfg(not(debug_assertions))]` does
-        // not strictly match release mode, these tests are commented out.
-
-        // assert_eq!(
-        //     Matrix::<()>::with_shape((usize::MAX, 2)).unwrap_err(),
-        //     Error::SizeOverflow
-        // );
-        // assert!(Matrix::<()>::with_shape((isize::MAX as usize + 1, 1)).is_ok());
-
-        // #[derive(Debug, Default)]
-        // struct Foo;
-        // assert_eq!(
-        //     Matrix::<Foo>::with_shape((usize::MAX, 2)).unwrap_err(),
-        //     Error::SizeOverflow
-        // );
-        // assert!(Matrix::<Foo>::with_shape((isize::MAX as usize + 1, 1)).is_ok());
-    }
-
     #[test]
     fn test_transpose() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
+        let order = matrix.order;
+        let major = matrix.major();
+        let minor = matrix.minor();
 
         matrix.transpose();
 
@@ -1167,9 +1003,9 @@ mod tests {
             assert_eq!(matrix[(2, 0)], 2);
             assert_eq!(matrix[(2, 1)], 5);
 
-            assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 3);
-            assert_eq!(matrix.minor(), 2);
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), minor);
+            assert_eq!(matrix.minor(), major);
         }
 
         matrix.transpose();
@@ -1185,19 +1021,18 @@ mod tests {
             assert_eq!(matrix[(1, 1)], 4);
             assert_eq!(matrix[(1, 2)], 5);
 
-            assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
     }
 
     #[test]
     fn test_switch_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
+        let order = matrix.order;
+        let major = matrix.major();
+        let minor = matrix.minor();
 
         matrix.switch_order();
 
@@ -1212,9 +1047,9 @@ mod tests {
             assert_eq!(matrix[(1, 1)], 4);
             assert_eq!(matrix[(1, 2)], 5);
 
-            assert_eq!(matrix.order, Order::ColMajor);
-            assert_eq!(matrix.major(), 3);
-            assert_eq!(matrix.minor(), 2);
+            assert_ne!(matrix.order, order);
+            assert_eq!(matrix.major(), minor);
+            assert_eq!(matrix.minor(), major);
         }
 
         matrix.switch_order();
@@ -1230,19 +1065,18 @@ mod tests {
             assert_eq!(matrix[(1, 1)], 4);
             assert_eq!(matrix[(1, 2)], 5);
 
-            assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
     }
 
     #[test]
     fn test_switch_order_without_rearrangement() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
+        let order = matrix.order;
+        let major = matrix.major();
+        let minor = matrix.minor();
 
         matrix.switch_order_without_rearrangement();
 
@@ -1259,9 +1093,9 @@ mod tests {
             assert_eq!(matrix[(2, 0)], 2);
             assert_eq!(matrix[(2, 1)], 5);
 
-            assert_eq!(matrix.order, Order::ColMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_ne!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
 
         matrix.switch_order_without_rearrangement();
@@ -1277,37 +1111,17 @@ mod tests {
             assert_eq!(matrix[(1, 1)], 4);
             assert_eq!(matrix[(1, 2)], 5);
 
-            assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
     }
 
     #[test]
     fn test_set_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
-
-        matrix.set_order(Order::ColMajor);
-
-        {
-            // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 1);
-            assert_eq!(matrix[(0, 2)], 2);
-
-            // row 1
-            assert_eq!(matrix[(1, 0)], 3);
-            assert_eq!(matrix[(1, 1)], 4);
-            assert_eq!(matrix[(1, 2)], 5);
-
-            assert_eq!(matrix.order, Order::ColMajor);
-            assert_eq!(matrix.major(), 3);
-            assert_eq!(matrix.minor(), 2);
-        }
+        let major = matrix.major();
+        let minor = matrix.minor();
 
         matrix.set_order(Order::RowMajor);
 
@@ -1323,20 +1137,11 @@ mod tests {
             assert_eq!(matrix[(1, 2)], 5);
 
             assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
-    }
 
-    #[test]
-    fn test_set_order_without_rearrangement() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
-
-        matrix.set_order_without_rearrangement(Order::RowMajor);
+        matrix.set_order(Order::ColMajor);
 
         {
             // row 0
@@ -1349,12 +1154,39 @@ mod tests {
             assert_eq!(matrix[(1, 1)], 4);
             assert_eq!(matrix[(1, 2)], 5);
 
-            assert_eq!(matrix.order, Order::RowMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.order, Order::ColMajor);
+            assert_eq!(matrix.major(), minor);
+            assert_eq!(matrix.minor(), major);
+        }
+    }
+
+    #[test]
+    fn test_set_order_without_rearrangement() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut order = matrix.order();
+        let major = matrix.major();
+        let minor = matrix.minor();
+
+        matrix.set_order_without_rearrangement(order);
+
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 1);
+            assert_eq!(matrix[(0, 2)], 2);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 3);
+            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 2)], 5);
+
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
 
-        matrix.set_order_without_rearrangement(Order::ColMajor);
+        order.switch();
+        matrix.set_order_without_rearrangement(order);
 
         {
             // row 0
@@ -1369,9 +1201,9 @@ mod tests {
             assert_eq!(matrix[(2, 0)], 2);
             assert_eq!(matrix[(2, 1)], 5);
 
-            assert_eq!(matrix.order, Order::ColMajor);
-            assert_eq!(matrix.major(), 2);
-            assert_eq!(matrix.minor(), 3);
+            assert_eq!(matrix.order, order);
+            assert_eq!(matrix.major(), major);
+            assert_eq!(matrix.minor(), minor);
         }
     }
 
@@ -1574,88 +1406,92 @@ mod tests {
 
     #[test]
     fn test_ensure_elementwise_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
+        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
 
-        // RowMajor & RowMajor
+        // default order & default order
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((2, 2)).unwrap();
-        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::NotConformable));
+        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
+        let error = lhs
+            .ensure_elementwise_operation_conformable(&rhs)
+            .unwrap_err();
+        assert_eq!(error, Error::ShapeNotConformable);
 
-        let rhs = Matrix::<i32>::with_shape((3, 2)).unwrap();
-        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::NotConformable));
+        let rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
+        let error = lhs
+            .ensure_elementwise_operation_conformable(&rhs)
+            .unwrap_err();
+        assert_eq!(error, Error::ShapeNotConformable);
     }
 
     #[test]
     fn test_elementwise_operation() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |(x, y): (&i32, &i32)| x + y;
+        let op = |x: &i32, y: &i32| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor & RowMajor
+        // default order & default order
         let output = lhs.elementwise_operation(&rhs, op).unwrap();
         assert_eq!(output, expected);
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         let output = lhs.elementwise_operation(&rhs, op).unwrap();
         assert_eq!(output, expected);
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         let mut output = lhs.elementwise_operation(&rhs, op).unwrap();
         output.switch_order();
         assert_eq!(output, expected);
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         let mut output = lhs.elementwise_operation(&rhs, op).unwrap();
         output.switch_order();
         assert_eq!(output, expected);
 
         let rhs = matrix![[2, 2], [2, 2]];
         let error = lhs.elementwise_operation(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::NotConformable);
+        assert_eq!(error, Error::ShapeNotConformable);
 
         let rhs = matrix![[2, 2], [2, 2], [2, 2]];
         let error = lhs.elementwise_operation(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::NotConformable);
+        assert_eq!(error, Error::ShapeNotConformable);
     }
 
     #[test]
     fn test_elementwise_operation_consume_self() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |(x, y): (i32, &i32)| x + y;
+        let op = |x, y: &i32| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor & RowMajor
+        // default order & default order
         {
             let lhs = lhs.clone();
             let output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
@@ -1664,7 +1500,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         {
             let lhs = lhs.clone();
             let output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
@@ -1673,7 +1509,7 @@ mod tests {
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         {
             let lhs = lhs.clone();
             let mut output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
@@ -1683,7 +1519,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         {
             let lhs = lhs.clone();
             let mut output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
@@ -1697,7 +1533,7 @@ mod tests {
             let error = lhs
                 .elementwise_operation_consume_self(&rhs, op)
                 .unwrap_err();
-            assert_eq!(error, Error::NotConformable);
+            assert_eq!(error, Error::ShapeNotConformable);
         }
 
         {
@@ -1706,7 +1542,7 @@ mod tests {
             let error = lhs
                 .elementwise_operation_consume_self(&rhs, op)
                 .unwrap_err();
-            assert_eq!(error, Error::NotConformable);
+            assert_eq!(error, Error::ShapeNotConformable);
         }
     }
 
@@ -1714,10 +1550,10 @@ mod tests {
     fn test_elementwise_operation_assign() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |(x, y): (&mut i32, &i32)| *x += y;
+        let op = |x: &mut i32, y: &i32| *x += y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor & RowMajor
+        // default order & default order
         {
             let mut lhs = lhs.clone();
             lhs.elementwise_operation_assign(&rhs, op).unwrap();
@@ -1726,7 +1562,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         {
             let mut lhs = lhs.clone();
             lhs.elementwise_operation_assign(&rhs, op).unwrap();
@@ -1735,7 +1571,7 @@ mod tests {
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         {
             let mut lhs = lhs.clone();
             lhs.elementwise_operation_assign(&rhs, op).unwrap();
@@ -1745,7 +1581,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         {
             let mut lhs = lhs.clone();
             lhs.elementwise_operation_assign(&rhs, op).unwrap();
@@ -1757,57 +1593,61 @@ mod tests {
 
         let rhs = matrix![[2, 2], [2, 2]];
         let error = lhs.elementwise_operation_assign(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::NotConformable);
+        assert_eq!(error, Error::ShapeNotConformable);
         assert_eq!(lhs, unchanged);
 
         let rhs = matrix![[2, 2], [2, 2], [2, 2]];
         let error = lhs.elementwise_operation_assign(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::NotConformable);
+        assert_eq!(error, Error::ShapeNotConformable);
         assert_eq!(lhs, unchanged);
     }
 
     #[test]
     fn test_ensure_multiplication_like_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_shape((3, 2)).unwrap();
+        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
 
-        // RowMajor & RowMajor
+        // default order & default order
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((3, 1)).unwrap();
+        let rhs = Matrix::<i32>::with_default((3, 1)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((3, 3)).unwrap();
+        let rhs = Matrix::<i32>::with_default((3, 3)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_shape((2, 2)).unwrap();
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::NotConformable));
+        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
+        let error = lhs
+            .ensure_multiplication_like_operation_conformable(&rhs)
+            .unwrap_err();
+        assert_eq!(error, Error::ShapeNotConformable);
 
-        let rhs = Matrix::<i32>::with_shape((2, 3)).unwrap();
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::NotConformable));
+        let rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let error = lhs
+            .ensure_multiplication_like_operation_conformable(&rhs)
+            .unwrap_err();
+        assert_eq!(error, Error::ShapeNotConformable);
     }
 
     #[test]
@@ -1822,7 +1662,7 @@ mod tests {
         };
         let expected = matrix![[10, 13], [28, 40]];
 
-        // RowMajor & RowMajor
+        // default order & default order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -1832,7 +1672,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // RowMajor & ColMajor
+        // default order & alternative order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -1842,7 +1682,7 @@ mod tests {
 
         lhs.switch_order();
 
-        // ColMajor & ColMajor
+        // alternative order & alternative order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -1853,7 +1693,7 @@ mod tests {
 
         rhs.switch_order();
 
-        // ColMajor & RowMajor
+        // alternative order & default order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
@@ -1882,14 +1722,14 @@ mod tests {
             let lhs = lhs.clone();
             let rhs = matrix![[0, 1], [2, 3]];
             let error = lhs.multiplication_like_operation(rhs, op).unwrap_err();
-            assert_eq!(error, Error::NotConformable);
+            assert_eq!(error, Error::ShapeNotConformable);
         }
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[0, 1, 3], [4, 5, 6]];
             let error = lhs.multiplication_like_operation(rhs, op).unwrap_err();
-            assert_eq!(error, Error::NotConformable);
+            assert_eq!(error, Error::ShapeNotConformable);
         }
     }
 
@@ -1900,13 +1740,13 @@ mod tests {
         let op = |x: &i32, y: &i32| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor
+        // default order
         let output = matrix.scalar_operation(&scalar, op);
         assert_eq!(output, expected);
 
         matrix.switch_order();
 
-        // ColMajor
+        // alternative order
         let mut output = matrix.scalar_operation(&scalar, op);
         output.switch_order();
         assert_eq!(output, expected);
@@ -1919,7 +1759,7 @@ mod tests {
         let op = |x: i32, y: &i32| x + y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor
+        // default order
         {
             let matrix = matrix.clone();
             let output = matrix.scalar_operation_consume_self(&scalar, op);
@@ -1928,7 +1768,7 @@ mod tests {
 
         matrix.switch_order();
 
-        // ColMajor
+        // alternative order
         {
             let matrix = matrix.clone();
             let mut output = matrix.scalar_operation_consume_self(&scalar, op);
@@ -1944,7 +1784,7 @@ mod tests {
         let op = |x: &mut i32, y: &i32| *x += y;
         let expected = matrix![[2, 3, 4], [5, 6, 7]];
 
-        // RowMajor
+        // default order
         {
             let mut matrix = matrix.clone();
             matrix.scalar_operation_assign(&scalar, op);
@@ -1953,7 +1793,7 @@ mod tests {
 
         matrix.switch_order();
 
-        // ColMajor
+        // alternative order
         {
             let mut matrix = matrix.clone();
             matrix.scalar_operation_assign(&scalar, op);

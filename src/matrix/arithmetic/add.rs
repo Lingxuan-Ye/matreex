@@ -84,7 +84,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -97,25 +97,24 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_add(&rhs);
     /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_add<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Add<R, Output = U> + Clone,
         R: Clone,
     {
-        self.elementwise_operation(rhs, |(left, right)| left.clone() + right.clone())
+        self.elementwise_operation(rhs, |left, right| left.clone() + right.clone())
     }
 
     /// Performs elementwise addition on two matrices, consuming `self`.
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -128,18 +127,17 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_add_consume_self(&rhs);
     /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_add_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Add<R, Output = U>,
         R: Clone,
     {
-        self.elementwise_operation_consume_self(rhs, |(left, right)| left + right.clone())
+        self.elementwise_operation_consume_self(rhs, |left, right| left + right.clone())
     }
 
     /// Performs elementwise addition on two matrices, assigning the result
@@ -147,7 +145,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -158,20 +156,19 @@ impl<L> Matrix<L> {
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// lhs.elementwise_add_assign(&rhs)?;
     /// assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
     /// # Ok(())
     /// # }
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_add_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
     where
         L: AddAssign<R>,
         R: Clone,
     {
-        self.elementwise_operation_assign(rhs, |(left, right)| *left += right.clone())
+        self.elementwise_operation_assign(rhs, |left, right| *left += right.clone())
     }
 }
 

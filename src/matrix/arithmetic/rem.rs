@@ -8,7 +8,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -21,7 +21,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_rem(&rhs);
     /// assert_eq!(result, Ok(matrix![[0, 1, 0], [1, 0, 1]]));
     /// ```
@@ -31,18 +30,17 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, -1, -2], [-3, -4, -5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.elementwise_rem(&rhs);
     /// assert_eq!(result, Ok(matrix![[0, -1, 0], [-1, 0, -1]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_rem<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Rem<R, Output = U> + Clone,
         R: Clone,
     {
-        self.elementwise_operation(rhs, |(left, right)| left.clone() % right.clone())
+        self.elementwise_operation(rhs, |left, right| left.clone() % right.clone())
     }
 
     /// Performs elementwise remainder operation on two matrices,
@@ -50,7 +48,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Notes
     ///
@@ -63,7 +61,6 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// let result = lhs.clone().elementwise_rem_consume_self(&rhs);
     /// assert_eq!(result, Ok(matrix![[0, 1, 0], [1, 0, 1]]));
     /// ```
@@ -78,13 +75,13 @@ impl<L> Matrix<L> {
     /// assert_eq!(result, Ok(matrix![[0, -1, 0], [-1, 0, -1]]));
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_rem_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Rem<R, Output = U>,
         R: Clone,
     {
-        self.elementwise_operation_consume_self(rhs, |(left, right)| left % right.clone())
+        self.elementwise_operation_consume_self(rhs, |left, right| left % right.clone())
     }
 
     /// Performs elementwise remainder operation on two matrices,
@@ -92,7 +89,7 @@ impl<L> Matrix<L> {
     ///
     /// # Errors
     ///
-    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     ///
     /// # Examples
     ///
@@ -103,20 +100,19 @@ impl<L> Matrix<L> {
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    ///
     /// lhs.elementwise_rem_assign(&rhs)?;
     /// assert_eq!(lhs, matrix![[0, 1, 0], [1, 0, 1]]);
     /// # Ok(())
     /// # }
     /// ```
     ///
-    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn elementwise_rem_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
     where
         L: RemAssign<R>,
         R: Clone,
     {
-        self.elementwise_operation_assign(rhs, |(left, right)| *left %= right.clone())
+        self.elementwise_operation_assign(rhs, |left, right| *left %= right.clone())
     }
 }
 

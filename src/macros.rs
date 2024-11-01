@@ -7,7 +7,8 @@
 ///
 /// let foo: Matrix<i32> = matrix![];
 /// let bar = matrix![[0; 3]; 2];
-/// let baz = matrix![[0, 1, 2], [3, 4, 5]];
+/// let baz = matrix![[0, 1, 2]; 2];
+/// let qux = matrix![[0, 1, 2], [3, 4, 5]];
 /// ```
 ///
 /// [`Matrix<T>`]: crate::matrix::Matrix
@@ -17,12 +18,19 @@ macro_rules! matrix {
         $crate::matrix::Matrix::new()
     };
 
-    [$col:expr; $n:expr] => {
-        $crate::matrix::Matrix::from([$col; $n])
+    [[$elem:expr; $ncols:expr]; $nrows:expr] => {
+        match $crate::matrix::Matrix::with_value(($nrows, $ncols), $elem) {
+            Err(error) => ::std::panic!("{error}"),
+            Ok(matrix) => matrix,
+        }
     };
 
-    [$($col:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from([$($col,)+])
+    [[$($elem:expr),+ $(,)?]; $nrows:expr] => {
+        $crate::matrix::Matrix::from(::std::vec![[$($elem),+]; $nrows])
+    };
+
+    [$($row:expr),+ $(,)?] => {
+        $crate::matrix::Matrix::from([$($row,)+])
     };
 }
 
@@ -46,15 +54,15 @@ macro_rules! matrix {
 #[macro_export]
 macro_rules! row_vec {
     [] => {
-        $crate::matrix::Matrix::from([[]])
+        $crate::matrix::Matrix::from_row(::std::vec::Vec::new());
     };
 
     [$elem:expr; $n:expr] => {
-        $crate::matrix::Matrix::from([[$elem; $n]])
+        $crate::matrix::Matrix::from_row(::std::vec![$elem; $n])
     };
 
     [$($elem:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from([[$($elem),+]])
+        $crate::matrix::Matrix::from_row(::std::vec![$($elem),+])
     };
 }
 
@@ -77,18 +85,16 @@ macro_rules! row_vec {
 /// ```
 #[macro_export]
 macro_rules! col_vec {
-    [] => {{
-        let mut matrix = $crate::matrix::Matrix::from([[]]);
-        matrix.transpose();
-        matrix
-    }};
+    [] => {
+        $crate::matrix::Matrix::from_col(::std::vec::Vec::new());
+    };
 
     [$elem:expr; $n:expr] => {
-        $crate::matrix::Matrix::from([[$elem]; $n])
+        $crate::matrix::Matrix::from_col(::std::vec![$elem; $n])
     };
 
     [$($elem:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from([$([$elem]),+])
+        $crate::matrix::Matrix::from_col(::std::vec![$($elem),+])
     };
 }
 

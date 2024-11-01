@@ -15,7 +15,6 @@ impl Order {
     /// use matreex::Order;
     ///
     /// let mut order = Order::RowMajor;
-    ///
     /// order.switch();
     /// assert_eq!(order, Order::ColMajor);
     /// ```

@@ -3,6 +3,40 @@ use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
+impl<T> Matrix<T> {
+    /// Creates a new single-row [`Matrix<T>`] from a vector.
+    ///
+    /// # Examples
+    /// ```
+    /// use matreex::{matrix, Matrix};
+    ///
+    /// let row_vec = Matrix::from_row(vec![0, 1, 2]);
+    /// assert_eq!(row_vec, matrix![[0, 1, 2]]);
+    /// ```
+    pub fn from_row(row: Vec<T>) -> Self {
+        let order = Order::default();
+        let shape = AxisShape::from_shape_unchecked((1, row.len()), order);
+        let data = row;
+        Self { order, shape, data }
+    }
+
+    /// Creates a new single-column [`Matrix<T>`] from a vector.
+    ///
+    /// # Examples
+    /// ```
+    /// use matreex::{matrix, Matrix};
+    ///
+    /// let col_vec = Matrix::from_col(vec![0, 1, 2]);
+    /// assert_eq!(col_vec, matrix![[0], [1], [2]]);
+    /// ```
+    pub fn from_col(col: Vec<T>) -> Self {
+        let order = Order::default();
+        let shape = AxisShape::from_shape_unchecked((col.len(), 1), order);
+        let data = col;
+        Self { order, shape, data }
+    }
+}
+
 impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     fn from(value: [[T; C]; R]) -> Self {
         let order = Order::default();
@@ -96,38 +130,30 @@ impl<T, V> FromIterator<V> for Matrix<T>
 where
     V: IntoIterator<Item = T>,
 {
-    /// Creates a new [`Matrix<T>`] from an iterator over matrix rows.
+    /// Creates a new [`Matrix<T>`] from an iterator over rows.
     ///
     /// # Panics
     ///
-    /// Panics if length in each iteration is inconsistent, or memory runs out.
+    /// Panics if rows have inconsistent lengths or if memory allocation fails.
     fn from_iter<M>(iter: M) -> Self
     where
         M: IntoIterator<Item = V>,
     {
-        let mut nrows;
-        let ncols;
-        let mut data_len;
-        let mut data = Vec::new();
         let mut iter = iter.into_iter();
-        match iter.next() {
-            None => {
-                return Self::new();
-            }
-            Some(row) => {
-                data.extend(row);
-                nrows = 1;
-                ncols = data.len();
-                data_len = data.len();
-            }
-        }
+        let Some(row) = iter.next() else {
+            return Self::new();
+        };
+        let mut data: Vec<T> = row.into_iter().collect(); // could panic for running out of memory
+        let mut nrows = 1;
+        let ncols = data.len();
+        let mut size = ncols;
         for row in iter {
-            data.extend(row);
-            if data.len() - data_len != ncols {
+            data.extend(row); // could panic for running out of memory
+            if data.len() - size != ncols {
                 panic!("{}", Error::LengthInconsistent);
             }
             nrows += 1;
-            data_len = data.len();
+            size = data.len();
         }
         data.shrink_to_fit();
         let order = Order::default();
@@ -142,82 +168,104 @@ mod tests {
     use crate::matrix;
 
     #[test]
-    fn test_from_2darray() {
+    fn test_from_row() {
+        let row_vec: Matrix<i32> = Matrix::from_row(Vec::new());
+        assert_eq!(row_vec, Matrix::with_default((1, 0)).unwrap());
+
+        let row_vec = Matrix::from_row(vec![0, 1, 2]);
+        assert_eq!(row_vec, matrix![[0, 1, 2]]);
+    }
+
+    #[test]
+    fn test_from_col() {
+        let col_vec: Matrix<i32> = Matrix::from_col(Vec::new());
+        assert_eq!(col_vec, Matrix::with_default((0, 1)).unwrap());
+
+        let col_vec = Matrix::from_col(vec![0, 1, 2]);
+        assert_eq!(col_vec, matrix![[0], [1], [2]]);
+    }
+
+    #[test]
+    fn test_from_sequence_of_arrays() {
+        // avoid using `matrix!` to prevent circular validation
         let order = Order::default();
         let shape = AxisShape::from_shape_unchecked((2, 3), order);
         let data = vec![0, 1, 2, 3, 4, 5];
         let mut expected = Matrix { order, shape, data };
 
-        let array = [[0, 1, 2], [3, 4, 5]];
-        assert_eq!(Matrix::from(array), expected);
-        assert_eq!(Matrix::from(array.to_vec()), expected);
-        assert_eq!(Matrix::from(&array[..]), expected);
+        let arrays = [[0, 1, 2], [3, 4, 5]];
+        assert_eq!(Matrix::from(arrays), expected);
+        assert_eq!(Matrix::from(arrays.to_vec()), expected);
+        assert_eq!(Matrix::from(&arrays[..]), expected);
         assert_eq!(matrix![[0, 1, 2], [3, 4, 5]], expected);
 
-        let array = [[0, 3], [1, 4], [2, 5]];
-        assert_ne!(Matrix::from(array), expected);
-        assert_ne!(Matrix::from(array.to_vec()), expected);
-        assert_ne!(Matrix::from(&array[..]), expected);
+        let arrays = [[0, 3], [1, 4], [2, 5]];
+        assert_ne!(Matrix::from(arrays), expected);
+        assert_ne!(Matrix::from(arrays.to_vec()), expected);
+        assert_ne!(Matrix::from(&arrays[..]), expected);
         assert_ne!(matrix![[0, 3], [1, 4], [2, 5]], expected);
         expected.transpose();
-        assert_eq!(Matrix::from(array), expected);
-        assert_eq!(Matrix::from(array.to_vec()), expected);
-        assert_eq!(Matrix::from(&array[..]), expected);
+        assert_eq!(Matrix::from(arrays), expected);
+        assert_eq!(Matrix::from(arrays.to_vec()), expected);
+        assert_eq!(Matrix::from(&arrays[..]), expected);
         assert_eq!(matrix![[0, 3], [1, 4], [2, 5]], expected);
     }
 
     #[test]
-    fn test_try_from_array_of_arrays() {
+    fn test_try_from_sequence_of_vectors() {
         const MAX: usize = isize::MAX as usize;
 
         let expected = matrix![[0, 1, 2], [3, 4, 5]];
 
-        let aoa = [vec![0, 1, 2], vec![3, 4, 5]];
-        assert_eq!(Matrix::try_from(aoa.clone()).unwrap(), expected);
-        assert_eq!(Matrix::try_from(aoa.to_vec()).unwrap(), expected);
-        assert_eq!(Matrix::try_from(&aoa[..]).unwrap(), expected);
+        let vectors = [vec![0, 1, 2], vec![3, 4, 5]];
+        assert_eq!(Matrix::try_from(vectors.clone()).unwrap(), expected);
+        assert_eq!(Matrix::try_from(vectors.to_vec()).unwrap(), expected);
+        assert_eq!(Matrix::try_from(&vectors[..]).unwrap(), expected);
 
-        let aoa = [vec![0, 1, 2]];
-        assert_ne!(Matrix::try_from(aoa.clone()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(aoa.to_vec()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(&aoa[..]).unwrap(), expected);
+        let vectors = [vec![0, 1, 2]];
+        assert_ne!(Matrix::try_from(vectors.clone()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(vectors.to_vec()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(&vectors[..]).unwrap(), expected);
 
-        let aoa = [vec![0, 1, 2], vec![3, 4, 5], vec![6, 7, 8]];
-        assert_ne!(Matrix::try_from(aoa.clone()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(aoa.to_vec()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(&aoa[..]).unwrap(), expected);
+        let vectors = [vec![0, 1, 2], vec![3, 4, 5], vec![6, 7, 8]];
+        assert_ne!(Matrix::try_from(vectors.clone()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(vectors.to_vec()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(&vectors[..]).unwrap(), expected);
 
-        let aoa = [vec![0, 1], vec![2, 3], vec![4, 5]];
-        assert_ne!(Matrix::try_from(aoa.clone()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(aoa.to_vec()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(&aoa[..]).unwrap(), expected);
+        let vectors = [vec![0, 1], vec![2, 3], vec![4, 5]];
+        assert_ne!(Matrix::try_from(vectors.clone()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(vectors.to_vec()).unwrap(), expected);
+        assert_ne!(Matrix::try_from(&vectors[..]).unwrap(), expected);
 
-        let aoa = [vec![(); MAX], vec![(); MAX]];
-        assert!(Matrix::try_from(aoa.clone()).is_ok());
-        assert!(Matrix::try_from(aoa.to_vec()).is_ok());
-        assert!(Matrix::try_from(&aoa[..]).is_ok());
+        let vectors = [vec![(); MAX], vec![(); MAX]];
+        assert!(Matrix::try_from(vectors.clone()).is_ok());
+        assert!(Matrix::try_from(vectors.to_vec()).is_ok());
+        assert!(Matrix::try_from(&vectors[..]).is_ok());
 
-        let aoa = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
-        assert_eq!(Matrix::try_from(aoa.clone()), Err(Error::SizeOverflow));
-        assert_eq!(Matrix::try_from(aoa.to_vec()), Err(Error::SizeOverflow));
-        assert_eq!(Matrix::try_from(&aoa[..]), Err(Error::SizeOverflow));
+        let vectors = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
+        assert_eq!(Matrix::try_from(vectors.clone()), Err(Error::SizeOverflow));
+        assert_eq!(Matrix::try_from(vectors.to_vec()), Err(Error::SizeOverflow));
+        assert_eq!(Matrix::try_from(&vectors[..]), Err(Error::SizeOverflow));
 
         // unable to cover (run out of memory)
-        // let aoa = [vec![0u8; MAX], vec![0u8; MAX]];
-        // assert_eq!(Matrix::try_from(aoa.clone()), Err(Error::CapacityExceeded));
-        // assert_eq!(Matrix::try_from(aoa.to_vec()), Err(Error::CapacityExceeded));
-        // assert_eq!(Matrix::try_from(&aoa[..]), Err(Error::CapacityExceeded));
+        // let vectors = [vec![0u8; MAX], vec![0u8; MAX]];
+        // assert_eq!(Matrix::try_from(vectors.clone()), Err(Error::CapacityExceeded));
+        // assert_eq!(Matrix::try_from(vectors.to_vec()), Err(Error::CapacityExceeded));
+        // assert_eq!(Matrix::try_from(&vectors[..]), Err(Error::CapacityExceeded));
 
-        let aoa = [vec![0, 1, 2], vec![3, 4]];
+        let vectors = [vec![0, 1, 2], vec![3, 4]];
         assert_eq!(
-            Matrix::try_from(aoa.clone()),
+            Matrix::try_from(vectors.clone()),
             Err(Error::LengthInconsistent)
         );
         assert_eq!(
-            Matrix::try_from(aoa.to_vec()),
+            Matrix::try_from(vectors.to_vec()),
             Err(Error::LengthInconsistent)
         );
-        assert_eq!(Matrix::try_from(&aoa[..]), Err(Error::LengthInconsistent));
+        assert_eq!(
+            Matrix::try_from(&vectors[..]),
+            Err(Error::LengthInconsistent)
+        );
     }
 
     #[test]
