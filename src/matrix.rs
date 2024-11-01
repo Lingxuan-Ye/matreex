@@ -666,13 +666,7 @@ impl<T> Matrix<T> {
         let data = self.data.into_iter().map(f).collect();
         Matrix { order, shape, data }
     }
-}
 
-#[cfg(feature = "rayon")]
-impl<T> Matrix<T>
-where
-    T: Sync + Send,
-{
     /// Applies a closure to each element of the matrix in parallel,
     /// modifying the matrix in place.
     ///
@@ -685,8 +679,10 @@ where
     /// matrix.par_apply(|x| *x += 1);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[cfg(feature = "rayon")]
     pub fn par_apply<F>(&mut self, f: F) -> &mut Self
     where
+        T: Send,
         F: Fn(&mut T) + Sync + Send,
     {
         self.data.par_iter_mut().for_each(f);
@@ -705,8 +701,10 @@ where
     /// let matrix_f64 = matrix_i32.par_map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
+    #[cfg(feature = "rayon")]
     pub fn par_map<U, F>(self, f: F) -> Matrix<U>
     where
+        T: Send,
         U: Send,
         F: Fn(T) -> U + Sync + Send,
     {
