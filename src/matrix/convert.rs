@@ -185,6 +185,15 @@ mod tests {
     }
 
     #[test]
+    fn test_from_col() {
+        let col_vec: Matrix<i32> = Matrix::from_col(Vec::new());
+        assert_eq!(col_vec, Matrix::with_default((0, 1)).unwrap());
+
+        let col_vec = Matrix::from_col(vec![0, 1, 2]);
+        assert_eq!(col_vec, matrix![[0], [1], [2]]);
+    }
+
+    #[test]
     fn test_from_sequence_of_arrays() {
         let order = Order::default();
         let shape = AxisShape::from_shape_unchecked((2, 3), order);
