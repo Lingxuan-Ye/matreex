@@ -118,17 +118,17 @@ impl AxisShape {
         }
     }
 
+    pub(super) fn try_from_shape<S: Shape>(shape: S, order: Order) -> Result<Self> {
+        shape.size()?;
+        Ok(Self::from_shape_unchecked(shape, order))
+    }
+
     pub(super) fn from_shape_unchecked<S: Shape>(shape: S, order: Order) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (shape.nrows(), shape.ncols()),
             Order::ColMajor => (shape.ncols(), shape.nrows()),
         };
         Self { major, minor }
-    }
-
-    pub(super) fn try_from_shape<S: Shape>(shape: S, order: Order) -> Result<Self> {
-        shape.size()?;
-        Ok(Self::from_shape_unchecked(shape, order))
     }
 }
 
