@@ -303,17 +303,17 @@ impl AxisIndex {
         }
     }
 
-    pub(super) fn to_flattened_unchecked(self, shape: AxisShape) -> usize {
-        // self.major * shape.major_stride() + self.minor * shape.minor_stride()
-        self.major * shape.major_stride() + self.minor
-    }
-
     pub(super) fn try_to_flattened(self, shape: AxisShape) -> Result<usize> {
         if self.is_out_of_bounds(shape) {
             Err(Error::IndexOutOfBounds)
         } else {
             Ok(self.to_flattened_unchecked(shape))
         }
+    }
+
+    pub(super) fn to_flattened_unchecked(self, shape: AxisShape) -> usize {
+        // self.major * shape.major_stride() + self.minor * shape.minor_stride()
+        self.major * shape.major_stride() + self.minor
     }
 }
 
@@ -360,14 +360,6 @@ impl<T> Matrix<T> {
         AxisIndex::from_flattened(index, shape).to_index(order)
     }
 
-    pub(super) fn flatten_index_unchecked<I: Index>(
-        index: I,
-        order: Order,
-        shape: AxisShape,
-    ) -> usize {
-        AxisIndex::from_index(index, order).to_flattened_unchecked(shape)
-    }
-
     #[allow(dead_code)]
     pub(super) fn try_flatten_index<I: Index>(
         index: I,
@@ -375,6 +367,14 @@ impl<T> Matrix<T> {
         shape: AxisShape,
     ) -> Result<usize> {
         AxisIndex::from_index(index, order).try_to_flattened(shape)
+    }
+
+    pub(super) fn flatten_index_unchecked<I: Index>(
+        index: I,
+        order: Order,
+        shape: AxisShape,
+    ) -> usize {
+        AxisIndex::from_index(index, order).to_flattened_unchecked(shape)
     }
 
     #[inline]
