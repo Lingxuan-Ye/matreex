@@ -185,11 +185,11 @@ mod tests {
 
         assert_eq!(
             Matrix::<u8>::with_value((isize::MAX as usize + 1, 1), 0).unwrap_err(),
-            Error::CapacityExceeded
+            Error::CapacityOverflow
         );
         assert_eq!(
             Matrix::<i32>::with_value((isize::MAX as usize / 4 + 1, 1), 0).unwrap_err(),
-            Error::CapacityExceeded
+            Error::CapacityOverflow
         );
 
         // zero-sized types
@@ -211,12 +211,12 @@ mod tests {
         assert_eq!(
             Matrix::<u8>::with_initializer((isize::MAX as usize + 1, 1), Default::default)
                 .unwrap_err(),
-            Error::CapacityExceeded
+            Error::CapacityOverflow
         );
         assert_eq!(
             Matrix::<i32>::with_initializer((isize::MAX as usize / 4 + 1, 1), Default::default)
                 .unwrap_err(),
-            Error::CapacityExceeded
+            Error::CapacityOverflow
         );
 
         // The following test case for zero-sized types is impractical to
@@ -242,11 +242,11 @@ mod tests {
 
         assert_eq!(
             Matrix::<u8>::with_default((isize::MAX as usize + 1, 1)).unwrap_err(),
-            Error::CapacityExceeded
+            Error::CapacityOverflow
         );
         assert_eq!(
             Matrix::<i32>::with_default((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
-            Error::CapacityExceeded
+            Error::CapacityOverflow
         );
 
         // assert!(Matrix::<()>::with_default((isize::MAX as usize + 1, 1)).is_ok());

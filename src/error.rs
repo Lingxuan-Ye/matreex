@@ -24,7 +24,7 @@ pub enum Error {
     /// Error when total bytes exceeds [`isize::MAX`].
     ///
     /// Refer to [`Vec::with_capacity`] for more information.
-    CapacityExceeded,
+    CapacityOverflow,
 
     /// Error when creating a matrix from a sequence of vectors with
     /// inconsistent lengths.
@@ -43,7 +43,7 @@ impl std::fmt::Display for Error {
         let content = match self {
             Self::SizeOverflow => "size overflows",
             Self::SizeMismatch => "size does not match",
-            Self::CapacityExceeded => "capacity exceeds",
+            Self::CapacityOverflow => "capacity exceeds",
             Self::LengthInconsistent => "length inconsistent",
             Self::IndexOutOfBounds => "index out of bounds",
             Self::ShapeNotConformable => "shape not conformable",
