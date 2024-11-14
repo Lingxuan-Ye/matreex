@@ -1,4 +1,4 @@
-//! This module serves for error handling.
+//! Module for error handling.
 
 /// An alias for [`std::result::Result`].
 pub type Result<T> = std::result::Result<T, Error>;

@@ -249,9 +249,9 @@ mod tests {
 
         // unable to cover (run out of memory)
         // let vectors = [vec![0u8; MAX], vec![0u8; MAX]];
-        // assert_eq!(Matrix::try_from(vectors.clone()), Err(Error::CapacityExceeded));
-        // assert_eq!(Matrix::try_from(vectors.to_vec()), Err(Error::CapacityExceeded));
-        // assert_eq!(Matrix::try_from(&vectors[..]), Err(Error::CapacityExceeded));
+        // assert_eq!(Matrix::try_from(vectors.clone()), Err(Error::CapacityOverflow));
+        // assert_eq!(Matrix::try_from(vectors.to_vec()), Err(Error::CapacityOverflow));
+        // assert_eq!(Matrix::try_from(&vectors[..]), Err(Error::CapacityOverflow));
 
         let vectors = [vec![0, 1, 2], vec![3, 4]];
         assert_eq!(

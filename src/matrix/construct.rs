@@ -52,7 +52,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityExceeded`] if total bytes stored exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if total bytes stored exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -66,8 +66,11 @@ impl<T> Matrix<T> {
     /// assert_eq!(result, Err(Error::SizeOverflow));
     ///
     /// let result = Matrix::<u8>::with_value((isize::MAX as usize + 1, 1), 0);
-    /// assert_eq!(result, Err(Error::CapacityExceeded));
+    /// assert_eq!(result, Err(Error::CapacityOverflow));
     /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_value<S>(shape: S, value: T) -> Result<Self>
     where
         T: Clone,
@@ -86,7 +89,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityExceeded`] if total bytes stored exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if total bytes stored exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -100,8 +103,11 @@ impl<T> Matrix<T> {
     /// assert_eq!(result, Err(Error::SizeOverflow));
     ///
     /// let result = Matrix::<u8>::with_initializer((isize::MAX as usize + 1, 1), Default::default);
-    /// assert_eq!(result, Err(Error::CapacityExceeded));
+    /// assert_eq!(result, Err(Error::CapacityOverflow));
     /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_initializer<S, F>(shape: S, initializer: F) -> Result<Self>
     where
         S: Shape,
@@ -121,7 +127,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityExceeded`] if total bytes stored exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if total bytes stored exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -135,8 +141,11 @@ impl<T> Matrix<T> {
     /// assert_eq!(result, Err(Error::SizeOverflow));
     ///
     /// let result = Matrix::<u8>::with_default((isize::MAX as usize + 1, 1));
-    /// assert_eq!(result, Err(Error::CapacityExceeded));
+    /// assert_eq!(result, Err(Error::CapacityOverflow));
     /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_default<S>(shape: S) -> Result<Self>
     where
         T: Default,
