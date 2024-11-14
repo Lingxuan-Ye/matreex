@@ -1,4 +1,4 @@
-//! This module defines [`Matrix<T>`] and all its related components.
+//! Defines [`Matrix<T>`] and all its related components.
 
 use self::iter::VectorIter;
 use self::order::Order;
@@ -971,7 +971,7 @@ impl<T> Matrix<T> {
         const MAX: usize = isize::MAX as usize;
         match std::mem::size_of::<T>().checked_mul(size) {
             Some(0..=MAX) => Ok(size),
-            _ => Err(Error::CapacityExceeded),
+            _ => Err(Error::CapacityOverflow),
         }
     }
 }
@@ -1233,7 +1233,7 @@ mod tests {
         assert_eq!(matrix, unchanged);
 
         let error = matrix.resize((isize::MAX as usize + 1, 1)).unwrap_err();
-        assert_eq!(error, Error::CapacityExceeded);
+        assert_eq!(error, Error::CapacityOverflow);
         assert_eq!(matrix, unchanged);
     }
 

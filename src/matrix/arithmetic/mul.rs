@@ -179,9 +179,9 @@ impl<L> Matrix<L> {
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     pub fn mat_mul<R, U>(mut self, mut rhs: Matrix<R>) -> Result<Matrix<U>>
     where
-        L: std::ops::Mul<R, Output = U> + Clone,
+        L: Mul<R, Output = U> + Clone,
         R: Clone,
-        U: std::ops::Add<Output = U> + Default,
+        U: Add<Output = U> + Default,
     {
         self.ensure_multiplication_like_operation_conformable(&rhs)?;
 

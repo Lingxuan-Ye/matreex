@@ -427,6 +427,17 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
+    pub(super) fn iter_nth_major_axis_vector(
+        &self,
+        n: usize,
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
+        if n >= self.major() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
+        }
+    }
+
     /// # Safety
     ///
     /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
@@ -441,14 +452,14 @@ impl<T> Matrix<T> {
         unsafe { self.data.get_unchecked(lower..upper).iter() }
     }
 
-    pub(super) fn iter_nth_major_axis_vector(
-        &self,
+    pub(super) fn iter_nth_major_axis_vector_mut(
+        &mut self,
         n: usize,
-    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
         if n >= self.major() {
             Err(Error::IndexOutOfBounds)
         } else {
-            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
+            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked_mut(n)) }
         }
     }
 
@@ -466,25 +477,6 @@ impl<T> Matrix<T> {
         unsafe { self.data.get_unchecked_mut(lower..upper).iter_mut() }
     }
 
-    pub(super) fn iter_nth_major_axis_vector_mut(
-        &mut self,
-        n: usize,
-    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
-        if n >= self.major() {
-            Err(Error::IndexOutOfBounds)
-        } else {
-            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked_mut(n)) }
-        }
-    }
-
-    pub(super) fn iter_nth_minor_axis_vector_unchecked(
-        &self,
-        n: usize,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
-        let step = self.major_stride();
-        self.data.iter().skip(n).step_by(step)
-    }
-
     pub(super) fn iter_nth_minor_axis_vector(
         &self,
         n: usize,
@@ -496,12 +488,12 @@ impl<T> Matrix<T> {
         }
     }
 
-    pub(super) fn iter_nth_minor_axis_vector_unchecked_mut(
-        &mut self,
+    pub(super) fn iter_nth_minor_axis_vector_unchecked(
+        &self,
         n: usize,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
         let step = self.major_stride();
-        self.data.iter_mut().skip(n).step_by(step)
+        self.data.iter().skip(n).step_by(step)
     }
 
     pub(super) fn iter_nth_minor_axis_vector_mut(
@@ -513,6 +505,14 @@ impl<T> Matrix<T> {
         } else {
             Ok(self.iter_nth_minor_axis_vector_unchecked_mut(n))
         }
+    }
+
+    pub(super) fn iter_nth_minor_axis_vector_unchecked_mut(
+        &mut self,
+        n: usize,
+    ) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
+        let step = self.major_stride();
+        self.data.iter_mut().skip(n).step_by(step)
     }
 }
 

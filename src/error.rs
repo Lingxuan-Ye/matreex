@@ -1,4 +1,4 @@
-//! This module serves for error handling.
+//! Module for error handling.
 
 /// An alias for [`std::result::Result`].
 pub type Result<T> = std::result::Result<T, Error>;
@@ -24,7 +24,7 @@ pub enum Error {
     /// Error when total bytes exceeds [`isize::MAX`].
     ///
     /// Refer to [`Vec::with_capacity`] for more information.
-    CapacityExceeded,
+    CapacityOverflow,
 
     /// Error when creating a matrix from a sequence of vectors with
     /// inconsistent lengths.
@@ -41,9 +41,9 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let content = match self {
-            Self::SizeOverflow => "size overflows",
-            Self::SizeMismatch => "size does not match",
-            Self::CapacityExceeded => "capacity exceeds",
+            Self::SizeOverflow => "size overflow",
+            Self::SizeMismatch => "size mismatch",
+            Self::CapacityOverflow => "capacity overflow",
             Self::LengthInconsistent => "length inconsistent",
             Self::IndexOutOfBounds => "index out of bounds",
             Self::ShapeNotConformable => "shape not conformable",
