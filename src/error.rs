@@ -41,9 +41,9 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let content = match self {
-            Self::SizeOverflow => "size overflows",
-            Self::SizeMismatch => "size does not match",
-            Self::CapacityOverflow => "capacity exceeds",
+            Self::SizeOverflow => "size overflow",
+            Self::SizeMismatch => "size mismatch",
+            Self::CapacityOverflow => "capacity overflow",
             Self::LengthInconsistent => "length inconsistent",
             Self::IndexOutOfBounds => "index out of bounds",
             Self::ShapeNotConformable => "shape not conformable",
