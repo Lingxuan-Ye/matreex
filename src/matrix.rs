@@ -1,4 +1,4 @@
-//! This module defines [`Matrix<T>`] and all its related components.
+//! Defines [`Matrix<T>`] and all its related components.
 
 use self::iter::VectorIter;
 use self::order::Order;
