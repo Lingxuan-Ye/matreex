@@ -47,12 +47,6 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
             cache.push(lines);
         }
 
-        writeln!(f, "Matrix{SPACE}{{")?;
-        writeln!(f, "{SPACE:TAB_SIZE$}order:{SPACE}{:?}", self.order)?;
-        writeln!(f, "{SPACE:TAB_SIZE$}shape:{SPACE}{:?}", self.shape)?;
-        writeln!(f, "{SPACE:TAB_SIZE$}data:")?;
-
-        write!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}")?;
         write!(f, "{LEFT_DELIMITER:<TAB_SIZE$}")?;
         write!(f, "{SPACE:>index_width$}")?;
         write!(f, "{SPACE:OUTER_GAP$}")?;
@@ -69,7 +63,6 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
 
         for row in 0..nrows {
             // first line of the element representation
-            write!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}")?;
             write!(f, "{SPACE:TAB_SIZE$}")?;
             write_index!(f, "{row:>index_width$}")?;
             write!(f, "{SPACE:OUTER_GAP$}")?;
@@ -90,7 +83,6 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
 
             // remaining lines of the element representation
             for _ in 1..element_hight {
-                write!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}")?;
                 write!(f, "{SPACE:TAB_SIZE$}")?;
                 write!(f, "{SPACE:>index_width$}")?;
                 write!(f, "{SPACE:OUTER_GAP$}")?;
@@ -111,9 +103,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
             }
         }
 
-        writeln!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}{RIGHT_DELIMITER}")?;
-
-        writeln!(f, "}}")
+        writeln!(f, "{RIGHT_DELIMITER}")
     }
 }
 
