@@ -103,12 +103,15 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
             }
         }
 
-        writeln!(f, "{RIGHT_DELIMITER}")
+        write!(f, "{RIGHT_DELIMITER}")
     }
 }
 
 impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_empty() {
+            return write!(f, "{LEFT_DELIMITER}{RIGHT_DELIMITER}");
+        }
         let shape = self.shape();
         let nrows = shape.nrows();
         let ncols = shape.ncols();
@@ -165,7 +168,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
             }
         }
 
-        writeln!(f, "{RIGHT_DELIMITER}")
+        write!(f, "{RIGHT_DELIMITER}")
     }
 }
 
