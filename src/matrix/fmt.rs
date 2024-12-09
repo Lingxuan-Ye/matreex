@@ -29,6 +29,9 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
         let shape = self.shape();
         let nrows = shape.nrows();
         let ncols = shape.ncols();
+        if nrows == 0 && ncols == 0 {
+            return write!(f, "{LEFT_DELIMITER}{RIGHT_DELIMITER}");
+        }
         let size = self.size();
         let index_width = size.to_string().chars().count();
         let mut element_width = 0;
