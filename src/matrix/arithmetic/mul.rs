@@ -236,13 +236,12 @@ impl<L> Matrix<L> {
 ///
 /// None of the arguments should be empty.
 #[inline]
-unsafe fn dot_product<'a, L, R, U>(
-    lhs: impl ExactSizeDoubleEndedIterator<Item = &'a L>,
-    rhs: impl ExactSizeDoubleEndedIterator<Item = &'a R>,
-) -> U
+unsafe fn dot_product<'a, L, R, LI, RI, U>(lhs: LI, rhs: RI) -> U
 where
     L: Mul<R, Output = U> + Clone + 'a,
     R: Clone + 'a,
+    LI: ExactSizeDoubleEndedIterator<Item = &'a L>,
+    RI: ExactSizeDoubleEndedIterator<Item = &'a R>,
     U: Add<Output = U>,
 {
     lhs.zip(rhs)
