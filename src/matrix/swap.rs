@@ -154,3 +154,40 @@ impl<T> Matrix<T> {
         Ok(self)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::matrix;
+
+    #[test]
+    fn test_swap() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix.swap((0, 0), (1, 1)).unwrap();
+        assert_eq!(matrix, matrix![[4, 1, 2], [3, 0, 5]]);
+
+        matrix.swap((0, 0), (1, 1)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        matrix.swap((1, 1), (0, 0)).unwrap();
+        assert_eq!(matrix, matrix![[4, 1, 2], [3, 0, 5]]);
+
+        matrix.swap((1, 1), (0, 0)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        let unchanged = matrix.clone();
+
+        let error = matrix.swap((0, 0), (2, 2)).unwrap_err();
+        assert_eq!(error, Error::IndexOutOfBounds);
+        assert_eq!(matrix, unchanged);
+
+        let error = matrix.swap((2, 2), (0, 0)).unwrap_err();
+        assert_eq!(error, Error::IndexOutOfBounds);
+        assert_eq!(matrix, unchanged);
+
+        let error = matrix.swap((2, 3), (3, 2)).unwrap_err();
+        assert_eq!(error, Error::IndexOutOfBounds);
+        assert_eq!(matrix, unchanged);
+    }
+}
