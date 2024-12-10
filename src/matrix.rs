@@ -18,6 +18,7 @@ mod construct;
 mod convert;
 mod default;
 mod fmt;
+mod swap;
 
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
