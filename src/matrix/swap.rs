@@ -4,6 +4,29 @@ use super::Matrix;
 use crate::error::{Error, Result};
 
 impl<T> Matrix<T> {
+    /// Swaps the elements at the given indices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Error};
+    /// # use matreex::Result;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.swap((0, 0), (1, 1))?;
+    /// assert_eq!(matrix, matrix![[4, 1, 2], [3, 0, 5]]);
+    ///
+    /// let result = matrix.swap((0, 0), (2, 2));
+    /// assert_eq!(result, Err(Error::IndexOutOfBounds));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn swap<I, J>(&mut self, index: I, jndex: J) -> Result<&mut Self>
     where
         I: Index,
