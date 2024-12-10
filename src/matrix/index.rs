@@ -377,15 +377,11 @@ impl<T> Matrix<T> {
         AxisIndex::from_index(index, order).to_flattened_unchecked(shape)
     }
 
-    #[inline]
-    pub(super) fn transpose_flattened_index(index: usize, src_shape: AxisShape) -> usize {
-        let mut index = AxisIndex::from_flattened(index, src_shape);
+    pub(super) fn transpose_flattened_index(index: usize, mut shape: AxisShape) -> usize {
+        let mut index = AxisIndex::from_flattened(index, shape);
         index.transpose();
-
-        let mut dest_shape = src_shape;
-        dest_shape.transpose();
-
-        index.to_flattened_unchecked(dest_shape)
+        shape.transpose();
+        index.to_flattened_unchecked(shape)
     }
 }
 
