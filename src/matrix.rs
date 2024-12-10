@@ -1,9 +1,12 @@
 //! Defines [`Matrix<T>`] and all its related components.
 
+use self::index::transpose_flattened_index;
 use self::iter::VectorIter;
 use self::order::Order;
 use self::shape::{AxisShape, Shape};
 use crate::error::{Error, Result};
+use std::cmp::min;
+use std::mem::size_of;
 
 pub mod index;
 pub mod iter;
@@ -199,7 +202,7 @@ impl<T> Matrix<T> {
             let mut current = index;
             while !visited[current] {
                 visited[current] = true;
-                let next = Self::transpose_flattened_index(current, self.shape);
+                let next = transpose_flattened_index(current, self.shape);
                 self.data.swap(index, next);
                 current = next;
             }
@@ -465,8 +468,8 @@ impl<T> Matrix<T> {
         T: Clone,
     {
         if self.order == other.order {
-            let major = std::cmp::min(self.major(), other.major());
-            let minor = std::cmp::min(self.minor(), other.minor());
+            let major = min(self.major(), other.major());
+            let minor = min(self.minor(), other.minor());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
@@ -476,8 +479,8 @@ impl<T> Matrix<T> {
                     .clone_from_slice(&other.data[other_lower..other_upper]);
             }
         } else {
-            let major = std::cmp::min(self.major(), other.minor());
-            let minor = std::cmp::min(self.minor(), other.major());
+            let major = min(self.major(), other.minor());
+            let minor = min(self.minor(), other.major());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
@@ -655,7 +658,7 @@ impl<L> Matrix<L> {
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = Self::transpose_flattened_index(index, self.shape);
+                    let index = transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -708,7 +711,7 @@ impl<L> Matrix<L> {
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = Self::transpose_flattened_index(index, self.shape);
+                    let index = transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -756,7 +759,7 @@ impl<L> Matrix<L> {
                 .for_each(|(left, right)| op(left, right));
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = Self::transpose_flattened_index(index, self.shape);
+                let index = transpose_flattened_index(index, self.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) };
                 op(left, right)
             });
@@ -969,7 +972,7 @@ impl<T> Matrix<T> {
     fn check_size(size: usize) -> Result<usize> {
         // see more info at https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.with_capacity
         const MAX: usize = isize::MAX as usize;
-        match std::mem::size_of::<T>().checked_mul(size) {
+        match size_of::<T>().checked_mul(size) {
             Some(0..=MAX) => Ok(size),
             _ => Err(Error::CapacityOverflow),
         }

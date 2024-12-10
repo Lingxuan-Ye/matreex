@@ -355,38 +355,28 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     }
 }
 
-impl<T> Matrix<T> {
-    pub(super) fn unflatten_index(index: usize, order: Order, shape: AxisShape) -> impl Index {
-        AxisIndex::from_flattened(index, shape).to_index(order)
-    }
+pub(super) fn unflatten_index(index: usize, order: Order, shape: AxisShape) -> impl Index {
+    AxisIndex::from_flattened(index, shape).to_index(order)
+}
 
-    #[allow(dead_code)]
-    pub(super) fn try_flatten_index<I: Index>(
-        index: I,
-        order: Order,
-        shape: AxisShape,
-    ) -> Result<usize> {
-        AxisIndex::from_index(index, order).try_to_flattened(shape)
-    }
+#[allow(dead_code)]
+pub(super) fn try_flatten_index<I: Index>(
+    index: I,
+    order: Order,
+    shape: AxisShape,
+) -> Result<usize> {
+    AxisIndex::from_index(index, order).try_to_flattened(shape)
+}
 
-    pub(super) fn flatten_index_unchecked<I: Index>(
-        index: I,
-        order: Order,
-        shape: AxisShape,
-    ) -> usize {
-        AxisIndex::from_index(index, order).to_flattened_unchecked(shape)
-    }
+pub(super) fn flatten_index_unchecked<I: Index>(index: I, order: Order, shape: AxisShape) -> usize {
+    AxisIndex::from_index(index, order).to_flattened_unchecked(shape)
+}
 
-    #[inline]
-    pub(super) fn transpose_flattened_index(index: usize, src_shape: AxisShape) -> usize {
-        let mut index = AxisIndex::from_flattened(index, src_shape);
-        index.transpose();
-
-        let mut dest_shape = src_shape;
-        dest_shape.transpose();
-
-        index.to_flattened_unchecked(dest_shape)
-    }
+pub(super) fn transpose_flattened_index(index: usize, mut shape: AxisShape) -> usize {
+    let mut index = AxisIndex::from_flattened(index, shape);
+    index.transpose();
+    shape.transpose();
+    index.to_flattened_unchecked(shape)
 }
 
 mod internal {
