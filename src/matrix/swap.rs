@@ -40,4 +40,48 @@ impl<T> Matrix<T> {
         self.data.swap(index, jndex);
         Ok(self)
     }
+
+    pub fn swap_rows(&mut self, m: usize, n: usize) -> Result<&mut Self> {
+        match self.order {
+            Order::RowMajor => self.swap_major_axis_vectors(m, n),
+            Order::ColMajor => self.swap_minor_axis_vectors(m, n),
+        }
+    }
+
+    pub fn swap_cols(&mut self, m: usize, n: usize) -> Result<&mut Self> {
+        match self.order {
+            Order::RowMajor => self.swap_minor_axis_vectors(m, n),
+            Order::ColMajor => self.swap_major_axis_vectors(m, n),
+        }
+    }
+}
+
+impl<T> Matrix<T> {
+    fn swap_major_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
+        if m >= self.major() || n >= self.major() {
+            return Err(Error::IndexOutOfBounds);
+        }
+        let mut index = m * self.major_stride();
+        let mut jndex = n * self.major_stride();
+        for _ in 0..self.minor() {
+            self.data.swap(index, jndex);
+            index += 1;
+            jndex += 1;
+        }
+        Ok(self)
+    }
+
+    fn swap_minor_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
+        if m >= self.minor() || n >= self.minor() {
+            return Err(Error::IndexOutOfBounds);
+        }
+        let mut index = m;
+        let mut jndex = n;
+        for _ in 0..self.major() {
+            self.data.swap(index, jndex);
+            index += self.major_stride();
+            jndex += self.major_stride();
+        }
+        Ok(self)
+    }
 }
