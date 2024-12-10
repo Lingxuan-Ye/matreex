@@ -190,4 +190,66 @@ mod tests {
         assert_eq!(error, Error::IndexOutOfBounds);
         assert_eq!(matrix, unchanged);
     }
+
+    #[test]
+    fn test_swap_rows() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix.swap_rows(0, 1).unwrap();
+        assert_eq!(matrix, matrix![[3, 4, 5], [0, 1, 2]]);
+
+        matrix.swap_rows(0, 1).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        matrix.swap_rows(1, 0).unwrap();
+        assert_eq!(matrix, matrix![[3, 4, 5], [0, 1, 2]]);
+
+        matrix.swap_rows(1, 0).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        let unchanged = matrix.clone();
+
+        let error = matrix.swap_rows(0, 2).unwrap_err();
+        assert_eq!(error, Error::IndexOutOfBounds);
+        assert_eq!(matrix, unchanged);
+
+        let error = matrix.swap_rows(2, 0).unwrap_err();
+        assert_eq!(error, Error::IndexOutOfBounds);
+        assert_eq!(matrix, unchanged);
+
+        let error = matrix.swap_rows(2, 3).unwrap_err();
+        assert_eq!(error, Error::IndexOutOfBounds);
+        assert_eq!(matrix, unchanged);
+    }
+
+    #[test]
+    fn test_swap_cols() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix.swap_cols(0, 1).unwrap();
+        assert_eq!(matrix, matrix![[1, 0, 2], [4, 3, 5]]);
+
+        matrix.swap_cols(0, 1).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        matrix.swap_cols(1, 0).unwrap();
+        assert_eq!(matrix, matrix![[1, 0, 2], [4, 3, 5]]);
+
+        matrix.swap_cols(1, 0).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        let unchanged = matrix.clone();
+
+        let error = matrix.swap_cols(0, 3).unwrap_err();
+        assert_eq!(error, Error::IndexOutOfBounds);
+        assert_eq!(matrix, unchanged);
+
+        let error = matrix.swap_cols(3, 0).unwrap_err();
+        assert_eq!(error, Error::IndexOutOfBounds);
+        assert_eq!(matrix, unchanged);
+
+        let error = matrix.swap_cols(3, 4).unwrap_err();
+        assert_eq!(error, Error::IndexOutOfBounds);
+        assert_eq!(matrix, unchanged);
+    }
 }
