@@ -323,6 +323,11 @@ impl<T> Matrix<T> {
 
     /// Resizes the matrix to the specified shape.
     ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if total bytes stored exceeds [`isize::MAX`].
+    ///
     /// # Notes
     ///
     /// Reducing the size does not automatically shrink the capacity.
@@ -451,7 +456,7 @@ impl<T> Matrix<T> {
         self
     }
 
-    /// Overwrites the overlapping part of this matrix with another one,
+    /// Overwrites the overlapping part of this matrix with `other`,
     /// leaving the non-overlapping part unchanged.
     ///
     /// # Examples

@@ -196,10 +196,10 @@ pub unsafe trait MatrixIndex<T>: internal::Sealed {
 /// assert_eq!(matrix[index], 4);
 /// ```
 pub trait Index {
-    /// Returns the row of the index.
+    /// Returns the row number of the index.
     fn row(&self) -> usize;
 
-    /// Returns the column of the index.
+    /// Returns the column number of the index.
     fn col(&self) -> usize;
 
     /// Returns `true` if the index is out of bounds for given matrix.
