@@ -1,5 +1,6 @@
 //! Defines [`Matrix<T>`] and all its related components.
 
+use self::index::transpose_flattened_index;
 use self::iter::VectorIter;
 use self::order::Order;
 use self::shape::{AxisShape, Shape};
@@ -201,7 +202,7 @@ impl<T> Matrix<T> {
             let mut current = index;
             while !visited[current] {
                 visited[current] = true;
-                let next = Self::transpose_flattened_index(current, self.shape);
+                let next = transpose_flattened_index(current, self.shape);
                 self.data.swap(index, next);
                 current = next;
             }
@@ -657,7 +658,7 @@ impl<L> Matrix<L> {
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = Self::transpose_flattened_index(index, self.shape);
+                    let index = transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -710,7 +711,7 @@ impl<L> Matrix<L> {
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = Self::transpose_flattened_index(index, self.shape);
+                    let index = transpose_flattened_index(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -758,7 +759,7 @@ impl<L> Matrix<L> {
                 .for_each(|(left, right)| op(left, right));
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = Self::transpose_flattened_index(index, self.shape);
+                let index = transpose_flattened_index(index, self.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) };
                 op(left, right)
             });

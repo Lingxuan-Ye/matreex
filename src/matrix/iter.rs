@@ -1,4 +1,4 @@
-use super::index::Index;
+use super::index::{unflatten_index, Index};
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
@@ -362,7 +362,9 @@ impl<T> Matrix<T> {
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, &T)> {
         self.data.iter().enumerate().map(|(index, element)| {
-            let index = Self::unflatten_index(index, self.order, self.shape);
+            // hope loop-invariant code motion applies here,
+            // as well as to similar code
+            let index = unflatten_index(index, self.order, self.shape);
             (index, element)
         })
     }
@@ -390,7 +392,7 @@ impl<T> Matrix<T> {
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, &mut T)> {
         self.data.iter_mut().enumerate().map(|(index, element)| {
-            let index = Self::unflatten_index(index, self.order, self.shape);
+            let index = unflatten_index(index, self.order, self.shape);
             (index, element)
         })
     }
@@ -420,7 +422,7 @@ impl<T> Matrix<T> {
             .into_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Self::unflatten_index(index, self.order, self.shape);
+                let index = unflatten_index(index, self.order, self.shape);
                 (index, element)
             })
     }
