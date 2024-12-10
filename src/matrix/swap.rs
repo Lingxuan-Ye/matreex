@@ -64,6 +64,29 @@ impl<T> Matrix<T> {
         Ok(self)
     }
 
+    /// Swaps the rows at the given indices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Error};
+    /// # use matreex::Result;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.swap_rows(0, 1)?;
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [0, 1, 2]]);
+    ///
+    /// let result = matrix.swap_rows(0, 2);
+    /// assert_eq!(result, Err(Error::IndexOutOfBounds));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn swap_rows(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         match self.order {
             Order::RowMajor => self.swap_major_axis_vectors(m, n),
@@ -71,6 +94,29 @@ impl<T> Matrix<T> {
         }
     }
 
+    /// Swaps the columns at the given indices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Error};
+    /// # use matreex::Result;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.swap_cols(0, 1)?;
+    /// assert_eq!(matrix, matrix![[1, 0, 2], [4, 3, 5]]);
+    ///
+    /// let result = matrix.swap_cols(0, 3);
+    /// assert_eq!(result, Err(Error::IndexOutOfBounds));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn swap_cols(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         match self.order {
             Order::RowMajor => self.swap_minor_axis_vectors(m, n),
