@@ -4,6 +4,8 @@ use self::iter::VectorIter;
 use self::order::Order;
 use self::shape::{AxisShape, Shape};
 use crate::error::{Error, Result};
+use std::cmp::min;
+use std::mem::size_of;
 
 pub mod index;
 pub mod iter;
@@ -465,8 +467,8 @@ impl<T> Matrix<T> {
         T: Clone,
     {
         if self.order == other.order {
-            let major = std::cmp::min(self.major(), other.major());
-            let minor = std::cmp::min(self.minor(), other.minor());
+            let major = min(self.major(), other.major());
+            let minor = min(self.minor(), other.minor());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
@@ -476,8 +478,8 @@ impl<T> Matrix<T> {
                     .clone_from_slice(&other.data[other_lower..other_upper]);
             }
         } else {
-            let major = std::cmp::min(self.major(), other.minor());
-            let minor = std::cmp::min(self.minor(), other.major());
+            let major = min(self.major(), other.minor());
+            let minor = min(self.minor(), other.major());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
@@ -969,7 +971,7 @@ impl<T> Matrix<T> {
     fn check_size(size: usize) -> Result<usize> {
         // see more info at https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.with_capacity
         const MAX: usize = isize::MAX as usize;
-        match std::mem::size_of::<T>().checked_mul(size) {
+        match size_of::<T>().checked_mul(size) {
             Some(0..=MAX) => Ok(size),
             _ => Err(Error::CapacityOverflow),
         }
