@@ -481,8 +481,11 @@ impl<T> Matrix<T> {
                 let self_upper = self_lower + minor;
                 let other_lower = i * other.major_stride();
                 let other_upper = other_lower + minor;
-                self.data[self_lower..self_upper]
-                    .clone_from_slice(&other.data[other_lower..other_upper]);
+                unsafe {
+                    self.data
+                        .get_unchecked_mut(self_lower..self_upper)
+                        .clone_from_slice(other.data.get_unchecked(other_lower..other_upper));
+                }
             }
         } else {
             let major = min(self.major(), other.minor());
@@ -490,10 +493,13 @@ impl<T> Matrix<T> {
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
-                self.data[self_lower..self_upper]
-                    .iter_mut()
-                    .zip(other.iter_nth_minor_axis_vector_unchecked(i))
-                    .for_each(|(x, y)| *x = y.clone());
+                unsafe {
+                    self.data
+                        .get_unchecked_mut(self_lower..self_upper)
+                        .iter_mut()
+                        .zip(other.iter_nth_minor_axis_vector_unchecked(i))
+                        .for_each(|(x, y)| *x = y.clone());
+                }
             }
         }
         self
