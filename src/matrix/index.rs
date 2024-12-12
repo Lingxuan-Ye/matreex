@@ -209,26 +209,6 @@ pub trait Index {
     }
 }
 
-impl Index for (usize, usize) {
-    fn row(&self) -> usize {
-        self.0
-    }
-
-    fn col(&self) -> usize {
-        self.1
-    }
-}
-
-impl Index for [usize; 2] {
-    fn row(&self) -> usize {
-        self[0]
-    }
-
-    fn col(&self) -> usize {
-        self[1]
-    }
-}
-
 unsafe impl<T, I> MatrixIndex<T> for I
 where
     I: Index,
@@ -257,6 +237,26 @@ where
 
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
         AxisIndex::from_index(self, matrix.order).index_mut(matrix)
+    }
+}
+
+impl Index for (usize, usize) {
+    fn row(&self) -> usize {
+        self.0
+    }
+
+    fn col(&self) -> usize {
+        self.1
+    }
+}
+
+impl Index for [usize; 2] {
+    fn row(&self) -> usize {
+        self[0]
+    }
+
+    fn col(&self) -> usize {
+        self[1]
     }
 }
 
@@ -289,18 +289,18 @@ impl AxisIndex {
         Self { major, minor }
     }
 
-    pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
-        let major = index / shape.major_stride();
-        // let minor = (index % shape.major_stride()) / shape.minor_stride();
-        let minor = index % shape.major_stride();
-        Self { major, minor }
-    }
-
     pub(super) fn to_index(self, order: Order) -> impl Index {
         match order {
             Order::RowMajor => (self.major, self.minor),
             Order::ColMajor => (self.minor, self.major),
         }
+    }
+
+    pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
+        let major = index / shape.major_stride();
+        // let minor = (index % shape.major_stride()) / shape.minor_stride();
+        let minor = index % shape.major_stride();
+        Self { major, minor }
     }
 
     pub(super) fn try_to_flattened(self, shape: AxisShape) -> Result<usize> {
