@@ -1,3 +1,4 @@
+use super::index::flatten_index;
 use super::shape::Shape;
 use super::Matrix;
 use std::collections::VecDeque;
@@ -74,7 +75,9 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                 if col != 0 {
                     write!(f, "{SPACE:<INTER_GAP$}")?;
                 }
-                let index = Self::flatten_index_unchecked((row, col), self.order, self.shape);
+                // hope loop-invariant code motion applies here,
+                // as well as to similar code
+                let index = flatten_index((row, col), self.order, self.shape);
                 write_index!(f, "{index:>index_width$}")?;
                 write!(f, "{SPACE:INNER_GAP$}")?;
                 match cache[index].next() {
@@ -94,7 +97,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                     if col != 0 {
                         write!(f, "{SPACE:<INTER_GAP$}")?;
                     }
-                    let index = Self::flatten_index_unchecked((row, col), self.order, self.shape);
+                    let index = flatten_index((row, col), self.order, self.shape);
                     write!(f, "{SPACE:>index_width$}")?;
                     write!(f, "{SPACE:INNER_GAP$}")?;
                     match cache[index].next() {
@@ -145,7 +148,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
                 if col != 0 {
                     write!(f, "{SPACE:INTER_GAP$}")?;
                 }
-                let index = Self::flatten_index_unchecked((row, col), self.order, self.shape);
+                let index = flatten_index((row, col), self.order, self.shape);
                 match cache[index].next() {
                     None => write!(f, "{SPACE:<element_width$}")?,
                     Some(line) => write!(f, "{line:<element_width$}")?,
@@ -161,7 +164,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
                     if col != 0 {
                         write!(f, "{SPACE:INTER_GAP$}")?;
                     }
-                    let index = Self::flatten_index_unchecked((row, col), self.order, self.shape);
+                    let index = flatten_index((row, col), self.order, self.shape);
                     match cache[index].next() {
                         None => write!(f, "{SPACE:<element_width$}")?,
                         Some(line) => write!(f, "{line:<element_width$}")?,
