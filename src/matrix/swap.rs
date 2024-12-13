@@ -1,4 +1,4 @@
-use super::index::Index;
+use super::index::{AxisIndex, Index};
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
@@ -27,40 +27,20 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn swap<I, J>(&mut self, index: I, jndex: J) -> Result<&mut Self>
+    pub fn swap<I, J>(&mut self, i: I, j: J) -> Result<&mut Self>
     where
         I: Index,
         J: Index,
     {
-        let (index, jndex) = match self.order {
-            Order::RowMajor => {
-                if index.row() >= self.major()
-                    || index.col() >= self.minor()
-                    || jndex.row() >= self.major()
-                    || jndex.col() >= self.minor()
-                {
-                    return Err(Error::IndexOutOfBounds);
-                }
-                (
-                    index.row() * self.major_stride() + index.col(),
-                    jndex.row() * self.major_stride() + jndex.col(),
-                )
-            }
-            Order::ColMajor => {
-                if index.row() >= self.minor()
-                    || index.col() >= self.major()
-                    || jndex.row() >= self.minor()
-                    || jndex.col() >= self.major()
-                {
-                    return Err(Error::IndexOutOfBounds);
-                }
-                (
-                    index.col() * self.minor_stride() + index.row(),
-                    jndex.col() * self.minor_stride() + jndex.row(),
-                )
-            }
-        };
-        self.data.swap(index, jndex);
+        let index = AxisIndex::from_index(i, self.order);
+        let jndex = AxisIndex::from_index(j, self.order);
+        if index.is_out_of_bounds(self.shape) || jndex.is_out_of_bounds(self.shape) {
+            return Err(Error::IndexOutOfBounds);
+        }
+        self.data.swap(
+            index.to_flattened(self.shape),
+            jndex.to_flattened(self.shape),
+        );
         Ok(self)
     }
 
