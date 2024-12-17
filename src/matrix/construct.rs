@@ -1,3 +1,4 @@
+use super::index::{unflatten_index, Index};
 use super::order::Order;
 use super::shape::{AxisShape, Shape};
 use super::Matrix;
@@ -44,6 +45,44 @@ impl<T> Matrix<T> {
             shape: AxisShape::default(),
             data: Vec::with_capacity(capacity),
         }
+    }
+
+    /// Creates a new [`Matrix<T>`] with the specified shape, filled with
+    /// the default value.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if total bytes stored exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Error, Matrix};
+    ///
+    /// let result = Matrix::with_default((2, 3));
+    /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
+    ///
+    /// let result = Matrix::<u8>::with_default((usize::MAX, 2));
+    /// assert_eq!(result, Err(Error::SizeOverflow));
+    ///
+    /// let result = Matrix::<u8>::with_default((isize::MAX as usize + 1, 1));
+    /// assert_eq!(result, Err(Error::CapacityOverflow));
+    /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
+    pub fn with_default<S>(shape: S) -> Result<Self>
+    where
+        T: Default,
+        S: Shape,
+    {
+        let order = Order::default();
+        let shape = AxisShape::try_from_shape(shape, order)?;
+        let size = Self::check_size(shape.size())?;
+        let mut data = Vec::with_capacity(size);
+        data.resize_with(size, T::default);
+        Ok(Self { order, shape, data })
     }
 
     /// Creates a new [`Matrix<T>`] with the specified shape, filled with
@@ -108,50 +147,21 @@ impl<T> Matrix<T> {
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    pub fn with_initializer<S, F>(shape: S, initializer: F) -> Result<Self>
+    pub fn with_initializer<S, F>(shape: S, mut initializer: F) -> Result<Self>
     where
         S: Shape,
-        F: FnMut() -> T,
+        F: FnMut(usize, usize) -> T,
     {
         let order = Order::default();
         let shape = AxisShape::try_from_shape(shape, order)?;
         let size = Self::check_size(shape.size())?;
         let mut data = Vec::with_capacity(size);
-        data.resize_with(size, initializer);
+        for index in 0..size {
+            let index = unflatten_index(index, order, shape);
+            let element = initializer(index.row(), index.col());
+            data.push(element);
+        }
         Ok(Self { order, shape, data })
-    }
-
-    /// Creates a new [`Matrix<T>`] with the specified shape, filled with
-    /// the default value.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if total bytes stored exceeds [`isize::MAX`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Error, Matrix};
-    ///
-    /// let result = Matrix::with_default((2, 3));
-    /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
-    ///
-    /// let result = Matrix::<u8>::with_default((usize::MAX, 2));
-    /// assert_eq!(result, Err(Error::SizeOverflow));
-    ///
-    /// let result = Matrix::<u8>::with_default((isize::MAX as usize + 1, 1));
-    /// assert_eq!(result, Err(Error::CapacityOverflow));
-    /// ```
-    ///
-    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
-    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    pub fn with_default<S>(shape: S) -> Result<Self>
-    where
-        T: Default,
-        S: Shape,
-    {
-        Self::with_initializer(shape, T::default)
     }
 }
 
@@ -178,6 +188,30 @@ mod tests {
         assert_eq!(matrix.ncols(), 0);
         assert!(matrix.is_empty());
         assert!(matrix.capacity() >= 10);
+    }
+
+    #[test]
+    fn test_with_default() {
+        assert_eq!(
+            Matrix::with_default((2, 3)).unwrap(),
+            matrix![[0, 0, 0], [0, 0, 0]]
+        );
+
+        assert_eq!(
+            Matrix::<i32>::with_default((usize::MAX, 2)).unwrap_err(),
+            Error::SizeOverflow
+        );
+
+        assert_eq!(
+            Matrix::<u8>::with_default((isize::MAX as usize + 1, 1)).unwrap_err(),
+            Error::CapacityOverflow
+        );
+        assert_eq!(
+            Matrix::<i32>::with_default((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
+            Error::CapacityOverflow
+        );
+
+        // assert!(Matrix::<()>::with_default((isize::MAX as usize + 1, 1)).is_ok());
     }
 
     #[test]
@@ -235,29 +269,5 @@ mod tests {
         // assert!(
         //     Matrix::<()>::with_initializer((isize::MAX as usize + 1, 1), Default::default).is_ok()
         // );
-    }
-
-    #[test]
-    fn test_with_default() {
-        assert_eq!(
-            Matrix::with_default((2, 3)).unwrap(),
-            matrix![[0, 0, 0], [0, 0, 0]]
-        );
-
-        assert_eq!(
-            Matrix::<i32>::with_default((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
-
-        assert_eq!(
-            Matrix::<u8>::with_default((isize::MAX as usize + 1, 1)).unwrap_err(),
-            Error::CapacityOverflow
-        );
-        assert_eq!(
-            Matrix::<i32>::with_default((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
-            Error::CapacityOverflow
-        );
-
-        // assert!(Matrix::<()>::with_default((isize::MAX as usize + 1, 1)).is_ok());
     }
 }

@@ -30,7 +30,7 @@ macro_rules! matrix {
     };
 
     [$($row:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from([$($row,)+])
+        $crate::matrix::Matrix::from([$($row),+])
     };
 }
 
