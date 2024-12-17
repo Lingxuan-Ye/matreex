@@ -504,9 +504,7 @@ impl<T> Matrix<T> {
         }
         self
     }
-}
 
-impl<T> Matrix<T> {
     /// Applies a closure to each element of the matrix,
     /// modifying the matrix in place.
     ///
@@ -524,6 +522,28 @@ impl<T> Matrix<T> {
         F: FnMut(&mut T),
     {
         self.data.iter_mut().for_each(f);
+        self
+    }
+
+    /// Applies a closure to each element of the matrix in parallel,
+    /// modifying the matrix in place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// matrix.par_apply(|x| *x += 1);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
+    #[cfg(feature = "rayon")]
+    pub fn par_apply<F>(&mut self, f: F) -> &mut Self
+    where
+        T: Send,
+        F: Fn(&mut T) + Sync + Send,
+    {
+        self.data.par_iter_mut().for_each(f);
         self
     }
 
@@ -547,28 +567,6 @@ impl<T> Matrix<T> {
         let shape = self.shape;
         let data = self.data.into_iter().map(f).collect();
         Matrix { order, shape, data }
-    }
-
-    /// Applies a closure to each element of the matrix in parallel,
-    /// modifying the matrix in place.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// matrix.par_apply(|x| *x += 1);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    #[cfg(feature = "rayon")]
-    pub fn par_apply<F>(&mut self, f: F) -> &mut Self
-    where
-        T: Send,
-        F: Fn(&mut T) + Sync + Send,
-    {
-        self.data.par_iter_mut().for_each(f);
-        self
     }
 
     /// Applies a closure to each element of the matrix in parallel,
@@ -1375,20 +1373,6 @@ mod tests {
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
-    #[test]
-    fn test_map() {
-        let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let mut matrix_f64 = matrix_i32.map(|x| x as f64);
-        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
-
-        matrix_f64.switch_order();
-
-        let mut matrix_i32 = matrix_f64.map(|x| x as i32);
-        matrix_i32.switch_order();
-        assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
-    }
-
     #[cfg(feature = "rayon")]
     #[test]
     fn test_par_apply() {
@@ -1402,6 +1386,20 @@ mod tests {
         matrix.par_apply(|x| *x -= 2);
         matrix.switch_order();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[test]
+    fn test_map() {
+        let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let mut matrix_f64 = matrix_i32.map(|x| x as f64);
+        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+
+        matrix_f64.switch_order();
+
+        let mut matrix_i32 = matrix_f64.map(|x| x as i32);
+        matrix_i32.switch_order();
+        assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
     #[cfg(feature = "rayon")]
