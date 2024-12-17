@@ -23,7 +23,7 @@ mod swap;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
-/// [`Matrix<T>`] means ... matrix.
+/// [`Matrix<T>`] means matrix.
 ///
 /// ```
 /// use matreex::matrix;
@@ -45,9 +45,9 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::{Matrix, Order};
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = Matrix::<i32>::new();
     /// assert_eq!(matrix.order(), Order::default());
     /// ```
     pub fn order(&self) -> Order {
@@ -59,12 +59,16 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Shape};
+    /// use matreex::{Matrix, Shape};
+    /// # use matreex::Result;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// # fn main() -> Result<()> {
+    /// let matrix = Matrix::<i32>::with_default((2, 3))?;
     /// let shape = matrix.shape();
     /// assert_eq!(shape.nrows(), 2);
     /// assert_eq!(shape.ncols(), 3);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn shape(&self) -> impl Shape {
         self.shape.interpret(self.order)
@@ -75,10 +79,14 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
+    /// use matreex::Matrix;
+    /// # use matreex::Result;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// # fn main() -> Result<()> {
+    /// let matrix = Matrix::<i32>::with_default((2, 3))?;
     /// assert_eq!(matrix.nrows(), 2);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn nrows(&self) -> usize {
         self.shape.interpret_nrows(self.order)
@@ -89,10 +97,14 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
+    /// use matreex::Matrix;
+    /// # use matreex::Result;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// # fn main() -> Result<()> {
+    /// let matrix = Matrix::<i32>::with_default((2, 3))?;
     /// assert_eq!(matrix.ncols(), 3);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn ncols(&self) -> usize {
         self.shape.interpret_ncols(self.order)
@@ -103,10 +115,14 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
+    /// use matreex::Matrix;
+    /// # use matreex::Result;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// # fn main() -> Result<()> {
+    /// let matrix = Matrix::<i32>::with_default((2, 3))?;
     /// assert_eq!(matrix.size(), 6);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn size(&self) -> usize {
         self.data.len()
@@ -117,9 +133,9 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Matrix};
+    /// use matreex::Matrix;
     ///
-    /// let matrix: Matrix<i32> = matrix![];
+    /// let matrix = Matrix::<i32>::new();
     /// assert!(matrix.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
@@ -131,17 +147,10 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
-    /// # use matreex::Result;
+    /// use matreex::Matrix;
     ///
-    /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert!(matrix.capacity() >= 6);
-    ///
-    /// matrix.resize((1, 10))?;
+    /// let mut matrix = Matrix::<i32>::with_capacity(10);
     /// assert!(matrix.capacity() >= 10);
-    /// # Ok(())
-    /// # }
     /// ```
     pub fn capacity(&self) -> usize {
         self.data.capacity()
@@ -218,16 +227,20 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
+    /// use matreex::Matrix;
+    /// # use matreex::Result;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let order = matrix.order();
+    /// # fn main() -> Result<()> {
+    /// let mut matrix = Matrix::<i32>::with_default((2, 3))?;
+    /// let mut order = matrix.order();
     ///
     /// matrix.switch_order();
     /// assert_ne!(matrix.order(), order);
     ///
-    /// matrix.switch_order();
+    /// order.switch();
     /// assert_eq!(matrix.order(), order);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn switch_order(&mut self) -> &mut Self {
         self.transpose();
@@ -244,9 +257,13 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let order = matrix.order();
+    /// let mut order = matrix.order();
+    ///
     /// matrix.switch_order_without_rearrangement();
     /// assert_ne!(matrix.order(), order);
+    ///
+    /// order.switch();
+    /// assert_eq!(matrix.order(), order);
     ///
     /// // row 0
     /// assert_eq!(matrix[(0, 0)], 0);
@@ -270,15 +287,19 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::{Matrix, Order};
+    /// # use matreex::Result;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// # fn main() -> Result<()> {
+    /// let mut matrix = Matrix::<i32>::with_default((2, 3))?;
     ///
     /// matrix.set_order(Order::RowMajor);
     /// assert_eq!(matrix.order(), Order::RowMajor);
     ///
     /// matrix.set_order(Order::ColMajor);
     /// assert_eq!(matrix.order(), Order::ColMajor);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn set_order(&mut self, order: Order) -> &mut Self {
         if order != self.order {
@@ -298,6 +319,7 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let mut order = matrix.order();
+    ///
     /// order.switch();
     /// matrix.set_order_without_rearrangement(order);
     /// assert_eq!(matrix.order(), order);
@@ -406,14 +428,16 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
+    /// use matreex::Matrix;
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = Matrix::<i32>::with_default((2, 3))?;
     /// assert!(matrix.capacity() >= 6);
     ///
     /// matrix.resize((1, 3))?;
+    /// assert!(matrix.capacity() >= 6);
+    ///
     /// matrix.shrink_to_fit();
     /// assert!(matrix.capacity() >= 3);
     /// # Ok(())
@@ -435,14 +459,16 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
+    /// use matreex::Matrix;
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = Matrix::<i32>::with_default((2, 3))?;
     /// assert!(matrix.capacity() >= 6);
     ///
     /// matrix.resize((1, 3))?;
+    /// assert!(matrix.capacity() >= 6);
+    ///
     /// matrix.shrink_to(4);
     /// assert!(matrix.capacity() >= 4);
     ///
@@ -555,9 +581,9 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let matrix_f64 = matrix_i32.map(|x| x as f64);
-    /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let result = matrix.map(|x| x as f64);
+    /// assert_eq!(result, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
     pub fn map<U, F>(self, f: F) -> Matrix<U>
     where
@@ -577,9 +603,9 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let matrix_f64 = matrix_i32.par_map(|x| x as f64);
-    /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let result = matrix.par_map(|x| x as f64);
+    /// assert_eq!(result, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
     #[cfg(feature = "rayon")]
     pub fn par_map<U, F>(self, f: F) -> Matrix<U>
@@ -643,11 +669,15 @@ impl<L> Matrix<L> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y);
-    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
+    /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y)?;
+    /// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn elementwise_operation<R, F, U>(&self, rhs: &Matrix<R>, mut op: F) -> Result<Matrix<U>>
     where
@@ -692,11 +722,15 @@ impl<L> Matrix<L> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y);
-    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
+    /// let result = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y)?;
+    /// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn elementwise_operation_consume_self<R, F, U>(
         self,
@@ -836,14 +870,18 @@ impl<L> Matrix<L> {
     ///
     /// ```
     /// use matreex::{matrix, VectorIter};
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
-    /// let op = |vl: VectorIter<&i32>, vr: VectorIter<&i32>| {
-    ///     vl.zip(vr).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
+    /// let op = |lv: VectorIter<&i32>, rv: VectorIter<&i32>| {
+    ///     lv.zip(rv).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
     /// };
-    /// let result = lhs.multiplication_like_operation(rhs, op);
-    /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
+    /// let result = lhs.multiplication_like_operation(rhs, op)?;
+    /// assert_eq!(result, matrix![[10, 13], [28, 40]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn multiplication_like_operation<R, F, U>(
         mut self,
