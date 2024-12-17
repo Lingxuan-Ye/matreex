@@ -456,7 +456,7 @@ impl<T> Matrix<T> {
         self
     }
 
-    /// Overwrites the overlapping part of this matrix with `other`,
+    /// Overwrites the overlapping part of this matrix with `source`,
     /// leaving the non-overlapping part unchanged.
     ///
     /// # Examples
@@ -465,31 +465,31 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
-    /// let other = matrix![[1, 1], [1, 1], [1, 1]];
-    /// matrix.overwrite_with(&other);
+    /// let source = matrix![[1, 1], [1, 1], [1, 1]];
+    /// matrix.overwrite(&source);
     /// assert_eq!(matrix, matrix![[1, 1, 0], [1, 1, 0]]);
     /// ```
-    pub fn overwrite_with(&mut self, other: &Self) -> &mut Self
+    pub fn overwrite(&mut self, source: &Self) -> &mut Self
     where
         T: Clone,
     {
-        if self.order == other.order {
-            let major = min(self.major(), other.major());
-            let minor = min(self.minor(), other.minor());
+        if self.order == source.order {
+            let major = min(self.major(), source.major());
+            let minor = min(self.minor(), source.minor());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
-                let other_lower = i * other.major_stride();
-                let other_upper = other_lower + minor;
+                let source_lower = i * source.major_stride();
+                let source_upper = source_lower + minor;
                 unsafe {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)
-                        .clone_from_slice(other.data.get_unchecked(other_lower..other_upper));
+                        .clone_from_slice(source.data.get_unchecked(source_lower..source_upper));
                 }
             }
         } else {
-            let major = min(self.major(), other.minor());
-            let minor = min(self.minor(), other.major());
+            let major = min(self.major(), source.minor());
+            let minor = min(self.minor(), source.major());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
@@ -497,7 +497,7 @@ impl<T> Matrix<T> {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)
                         .iter_mut()
-                        .zip(other.iter_nth_minor_axis_vector_unchecked(i))
+                        .zip(source.iter_nth_minor_axis_vector_unchecked(i))
                         .for_each(|(x, y)| *x = y.clone());
                 }
             }
@@ -1287,76 +1287,76 @@ mod tests {
     }
 
     #[test]
-    fn test_overwrite_with() {
+    fn test_overwrite() {
         let blank = matrix![[0, 0, 0], [0, 0, 0]];
 
         {
-            let mut other = matrix![[1, 2]];
+            let mut source = matrix![[1, 2]];
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
 
-            other.switch_order();
+            source.switch_order();
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
         }
 
         {
-            let mut other = matrix![[1, 2], [3, 4]];
+            let mut source = matrix![[1, 2], [3, 4]];
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
 
-            other.switch_order();
+            source.switch_order();
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
-        }
-
-        {
-            let mut other = matrix![[1, 2], [3, 4], [5, 6]];
-
-            let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
-
-            other.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
         }
 
         {
-            let mut other = matrix![[1, 2, 3]];
+            let mut source = matrix![[1, 2], [3, 4], [5, 6]];
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+
+            source.switch_order();
+
+            let mut matrix = blank.clone();
+            matrix.overwrite(&source);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+        }
+
+        {
+            let mut source = matrix![[1, 2, 3]];
+
+            let mut matrix = blank.clone();
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
 
-            other.switch_order();
+            source.switch_order();
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
         }
 
         {
-            let mut other = matrix![[1, 2, 3, 4]];
+            let mut source = matrix![[1, 2, 3, 4]];
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
 
-            other.switch_order();
+            source.switch_order();
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
         }
     }
