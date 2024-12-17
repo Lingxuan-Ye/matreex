@@ -25,7 +25,7 @@ where
     fn add(self, rhs: &Matrix<R>) -> Self::Output {
         match self.elementwise_add_consume_self(rhs) {
             Err(error) => panic!("{error}"),
-            Ok(output) => output,
+            Ok(matrix) => matrix,
         }
     }
 }
@@ -52,7 +52,7 @@ where
     fn add(self, rhs: &Matrix<R>) -> Self::Output {
         match self.elementwise_add(rhs) {
             Err(error) => panic!("{error}"),
-            Ok(output) => output,
+            Ok(matrix) => matrix,
         }
     }
 }

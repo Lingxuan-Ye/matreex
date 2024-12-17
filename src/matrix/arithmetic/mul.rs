@@ -17,7 +17,7 @@ where
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
         match self.mat_mul(rhs) {
             Err(error) => panic!("{error}"),
-            Ok(output) => output,
+            Ok(matrix) => matrix,
         }
     }
 }
@@ -279,8 +279,8 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
-            let output = lhs.mat_mul(rhs).unwrap();
-            assert_eq!(output, expected);
+            let result = lhs.mat_mul(rhs).unwrap();
+            assert_eq!(result, expected);
         }
 
         rhs.switch_order();
@@ -289,8 +289,8 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
-            let output = lhs.mat_mul(rhs).unwrap();
-            assert_eq!(output, expected);
+            let result = lhs.mat_mul(rhs).unwrap();
+            assert_eq!(result, expected);
         }
 
         lhs.switch_order();
@@ -299,9 +299,9 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
-            let mut output = lhs.mat_mul(rhs).unwrap();
-            output.switch_order();
-            assert_eq!(output, expected);
+            let mut result = lhs.mat_mul(rhs).unwrap();
+            result.switch_order();
+            assert_eq!(result, expected);
         }
 
         rhs.switch_order();
@@ -310,9 +310,9 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
-            let mut output = lhs.mat_mul(rhs).unwrap();
-            output.switch_order();
-            assert_eq!(output, expected);
+            let mut result = lhs.mat_mul(rhs).unwrap();
+            result.switch_order();
+            assert_eq!(result, expected);
         }
 
         lhs.switch_order();
@@ -320,15 +320,15 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = matrix![[0], [1], [2]];
-            let output = lhs.mat_mul(rhs).unwrap();
-            assert_eq!(output, matrix![[5], [14]]);
+            let result = lhs.mat_mul(rhs).unwrap();
+            assert_eq!(result, matrix![[5], [14]]);
         }
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
-            let output = lhs.mat_mul(rhs).unwrap();
-            assert_eq!(output, matrix![[15, 18, 21], [42, 54, 66]]);
+            let result = lhs.mat_mul(rhs).unwrap();
+            assert_eq!(result, matrix![[15, 18, 21], [42, 54, 66]]);
         }
 
         {

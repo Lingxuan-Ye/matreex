@@ -25,7 +25,7 @@ where
     fn sub(self, rhs: &Matrix<R>) -> Self::Output {
         match self.elementwise_sub_consume_self(rhs) {
             Err(error) => panic!("{error}"),
-            Ok(output) => output,
+            Ok(matrix) => matrix,
         }
     }
 }
@@ -52,7 +52,7 @@ where
     fn sub(self, rhs: &Matrix<R>) -> Self::Output {
         match self.elementwise_sub(rhs) {
             Err(error) => panic!("{error}"),
-            Ok(output) => output,
+            Ok(matrix) => matrix,
         }
     }
 }

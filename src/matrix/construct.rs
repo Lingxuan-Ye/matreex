@@ -186,82 +186,73 @@ mod tests {
 
     #[test]
     fn test_with_default() {
-        assert_eq!(
-            Matrix::with_default((2, 3)).unwrap(),
-            matrix![[0, 0, 0], [0, 0, 0]]
-        );
+        let shape = (2, 3);
+        let matrix = Matrix::with_default(shape).unwrap();
+        assert_eq!(matrix, matrix![[0, 0, 0], [0, 0, 0]]);
 
-        assert_eq!(
-            Matrix::<i32>::with_default((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
+        let shape = (usize::MAX, 2);
+        let error = Matrix::<i32>::with_default(shape).unwrap_err();
+        assert_eq!(error, Error::SizeOverflow);
 
-        assert_eq!(
-            Matrix::<u8>::with_default((isize::MAX as usize + 1, 1)).unwrap_err(),
-            Error::CapacityOverflow
-        );
-        assert_eq!(
-            Matrix::<i32>::with_default((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
-            Error::CapacityOverflow
-        );
+        let shape = (isize::MAX as usize + 1, 1);
+        let error = Matrix::<u8>::with_default(shape).unwrap_err();
+        assert_eq!(error, Error::CapacityOverflow);
 
-        // assert!(Matrix::<()>::with_default((isize::MAX as usize + 1, 1)).is_ok());
+        let shape = (isize::MAX as usize / 4 + 1, 1);
+        let error = Matrix::<i32>::with_default(shape).unwrap_err();
+        assert_eq!(error, Error::CapacityOverflow);
+
+        // unable to cover
+        // let shape = (isize::MAX as usize + 1, 1);
+        // let result = Matrix::<()>::with_default(shape);
+        // assert!(result.is_ok());
     }
 
     #[test]
     fn test_with_value() {
-        assert_eq!(
-            Matrix::with_value((2, 3), 0).unwrap(),
-            matrix![[0, 0, 0], [0, 0, 0]]
-        );
+        let shape = (2, 3);
+        let matrix = Matrix::with_value(shape, 0).unwrap();
+        assert_eq!(matrix, matrix![[0, 0, 0], [0, 0, 0]]);
 
-        assert_eq!(
-            Matrix::<i32>::with_value((usize::MAX, 2), 0).unwrap_err(),
-            Error::SizeOverflow
-        );
+        let shape = (usize::MAX, 2);
+        let error = Matrix::with_value(shape, 0).unwrap_err();
+        assert_eq!(error, Error::SizeOverflow);
 
-        assert_eq!(
-            Matrix::<u8>::with_value((isize::MAX as usize + 1, 1), 0).unwrap_err(),
-            Error::CapacityOverflow
-        );
-        assert_eq!(
-            Matrix::<i32>::with_value((isize::MAX as usize / 4 + 1, 1), 0).unwrap_err(),
-            Error::CapacityOverflow
-        );
+        let shape = (isize::MAX as usize + 1, 1);
+        let error = Matrix::<u8>::with_value(shape, 0).unwrap_err();
+        assert_eq!(error, Error::CapacityOverflow);
+
+        let shape = (isize::MAX as usize / 4 + 1, 1);
+        let error = Matrix::<i32>::with_value(shape, 0).unwrap_err();
+        assert_eq!(error, Error::CapacityOverflow);
 
         // zero-sized types
-        assert!(Matrix::<()>::with_value((isize::MAX as usize + 1, 1), ()).is_ok());
+        let shape = (isize::MAX as usize + 1, 1);
+        let result = Matrix::<()>::with_value(shape, ());
+        assert!(result.is_ok());
     }
 
     #[test]
     fn test_with_initializer() {
-        assert_eq!(
-            Matrix::with_initializer((2, 3), Default::default).unwrap(),
-            matrix![[0, 0, 0], [0, 0, 0]]
-        );
+        let shape = (2, 3);
+        let matrix = Matrix::with_initializer(shape, |row, col| row + col).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [1, 2, 3]]);
 
-        assert_eq!(
-            Matrix::<i32>::with_initializer((usize::MAX, 2), Default::default).unwrap_err(),
-            Error::SizeOverflow
-        );
+        let shape = (usize::MAX, 2);
+        let error = Matrix::with_initializer(shape, |_, _| 0).unwrap_err();
+        assert_eq!(error, Error::SizeOverflow);
 
-        assert_eq!(
-            Matrix::<u8>::with_initializer((isize::MAX as usize + 1, 1), Default::default)
-                .unwrap_err(),
-            Error::CapacityOverflow
-        );
-        assert_eq!(
-            Matrix::<i32>::with_initializer((isize::MAX as usize / 4 + 1, 1), Default::default)
-                .unwrap_err(),
-            Error::CapacityOverflow
-        );
+        let shape = (isize::MAX as usize + 1, 1);
+        let error = Matrix::<u8>::with_initializer(shape, |_, _| 0).unwrap_err();
+        assert_eq!(error, Error::CapacityOverflow);
 
-        // The following test case for zero-sized types is impractical to
-        // run in debug mode, and since `#[cfg(not(debug_assertions))]` does
-        // not strictly match release mode, these tests are commented out.
+        let shape = (isize::MAX as usize / 4 + 1, 1);
+        let error = Matrix::<i32>::with_initializer(shape, |_, _| 0).unwrap_err();
+        assert_eq!(error, Error::CapacityOverflow);
 
-        // assert!(
-        //     Matrix::<()>::with_initializer((isize::MAX as usize + 1, 1), Default::default).is_ok()
-        // );
+        // unable to cover
+        // let shape = (isize::MAX as usize + 1, 1);
+        // let result = Matrix::<()>::with_initializer(shape, |_, _| ());
+        // assert!(result.is_ok());
     }
 }
