@@ -94,11 +94,15 @@ impl<L> Matrix<L> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_add(&rhs);
-    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
+    /// let result = lhs.elementwise_add(&rhs)?;
+    /// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// # Ok(())
+    /// # }
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
@@ -124,11 +128,15 @@ impl<L> Matrix<L> {
     ///
     /// ```
     /// use matreex::matrix;
+    /// # use matreex::Result;
     ///
+    /// # fn main() -> Result<()> {
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_add_consume_self(&rhs);
-    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
+    /// let result = lhs.elementwise_add_consume_self(&rhs)?;
+    /// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// # Ok(())
+    /// # }
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
