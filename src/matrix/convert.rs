@@ -186,7 +186,7 @@ mod tests {
     }
 
     #[test]
-    fn test_from_sequence_of_arrays() {
+    fn test_from_arrays() {
         // avoid using `matrix!` to prevent circular validation
         let order = Order::default();
         let shape = AxisShape::from_shape_unchecked((2, 3), order);
@@ -212,7 +212,7 @@ mod tests {
     }
 
     #[test]
-    fn test_try_from_sequence_of_vectors() {
+    fn test_try_from_vectors() {
         const MAX: usize = isize::MAX as usize;
 
         let expected = matrix![[0, 1, 2], [3, 4, 5]];
@@ -243,28 +243,31 @@ mod tests {
         assert!(Matrix::try_from(&vectors[..]).is_ok());
 
         let vectors = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
-        assert_eq!(Matrix::try_from(vectors.clone()), Err(Error::SizeOverflow));
-        assert_eq!(Matrix::try_from(vectors.to_vec()), Err(Error::SizeOverflow));
-        assert_eq!(Matrix::try_from(&vectors[..]), Err(Error::SizeOverflow));
-
-        // unable to cover (run out of memory)
-        // let vectors = [vec![0u8; MAX], vec![0u8; MAX]];
-        // assert_eq!(Matrix::try_from(vectors.clone()), Err(Error::CapacityOverflow));
-        // assert_eq!(Matrix::try_from(vectors.to_vec()), Err(Error::CapacityOverflow));
-        // assert_eq!(Matrix::try_from(&vectors[..]), Err(Error::CapacityOverflow));
+        assert_eq!(
+            Matrix::try_from(vectors.clone()).unwrap_err(),
+            Error::SizeOverflow
+        );
+        assert_eq!(
+            Matrix::try_from(vectors.to_vec()).unwrap_err(),
+            Error::SizeOverflow
+        );
+        assert_eq!(
+            Matrix::try_from(&vectors[..]).unwrap_err(),
+            Error::SizeOverflow
+        );
 
         let vectors = [vec![0, 1, 2], vec![3, 4]];
         assert_eq!(
-            Matrix::try_from(vectors.clone()),
-            Err(Error::LengthInconsistent)
+            Matrix::try_from(vectors.clone()).unwrap_err(),
+            Error::LengthInconsistent
         );
         assert_eq!(
-            Matrix::try_from(vectors.to_vec()),
-            Err(Error::LengthInconsistent)
+            Matrix::try_from(vectors.to_vec()).unwrap_err(),
+            Error::LengthInconsistent
         );
         assert_eq!(
-            Matrix::try_from(&vectors[..]),
-            Err(Error::LengthInconsistent)
+            Matrix::try_from(&vectors[..]).unwrap_err(),
+            Error::LengthInconsistent
         );
     }
 
