@@ -1,3 +1,4 @@
+use super::index::{unflatten_index, Index};
 use super::order::Order;
 use super::shape::{AxisShape, Shape};
 use super::Matrix;
@@ -108,16 +109,20 @@ impl<T> Matrix<T> {
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    pub fn with_initializer<S, F>(shape: S, initializer: F) -> Result<Self>
+    pub fn with_initializer<S, F>(shape: S, mut initializer: F) -> Result<Self>
     where
         S: Shape,
-        F: FnMut() -> T,
+        F: FnMut(usize, usize) -> T,
     {
         let order = Order::default();
         let shape = AxisShape::try_from_shape(shape, order)?;
         let size = Self::check_size(shape.size())?;
         let mut data = Vec::with_capacity(size);
-        data.resize_with(size, initializer);
+        for index in 0..size {
+            let index = unflatten_index(index, order, shape);
+            let element = initializer(index.row(), index.col());
+            data.push(element);
+        }
         Ok(Self { order, shape, data })
     }
 
@@ -151,7 +156,12 @@ impl<T> Matrix<T> {
         T: Default,
         S: Shape,
     {
-        Self::with_initializer(shape, T::default)
+        let order = Order::default();
+        let shape = AxisShape::try_from_shape(shape, order)?;
+        let size = Self::check_size(shape.size())?;
+        let mut data = Vec::with_capacity(size);
+        data.resize_with(size, T::default);
+        Ok(Self { order, shape, data })
     }
 }
 
