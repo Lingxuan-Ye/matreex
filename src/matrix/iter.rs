@@ -278,68 +278,6 @@ impl<T> Matrix<T> {
         self.data.into_iter()
     }
 
-    /// Returns a parallel iterator over the elements of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::prelude::*;
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let sum = matrix.par_iter_elements().sum::<i32>();
-    /// assert_eq!(sum, 15);
-    /// ```
-    #[cfg(feature = "rayon")]
-    pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T>
-    where
-        T: Sync,
-    {
-        self.data.par_iter()
-    }
-
-    /// Returns an parallel iterator that allows modifying each element
-    /// of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::prelude::*;
-    ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// matrix.par_iter_elements_mut().for_each(|element| *element += 1);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    #[cfg(feature = "rayon")]
-    pub fn par_iter_elements_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send,
-    {
-        self.data.par_iter_mut()
-    }
-
-    /// Creates a parallel consuming iterator, that is, one that moves each
-    /// element out of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::prelude::*;
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let sum = matrix.into_par_iter_elements().sum::<i32>();
-    /// assert_eq!(sum, 15);
-    /// ```
-    #[cfg(feature = "rayon")]
-    pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T>
-    where
-        T: Send,
-    {
-        self.data.into_par_iter()
-    }
-
     /// Returns an iterator over the elements of the matrix along with
     /// their indices.
     ///
@@ -425,6 +363,68 @@ impl<T> Matrix<T> {
                 let index = Index::unflatten(index, self.order, self.shape);
                 (index, element)
             })
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<T> Matrix<T> {
+    /// Returns a parallel iterator over the elements of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::prelude::*;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let sum = matrix.par_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 15);
+    /// ```
+    pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T>
+    where
+        T: Sync,
+    {
+        self.data.par_iter()
+    }
+
+    /// Returns a parallel iterator that allows modifying each element
+    /// of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::prelude::*;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// matrix.par_iter_elements_mut().for_each(|element| *element += 1);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
+    pub fn par_iter_elements_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send,
+    {
+        self.data.par_iter_mut()
+    }
+
+    /// Creates a parallel consuming iterator, that is, one that moves each
+    /// element out of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::prelude::*;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let sum = matrix.into_par_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 15);
+    /// ```
+    pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T>
+    where
+        T: Send,
+    {
+        self.data.into_par_iter()
     }
 }
 
@@ -915,53 +915,6 @@ mod tests {
         assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
     }
 
-    #[cfg(feature = "rayon")]
-    #[test]
-    fn test_par_iter_elements() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let sum = matrix.par_iter_elements().sum::<i32>();
-        assert_eq!(sum, 15);
-
-        matrix.switch_order();
-
-        let sum = matrix.par_iter_elements().sum::<i32>();
-        assert_eq!(sum, 15);
-    }
-
-    #[cfg(feature = "rayon")]
-    #[test]
-    fn test_par_iter_elements_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        matrix
-            .par_iter_elements_mut()
-            .for_each(|element| *element += 1);
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-        matrix.switch_order();
-
-        matrix
-            .par_iter_elements_mut()
-            .for_each(|element| *element -= 1);
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-    }
-
-    #[cfg(feature = "rayon")]
-    #[test]
-    fn test_into_par_iter_elements() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
-        assert_eq!(sum, 15);
-
-        matrix.switch_order();
-
-        let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
-        assert_eq!(sum, 15);
-    }
-
     #[test]
     fn test_iter_elements_with_index() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
@@ -1008,5 +961,52 @@ mod tests {
         for (index, element) in matrix.clone().into_iter_elements_with_index() {
             assert_eq!(element, matrix[index]);
         }
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_iter_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let sum = matrix.par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
+
+        matrix.switch_order();
+
+        let sum = matrix.par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_iter_elements_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix
+            .par_iter_elements_mut()
+            .for_each(|element| *element += 1);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+
+        matrix.switch_order();
+
+        matrix
+            .par_iter_elements_mut()
+            .for_each(|element| *element -= 1);
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_into_par_iter_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
+
+        matrix.switch_order();
+
+        let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
     }
 }
