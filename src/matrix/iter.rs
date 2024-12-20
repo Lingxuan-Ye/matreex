@@ -426,6 +426,44 @@ impl<T> Matrix<T> {
     {
         self.data.into_par_iter()
     }
+
+    pub fn par_iter_elements_with_index(&self) -> impl ParallelIterator<Item = (Index, &T)>
+    where
+        T: Sync,
+    {
+        self.data.par_iter().enumerate().map(|(index, element)| {
+            let index = Index::unflatten(index, self.order, self.shape);
+            (index, element)
+        })
+    }
+
+    pub fn par_iter_elements_mut_with_index(
+        &mut self,
+    ) -> impl ParallelIterator<Item = (Index, &mut T)>
+    where
+        T: Send,
+    {
+        self.data
+            .par_iter_mut()
+            .enumerate()
+            .map(|(index, element)| {
+                let index = Index::unflatten(index, self.order, self.shape);
+                (index, element)
+            })
+    }
+
+    pub fn into_par_iter_elements_with_index(self) -> impl ParallelIterator<Item = (Index, T)>
+    where
+        T: Send,
+    {
+        self.data
+            .into_par_iter()
+            .enumerate()
+            .map(move |(index, element)| {
+                let index = Index::unflatten(index, self.order, self.shape);
+                (index, element)
+            })
+    }
 }
 
 impl<T> Matrix<T> {
