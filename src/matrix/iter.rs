@@ -983,16 +983,16 @@ mod tests {
     fn test_iter_elements_mut() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for element in matrix.iter_elements_mut() {
+        matrix.iter_elements_mut().for_each(|element| {
             *element += 1;
-        }
+        });
         assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
 
-        for element in matrix.iter_elements_mut() {
+        matrix.iter_elements_mut().for_each(|element| {
             *element -= 1;
-        }
+        });
         matrix.switch_order();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
@@ -1016,31 +1016,39 @@ mod tests {
     fn test_iter_elements_with_index() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for (index, element) in matrix.iter_elements_with_index() {
-            assert_eq!(element, &matrix[index]);
-        }
+        matrix
+            .iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, &matrix[index]);
+            });
 
         matrix.switch_order();
 
-        for (index, element) in matrix.iter_elements_with_index() {
-            assert_eq!(element, &matrix[index]);
-        }
+        matrix
+            .iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, &matrix[index]);
+            });
     }
 
     #[test]
     fn test_iter_elements_mut_with_index() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for (index, element) in matrix.iter_elements_mut_with_index() {
-            *element += index.row as i32 + index.col as i32;
-        }
+        matrix
+            .iter_elements_mut_with_index()
+            .for_each(|(index, element)| {
+                *element += index.row as i32 + index.col as i32;
+            });
         assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
 
         matrix.switch_order();
 
-        for (index, element) in matrix.iter_elements_mut_with_index() {
-            *element -= index.row as i32 + index.col as i32;
-        }
+        matrix
+            .iter_elements_mut_with_index()
+            .for_each(|(index, element)| {
+                *element -= index.row as i32 + index.col as i32;
+            });
         matrix.switch_order();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
@@ -1049,15 +1057,21 @@ mod tests {
     fn test_into_iter_elements_with_index() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for (index, element) in matrix.clone().into_iter_elements_with_index() {
-            assert_eq!(element, matrix[index]);
-        }
+        matrix
+            .clone()
+            .into_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, matrix[index]);
+            });
 
         matrix.switch_order();
 
-        for (index, element) in matrix.clone().into_iter_elements_with_index() {
-            assert_eq!(element, matrix[index]);
-        }
+        matrix
+            .clone()
+            .into_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, matrix[index]);
+            });
     }
 
     #[cfg(feature = "rayon")]
@@ -1105,5 +1119,70 @@ mod tests {
 
         let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
         assert_eq!(sum, 15);
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_iter_elements_with_index() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix
+            .par_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, &matrix[index]);
+            });
+
+        matrix.switch_order();
+
+        matrix
+            .par_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, &matrix[index]);
+            });
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_iter_elements_mut_with_index() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix
+            .par_iter_elements_mut_with_index()
+            .for_each(|(index, element)| {
+                *element += index.row as i32 + index.col as i32;
+            });
+        assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
+
+        matrix.switch_order();
+
+        matrix
+            .par_iter_elements_mut_with_index()
+            .for_each(|(index, element)| {
+                *element -= index.row as i32 + index.col as i32;
+            });
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_into_par_iter_elements_with_index() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix
+            .clone()
+            .into_par_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, matrix[index]);
+            });
+
+        matrix.switch_order();
+
+        matrix
+            .clone()
+            .into_par_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, matrix[index]);
+            });
     }
 }
