@@ -1,4 +1,4 @@
-use super::index::{unflatten_index, Index};
+use super::index::Index;
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
@@ -360,11 +360,11 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_elements_with_index(
         &self,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, &T)> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &T)> {
         self.data.iter().enumerate().map(|(index, element)| {
             // hope loop-invariant code motion applies here,
             // as well as to similar code
-            let index = unflatten_index(index, self.order, self.shape);
+            let index = Index::unflatten(index, self.order, self.shape);
             (index, element)
         })
     }
@@ -384,15 +384,15 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// for (index, element) in matrix.iter_elements_mut_with_index() {
-    ///     *element += index.row() as i32 + index.col() as i32;
+    ///     *element += index.row as i32 + index.col as i32;
     /// }
     /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
     /// ```
     pub fn iter_elements_mut_with_index(
         &mut self,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, &mut T)> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &mut T)> {
         self.data.iter_mut().enumerate().map(|(index, element)| {
-            let index = unflatten_index(index, self.order, self.shape);
+            let index = Index::unflatten(index, self.order, self.shape);
             (index, element)
         })
     }
@@ -417,12 +417,12 @@ impl<T> Matrix<T> {
     /// ```
     pub fn into_iter_elements_with_index(
         self,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, T)> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, T)> {
         self.data
             .into_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = unflatten_index(index, self.order, self.shape);
+                let index = Index::unflatten(index, self.order, self.shape);
                 (index, element)
             })
     }
@@ -982,14 +982,14 @@ mod tests {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
         for (index, element) in matrix.iter_elements_mut_with_index() {
-            *element += index.row() as i32 + index.col() as i32;
+            *element += index.row as i32 + index.col as i32;
         }
         assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
 
         matrix.switch_order();
 
         for (index, element) in matrix.iter_elements_mut_with_index() {
-            *element -= index.row() as i32 + index.col() as i32;
+            *element -= index.row as i32 + index.col as i32;
         }
         matrix.switch_order();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);

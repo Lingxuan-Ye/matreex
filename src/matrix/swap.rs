@@ -29,18 +29,16 @@ impl<T> Matrix<T> {
     /// ```
     pub fn swap<I, J>(&mut self, i: I, j: J) -> Result<&mut Self>
     where
-        I: Index,
-        J: Index,
+        I: Into<Index>,
+        J: Into<Index>,
     {
         let index = AxisIndex::from_index(i, self.order);
         let jndex = AxisIndex::from_index(j, self.order);
-        if index.is_out_of_bounds(self.shape) || jndex.is_out_of_bounds(self.shape) {
-            return Err(Error::IndexOutOfBounds);
-        }
-        self.data.swap(
-            index.to_flattened(self.shape),
-            jndex.to_flattened(self.shape),
-        );
+        index.ensure_in_bounds(self.shape)?;
+        jndex.ensure_in_bounds(self.shape)?;
+        let index = index.to_flattened(self.shape);
+        let jndex = jndex.to_flattened(self.shape);
+        self.data.swap(index, jndex);
         Ok(self)
     }
 

@@ -1,5 +1,5 @@
 use super::order::Order;
-use super::shape::{AxisShape, Shape};
+use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -180,38 +180,123 @@ pub unsafe trait MatrixIndex<T>: internal::Sealed {
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output;
 }
 
-/// Any type implementing this trait can index a [`Matrix<T>`].
+/// A structure representing the index of an element in a [`Matrix<T>`].
 ///
-/// # Examples
+/// # Notes
 ///
-/// ```
-/// use matreex::matrix;
-///
-/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-///
-/// let index = (0, 0);
-/// assert_eq!(matrix[index], 0);
-///
-/// let index = [1, 1];
-/// assert_eq!(matrix[index], 4);
-/// ```
-pub trait Index {
-    /// Returns the row number of the index.
-    fn row(&self) -> usize;
+/// Any type that implements [`Into<Index>`] can be used as an index.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Index {
+    /// The row index of the element.
+    pub row: usize,
 
-    /// Returns the column number of the index.
-    fn col(&self) -> usize;
+    /// The column index of the element.
+    pub col: usize,
+}
 
-    /// Returns `true` if the index is out of bounds for given matrix.
-    fn is_out_of_bounds<T>(&self, matrix: &Matrix<T>) -> bool {
+impl Index {
+    /// Creates a new [`Index`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Index;
+    ///
+    /// let index = Index::new(2, 3);
+    /// ```
+    pub fn new(row: usize, col: usize) -> Self {
+        Self { row, col }
+    }
+
+    /// Returns `true` if the index is out of bounds for the given matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Index, Matrix};
+    /// # use matreex::Result;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let matrix = Matrix::<i32>::with_default((2, 3))?;
+    /// let index = Index::new(2, 3);
+    /// assert!(index.is_out_of_bounds(&matrix));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn is_out_of_bounds<T>(&self, matrix: &Matrix<T>) -> bool {
         let shape = matrix.shape();
-        self.row() >= shape.nrows() || self.col() >= shape.ncols()
+        self.row >= shape.nrows() || self.col >= shape.ncols()
+    }
+
+    /// Ensures the index is in bounds for the given matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Index, Matrix};
+    /// # use matreex::Result;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let matrix = Matrix::<i32>::with_default((2, 3))?;
+    /// let index = Index::new(0, 0);
+    /// assert!(index.ensure_in_bounds(&matrix).is_ok());
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn ensure_in_bounds<T>(&self, matrix: &Matrix<T>) -> Result<&Self> {
+        if self.is_out_of_bounds(matrix) {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self)
+        }
+    }
+
+    /// Transposes the index.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Index;
+    ///
+    /// let mut index = Index::new(2, 3);
+    /// index.transpose();
+    /// assert_eq!(index, Index::new(3, 2));
+    /// ```
+    pub fn transpose(&mut self) -> &mut Self {
+        (self.row, self.col) = (self.col, self.row);
+        self
+    }
+
+    pub(super) fn flatten(self, order: Order, shape: AxisShape) -> usize {
+        AxisIndex::from_index(self, order).to_flattened(shape)
+    }
+
+    pub(super) fn unflatten(index: usize, order: Order, shape: AxisShape) -> Self {
+        AxisIndex::from_flattened(index, shape).to_index(order)
+    }
+}
+
+impl From<(usize, usize)> for Index {
+    fn from(value: (usize, usize)) -> Self {
+        let (row, col) = value;
+        Self { row, col }
+    }
+}
+
+impl From<[usize; 2]> for Index {
+    fn from(value: [usize; 2]) -> Self {
+        let [row, col] = value;
+        Self { row, col }
     }
 }
 
 unsafe impl<T, I> MatrixIndex<T> for I
 where
-    I: Index,
+    I: Into<Index>,
 {
     type Output = T;
 
@@ -240,26 +325,6 @@ where
     }
 }
 
-impl Index for (usize, usize) {
-    fn row(&self) -> usize {
-        self.0
-    }
-
-    fn col(&self) -> usize {
-        self.1
-    }
-}
-
-impl Index for [usize; 2] {
-    fn row(&self) -> usize {
-        self[0]
-    }
-
-    fn col(&self) -> usize {
-        self[1]
-    }
-}
-
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(super) struct AxisIndex {
     pub(super) major: usize,
@@ -271,24 +336,37 @@ impl AxisIndex {
         self.major >= shape.major() || self.minor >= shape.minor()
     }
 
+    pub(super) fn ensure_in_bounds(&self, shape: AxisShape) -> Result<&Self> {
+        if self.is_out_of_bounds(shape) {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self)
+        }
+    }
+
     pub(super) fn transpose(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
     }
 
-    pub(super) fn from_index<I: Index>(index: I, order: Order) -> Self {
+    pub(super) fn from_index<I>(index: I, order: Order) -> Self
+    where
+        I: Into<Index>,
+    {
+        let index = index.into();
         let (major, minor) = match order {
-            Order::RowMajor => (index.row(), index.col()),
-            Order::ColMajor => (index.col(), index.row()),
+            Order::RowMajor => (index.row, index.col),
+            Order::ColMajor => (index.col, index.row),
         };
         Self { major, minor }
     }
 
-    pub(super) fn to_index(self, order: Order) -> impl Index {
-        match order {
+    pub(super) fn to_index(self, order: Order) -> Index {
+        let (row, col) = match order {
             Order::RowMajor => (self.major, self.minor),
             Order::ColMajor => (self.minor, self.major),
-        }
+        };
+        Index { row, col }
     }
 
     pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
@@ -308,19 +386,13 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     type Output = T;
 
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        if self.is_out_of_bounds(matrix.shape) {
-            Err(Error::IndexOutOfBounds)
-        } else {
-            unsafe { Ok(self.get_unchecked(matrix)) }
-        }
+        self.ensure_in_bounds(matrix.shape)?;
+        unsafe { Ok(self.get_unchecked(matrix)) }
     }
 
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        if self.is_out_of_bounds(matrix.shape) {
-            Err(Error::IndexOutOfBounds)
-        } else {
-            unsafe { Ok(self.get_unchecked_mut(matrix)) }
-        }
+        self.ensure_in_bounds(matrix.shape)?;
+        unsafe { Ok(self.get_unchecked_mut(matrix)) }
     }
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
@@ -334,28 +406,21 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     }
 
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        if self.is_out_of_bounds(matrix.shape) {
-            panic!("{}", Error::IndexOutOfBounds);
+        if let Err(error) = self.ensure_in_bounds(matrix.shape) {
+            panic!("{error}");
         }
         unsafe { self.get_unchecked(matrix) }
     }
 
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        if self.is_out_of_bounds(matrix.shape) {
-            panic!("{}", Error::IndexOutOfBounds);
+        if let Err(error) = self.ensure_in_bounds(matrix.shape) {
+            panic!("{error}");
         }
         unsafe { self.get_unchecked_mut(matrix) }
     }
 }
 
-pub(super) fn unflatten_index(index: usize, order: Order, shape: AxisShape) -> impl Index {
-    AxisIndex::from_flattened(index, shape).to_index(order)
-}
-
-pub(super) fn flatten_index<I: Index>(index: I, order: Order, shape: AxisShape) -> usize {
-    AxisIndex::from_index(index, order).to_flattened(shape)
-}
-
+#[inline]
 pub(super) fn transpose_flattened_index(index: usize, mut shape: AxisShape) -> usize {
     let mut index = AxisIndex::from_flattened(index, shape);
     index.transpose();
@@ -364,11 +429,13 @@ pub(super) fn transpose_flattened_index(index: usize, mut shape: AxisShape) -> u
 }
 
 mod internal {
+    use super::{AxisIndex, Index};
+
     pub trait Sealed {}
 
-    impl<I: super::Index> Sealed for I {}
+    impl<I> Sealed for I where I: Into<Index> {}
 
-    impl Sealed for super::AxisIndex {}
+    impl Sealed for AxisIndex {}
 }
 
 #[cfg(test)]
@@ -464,21 +531,65 @@ mod tests {
     }
 
     #[test]
-    fn test_trait_index() {
-        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    fn test_struct_index_new() {
+        let index = Index::new(2, 3);
+        assert_eq!(index.row, 2);
+        assert_eq!(index.col, 3);
+    }
 
-        assert_eq!((2, 3).row(), 2);
-        assert_eq!((2, 3).col(), 3);
-        assert!(!(1, 2).is_out_of_bounds(&matrix));
-        assert!((1, 3).is_out_of_bounds(&matrix));
-        assert!((2, 2).is_out_of_bounds(&matrix));
-        assert!((2, 3).is_out_of_bounds(&matrix));
+    #[test]
+    fn test_struct_index_is_out_of_bounds() {
+        let matrix = Matrix::<i32>::with_default((2, 3)).unwrap();
 
-        assert_eq!([2, 3].row(), 2);
-        assert_eq!([2, 3].col(), 3);
-        assert!(![1, 2].is_out_of_bounds(&matrix));
-        assert!([1, 3].is_out_of_bounds(&matrix));
-        assert!([2, 2].is_out_of_bounds(&matrix));
-        assert!([2, 3].is_out_of_bounds(&matrix));
+        let index = Index::new(0, 0);
+        assert!(!index.is_out_of_bounds(&matrix));
+
+        let index = Index::new(1, 2);
+        assert!(!index.is_out_of_bounds(&matrix));
+
+        let index = Index::new(1, 3);
+        assert!(index.is_out_of_bounds(&matrix));
+
+        let index = Index::new(2, 2);
+        assert!(index.is_out_of_bounds(&matrix));
+
+        let index = Index::new(2, 3);
+        assert!(index.is_out_of_bounds(&matrix));
+    }
+
+    #[test]
+    fn test_struct_index_ensure_in_bounds() {
+        let matrix = Matrix::<i32>::with_default((2, 3)).unwrap();
+
+        let index = Index::new(0, 0);
+        assert_eq!(index.ensure_in_bounds(&matrix), Ok(&index));
+
+        let index = Index::new(1, 2);
+        assert_eq!(index.ensure_in_bounds(&matrix), Ok(&index));
+
+        let index = Index::new(1, 3);
+        assert_eq!(
+            index.ensure_in_bounds(&matrix),
+            Err(Error::IndexOutOfBounds)
+        );
+
+        let index = Index::new(2, 2);
+        assert_eq!(
+            index.ensure_in_bounds(&matrix),
+            Err(Error::IndexOutOfBounds)
+        );
+
+        let index = Index::new(2, 3);
+        assert_eq!(
+            index.ensure_in_bounds(&matrix),
+            Err(Error::IndexOutOfBounds)
+        );
+    }
+
+    #[test]
+    fn test_struct_index_transpose() {
+        let mut index = Index::new(2, 3);
+        index.transpose();
+        assert_eq!(index, Index::new(3, 2));
     }
 }

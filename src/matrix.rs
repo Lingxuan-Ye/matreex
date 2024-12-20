@@ -66,8 +66,8 @@ impl<T> Matrix<T> {
     /// assert_eq!(shape.nrows(), 2);
     /// assert_eq!(shape.ncols(), 3);
     /// ```
-    pub fn shape(&self) -> impl Shape {
-        self.shape.interpret(self.order)
+    pub fn shape(&self) -> Shape {
+        self.shape.to_shape(self.order)
     }
 
     /// Returns the number of rows in the matrix.
@@ -81,7 +81,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix.nrows(), 2);
     /// ```
     pub fn nrows(&self) -> usize {
-        self.shape.interpret_nrows(self.order)
+        self.shape.nrows(self.order)
     }
 
     /// Returns the number of columns in the matrix.
@@ -95,7 +95,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix.ncols(), 3);
     /// ```
     pub fn ncols(&self) -> usize {
-        self.shape.interpret_ncols(self.order)
+        self.shape.ncols(self.order)
     }
 
     /// Returns the total number of elements in the matrix.
@@ -354,9 +354,9 @@ impl<T> Matrix<T> {
     pub fn resize<S>(&mut self, shape: S) -> Result<&mut Self>
     where
         T: Default,
-        S: Shape,
+        S: Into<Shape>,
     {
-        let shape = AxisShape::try_from_shape(shape, self.order)?;
+        let shape = shape.into().try_to_axis_shape(self.order)?;
         let size = Self::check_size(shape.size())?;
         self.shape = shape;
         self.data.resize_with(size, T::default);
@@ -389,15 +389,15 @@ impl<T> Matrix<T> {
     /// ```
     pub fn reshape<S>(&mut self, shape: S) -> Result<&mut Self>
     where
-        S: Shape,
+        S: Into<Shape>,
     {
-        let Ok(size) = shape.size() else {
+        let Ok(shape) = shape.into().try_to_axis_shape(self.order) else {
             return Err(Error::SizeMismatch);
         };
-        if self.size() != size {
+        if self.size() != shape.size() {
             return Err(Error::SizeMismatch);
         }
-        self.shape = AxisShape::from_shape_unchecked(shape, self.order);
+        self.shape = shape;
         Ok(self)
     }
 
@@ -456,7 +456,7 @@ impl<T> Matrix<T> {
         self
     }
 
-    /// Overwrites the overlapping part of this matrix with `other`,
+    /// Overwrites the overlapping part of this matrix with `source`,
     /// leaving the non-overlapping part unchanged.
     ///
     /// # Examples
@@ -465,31 +465,31 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
-    /// let other = matrix![[1, 1], [1, 1], [1, 1]];
-    /// matrix.overwrite_with(&other);
+    /// let source = matrix![[1, 1], [1, 1], [1, 1]];
+    /// matrix.overwrite(&source);
     /// assert_eq!(matrix, matrix![[1, 1, 0], [1, 1, 0]]);
     /// ```
-    pub fn overwrite_with(&mut self, other: &Self) -> &mut Self
+    pub fn overwrite(&mut self, source: &Self) -> &mut Self
     where
         T: Clone,
     {
-        if self.order == other.order {
-            let major = min(self.major(), other.major());
-            let minor = min(self.minor(), other.minor());
+        if self.order == source.order {
+            let major = min(self.major(), source.major());
+            let minor = min(self.minor(), source.minor());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
-                let other_lower = i * other.major_stride();
-                let other_upper = other_lower + minor;
+                let source_lower = i * source.major_stride();
+                let source_upper = source_lower + minor;
                 unsafe {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)
-                        .clone_from_slice(other.data.get_unchecked(other_lower..other_upper));
+                        .clone_from_slice(source.data.get_unchecked(source_lower..source_upper));
                 }
             }
         } else {
-            let major = min(self.major(), other.minor());
-            let minor = min(self.minor(), other.major());
+            let major = min(self.major(), source.minor());
+            let minor = min(self.minor(), source.major());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
@@ -497,16 +497,14 @@ impl<T> Matrix<T> {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)
                         .iter_mut()
-                        .zip(other.iter_nth_minor_axis_vector_unchecked(i))
+                        .zip(source.iter_nth_minor_axis_vector_unchecked(i))
                         .for_each(|(x, y)| *x = y.clone());
                 }
             }
         }
         self
     }
-}
 
-impl<T> Matrix<T> {
     /// Applies a closure to each element of the matrix,
     /// modifying the matrix in place.
     ///
@@ -524,6 +522,28 @@ impl<T> Matrix<T> {
         F: FnMut(&mut T),
     {
         self.data.iter_mut().for_each(f);
+        self
+    }
+
+    /// Applies a closure to each element of the matrix in parallel,
+    /// modifying the matrix in place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// matrix.par_apply(|x| *x += 1);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
+    #[cfg(feature = "rayon")]
+    pub fn par_apply<F>(&mut self, f: F) -> &mut Self
+    where
+        T: Send,
+        F: Fn(&mut T) + Sync + Send,
+    {
+        self.data.par_iter_mut().for_each(f);
         self
     }
 
@@ -547,28 +567,6 @@ impl<T> Matrix<T> {
         let shape = self.shape;
         let data = self.data.into_iter().map(f).collect();
         Matrix { order, shape, data }
-    }
-
-    /// Applies a closure to each element of the matrix in parallel,
-    /// modifying the matrix in place.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// matrix.par_apply(|x| *x += 1);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    #[cfg(feature = "rayon")]
-    pub fn par_apply<F>(&mut self, f: F) -> &mut Self
-    where
-        T: Send,
-        F: Fn(&mut T) + Sync + Send,
-    {
-        self.data.par_iter_mut().for_each(f);
-        self
     }
 
     /// Applies a closure to each element of the matrix in parallel,
@@ -624,7 +622,7 @@ impl<L> Matrix<L> {
     /// # }
     /// ```
     pub fn ensure_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> Result<&Self> {
-        if self.shape().equal(&rhs.shape()) {
+        if self.shape().eq(&rhs.shape()) {
             Ok(self)
         } else {
             Err(Error::ShapeNotConformable)
@@ -861,7 +859,7 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let order = self.order;
-        let shape = AxisShape::try_from_shape((nrows, ncols), order)?;
+        let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
 
@@ -1287,76 +1285,76 @@ mod tests {
     }
 
     #[test]
-    fn test_overwrite_with() {
+    fn test_overwrite() {
         let blank = matrix![[0, 0, 0], [0, 0, 0]];
 
         {
-            let mut other = matrix![[1, 2]];
+            let mut source = matrix![[1, 2]];
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
 
-            other.switch_order();
+            source.switch_order();
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
         }
 
         {
-            let mut other = matrix![[1, 2], [3, 4]];
+            let mut source = matrix![[1, 2], [3, 4]];
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
 
-            other.switch_order();
+            source.switch_order();
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
-        }
-
-        {
-            let mut other = matrix![[1, 2], [3, 4], [5, 6]];
-
-            let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
-
-            other.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
         }
 
         {
-            let mut other = matrix![[1, 2, 3]];
+            let mut source = matrix![[1, 2], [3, 4], [5, 6]];
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+
+            source.switch_order();
+
+            let mut matrix = blank.clone();
+            matrix.overwrite(&source);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+        }
+
+        {
+            let mut source = matrix![[1, 2, 3]];
+
+            let mut matrix = blank.clone();
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
 
-            other.switch_order();
+            source.switch_order();
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
         }
 
         {
-            let mut other = matrix![[1, 2, 3, 4]];
+            let mut source = matrix![[1, 2, 3, 4]];
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
 
-            other.switch_order();
+            source.switch_order();
 
             let mut matrix = blank.clone();
-            matrix.overwrite_with(&other);
+            matrix.overwrite(&source);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
         }
     }
@@ -1375,20 +1373,6 @@ mod tests {
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
-    #[test]
-    fn test_map() {
-        let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let mut matrix_f64 = matrix_i32.map(|x| x as f64);
-        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
-
-        matrix_f64.switch_order();
-
-        let mut matrix_i32 = matrix_f64.map(|x| x as i32);
-        matrix_i32.switch_order();
-        assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
-    }
-
     #[cfg(feature = "rayon")]
     #[test]
     fn test_par_apply() {
@@ -1402,6 +1386,20 @@ mod tests {
         matrix.par_apply(|x| *x -= 2);
         matrix.switch_order();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[test]
+    fn test_map() {
+        let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let mut matrix_f64 = matrix_i32.map(|x| x as f64);
+        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+
+        matrix_f64.switch_order();
+
+        let mut matrix_i32 = matrix_f64.map(|x| x as i32);
+        matrix_i32.switch_order();
+        assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
     #[cfg(feature = "rayon")]
