@@ -66,8 +66,8 @@ impl<T> Matrix<T> {
     /// assert_eq!(shape.nrows(), 2);
     /// assert_eq!(shape.ncols(), 3);
     /// ```
-    pub fn shape(&self) -> impl Shape {
-        self.shape.interpret(self.order)
+    pub fn shape(&self) -> Shape {
+        self.shape.to_shape(self.order)
     }
 
     /// Returns the number of rows in the matrix.
@@ -81,7 +81,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix.nrows(), 2);
     /// ```
     pub fn nrows(&self) -> usize {
-        self.shape.interpret_nrows(self.order)
+        self.shape.nrows(self.order)
     }
 
     /// Returns the number of columns in the matrix.
@@ -95,7 +95,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix.ncols(), 3);
     /// ```
     pub fn ncols(&self) -> usize {
-        self.shape.interpret_ncols(self.order)
+        self.shape.ncols(self.order)
     }
 
     /// Returns the total number of elements in the matrix.
@@ -354,9 +354,9 @@ impl<T> Matrix<T> {
     pub fn resize<S>(&mut self, shape: S) -> Result<&mut Self>
     where
         T: Default,
-        S: Shape,
+        S: Into<Shape>,
     {
-        let shape = AxisShape::try_from_shape(shape, self.order)?;
+        let shape = shape.into().try_to_axis_shape(self.order)?;
         let size = Self::check_size(shape.size())?;
         self.shape = shape;
         self.data.resize_with(size, T::default);
@@ -389,15 +389,15 @@ impl<T> Matrix<T> {
     /// ```
     pub fn reshape<S>(&mut self, shape: S) -> Result<&mut Self>
     where
-        S: Shape,
+        S: Into<Shape>,
     {
-        let Ok(size) = shape.size() else {
+        let Ok(shape) = shape.into().try_to_axis_shape(self.order) else {
             return Err(Error::SizeMismatch);
         };
-        if self.size() != size {
+        if self.size() != shape.size() {
             return Err(Error::SizeMismatch);
         }
-        self.shape = AxisShape::from_shape_unchecked(shape, self.order);
+        self.shape = shape;
         Ok(self)
     }
 
@@ -624,7 +624,7 @@ impl<L> Matrix<L> {
     /// # }
     /// ```
     pub fn ensure_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> Result<&Self> {
-        if self.shape().equal(&rhs.shape()) {
+        if self.shape().eq(&rhs.shape()) {
             Ok(self)
         } else {
             Err(Error::ShapeNotConformable)
@@ -861,7 +861,7 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let order = self.order;
-        let shape = AxisShape::try_from_shape((nrows, ncols), order)?;
+        let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
 

@@ -1,67 +1,105 @@
 use super::order::Order;
 use crate::error::{Error, Result};
 
-/// Any type implementing this trait can be a `shape` argument for
-/// [`Matrix<T>`] constructors.
-///
-/// # Examples
-///
-/// ```
-/// use matreex::Matrix;
-/// # use matreex::Result;
-///
-/// # fn main() -> Result<()> {
-/// let shape = (2, 3);
-/// let matrix = Matrix::<i32>::with_default(shape)?;
-///
-/// let shape = [3; 2];
-/// let matrix = Matrix::<i32>::with_default(shape)?;
-/// # Ok(())
-/// # }
-/// ```
+/// A structure representing the shape of a [`Matrix<T>`].
 ///
 /// [`Matrix<T>`]: crate::matrix::Matrix<T>
-pub trait Shape {
-    /// Returns the number of rows.
-    fn nrows(&self) -> usize;
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Shape {
+    nrows: usize,
+    ncols: usize,
+}
 
-    /// Returns the number of columns.
-    fn ncols(&self) -> usize;
+impl Shape {
+    /// Creates a new [`Shape`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let shape = Shape::new(2, 3);
+    /// ```
+    pub fn new(nrows: usize, ncols: usize) -> Self {
+        Self { nrows, ncols }
+    }
+
+    /// Returns the number of rows of the shape.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let shape = Shape::new(2, 3);
+    /// assert_eq!(shape.nrows(), 2);
+    /// ```
+    pub fn nrows(&self) -> usize {
+        self.nrows
+    }
+
+    /// Returns the number of columns of the shape.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let shape = Shape::new(2, 3);
+    /// assert_eq!(shape.ncols(), 3);
+    /// ```
+    pub fn ncols(&self) -> usize {
+        self.ncols
+    }
 
     /// Returns the size of the shape.
     ///
     /// # Errors
     ///
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    fn size(&self) -> Result<usize> {
-        self.nrows()
-            .checked_mul(self.ncols())
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, Shape};
+    ///
+    /// let shape = Shape::new(2, 3);
+    /// assert_eq!(shape.size(), Ok(6));
+    ///
+    /// let shape = Shape::new(2, usize::MAX);
+    /// assert_eq!(shape.size(), Err(Error::SizeOverflow));
+    /// ```
+    pub fn size(&self) -> Result<usize> {
+        self.nrows
+            .checked_mul(self.ncols)
             .ok_or(Error::SizeOverflow)
     }
 
-    /// Returns `true` if this shape has the same rows and columns as `other`.
-    fn equal<S: Shape>(&self, other: &S) -> bool {
-        self.nrows() == other.nrows() && self.ncols() == other.ncols()
+    pub(super) fn try_to_axis_shape(self, order: Order) -> Result<AxisShape> {
+        self.size()?;
+        Ok(self.to_axis_shape_unchecked(order))
+    }
+
+    pub(super) fn to_axis_shape_unchecked(self, order: Order) -> AxisShape {
+        let (major, minor) = match order {
+            Order::RowMajor => (self.nrows, self.ncols),
+            Order::ColMajor => (self.ncols, self.nrows),
+        };
+        AxisShape { major, minor }
     }
 }
 
-impl Shape for (usize, usize) {
-    fn nrows(&self) -> usize {
-        self.0
-    }
-
-    fn ncols(&self) -> usize {
-        self.1
+impl From<(usize, usize)> for Shape {
+    fn from(value: (usize, usize)) -> Self {
+        let (nrows, ncols) = value;
+        Self { nrows, ncols }
     }
 }
 
-impl Shape for [usize; 2] {
-    fn nrows(&self) -> usize {
-        self[0]
-    }
-
-    fn ncols(&self) -> usize {
-        self[1]
+impl From<[usize; 2]> for Shape {
+    fn from(value: [usize; 2]) -> Self {
+        let [nrows, ncols] = value;
+        Self { nrows, ncols }
     }
 }
 
@@ -97,38 +135,26 @@ impl AxisShape {
         self
     }
 
-    pub(super) fn interpret(&self, order: Order) -> impl Shape {
-        match order {
-            Order::RowMajor => (self.major, self.minor),
-            Order::ColMajor => (self.minor, self.major),
-        }
-    }
-
-    pub(super) fn interpret_nrows(&self, order: Order) -> usize {
+    pub(super) fn nrows(&self, order: Order) -> usize {
         match order {
             Order::RowMajor => self.major,
             Order::ColMajor => self.minor,
         }
     }
 
-    pub(super) fn interpret_ncols(&self, order: Order) -> usize {
+    pub(super) fn ncols(&self, order: Order) -> usize {
         match order {
             Order::RowMajor => self.minor,
             Order::ColMajor => self.major,
         }
     }
 
-    pub(super) fn try_from_shape<S: Shape>(shape: S, order: Order) -> Result<Self> {
-        shape.size()?;
-        Ok(Self::from_shape_unchecked(shape, order))
-    }
-
-    pub(super) fn from_shape_unchecked<S: Shape>(shape: S, order: Order) -> Self {
-        let (major, minor) = match order {
-            Order::RowMajor => (shape.nrows(), shape.ncols()),
-            Order::ColMajor => (shape.ncols(), shape.nrows()),
+    pub(super) fn to_shape(self, order: Order) -> Shape {
+        let (nrows, ncols) = match order {
+            Order::RowMajor => (self.major, self.minor),
+            Order::ColMajor => (self.minor, self.major),
         };
-        Self { major, minor }
+        Shape { nrows, ncols }
     }
 }
 
@@ -137,17 +163,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_trait_shape() {
-        assert_eq!((2, 3).nrows(), 2);
-        assert_eq!((2, 3).ncols(), 3);
-        assert_eq!((2, 3).size(), Ok(6));
-        assert_eq!((2, usize::MAX).size(), Err(Error::SizeOverflow));
+    fn test_shape() {
+        let shape = Shape::new(2, 3);
+        assert_eq!(shape.nrows(), 2);
+        assert_eq!(shape.ncols(), 3);
+        assert_eq!(shape.size(), Ok(6));
 
-        assert_eq!([2, 3].nrows(), 2);
-        assert_eq!([2, 3].ncols(), 3);
-        assert_eq!([2, 3].size(), Ok(6));
-        assert_eq!([2, usize::MAX].size(), Err(Error::SizeOverflow));
+        let shape = Shape::new(2, usize::MAX);
+        assert_eq!(shape.size(), Err(Error::SizeOverflow));
+    }
 
-        assert!(Shape::equal(&(2, 3), &[2, 3]));
+    #[test]
+    fn test_into_shape() {
+        let expected = Shape::new(2, 3);
+
+        let shape: Shape = (2, 3).into();
+        assert_eq!(shape, expected);
+
+        let shape: Shape = [2, 3].into();
+        assert_eq!(shape, expected);
     }
 }

@@ -1,5 +1,5 @@
 use super::order::Order;
-use super::shape::{AxisShape, Shape};
+use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 

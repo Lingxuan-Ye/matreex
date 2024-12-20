@@ -1,5 +1,4 @@
 use super::index::flatten_index;
-use super::shape::Shape;
 use super::Matrix;
 use std::collections::VecDeque;
 

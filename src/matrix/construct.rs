@@ -74,10 +74,10 @@ impl<T> Matrix<T> {
     pub fn with_value<S>(shape: S, value: T) -> Result<Self>
     where
         T: Clone,
-        S: Shape,
+        S: Into<Shape>,
     {
         let order = Order::default();
-        let shape = AxisShape::try_from_shape(shape, order)?;
+        let shape = shape.into().try_to_axis_shape(order)?;
         let size = Self::check_size(shape.size())?;
         let data = vec![value; size];
         Ok(Self { order, shape, data })
@@ -110,11 +110,11 @@ impl<T> Matrix<T> {
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_initializer<S, F>(shape: S, initializer: F) -> Result<Self>
     where
-        S: Shape,
+        S: Into<Shape>,
         F: FnMut() -> T,
     {
         let order = Order::default();
-        let shape = AxisShape::try_from_shape(shape, order)?;
+        let shape = shape.into().try_to_axis_shape(order)?;
         let size = Self::check_size(shape.size())?;
         let mut data = Vec::with_capacity(size);
         data.resize_with(size, initializer);
@@ -149,7 +149,7 @@ impl<T> Matrix<T> {
     pub fn with_default<S>(shape: S) -> Result<Self>
     where
         T: Default,
-        S: Shape,
+        S: Into<Shape>,
     {
         Self::with_initializer(shape, T::default)
     }
