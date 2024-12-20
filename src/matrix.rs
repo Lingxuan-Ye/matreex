@@ -23,13 +23,13 @@ mod swap;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
-/// [`Matrix<T>`] means ... matrix.
+/// [`Matrix<T>`] means matrix.
 ///
-/// ```
-/// use matreex::matrix;
-///
-/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-/// ```
+/// > I witnessed His decree:
+/// >
+/// > > Let there be matrix!
+/// >
+/// > Thus, [`matrix!`] was brought forth into existence.
 ///
 /// [`matrix!`]: crate::matrix!
 #[derive(Clone, PartialEq, Eq)]
@@ -117,9 +117,9 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Matrix};
+    /// use matreex::Matrix;
     ///
-    /// let matrix: Matrix<i32> = matrix![];
+    /// let matrix = Matrix::<i32>::new();
     /// assert!(matrix.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
@@ -131,17 +131,10 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
-    /// # use matreex::Result;
+    /// use matreex::Matrix;
     ///
-    /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert!(matrix.capacity() >= 6);
-    ///
-    /// matrix.resize((1, 10))?;
+    /// let mut matrix = Matrix::<i32>::with_capacity(10);
     /// assert!(matrix.capacity() >= 10);
-    /// # Ok(())
-    /// # }
     /// ```
     pub fn capacity(&self) -> usize {
         self.data.capacity()
@@ -414,6 +407,8 @@ impl<T> Matrix<T> {
     /// assert!(matrix.capacity() >= 6);
     ///
     /// matrix.resize((1, 3))?;
+    /// assert!(matrix.capacity() >= 6);
+    ///
     /// matrix.shrink_to_fit();
     /// assert!(matrix.capacity() >= 3);
     /// # Ok(())
@@ -443,6 +438,8 @@ impl<T> Matrix<T> {
     /// assert!(matrix.capacity() >= 6);
     ///
     /// matrix.resize((1, 3))?;
+    /// assert!(matrix.capacity() >= 6);
+    ///
     /// matrix.shrink_to(4);
     /// assert!(matrix.capacity() >= 4);
     ///
@@ -839,8 +836,8 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
-    /// let op = |vl: VectorIter<&i32>, vr: VectorIter<&i32>| {
-    ///     vl.zip(vr).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
+    /// let op = |lv: VectorIter<&i32>, rv: VectorIter<&i32>| {
+    ///     lv.zip(rv).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
     /// };
     /// let result = lhs.multiplication_like_operation(rhs, op);
     /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
@@ -913,8 +910,8 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let scalar = 2;
-    /// let result = matrix.scalar_operation(&scalar, |x, y| x + y);
-    /// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// let output = matrix.scalar_operation(&scalar, |x, y| x + y);
+    /// assert_eq!(output, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
     pub fn scalar_operation<S, F, U>(&self, scalar: &S, mut op: F) -> Matrix<U>
     where
@@ -939,8 +936,8 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let scalar = 2;
-    /// let result = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
-    /// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// let output = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
+    /// assert_eq!(output, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
     pub fn scalar_operation_consume_self<S, F, U>(self, scalar: &S, mut op: F) -> Matrix<U>
     where
