@@ -139,10 +139,18 @@ pub unsafe trait MatrixIndex<T>: internal::Sealed {
 
     /// Returns a reference to the output at this location,
     /// if in bounds.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output>;
 
     /// Returns a mutable reference to the output at this location,
     /// if in bounds.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output>;
 
     /// Returns a reference to the output at this location,

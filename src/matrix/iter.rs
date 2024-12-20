@@ -284,7 +284,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::iter::ParallelIterator;
+    /// use rayon::prelude::*;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let sum = matrix.par_iter_elements().sum::<i32>();
@@ -305,7 +305,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::iter::ParallelIterator;
+    /// use rayon::prelude::*;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// matrix.par_iter_elements_mut().for_each(|element| *element += 1);
@@ -326,7 +326,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::iter::ParallelIterator;
+    /// use rayon::prelude::*;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let sum = matrix.into_par_iter_elements().sum::<i32>();
@@ -354,9 +354,9 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// for (index, element) in matrix.iter_elements_with_index() {
+    /// matrix.iter_elements_with_index().for_each(|(index, element)| {
     ///     assert_eq!(element, &matrix[index]);
-    /// }
+    /// });
     /// ```
     pub fn iter_elements_with_index(
         &self,
@@ -383,9 +383,9 @@ impl<T> Matrix<T> {
     /// use matreex::{matrix, Index};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// for (index, element) in matrix.iter_elements_mut_with_index() {
+    /// matrix.iter_elements_mut_with_index().for_each(|(index, element)| {
     ///     *element += index.row as i32 + index.col as i32;
-    /// }
+    /// });
     /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
     /// ```
     pub fn iter_elements_mut_with_index(
@@ -411,9 +411,9 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// for (index, element) in matrix.clone().into_iter_elements_with_index() {
+    /// matrix.clone().into_iter_elements_with_index().for_each(|(index, element)| {
     ///     assert_eq!(element, matrix[index]);
-    /// }
+    /// });
     /// ```
     pub fn into_iter_elements_with_index(
         self,

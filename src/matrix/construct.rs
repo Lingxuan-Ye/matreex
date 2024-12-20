@@ -58,16 +58,10 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error, Matrix};
+    /// use matreex::{matrix, Matrix};
     ///
     /// let result = Matrix::with_default((2, 3));
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
-    ///
-    /// let result = Matrix::<u8>::with_default((usize::MAX, 2));
-    /// assert_eq!(result, Err(Error::SizeOverflow));
-    ///
-    /// let result = Matrix::<u8>::with_default((isize::MAX as usize + 1, 1));
-    /// assert_eq!(result, Err(Error::CapacityOverflow));
     /// ```
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
@@ -96,16 +90,10 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error, Matrix};
+    /// use matreex::{matrix, Matrix};
     ///
     /// let result = Matrix::with_value((2, 3), 0);
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
-    ///
-    /// let result = Matrix::<u8>::with_value((usize::MAX, 2), 0);
-    /// assert_eq!(result, Err(Error::SizeOverflow));
-    ///
-    /// let result = Matrix::<u8>::with_value((isize::MAX as usize + 1, 1), 0);
-    /// assert_eq!(result, Err(Error::CapacityOverflow));
     /// ```
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
@@ -135,7 +123,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{matrix, Matrix};
     ///
-    /// let result = Matrix::with_initializer((2, 3), |i| i.row + i.col);
+    /// let result = Matrix::with_initializer((2, 3), |index| index.row + index.col);
     /// assert_eq!(result, Ok(matrix![[0, 1, 2], [1, 2, 3]]));
     /// ```
     ///
@@ -235,7 +223,7 @@ mod tests {
     #[test]
     fn test_with_initializer() {
         let shape = (2, 3);
-        let result = Matrix::with_initializer(shape, |i| i.row + i.col);
+        let result = Matrix::with_initializer(shape, |index| index.row + index.col);
         assert_eq!(result, Ok(matrix![[0, 1, 2], [1, 2, 3]]));
 
         let shape = (usize::MAX, 2);
