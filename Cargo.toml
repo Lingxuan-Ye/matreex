@@ -17,5 +17,6 @@ rayon = { version = "1.10.0", optional = true }
 
 [features]
 default = ["rayon"]
+full = ["pretty_debug", "rayon"]
 pretty_debug = ["dep:ansi_term"]
 rayon = ["dep:rayon"]
