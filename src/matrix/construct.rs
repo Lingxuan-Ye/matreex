@@ -186,51 +186,50 @@ mod tests {
 
     #[test]
     fn test_with_default() {
-        assert_eq!(
-            Matrix::with_default((2, 3)).unwrap(),
-            matrix![[0, 0, 0], [0, 0, 0]]
-        );
+        let shape = (2, 3);
+        let result = Matrix::with_default(shape);
+        assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
 
-        assert_eq!(
-            Matrix::<i32>::with_default((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
+        let shape = (usize::MAX, 2);
+        let result = Matrix::<i32>::with_default(shape);
+        assert_eq!(result, Err(Error::SizeOverflow));
 
-        assert_eq!(
-            Matrix::<u8>::with_default((isize::MAX as usize + 1, 1)).unwrap_err(),
-            Error::CapacityOverflow
-        );
-        assert_eq!(
-            Matrix::<i32>::with_default((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
-            Error::CapacityOverflow
-        );
+        let shape = (isize::MAX as usize + 1, 1);
+        let result = Matrix::<u8>::with_default(shape);
+        assert_eq!(result, Err(Error::CapacityOverflow));
 
-        // assert!(Matrix::<()>::with_default((isize::MAX as usize + 1, 1)).is_ok());
+        let shape = (isize::MAX as usize / 4 + 1, 1);
+        let result = Matrix::<i32>::with_default(shape);
+        assert_eq!(result, Err(Error::CapacityOverflow));
+
+        // unable to cover
+        // let shape = (isize::MAX as usize + 1, 1);
+        // let result = Matrix::<()>::with_default(shape);
+        // assert!(result.is_ok());
     }
 
     #[test]
     fn test_with_value() {
-        assert_eq!(
-            Matrix::with_value((2, 3), 0).unwrap(),
-            matrix![[0, 0, 0], [0, 0, 0]]
-        );
+        let shape = (2, 3);
+        let result = Matrix::with_value(shape, 0);
+        assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
 
-        assert_eq!(
-            Matrix::<i32>::with_value((usize::MAX, 2), 0).unwrap_err(),
-            Error::SizeOverflow
-        );
+        let shape = (usize::MAX, 2);
+        let result = Matrix::with_value(shape, 0);
+        assert_eq!(result, Err(Error::SizeOverflow));
 
-        assert_eq!(
-            Matrix::<u8>::with_value((isize::MAX as usize + 1, 1), 0).unwrap_err(),
-            Error::CapacityOverflow
-        );
-        assert_eq!(
-            Matrix::<i32>::with_value((isize::MAX as usize / 4 + 1, 1), 0).unwrap_err(),
-            Error::CapacityOverflow
-        );
+        let shape = (isize::MAX as usize + 1, 1);
+        let result = Matrix::<u8>::with_value(shape, 0);
+        assert_eq!(result, Err(Error::CapacityOverflow));
+
+        let shape = (isize::MAX as usize / 4 + 1, 1);
+        let result = Matrix::<i32>::with_value(shape, 0);
+        assert_eq!(result, Err(Error::CapacityOverflow));
 
         // zero-sized types
-        assert!(Matrix::<()>::with_value((isize::MAX as usize + 1, 1), ()).is_ok());
+        let shape = (isize::MAX as usize + 1, 1);
+        let result = Matrix::<()>::with_value(shape, ());
+        assert!(result.is_ok());
     }
 
     #[test]

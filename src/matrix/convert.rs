@@ -186,12 +186,9 @@ mod tests {
     }
 
     #[test]
-    fn test_from_sequence_of_arrays() {
+    fn test_from_arrays() {
         // avoid using `matrix!` to prevent circular validation
-        let order = Order::default();
-        let shape = Shape::new(2, 3).to_axis_shape_unchecked(order);
-        let data = vec![0, 1, 2, 3, 4, 5];
-        let mut expected = Matrix { order, shape, data };
+        let mut expected = Matrix::with_initializer((2, 3), |i| i.row * 3 + i.col).unwrap();
 
         let arrays = [[0, 1, 2], [3, 4, 5]];
         assert_eq!(Matrix::from(arrays), expected);
@@ -212,7 +209,7 @@ mod tests {
     }
 
     #[test]
-    fn test_try_from_sequence_of_vectors() {
+    fn test_try_from_vectors() {
         const MAX: usize = isize::MAX as usize;
 
         let expected = matrix![[0, 1, 2], [3, 4, 5]];
