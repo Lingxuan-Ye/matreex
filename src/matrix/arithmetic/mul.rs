@@ -1,6 +1,6 @@
 use super::super::iter::ExactSizeDoubleEndedIterator;
 use super::super::order::Order;
-use super::super::shape::AxisShape;
+use super::super::shape::Shape;
 use super::super::Matrix;
 use crate::error::Result;
 use crate::impl_scalar_mul;
@@ -15,7 +15,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        match self.mat_mul(rhs) {
+        match self.multiply(rhs) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -172,12 +172,12 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
-    /// let result = lhs.mat_mul(rhs);
+    /// let result = lhs.multiply(rhs);
     /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
-    pub fn mat_mul<R, U>(mut self, mut rhs: Matrix<R>) -> Result<Matrix<U>>
+    pub fn multiply<R, U>(mut self, mut rhs: Matrix<R>) -> Result<Matrix<U>>
     where
         L: Mul<R, Output = U> + Clone,
         R: Clone,
@@ -188,7 +188,7 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let order = self.order;
-        let shape = AxisShape::try_from_shape((nrows, ncols), order)?;
+        let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
 
@@ -258,7 +258,7 @@ mod tests {
     use crate::matrix;
 
     #[test]
-    fn test_mat_mul() {
+    fn test_multiply() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[0, 1], [2, 3], [4, 5]];
         let expected = matrix![[10, 13], [28, 40]];
@@ -267,7 +267,7 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
-            let output = lhs.mat_mul(rhs).unwrap();
+            let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -277,7 +277,7 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
-            let output = lhs.mat_mul(rhs).unwrap();
+            let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -287,7 +287,7 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
-            let mut output = lhs.mat_mul(rhs).unwrap();
+            let mut output = lhs.multiply(rhs).unwrap();
             output.switch_order();
             assert_eq!(output, expected);
         }
@@ -298,7 +298,7 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
-            let mut output = lhs.mat_mul(rhs).unwrap();
+            let mut output = lhs.multiply(rhs).unwrap();
             output.switch_order();
             assert_eq!(output, expected);
         }
@@ -308,28 +308,28 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = matrix![[0], [1], [2]];
-            let output = lhs.mat_mul(rhs).unwrap();
+            let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, matrix![[5], [14]]);
         }
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
-            let output = lhs.mat_mul(rhs).unwrap();
+            let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, matrix![[15, 18, 21], [42, 54, 66]]);
         }
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[0, 1], [2, 3]];
-            let error = lhs.mat_mul(rhs).unwrap_err();
+            let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[0, 1, 3], [4, 5, 6]];
-            let error = lhs.mat_mul(rhs).unwrap_err();
+            let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
     }

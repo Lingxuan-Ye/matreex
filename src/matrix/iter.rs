@@ -1,4 +1,4 @@
-use super::index::{unflatten_index, Index};
+use super::index::Index;
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
@@ -247,9 +247,9 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// for element in matrix.iter_elements_mut() {
+    /// matrix.iter_elements_mut().for_each(|element| {
     ///     *element += 1;
-    /// }
+    /// });
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     pub fn iter_elements_mut(&mut self) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
@@ -278,68 +278,6 @@ impl<T> Matrix<T> {
         self.data.into_iter()
     }
 
-    /// Returns a parallel iterator over the elements of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::iter::ParallelIterator;
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let sum = matrix.par_iter_elements().sum::<i32>();
-    /// assert_eq!(sum, 15);
-    /// ```
-    #[cfg(feature = "rayon")]
-    pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T>
-    where
-        T: Sync,
-    {
-        self.data.par_iter()
-    }
-
-    /// Returns an parallel iterator that allows modifying each element
-    /// of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::iter::ParallelIterator;
-    ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// matrix.par_iter_elements_mut().for_each(|element| *element += 1);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    #[cfg(feature = "rayon")]
-    pub fn par_iter_elements_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send,
-    {
-        self.data.par_iter_mut()
-    }
-
-    /// Creates a parallel consuming iterator, that is, one that moves each
-    /// element out of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::iter::ParallelIterator;
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let sum = matrix.into_par_iter_elements().sum::<i32>();
-    /// assert_eq!(sum, 15);
-    /// ```
-    #[cfg(feature = "rayon")]
-    pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T>
-    where
-        T: Send,
-    {
-        self.data.into_par_iter()
-    }
-
     /// Returns an iterator over the elements of the matrix along with
     /// their indices.
     ///
@@ -354,17 +292,19 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// for (index, element) in matrix.iter_elements_with_index() {
-    ///     assert_eq!(element, &matrix[index]);
-    /// }
+    /// matrix
+    ///     .iter_elements_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         assert_eq!(element, &matrix[index]);
+    ///     });
     /// ```
     pub fn iter_elements_with_index(
         &self,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, &T)> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &T)> {
         self.data.iter().enumerate().map(|(index, element)| {
             // hope loop-invariant code motion applies here,
             // as well as to similar code
-            let index = unflatten_index(index, self.order, self.shape);
+            let index = Index::unflatten(index, self.order, self.shape);
             (index, element)
         })
     }
@@ -383,16 +323,18 @@ impl<T> Matrix<T> {
     /// use matreex::{matrix, Index};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// for (index, element) in matrix.iter_elements_mut_with_index() {
-    ///     *element += index.row() as i32 + index.col() as i32;
-    /// }
+    /// matrix
+    ///     .iter_elements_mut_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         *element += index.row as i32 + index.col as i32;
+    ///     });
     /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
     /// ```
     pub fn iter_elements_mut_with_index(
         &mut self,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, &mut T)> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &mut T)> {
         self.data.iter_mut().enumerate().map(|(index, element)| {
-            let index = unflatten_index(index, self.order, self.shape);
+            let index = Index::unflatten(index, self.order, self.shape);
             (index, element)
         })
     }
@@ -411,18 +353,173 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// for (index, element) in matrix.clone().into_iter_elements_with_index() {
-    ///     assert_eq!(element, matrix[index]);
-    /// }
+    /// matrix
+    ///     .clone()
+    ///     .into_iter_elements_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         assert_eq!(element, matrix[index]);
+    ///     });
     /// ```
     pub fn into_iter_elements_with_index(
         self,
-    ) -> impl ExactSizeDoubleEndedIterator<Item = (impl Index, T)> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, T)> {
         self.data
             .into_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = unflatten_index(index, self.order, self.shape);
+                let index = Index::unflatten(index, self.order, self.shape);
+                (index, element)
+            })
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<T> Matrix<T> {
+    /// Returns a parallel iterator over the elements of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::prelude::*;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let sum = matrix.par_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 15);
+    /// ```
+    pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T>
+    where
+        T: Sync,
+    {
+        self.data.par_iter()
+    }
+
+    /// Returns a parallel iterator that allows modifying each element
+    /// of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::prelude::*;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// matrix
+    ///     .par_iter_elements_mut()
+    ///     .for_each(|element| *element += 1);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
+    pub fn par_iter_elements_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send,
+    {
+        self.data.par_iter_mut()
+    }
+
+    /// Creates a parallel consuming iterator, that is, one that moves each
+    /// element out of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::prelude::*;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let sum = matrix.into_par_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 15);
+    /// ```
+    pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T>
+    where
+        T: Send,
+    {
+        self.data.into_par_iter()
+    }
+
+    /// Returns a parallel iterator over the elements of the matrix along with
+    /// their indices.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::prelude::*;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// matrix
+    ///     .par_iter_elements_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         assert_eq!(element, &matrix[index]);
+    ///     });
+    /// ```
+    pub fn par_iter_elements_with_index(&self) -> impl ParallelIterator<Item = (Index, &T)>
+    where
+        T: Sync,
+    {
+        self.data.par_iter().enumerate().map(|(index, element)| {
+            let index = Index::unflatten(index, self.order, self.shape);
+            (index, element)
+        })
+    }
+
+    /// Returns a parallel iterator that allows modifying each element
+    /// of the matrix along with its index.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    /// use rayon::prelude::*;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// matrix
+    ///     .par_iter_elements_mut_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         *element += index.row as i32 + index.col as i32;
+    ///     });
+    /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
+    /// ```
+    pub fn par_iter_elements_mut_with_index(
+        &mut self,
+    ) -> impl ParallelIterator<Item = (Index, &mut T)>
+    where
+        T: Send,
+    {
+        self.data
+            .par_iter_mut()
+            .enumerate()
+            .map(|(index, element)| {
+                let index = Index::unflatten(index, self.order, self.shape);
+                (index, element)
+            })
+    }
+
+    /// Creates a parallel consuming iterator, that is, one that moves each
+    /// element out of the matrix along with its index.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::prelude::*;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// matrix
+    ///     .clone()
+    ///     .into_par_iter_elements_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         assert_eq!(element, matrix[index]);
+    ///     });
+    /// ```
+    pub fn into_par_iter_elements_with_index(self) -> impl ParallelIterator<Item = (Index, T)>
+    where
+        T: Send,
+    {
+        self.data
+            .into_par_iter()
+            .enumerate()
+            .map(move |(index, element)| {
+                let index = Index::unflatten(index, self.order, self.shape);
                 (index, element)
             })
     }
@@ -886,16 +983,16 @@ mod tests {
     fn test_iter_elements_mut() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for element in matrix.iter_elements_mut() {
+        matrix.iter_elements_mut().for_each(|element| {
             *element += 1;
-        }
+        });
         assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
 
-        for element in matrix.iter_elements_mut() {
+        matrix.iter_elements_mut().for_each(|element| {
             *element -= 1;
-        }
+        });
         matrix.switch_order();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
@@ -913,6 +1010,68 @@ mod tests {
         let mut data: Vec<i32> = matrix.clone().into_iter_elements().collect();
         data.sort();
         assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn test_iter_elements_with_index() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix
+            .iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, &matrix[index]);
+            });
+
+        matrix.switch_order();
+
+        matrix
+            .iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, &matrix[index]);
+            });
+    }
+
+    #[test]
+    fn test_iter_elements_mut_with_index() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix
+            .iter_elements_mut_with_index()
+            .for_each(|(index, element)| {
+                *element += index.row as i32 + index.col as i32;
+            });
+        assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
+
+        matrix.switch_order();
+
+        matrix
+            .iter_elements_mut_with_index()
+            .for_each(|(index, element)| {
+                *element -= index.row as i32 + index.col as i32;
+            });
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[test]
+    fn test_into_iter_elements_with_index() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix
+            .clone()
+            .into_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, matrix[index]);
+            });
+
+        matrix.switch_order();
+
+        matrix
+            .clone()
+            .into_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, matrix[index]);
+            });
     }
 
     #[cfg(feature = "rayon")]
@@ -962,51 +1121,68 @@ mod tests {
         assert_eq!(sum, 15);
     }
 
+    #[cfg(feature = "rayon")]
     #[test]
-    fn test_iter_elements_with_index() {
+    fn test_par_iter_elements_with_index() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for (index, element) in matrix.iter_elements_with_index() {
-            assert_eq!(element, &matrix[index]);
-        }
+        matrix
+            .par_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, &matrix[index]);
+            });
 
         matrix.switch_order();
 
-        for (index, element) in matrix.iter_elements_with_index() {
-            assert_eq!(element, &matrix[index]);
-        }
+        matrix
+            .par_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, &matrix[index]);
+            });
     }
 
+    #[cfg(feature = "rayon")]
     #[test]
-    fn test_iter_elements_mut_with_index() {
+    fn test_par_iter_elements_mut_with_index() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for (index, element) in matrix.iter_elements_mut_with_index() {
-            *element += index.row() as i32 + index.col() as i32;
-        }
+        matrix
+            .par_iter_elements_mut_with_index()
+            .for_each(|(index, element)| {
+                *element += index.row as i32 + index.col as i32;
+            });
         assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
 
         matrix.switch_order();
 
-        for (index, element) in matrix.iter_elements_mut_with_index() {
-            *element -= index.row() as i32 + index.col() as i32;
-        }
+        matrix
+            .par_iter_elements_mut_with_index()
+            .for_each(|(index, element)| {
+                *element -= index.row as i32 + index.col as i32;
+            });
         matrix.switch_order();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
+    #[cfg(feature = "rayon")]
     #[test]
-    fn test_into_iter_elements_with_index() {
+    fn test_into_par_iter_elements_with_index() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for (index, element) in matrix.clone().into_iter_elements_with_index() {
-            assert_eq!(element, matrix[index]);
-        }
+        matrix
+            .clone()
+            .into_par_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, matrix[index]);
+            });
 
         matrix.switch_order();
 
-        for (index, element) in matrix.clone().into_iter_elements_with_index() {
-            assert_eq!(element, matrix[index]);
-        }
+        matrix
+            .clone()
+            .into_par_iter_elements_with_index()
+            .for_each(|(index, element)| {
+                assert_eq!(element, matrix[index]);
+            });
     }
 }

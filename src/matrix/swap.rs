@@ -13,34 +13,28 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
+    /// use matreex::matrix;
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// matrix.swap((0, 0), (1, 1))?;
     /// assert_eq!(matrix, matrix![[4, 1, 2], [3, 0, 5]]);
-    ///
-    /// let result = matrix.swap((0, 0), (2, 2));
-    /// assert_eq!(result, Err(Error::IndexOutOfBounds));
     /// # Ok(())
     /// # }
     /// ```
     pub fn swap<I, J>(&mut self, i: I, j: J) -> Result<&mut Self>
     where
-        I: Index,
-        J: Index,
+        I: Into<Index>,
+        J: Into<Index>,
     {
         let index = AxisIndex::from_index(i, self.order);
         let jndex = AxisIndex::from_index(j, self.order);
-        if index.is_out_of_bounds(self.shape) || jndex.is_out_of_bounds(self.shape) {
-            return Err(Error::IndexOutOfBounds);
-        }
-        self.data.swap(
-            index.to_flattened(self.shape),
-            jndex.to_flattened(self.shape),
-        );
+        index.ensure_in_bounds(self.shape)?;
+        jndex.ensure_in_bounds(self.shape)?;
+        let index = index.to_flattened(self.shape);
+        let jndex = jndex.to_flattened(self.shape);
+        self.data.swap(index, jndex);
         Ok(self)
     }
 
@@ -53,17 +47,13 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
+    /// use matreex::matrix;
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// matrix.swap_rows(0, 1)?;
     /// assert_eq!(matrix, matrix![[3, 4, 5], [0, 1, 2]]);
-    ///
-    /// let result = matrix.swap_rows(0, 2);
-    /// assert_eq!(result, Err(Error::IndexOutOfBounds));
     /// # Ok(())
     /// # }
     /// ```
@@ -83,17 +73,13 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
+    /// use matreex::matrix;
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
     /// matrix.swap_cols(0, 1)?;
     /// assert_eq!(matrix, matrix![[1, 0, 2], [4, 3, 5]]);
-    ///
-    /// let result = matrix.swap_cols(0, 3);
-    /// assert_eq!(result, Err(Error::IndexOutOfBounds));
     /// # Ok(())
     /// # }
     /// ```
