@@ -543,6 +543,39 @@ impl<T> Matrix<T> {
         }
     }
 
+    pub(super) fn iter_nth_major_axis_vector_mut(
+        &mut self,
+        n: usize,
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
+        if n >= self.major() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked_mut(n)) }
+        }
+    }
+
+    pub(super) fn iter_nth_minor_axis_vector(
+        &self,
+        n: usize,
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
+        if n >= self.minor() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self.iter_nth_minor_axis_vector_unchecked(n))
+        }
+    }
+
+    pub(super) fn iter_nth_minor_axis_vector_mut(
+        &mut self,
+        n: usize,
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
+        if n >= self.minor() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self.iter_nth_minor_axis_vector_unchecked_mut(n))
+        }
+    }
+
     /// # Safety
     ///
     /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
@@ -555,17 +588,6 @@ impl<T> Matrix<T> {
         let lower = n * self.major_stride();
         let upper = lower + self.major_stride();
         unsafe { self.data.get_unchecked(lower..upper).iter() }
-    }
-
-    pub(super) fn iter_nth_major_axis_vector_mut(
-        &mut self,
-        n: usize,
-    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
-        if n >= self.major() {
-            Err(Error::IndexOutOfBounds)
-        } else {
-            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked_mut(n)) }
-        }
     }
 
     /// # Safety
@@ -582,17 +604,9 @@ impl<T> Matrix<T> {
         unsafe { self.data.get_unchecked_mut(lower..upper).iter_mut() }
     }
 
-    pub(super) fn iter_nth_minor_axis_vector(
-        &self,
-        n: usize,
-    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
-        if n >= self.minor() {
-            Err(Error::IndexOutOfBounds)
-        } else {
-            Ok(self.iter_nth_minor_axis_vector_unchecked(n))
-        }
-    }
-
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.minor()` is erroneous but safe.
     pub(super) fn iter_nth_minor_axis_vector_unchecked(
         &self,
         n: usize,
@@ -601,17 +615,9 @@ impl<T> Matrix<T> {
         self.data.iter().skip(n).step_by(step)
     }
 
-    pub(super) fn iter_nth_minor_axis_vector_mut(
-        &mut self,
-        n: usize,
-    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
-        if n >= self.minor() {
-            Err(Error::IndexOutOfBounds)
-        } else {
-            Ok(self.iter_nth_minor_axis_vector_unchecked_mut(n))
-        }
-    }
-
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.minor()` is erroneous but safe.
     pub(super) fn iter_nth_minor_axis_vector_unchecked_mut(
         &mut self,
         n: usize,
