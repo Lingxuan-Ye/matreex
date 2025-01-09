@@ -26,6 +26,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_div<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Div<R, Output = U> + Clone,
@@ -56,6 +57,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_div_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Div<R, Output = U>,
@@ -87,6 +89,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_div_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
     where
         L: DivAssign<R>,

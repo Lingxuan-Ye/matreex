@@ -20,6 +20,7 @@ impl Shape {
     ///
     /// let shape = Shape::new(2, 3);
     /// ```
+    #[inline]
     pub fn new(nrows: usize, ncols: usize) -> Self {
         Self { nrows, ncols }
     }
@@ -34,6 +35,7 @@ impl Shape {
     /// let shape = Shape::new(2, 3);
     /// assert_eq!(shape.nrows(), 2);
     /// ```
+    #[inline]
     pub fn nrows(&self) -> usize {
         self.nrows
     }
@@ -48,6 +50,7 @@ impl Shape {
     /// let shape = Shape::new(2, 3);
     /// assert_eq!(shape.ncols(), 3);
     /// ```
+    #[inline]
     pub fn ncols(&self) -> usize {
         self.ncols
     }
@@ -69,6 +72,7 @@ impl Shape {
     /// let shape = Shape::new(2, usize::MAX);
     /// assert_eq!(shape.size(), Err(Error::SizeOverflow));
     /// ```
+    #[inline]
     pub fn size(&self) -> Result<usize> {
         self.nrows
             .checked_mul(self.ncols)
@@ -90,6 +94,7 @@ impl Shape {
 }
 
 impl From<(usize, usize)> for Shape {
+    #[inline]
     fn from(value: (usize, usize)) -> Self {
         let (nrows, ncols) = value;
         Self { nrows, ncols }
@@ -97,6 +102,7 @@ impl From<(usize, usize)> for Shape {
 }
 
 impl From<[usize; 2]> for Shape {
+    #[inline]
     fn from(value: [usize; 2]) -> Self {
         let [nrows, ncols] = value;
         Self { nrows, ncols }

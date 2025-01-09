@@ -14,6 +14,7 @@ where
 {
     type Output = Matrix<U>;
 
+    #[inline]
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
         match self.multiply(rhs) {
             Err(error) => panic!("{error}"),
@@ -30,6 +31,7 @@ where
 {
     type Output = Matrix<U>;
 
+    #[inline]
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
         self * rhs.clone()
     }
@@ -43,6 +45,7 @@ where
 {
     type Output = Matrix<U>;
 
+    #[inline]
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
         self.clone() * rhs
     }
@@ -56,6 +59,7 @@ where
 {
     type Output = Matrix<U>;
 
+    #[inline]
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
         self.clone() * rhs.clone()
     }
@@ -84,6 +88,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_mul<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Mul<R, Output = U> + Clone,
@@ -114,6 +119,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_mul_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Mul<R, Output = U>,
@@ -145,6 +151,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_mul_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
     where
         L: MulAssign<R>,
@@ -235,7 +242,7 @@ impl<L> Matrix<L> {
 /// # Safety
 ///
 /// None of the arguments should be empty.
-#[inline]
+#[inline(always)]
 unsafe fn dot_product<'a, L, R, LI, RI, U>(lhs: LI, rhs: RI) -> U
 where
     L: Mul<R, Output = U> + Clone + 'a,
