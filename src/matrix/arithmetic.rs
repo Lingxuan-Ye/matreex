@@ -294,12 +294,11 @@ impl<L> Matrix<L> {
             Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        unsafe {
-                            data.push(op(
-                                Box::new(self.iter_nth_major_axis_vector_unchecked(row)),
-                                Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)),
-                            ));
-                        }
+                        let element = op(
+                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
+                            unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
+                        );
+                        data.push(element);
                     }
                 }
             }
@@ -307,12 +306,11 @@ impl<L> Matrix<L> {
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        unsafe {
-                            data.push(op(
-                                Box::new(self.iter_nth_major_axis_vector_unchecked(row)),
-                                Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)),
-                            ));
-                        }
+                        let element = op(
+                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
+                            unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
+                        );
+                        data.push(element);
                     }
                 }
             }

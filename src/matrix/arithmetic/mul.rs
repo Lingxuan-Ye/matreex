@@ -159,7 +159,9 @@ impl<L> Matrix<L> {
     {
         self.elementwise_operation_assign(rhs, |left, right| *left *= right.clone())
     }
+}
 
+impl<L> Matrix<L> {
     /// Performs matrix multiplication on two matrices.
     ///
     /// # Errors
