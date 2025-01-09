@@ -1,5 +1,11 @@
 /// Creates a new [`Matrix<T>`] from literal.
 ///
+/// > I witnessed His decree:
+/// >
+/// > > Let there be matrix!
+/// >
+/// > Thus, [`matrix!`] was brought forth into existence.
+///
 /// # Examples
 ///
 /// ```
@@ -12,6 +18,7 @@
 /// ```
 ///
 /// [`Matrix<T>`]: crate::matrix::Matrix
+/// [`matrix!`]: crate::matrix!
 #[macro_export]
 macro_rules! matrix {
     [] => {

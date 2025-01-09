@@ -22,14 +22,6 @@ mod swap;
 mod parallel;
 
 /// [`Matrix<T>`] means matrix.
-///
-/// > I witnessed His decree:
-/// >
-/// > > Let there be matrix!
-/// >
-/// > Thus, [`matrix!`] was brought forth into existence.
-///
-/// [`matrix!`]: crate::matrix!
 #[derive(Clone, PartialEq, Eq)]
 pub struct Matrix<T> {
     order: Order,
