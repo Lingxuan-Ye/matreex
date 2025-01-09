@@ -149,6 +149,13 @@ impl<T> Matrix<T> {
     }
 }
 
+impl<T> Default for Matrix<T> {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

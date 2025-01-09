@@ -1,9 +1,9 @@
-use super::super::iter::ExactSizeDoubleEndedIterator;
 use super::super::order::Order;
 use super::super::shape::Shape;
 use super::super::Matrix;
 use crate::error::Result;
 use crate::impl_scalar_mul;
+use std::iter::zip;
 use std::ops::{Add, Mul, MulAssign};
 
 impl<L, R, U> Mul<Matrix<R>> for Matrix<L>
@@ -159,7 +159,9 @@ impl<L> Matrix<L> {
     {
         self.elementwise_operation_assign(rhs, |left, right| *left *= right.clone())
     }
+}
 
+impl<L> Matrix<L> {
     /// Performs matrix multiplication on two matrices.
     ///
     /// # Errors
@@ -211,12 +213,16 @@ impl<L> Matrix<L> {
             Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        unsafe {
-                            data.push(dot_product(
+                        let element = unsafe {
+                            zip(
                                 self.iter_nth_major_axis_vector_unchecked(row),
                                 rhs.iter_nth_major_axis_vector_unchecked(col),
-                            ));
-                        }
+                            )
+                            .map(|(left, right)| left.clone() * right.clone())
+                            .reduce(|accumulator, product| accumulator + product)
+                            .unwrap_unchecked()
+                        };
+                        data.push(element);
                     }
                 }
             }
@@ -224,12 +230,16 @@ impl<L> Matrix<L> {
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        unsafe {
-                            data.push(dot_product(
+                        let element = unsafe {
+                            zip(
                                 self.iter_nth_major_axis_vector_unchecked(row),
                                 rhs.iter_nth_major_axis_vector_unchecked(col),
-                            ));
-                        }
+                            )
+                            .map(|(left, right)| left.clone() * right.clone())
+                            .reduce(|accumulator, product| accumulator + product)
+                            .unwrap_unchecked()
+                        };
+                        data.push(element);
                     }
                 }
             }
@@ -237,24 +247,6 @@ impl<L> Matrix<L> {
 
         Ok(Matrix { order, shape, data })
     }
-}
-
-/// # Safety
-///
-/// None of the arguments should be empty.
-#[inline(always)]
-unsafe fn dot_product<'a, L, R, LI, RI, U>(lhs: LI, rhs: RI) -> U
-where
-    L: Mul<R, Output = U> + Clone + 'a,
-    R: Clone + 'a,
-    LI: ExactSizeDoubleEndedIterator<Item = &'a L>,
-    RI: ExactSizeDoubleEndedIterator<Item = &'a R>,
-    U: Add<Output = U>,
-{
-    lhs.zip(rhs)
-        .map(|(left, right)| left.clone() * right.clone())
-        .reduce(|accumulator, product| accumulator + product)
-        .unwrap_unchecked()
 }
 
 impl_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
