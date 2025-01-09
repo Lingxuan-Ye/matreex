@@ -229,6 +229,7 @@ impl<T> Matrix<T> {
     /// data.sort(); // sort because the order of the elements is not guaranteed
     /// assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
     /// ```
+    #[inline]
     pub fn iter_elements(&self) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
         self.data.iter()
     }
@@ -252,6 +253,7 @@ impl<T> Matrix<T> {
     /// });
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[inline]
     pub fn iter_elements_mut(&mut self) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
         self.data.iter_mut()
     }
@@ -274,6 +276,7 @@ impl<T> Matrix<T> {
     /// data.sort(); // sort because the order of the elements is not guaranteed
     /// assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
     /// ```
+    #[inline]
     pub fn into_iter_elements(self) -> impl ExactSizeDoubleEndedIterator<Item = T> {
         self.data.into_iter()
     }
@@ -387,6 +390,7 @@ impl<T> Matrix<T> {
     /// let sum = matrix.par_iter_elements().sum::<i32>();
     /// assert_eq!(sum, 15);
     /// ```
+    #[inline]
     pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T>
     where
         T: Sync,
@@ -409,6 +413,7 @@ impl<T> Matrix<T> {
     ///     .for_each(|element| *element += 1);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[inline]
     pub fn par_iter_elements_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
     where
         T: Send,
@@ -429,6 +434,7 @@ impl<T> Matrix<T> {
     /// let sum = matrix.into_par_iter_elements().sum::<i32>();
     /// assert_eq!(sum, 15);
     /// ```
+    #[inline]
     pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T>
     where
         T: Send,

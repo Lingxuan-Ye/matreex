@@ -7,6 +7,7 @@ where
 {
     type Output = Matrix<U>;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         self.map(|element| element.neg())
     }
@@ -18,6 +19,7 @@ where
 {
     type Output = Matrix<U>;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         -self.clone()
     }

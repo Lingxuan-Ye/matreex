@@ -50,6 +50,7 @@ impl<T> Matrix<T> {
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.order(), Order::default());
     /// ```
+    #[inline]
     pub fn order(&self) -> Order {
         self.order
     }
@@ -66,6 +67,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(shape.nrows(), 2);
     /// assert_eq!(shape.ncols(), 3);
     /// ```
+    #[inline]
     pub fn shape(&self) -> Shape {
         self.shape.to_shape(self.order)
     }
@@ -80,6 +82,7 @@ impl<T> Matrix<T> {
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.nrows(), 2);
     /// ```
+    #[inline]
     pub fn nrows(&self) -> usize {
         self.shape.nrows(self.order)
     }
@@ -94,6 +97,7 @@ impl<T> Matrix<T> {
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.ncols(), 3);
     /// ```
+    #[inline]
     pub fn ncols(&self) -> usize {
         self.shape.ncols(self.order)
     }
@@ -108,6 +112,7 @@ impl<T> Matrix<T> {
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.size(), 6);
     /// ```
+    #[inline]
     pub fn size(&self) -> usize {
         self.data.len()
     }
@@ -122,6 +127,7 @@ impl<T> Matrix<T> {
     /// let matrix = Matrix::<i32>::new();
     /// assert!(matrix.is_empty());
     /// ```
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
@@ -136,6 +142,7 @@ impl<T> Matrix<T> {
     /// let mut matrix = Matrix::<i32>::with_capacity(10);
     /// assert!(matrix.capacity() >= 10);
     /// ```
+    #[inline]
     pub fn capacity(&self) -> usize {
         self.data.capacity()
     }
@@ -222,6 +229,7 @@ impl<T> Matrix<T> {
     /// matrix.switch_order();
     /// assert_eq!(matrix.order(), order);
     /// ```
+    #[inline]
     pub fn switch_order(&mut self) -> &mut Self {
         self.transpose();
         self.order.switch();
@@ -253,6 +261,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix[(2, 0)], 2);
     /// assert_eq!(matrix[(2, 1)], 5);
     /// ```
+    #[inline]
     pub fn switch_order_without_rearrangement(&mut self) -> &mut Self {
         self.order.switch();
         self
@@ -273,6 +282,7 @@ impl<T> Matrix<T> {
     /// matrix.set_order(Order::ColMajor);
     /// assert_eq!(matrix.order(), Order::ColMajor);
     /// ```
+    #[inline]
     pub fn set_order(&mut self, order: Order) -> &mut Self {
         if order != self.order {
             self.switch_order();
@@ -307,6 +317,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix[(2, 0)], 2);
     /// assert_eq!(matrix[(2, 1)], 5);
     /// ```
+    #[inline]
     pub fn set_order_without_rearrangement(&mut self, order: Order) -> &mut Self {
         if order != self.order {
             self.switch_order_without_rearrangement();
@@ -414,6 +425,7 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn shrink_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
         self
@@ -448,6 +460,7 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn shrink_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
         self
@@ -514,6 +527,7 @@ impl<T> Matrix<T> {
     /// matrix.apply(|x| *x += 1);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[inline]
     pub fn apply<F>(&mut self, f: F) -> &mut Self
     where
         F: FnMut(&mut T),
@@ -535,6 +549,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     #[cfg(feature = "rayon")]
+    #[inline]
     pub fn par_apply<F>(&mut self, f: F) -> &mut Self
     where
         T: Send,
@@ -556,6 +571,7 @@ impl<T> Matrix<T> {
     /// let matrix_f64 = matrix_i32.map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
+    #[inline]
     pub fn map<U, F>(self, f: F) -> Matrix<U>
     where
         F: FnMut(T) -> U,
@@ -579,6 +595,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
     #[cfg(feature = "rayon")]
+    #[inline]
     pub fn par_map<U, F>(self, f: F) -> Matrix<U>
     where
         T: Send,
@@ -618,6 +635,7 @@ impl<L> Matrix<L> {
     /// # Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn ensure_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> Result<&Self> {
         if self.shape().eq(&rhs.shape()) {
             Ok(self)
@@ -803,6 +821,7 @@ impl<L> Matrix<L> {
     /// # Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn ensure_multiplication_like_operation_conformable<R>(
         &self,
         rhs: &Matrix<R>,
@@ -913,6 +932,7 @@ impl<T> Matrix<T> {
     /// let output = matrix.scalar_operation(&scalar, |x, y| x + y);
     /// assert_eq!(output, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
+    #[inline]
     pub fn scalar_operation<S, F, U>(&self, scalar: &S, mut op: F) -> Matrix<U>
     where
         F: FnMut(&T, &S) -> U,
@@ -939,6 +959,7 @@ impl<T> Matrix<T> {
     /// let output = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
     /// assert_eq!(output, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
+    #[inline]
     pub fn scalar_operation_consume_self<S, F, U>(self, scalar: &S, mut op: F) -> Matrix<U>
     where
         F: FnMut(T, &S) -> U,
@@ -966,6 +987,7 @@ impl<T> Matrix<T> {
     /// matrix.scalar_operation_assign(&scalar, |x, y| *x += y);
     /// assert_eq!(matrix, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
+    #[inline]
     pub fn scalar_operation_assign<S, F>(&mut self, scalar: &S, mut op: F) -> &mut Self
     where
         F: FnMut(&mut T, &S),
