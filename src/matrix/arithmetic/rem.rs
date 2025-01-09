@@ -26,6 +26,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_rem<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Rem<R, Output = U> + Clone,
@@ -57,6 +58,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_rem_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Rem<R, Output = U>,
@@ -88,6 +90,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_rem_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
     where
         L: RemAssign<R>,

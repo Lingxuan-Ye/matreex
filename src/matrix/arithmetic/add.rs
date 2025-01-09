@@ -10,6 +10,7 @@ where
 {
     type Output = Matrix<U>;
 
+    #[inline]
     fn add(self, rhs: Matrix<R>) -> Self::Output {
         self + &rhs
     }
@@ -22,6 +23,7 @@ where
 {
     type Output = Matrix<U>;
 
+    #[inline]
     fn add(self, rhs: &Matrix<R>) -> Self::Output {
         match self.elementwise_add_consume_self(rhs) {
             Err(error) => panic!("{error}"),
@@ -37,6 +39,7 @@ where
 {
     type Output = Matrix<U>;
 
+    #[inline]
     fn add(self, rhs: Matrix<R>) -> Self::Output {
         self + &rhs
     }
@@ -49,6 +52,7 @@ where
 {
     type Output = Matrix<U>;
 
+    #[inline]
     fn add(self, rhs: &Matrix<R>) -> Self::Output {
         match self.elementwise_add(rhs) {
             Err(error) => panic!("{error}"),
@@ -62,6 +66,7 @@ where
     L: AddAssign<R>,
     R: Clone,
 {
+    #[inline]
     fn add_assign(&mut self, rhs: Matrix<R>) {
         *self += &rhs
     }
@@ -72,6 +77,7 @@ where
     L: AddAssign<R>,
     R: Clone,
 {
+    #[inline]
     fn add_assign(&mut self, rhs: &Matrix<R>) {
         if let Err(error) = self.elementwise_add_assign(rhs) {
             panic!("{error}");
@@ -102,6 +108,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_add<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Add<R, Output = U> + Clone,
@@ -132,6 +139,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_add_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: Add<R, Output = U>,
@@ -163,6 +171,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    #[inline]
     pub fn elementwise_add_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
     where
         L: AddAssign<R>,

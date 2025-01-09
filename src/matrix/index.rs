@@ -20,6 +20,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix.get((1, 1)), Ok(&4));
     /// assert_eq!(matrix.get((2, 3)), Err(Error::IndexOutOfBounds));
     /// ```
+    #[inline]
     pub fn get<I>(&self, index: I) -> Result<&I::Output>
     where
         I: MatrixIndex<T>,
@@ -43,6 +44,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 4));
     /// assert_eq!(matrix.get_mut((2, 3)), Err(Error::IndexOutOfBounds));
     /// ```
+    #[inline]
     pub fn get_mut<I>(&mut self, index: I) -> Result<&mut I::Output>
     where
         I: MatrixIndex<T>,
@@ -70,6 +72,7 @@ impl<T> Matrix<T> {
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     /// [`get`]: Matrix::get
+    #[inline]
     pub unsafe fn get_unchecked<I>(&self, index: I) -> &I::Output
     where
         I: MatrixIndex<T>,
@@ -97,6 +100,7 @@ impl<T> Matrix<T> {
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     /// [`get_mut`]: Matrix::get_mut
+    #[inline]
     pub unsafe fn get_unchecked_mut<I>(&mut self, index: I) -> &mut I::Output
     where
         I: MatrixIndex<T>,
@@ -111,6 +115,7 @@ where
 {
     type Output = I::Output;
 
+    #[inline]
     fn index(&self, index: I) -> &Self::Output {
         index.index(self)
     }
@@ -120,6 +125,7 @@ impl<T, I> std::ops::IndexMut<I> for Matrix<T>
 where
     I: MatrixIndex<T>,
 {
+    #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         index.index_mut(self)
     }
@@ -212,6 +218,7 @@ impl Index {
     ///
     /// let index = Index::new(2, 3);
     /// ```
+    #[inline]
     pub fn new(row: usize, col: usize) -> Self {
         Self { row, col }
     }
@@ -289,6 +296,7 @@ impl Index {
 }
 
 impl From<(usize, usize)> for Index {
+    #[inline]
     fn from(value: (usize, usize)) -> Self {
         let (row, col) = value;
         Self { row, col }
@@ -296,6 +304,7 @@ impl From<(usize, usize)> for Index {
 }
 
 impl From<[usize; 2]> for Index {
+    #[inline]
     fn from(value: [usize; 2]) -> Self {
         let [row, col] = value;
         Self { row, col }
@@ -308,26 +317,32 @@ where
 {
     type Output = T;
 
+    #[inline]
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
         AxisIndex::from_index(self, matrix.order).get(matrix)
     }
 
+    #[inline]
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
         AxisIndex::from_index(self, matrix.order).get_mut(matrix)
     }
 
+    #[inline]
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
         unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked(matrix) }
     }
 
+    #[inline]
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
         unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked_mut(matrix) }
     }
 
+    #[inline]
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
         AxisIndex::from_index(self, matrix.order).index(matrix)
     }
 
+    #[inline]
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
         AxisIndex::from_index(self, matrix.order).index_mut(matrix)
     }
@@ -428,7 +443,7 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     }
 }
 
-#[inline]
+#[inline(always)]
 pub(super) fn transpose_flattened_index(index: usize, mut shape: AxisShape) -> usize {
     let mut index = AxisIndex::from_flattened(index, shape);
     index.transpose();

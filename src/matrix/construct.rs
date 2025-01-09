@@ -17,6 +17,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix.ncols(), 0);
     /// assert!(matrix.is_empty());
     /// ```
+    #[inline]
     pub fn new() -> Self {
         Self {
             order: Order::default(),
@@ -39,6 +40,7 @@ impl<T> Matrix<T> {
     /// assert!(matrix.is_empty());
     /// assert!(matrix.capacity() >= 10);
     /// ```
+    #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             order: Order::default(),
@@ -144,6 +146,13 @@ impl<T> Matrix<T> {
             data.push(element);
         }
         Ok(Self { order, shape, data })
+    }
+}
+
+impl<T> Default for Matrix<T> {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
     }
 }
 

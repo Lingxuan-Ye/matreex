@@ -57,6 +57,7 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn swap_rows(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         match self.order {
             Order::RowMajor => self.swap_major_axis_vectors(m, n),
@@ -83,6 +84,7 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn swap_cols(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         match self.order {
             Order::RowMajor => self.swap_minor_axis_vectors(m, n),

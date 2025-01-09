@@ -3,9 +3,6 @@ use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
 
-#[cfg(feature = "rayon")]
-use rayon::prelude::*;
-
 /// An iterator that knows its exact length and can yield elements
 /// from both ends.
 pub trait ExactSizeDoubleEndedIterator: ExactSizeIterator + DoubleEndedIterator {}
@@ -229,6 +226,7 @@ impl<T> Matrix<T> {
     /// data.sort(); // sort because the order of the elements is not guaranteed
     /// assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
     /// ```
+    #[inline]
     pub fn iter_elements(&self) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
         self.data.iter()
     }
@@ -252,6 +250,7 @@ impl<T> Matrix<T> {
     /// });
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[inline]
     pub fn iter_elements_mut(&mut self) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
         self.data.iter_mut()
     }
@@ -274,6 +273,7 @@ impl<T> Matrix<T> {
     /// data.sort(); // sort because the order of the elements is not guaranteed
     /// assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
     /// ```
+    #[inline]
     pub fn into_iter_elements(self) -> impl ExactSizeDoubleEndedIterator<Item = T> {
         self.data.into_iter()
     }
@@ -373,158 +373,6 @@ impl<T> Matrix<T> {
     }
 }
 
-#[cfg(feature = "rayon")]
-impl<T> Matrix<T> {
-    /// Returns a parallel iterator over the elements of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::prelude::*;
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let sum = matrix.par_iter_elements().sum::<i32>();
-    /// assert_eq!(sum, 15);
-    /// ```
-    pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T>
-    where
-        T: Sync,
-    {
-        self.data.par_iter()
-    }
-
-    /// Returns a parallel iterator that allows modifying each element
-    /// of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::prelude::*;
-    ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// matrix
-    ///     .par_iter_elements_mut()
-    ///     .for_each(|element| *element += 1);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    pub fn par_iter_elements_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send,
-    {
-        self.data.par_iter_mut()
-    }
-
-    /// Creates a parallel consuming iterator, that is, one that moves each
-    /// element out of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::prelude::*;
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let sum = matrix.into_par_iter_elements().sum::<i32>();
-    /// assert_eq!(sum, 15);
-    /// ```
-    pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T>
-    where
-        T: Send,
-    {
-        self.data.into_par_iter()
-    }
-
-    /// Returns a parallel iterator over the elements of the matrix along with
-    /// their indices.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::prelude::*;
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// matrix
-    ///     .par_iter_elements_with_index()
-    ///     .for_each(|(index, element)| {
-    ///         assert_eq!(element, &matrix[index]);
-    ///     });
-    /// ```
-    pub fn par_iter_elements_with_index(&self) -> impl ParallelIterator<Item = (Index, &T)>
-    where
-        T: Sync,
-    {
-        self.data.par_iter().enumerate().map(|(index, element)| {
-            let index = Index::unflatten(index, self.order, self.shape);
-            (index, element)
-        })
-    }
-
-    /// Returns a parallel iterator that allows modifying each element
-    /// of the matrix along with its index.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Index};
-    /// use rayon::prelude::*;
-    ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// matrix
-    ///     .par_iter_elements_mut_with_index()
-    ///     .for_each(|(index, element)| {
-    ///         *element += index.row as i32 + index.col as i32;
-    ///     });
-    /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
-    /// ```
-    pub fn par_iter_elements_mut_with_index(
-        &mut self,
-    ) -> impl ParallelIterator<Item = (Index, &mut T)>
-    where
-        T: Send,
-    {
-        self.data
-            .par_iter_mut()
-            .enumerate()
-            .map(|(index, element)| {
-                let index = Index::unflatten(index, self.order, self.shape);
-                (index, element)
-            })
-    }
-
-    /// Creates a parallel consuming iterator, that is, one that moves each
-    /// element out of the matrix along with its index.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    /// use rayon::prelude::*;
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// matrix
-    ///     .clone()
-    ///     .into_par_iter_elements_with_index()
-    ///     .for_each(|(index, element)| {
-    ///         assert_eq!(element, matrix[index]);
-    ///     });
-    /// ```
-    pub fn into_par_iter_elements_with_index(self) -> impl ParallelIterator<Item = (Index, T)>
-    where
-        T: Send,
-    {
-        self.data
-            .into_par_iter()
-            .enumerate()
-            .map(move |(index, element)| {
-                let index = Index::unflatten(index, self.order, self.shape);
-                (index, element)
-            })
-    }
-}
-
 impl<T> Matrix<T> {
     pub(super) fn iter_nth_major_axis_vector(
         &self,
@@ -534,6 +382,39 @@ impl<T> Matrix<T> {
             Err(Error::IndexOutOfBounds)
         } else {
             unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
+        }
+    }
+
+    pub(super) fn iter_nth_major_axis_vector_mut(
+        &mut self,
+        n: usize,
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
+        if n >= self.major() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked_mut(n)) }
+        }
+    }
+
+    pub(super) fn iter_nth_minor_axis_vector(
+        &self,
+        n: usize,
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
+        if n >= self.minor() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self.iter_nth_minor_axis_vector_unchecked(n))
+        }
+    }
+
+    pub(super) fn iter_nth_minor_axis_vector_mut(
+        &mut self,
+        n: usize,
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
+        if n >= self.minor() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self.iter_nth_minor_axis_vector_unchecked_mut(n))
         }
     }
 
@@ -551,17 +432,6 @@ impl<T> Matrix<T> {
         unsafe { self.data.get_unchecked(lower..upper).iter() }
     }
 
-    pub(super) fn iter_nth_major_axis_vector_mut(
-        &mut self,
-        n: usize,
-    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
-        if n >= self.major() {
-            Err(Error::IndexOutOfBounds)
-        } else {
-            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked_mut(n)) }
-        }
-    }
-
     /// # Safety
     ///
     /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
@@ -576,17 +446,9 @@ impl<T> Matrix<T> {
         unsafe { self.data.get_unchecked_mut(lower..upper).iter_mut() }
     }
 
-    pub(super) fn iter_nth_minor_axis_vector(
-        &self,
-        n: usize,
-    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
-        if n >= self.minor() {
-            Err(Error::IndexOutOfBounds)
-        } else {
-            Ok(self.iter_nth_minor_axis_vector_unchecked(n))
-        }
-    }
-
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.minor()` is erroneous but safe.
     pub(super) fn iter_nth_minor_axis_vector_unchecked(
         &self,
         n: usize,
@@ -595,17 +457,9 @@ impl<T> Matrix<T> {
         self.data.iter().skip(n).step_by(step)
     }
 
-    pub(super) fn iter_nth_minor_axis_vector_mut(
-        &mut self,
-        n: usize,
-    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
-        if n >= self.minor() {
-            Err(Error::IndexOutOfBounds)
-        } else {
-            Ok(self.iter_nth_minor_axis_vector_unchecked_mut(n))
-        }
-    }
-
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.minor()` is erroneous but safe.
     pub(super) fn iter_nth_minor_axis_vector_unchecked_mut(
         &mut self,
         n: usize,
@@ -1069,118 +923,6 @@ mod tests {
         matrix
             .clone()
             .into_iter_elements_with_index()
-            .for_each(|(index, element)| {
-                assert_eq!(element, matrix[index]);
-            });
-    }
-
-    #[cfg(feature = "rayon")]
-    #[test]
-    fn test_par_iter_elements() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let sum = matrix.par_iter_elements().sum::<i32>();
-        assert_eq!(sum, 15);
-
-        matrix.switch_order();
-
-        let sum = matrix.par_iter_elements().sum::<i32>();
-        assert_eq!(sum, 15);
-    }
-
-    #[cfg(feature = "rayon")]
-    #[test]
-    fn test_par_iter_elements_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        matrix
-            .par_iter_elements_mut()
-            .for_each(|element| *element += 1);
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-        matrix.switch_order();
-
-        matrix
-            .par_iter_elements_mut()
-            .for_each(|element| *element -= 1);
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-    }
-
-    #[cfg(feature = "rayon")]
-    #[test]
-    fn test_into_par_iter_elements() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
-        assert_eq!(sum, 15);
-
-        matrix.switch_order();
-
-        let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
-        assert_eq!(sum, 15);
-    }
-
-    #[cfg(feature = "rayon")]
-    #[test]
-    fn test_par_iter_elements_with_index() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        matrix
-            .par_iter_elements_with_index()
-            .for_each(|(index, element)| {
-                assert_eq!(element, &matrix[index]);
-            });
-
-        matrix.switch_order();
-
-        matrix
-            .par_iter_elements_with_index()
-            .for_each(|(index, element)| {
-                assert_eq!(element, &matrix[index]);
-            });
-    }
-
-    #[cfg(feature = "rayon")]
-    #[test]
-    fn test_par_iter_elements_mut_with_index() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        matrix
-            .par_iter_elements_mut_with_index()
-            .for_each(|(index, element)| {
-                *element += index.row as i32 + index.col as i32;
-            });
-        assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
-
-        matrix.switch_order();
-
-        matrix
-            .par_iter_elements_mut_with_index()
-            .for_each(|(index, element)| {
-                *element -= index.row as i32 + index.col as i32;
-            });
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-    }
-
-    #[cfg(feature = "rayon")]
-    #[test]
-    fn test_into_par_iter_elements_with_index() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        matrix
-            .clone()
-            .into_par_iter_elements_with_index()
-            .for_each(|(index, element)| {
-                assert_eq!(element, matrix[index]);
-            });
-
-        matrix.switch_order();
-
-        matrix
-            .clone()
-            .into_par_iter_elements_with_index()
             .for_each(|(index, element)| {
                 assert_eq!(element, matrix[index]);
             });

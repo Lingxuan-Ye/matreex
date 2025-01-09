@@ -1,5 +1,11 @@
 /// Creates a new [`Matrix<T>`] from literal.
 ///
+/// > I witnessed His decree:
+/// >
+/// > > Let there be matrix!
+/// >
+/// > Thus, [`matrix!`] was brought forth into existence.
+///
 /// # Examples
 ///
 /// ```
@@ -12,6 +18,7 @@
 /// ```
 ///
 /// [`Matrix<T>`]: crate::matrix::Matrix
+/// [`matrix!`]: crate::matrix!
 #[macro_export]
 macro_rules! matrix {
     [] => {
@@ -124,6 +131,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element + scalar.clone())
                 }
@@ -135,6 +143,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element + scalar.clone())
                 }
@@ -146,6 +155,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| element.clone() + scalar.clone())
                 }
@@ -157,6 +167,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| element.clone() + scalar.clone())
                 }
@@ -168,6 +179,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() + scalar.clone())
                 }
@@ -179,6 +191,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() + scalar.clone())
                 }
@@ -190,6 +203,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| (*element).clone() + scalar.clone())
                 }
@@ -201,6 +215,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| (*element).clone() + scalar.clone())
                 }
@@ -212,6 +227,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() + element)
                 }
@@ -223,6 +239,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation(&self, |element, scalar| scalar.clone() + element.clone())
                 }
@@ -234,6 +251,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() + element.clone())
                 }
@@ -245,6 +263,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation(&self, |element, scalar| scalar.clone() + (*element).clone())
                 }
@@ -256,6 +275,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() + element)
                 }
@@ -267,6 +287,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation(self, |element, scalar| scalar.clone() + element.clone())
                 }
@@ -278,6 +299,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() + element.clone())
                 }
@@ -289,6 +311,7 @@ macro_rules! impl_scalar_add {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn add(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation(self, |element, scalar| scalar.clone() + (*element).clone())
                 }
@@ -298,6 +321,7 @@ macro_rules! impl_scalar_add {
             where
                 $t: Clone,
             {
+                #[inline]
                 fn add_assign(&mut self, rhs: $t) {
                     self.scalar_operation_assign(&rhs, |element, scalar| *element += scalar.clone());
                 }
@@ -307,6 +331,7 @@ macro_rules! impl_scalar_add {
             where
                 $t: Clone,
             {
+                #[inline]
                 fn add_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element += scalar.clone());
                 }
@@ -336,6 +361,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element - scalar.clone())
                 }
@@ -347,6 +373,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element - scalar.clone())
                 }
@@ -358,6 +385,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| element.clone() - scalar.clone())
                 }
@@ -369,6 +397,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| element.clone() - scalar.clone())
                 }
@@ -380,6 +409,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() - scalar.clone())
                 }
@@ -391,6 +421,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() - scalar.clone())
                 }
@@ -402,6 +433,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| (*element).clone() - scalar.clone())
                 }
@@ -413,6 +445,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| (*element).clone() - scalar.clone())
                 }
@@ -424,6 +457,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() - element)
                 }
@@ -435,6 +469,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation(&self, |element, scalar| scalar.clone() - element.clone())
                 }
@@ -446,6 +481,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() - element.clone())
                 }
@@ -457,6 +493,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation(&self, |element, scalar| scalar.clone() - (*element).clone())
                 }
@@ -468,6 +505,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() - element)
                 }
@@ -479,6 +517,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation(self, |element, scalar| scalar.clone() - element.clone())
                 }
@@ -490,6 +529,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() - element.clone())
                 }
@@ -501,6 +541,7 @@ macro_rules! impl_scalar_sub {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn sub(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation(self, |element, scalar| scalar.clone() - (*element).clone())
                 }
@@ -510,6 +551,7 @@ macro_rules! impl_scalar_sub {
             where
                 $t: Clone,
             {
+                #[inline]
                 fn sub_assign(&mut self, rhs: $t) {
                     self.scalar_operation_assign(&rhs, |element, scalar| *element -= scalar.clone());
                 }
@@ -519,6 +561,7 @@ macro_rules! impl_scalar_sub {
             where
                 $t: Clone,
             {
+                #[inline]
                 fn sub_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element -= scalar.clone());
                 }
@@ -548,6 +591,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element * scalar.clone())
                 }
@@ -559,6 +603,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element * scalar.clone())
                 }
@@ -570,6 +615,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| element.clone() * scalar.clone())
                 }
@@ -581,6 +627,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| element.clone() * scalar.clone())
                 }
@@ -592,6 +639,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() * scalar.clone())
                 }
@@ -603,6 +651,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() * scalar.clone())
                 }
@@ -614,6 +663,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| (*element).clone() * scalar.clone())
                 }
@@ -625,6 +675,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| (*element).clone() * scalar.clone())
                 }
@@ -636,6 +687,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() * element)
                 }
@@ -647,6 +699,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation(&self, |element, scalar| scalar.clone() * element.clone())
                 }
@@ -658,6 +711,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() * element.clone())
                 }
@@ -669,6 +723,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation(&self, |element, scalar| scalar.clone() * (*element).clone())
                 }
@@ -680,6 +735,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() * element)
                 }
@@ -691,6 +747,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation(self, |element, scalar| scalar.clone() * element.clone())
                 }
@@ -702,6 +759,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() * element.clone())
                 }
@@ -713,6 +771,7 @@ macro_rules! impl_scalar_mul {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn mul(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation(self, |element, scalar| scalar.clone() * (*element).clone())
                 }
@@ -722,6 +781,7 @@ macro_rules! impl_scalar_mul {
             where
                 $t: Clone,
             {
+                #[inline]
                 fn mul_assign(&mut self, rhs: $t) {
                     self.scalar_operation_assign(&rhs, |element, scalar| *element *= scalar.clone());
                 }
@@ -731,6 +791,7 @@ macro_rules! impl_scalar_mul {
             where
                 $t: Clone,
             {
+                #[inline]
                 fn mul_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element *= scalar.clone());
                 }
@@ -760,6 +821,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element / scalar.clone())
                 }
@@ -771,6 +833,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element / scalar.clone())
                 }
@@ -782,6 +845,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| element.clone() / scalar.clone())
                 }
@@ -793,6 +857,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| element.clone() / scalar.clone())
                 }
@@ -804,6 +869,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() / scalar.clone())
                 }
@@ -815,6 +881,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() / scalar.clone())
                 }
@@ -826,6 +893,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| (*element).clone() / scalar.clone())
                 }
@@ -837,6 +905,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| (*element).clone() / scalar.clone())
                 }
@@ -848,6 +917,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() / element)
                 }
@@ -859,6 +929,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation(&self, |element, scalar| scalar.clone() / element.clone())
                 }
@@ -870,6 +941,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() / element.clone())
                 }
@@ -881,6 +953,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation(&self, |element, scalar| scalar.clone() / (*element).clone())
                 }
@@ -892,6 +965,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() / element)
                 }
@@ -903,6 +977,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation(self, |element, scalar| scalar.clone() / element.clone())
                 }
@@ -914,6 +989,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() / element.clone())
                 }
@@ -925,6 +1001,7 @@ macro_rules! impl_scalar_div {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn div(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation(self, |element, scalar| scalar.clone() / (*element).clone())
                 }
@@ -934,6 +1011,7 @@ macro_rules! impl_scalar_div {
             where
                 $t: Clone,
             {
+                #[inline]
                 fn div_assign(&mut self, rhs: $t) {
                     self.scalar_operation_assign(&rhs, |element, scalar| *element /= scalar.clone());
                 }
@@ -943,6 +1021,7 @@ macro_rules! impl_scalar_div {
             where
                 $t: Clone,
             {
+                #[inline]
                 fn div_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element /= scalar.clone());
                 }
@@ -972,6 +1051,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element % scalar.clone())
                 }
@@ -983,6 +1063,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element % scalar.clone())
                 }
@@ -994,6 +1075,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| element.clone() % scalar.clone())
                 }
@@ -1005,6 +1087,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| element.clone() % scalar.clone())
                 }
@@ -1016,6 +1099,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() % scalar.clone())
                 }
@@ -1027,6 +1111,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() % scalar.clone())
                 }
@@ -1038,6 +1123,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| (*element).clone() % scalar.clone())
                 }
@@ -1049,6 +1135,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| (*element).clone() % scalar.clone())
                 }
@@ -1060,6 +1147,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() % element)
                 }
@@ -1071,6 +1159,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation(&self, |element, scalar| scalar.clone() % element.clone())
                 }
@@ -1082,6 +1171,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() % element.clone())
                 }
@@ -1093,6 +1183,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation(&self, |element, scalar| scalar.clone() % (*element).clone())
                 }
@@ -1104,6 +1195,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() % element)
                 }
@@ -1115,6 +1207,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
                     rhs.scalar_operation(self, |element, scalar| scalar.clone() % element.clone())
                 }
@@ -1126,6 +1219,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() % element.clone())
                 }
@@ -1137,6 +1231,7 @@ macro_rules! impl_scalar_rem {
             {
                 type Output = $crate::matrix::Matrix<$t>;
 
+                #[inline]
                 fn rem(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation(self, |element, scalar| scalar.clone() % (*element).clone())
                 }
@@ -1146,6 +1241,7 @@ macro_rules! impl_scalar_rem {
             where
                 $t: Clone,
             {
+                #[inline]
                 fn rem_assign(&mut self, rhs: $t) {
                     self.scalar_operation_assign(&rhs, |element, scalar| *element %= scalar.clone());
                 }
@@ -1155,6 +1251,7 @@ macro_rules! impl_scalar_rem {
             where
                 $t: Clone,
             {
+                #[inline]
                 fn rem_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element %= scalar.clone());
                 }
