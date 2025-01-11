@@ -49,6 +49,19 @@ impl<T> Matrix<T> {
         let data = self.data.into_par_iter().map(f).collect();
         Matrix { order, shape, data }
     }
+
+    #[inline]
+    pub fn par_map_ref<U, F>(&self, f: F) -> Matrix<U>
+    where
+        T: Sync,
+        U: Send,
+        F: Fn(&T) -> U + Sync + Send,
+    {
+        let order = self.order;
+        let shape = self.shape;
+        let data = self.data.par_iter().map(f).collect();
+        Matrix { order, shape, data }
+    }
 }
 
 impl<T> Matrix<T> {

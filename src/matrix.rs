@@ -548,6 +548,17 @@ impl<T> Matrix<T> {
         let data = self.data.into_iter().map(f).collect();
         Matrix { order, shape, data }
     }
+
+    #[inline]
+    pub fn map_ref<U, F>(&self, f: F) -> Matrix<U>
+    where
+        F: FnMut(&T) -> U,
+    {
+        let order = self.order;
+        let shape = self.shape;
+        let data = self.data.iter().map(f).collect();
+        Matrix { order, shape, data }
+    }
 }
 
 impl<T> Matrix<T> {
