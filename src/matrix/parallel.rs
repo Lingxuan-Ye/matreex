@@ -50,6 +50,23 @@ impl<T> Matrix<T> {
         Matrix { order, shape, data }
     }
 
+    /// Applies a closure to each element of the matrix in parallel,
+    /// returning a new matrix with the results.
+    ///
+    /// This method is similar to [`par_map`] but passes references to the
+    /// elements instead of taking ownership of them.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix_f64 = matrix_i32.par_map_ref(|x| *x as f64);
+    /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    /// ```
+    ///
+    /// [`par_map`]: Matrix::par_map
     #[inline]
     pub fn par_map_ref<U, F>(&self, f: F) -> Matrix<U>
     where
