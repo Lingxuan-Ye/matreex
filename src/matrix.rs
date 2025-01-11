@@ -548,6 +548,34 @@ impl<T> Matrix<T> {
         let data = self.data.into_iter().map(f).collect();
         Matrix { order, shape, data }
     }
+
+    /// Applies a closure to each element of the matrix,
+    /// returning a new matrix with the results.
+    ///
+    /// This method is similar to [`map`] but passes references to the
+    /// elements instead of taking ownership of them.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix_f64 = matrix_i32.map_ref(|x| *x as f64);
+    /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    /// ```
+    ///
+    /// [`map`]: Matrix::map
+    #[inline]
+    pub fn map_ref<U, F>(&self, f: F) -> Matrix<U>
+    where
+        F: FnMut(&T) -> U,
+    {
+        let order = self.order;
+        let shape = self.shape;
+        let data = self.data.iter().map(f).collect();
+        Matrix { order, shape, data }
+    }
 }
 
 impl<T> Matrix<T> {
@@ -957,5 +985,19 @@ mod tests {
         let mut matrix_i32 = matrix_f64.map(|x| x as i32);
         matrix_i32.switch_order();
         assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[test]
+    fn test_map_ref() {
+        let mut matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let matrix_f64 = matrix_i32.map_ref(|x| *x as f64);
+        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+
+        matrix_i32.switch_order();
+
+        let mut matrix_f64 = matrix_i32.map_ref(|x| *x as f64);
+        matrix_f64.switch_order();
+        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     }
 }
