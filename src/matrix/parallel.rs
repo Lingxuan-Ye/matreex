@@ -252,6 +252,20 @@ mod tests {
     }
 
     #[test]
+    fn test_par_map_ref() {
+        let mut matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let matrix_f64 = matrix_i32.par_map_ref(|x| *x as f64);
+        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+
+        matrix_i32.switch_order();
+
+        let mut matrix_f64 = matrix_i32.par_map_ref(|x| *x as f64);
+        matrix_f64.switch_order();
+        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    }
+
+    #[test]
     fn test_par_iter_elements() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
