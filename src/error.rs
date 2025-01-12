@@ -6,22 +6,22 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// An enum for error types.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Error {
-    /// Error when matrix size exceeds [`usize::MAX`], which is, in
-    /// fact pointless, since a matrix can store up to [`isize::MAX`]
-    /// bytes of data.
+    /// Error when matrix size exceeds [`usize::MAX`], which is, in fact
+    /// pointless, since a matrix can only store up to [`isize::MAX`] bytes
+    /// of data.
     SizeOverflow,
 
-    /// Error when the size of the shape does not match the length of
-    /// the underlying data.
+    /// Error when the size of the shape does not match the length of the
+    /// underlying data.
     ///
-    /// Ensuring this equality is crucial because if the size exceeds
-    /// the length, indexing into the matrix may result in out-of-bounds
-    /// memory access, leading to *[undefined behavior]*.
+    /// Ensuring this equality is crucial because if the size exceeds the
+    /// length, indexing into the matrix may result in out-of-bounds memory
+    /// access, leading to *[undefined behavior]*.
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     SizeMismatch,
 
-    /// Error when total bytes exceeds [`isize::MAX`].
+    /// Error when the capacity exceeds [`isize::MAX`].
     ///
     /// Refer to [`Vec::with_capacity`] for more information.
     CapacityOverflow,

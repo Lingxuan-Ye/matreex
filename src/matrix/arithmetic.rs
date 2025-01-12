@@ -22,21 +22,17 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, Matrix};
-    /// # use matreex::Result;
+    /// use matreex::{matrix, Error};
     ///
-    /// # fn main() -> Result<()> {
-    /// let lhs = Matrix::<i32>::with_default((2, 3))?;
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let rhs = Matrix::<i32>::with_default((2, 3))?;
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::with_default((3, 2))?;
+    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert_eq!(result, Err(Error::ShapeNotConformable));
-    /// # Ok(())
-    /// # }
     /// ```
     #[inline]
     pub fn ensure_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> Result<&Self> {
@@ -208,21 +204,17 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, Matrix};
-    /// # use matreex::Result;
+    /// use matreex::{matrix, Error};
     ///
-    /// # fn main() -> Result<()> {
-    /// let lhs = Matrix::<i32>::with_default((2, 3))?;
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let rhs = Matrix::<i32>::with_default((3, 2))?;
+    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::with_default((2, 3))?;
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert_eq!(result, Err(Error::ShapeNotConformable));
-    /// # Ok(())
-    /// # }
     /// ```
     #[inline]
     pub fn ensure_multiplication_like_operation_conformable<R>(
