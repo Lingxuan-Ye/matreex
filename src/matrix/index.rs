@@ -228,15 +228,11 @@ impl Index {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Index, Matrix};
-    /// # use matreex::Result;
+    /// use matreex::{matrix, Index};
     ///
-    /// # fn main() -> Result<()> {
-    /// let matrix = Matrix::<i32>::with_default((2, 3))?;
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let index = Index::new(2, 3);
     /// assert!(index.is_out_of_bounds(&matrix));
-    /// # Ok(())
-    /// # }
     /// ```
     pub fn is_out_of_bounds<T>(&self, matrix: &Matrix<T>) -> bool {
         let shape = matrix.shape();
@@ -252,15 +248,11 @@ impl Index {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Index, Matrix};
-    /// # use matreex::Result;
+    /// use matreex::{matrix, Index};
     ///
-    /// # fn main() -> Result<()> {
-    /// let matrix = Matrix::<i32>::with_default((2, 3))?;
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let index = Index::new(0, 0);
     /// assert!(index.ensure_in_bounds(&matrix).is_ok());
-    /// # Ok(())
-    /// # }
     /// ```
     pub fn ensure_in_bounds<T>(&self, matrix: &Matrix<T>) -> Result<&Self> {
         if self.is_out_of_bounds(matrix) {
