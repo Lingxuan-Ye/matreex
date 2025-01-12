@@ -21,6 +21,6 @@ where
 
     #[inline]
     fn neg(self) -> Self::Output {
-        -self.clone()
+        self.map_ref(|element| element.clone().neg())
     }
 }
