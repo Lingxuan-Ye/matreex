@@ -43,6 +43,42 @@ impl<L> Matrix<L> {
         }
     }
 
+    /// Ensures that two matrices are conformable for multiplication-like
+    /// operation.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Error};
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+    /// assert!(result.is_ok());
+    ///
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+    /// assert_eq!(result, Err(Error::ShapeNotConformable));
+    /// ```
+    #[inline]
+    pub fn ensure_multiplication_like_operation_conformable<R>(
+        &self,
+        rhs: &Matrix<R>,
+    ) -> Result<&Self> {
+        if self.ncols() == rhs.nrows() {
+            Ok(self)
+        } else {
+            Err(Error::ShapeNotConformable)
+        }
+    }
+}
+
+impl<L> Matrix<L> {
     /// Performs elementwise operation on two matrices.
     ///
     /// # Errors
@@ -194,40 +230,6 @@ impl<L> Matrix<L> {
 }
 
 impl<L> Matrix<L> {
-    /// Ensures that two matrices are conformable for multiplication-like
-    /// operation.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Error};
-    ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
-    /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-    /// assert!(result.is_ok());
-    ///
-    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-    /// assert_eq!(result, Err(Error::ShapeNotConformable));
-    /// ```
-    #[inline]
-    pub fn ensure_multiplication_like_operation_conformable<R>(
-        &self,
-        rhs: &Matrix<R>,
-    ) -> Result<&Self> {
-        if self.ncols() == rhs.nrows() {
-            Ok(self)
-        } else {
-            Err(Error::ShapeNotConformable)
-        }
-    }
-
     /// Performs multiplication-like operation on two matrices.
     ///
     /// # Errors
@@ -436,6 +438,54 @@ mod tests {
     }
 
     #[test]
+    fn test_ensure_multiplication_like_operation_conformable() {
+        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
+
+        // default order & default order
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        rhs.switch_order();
+
+        // default order & alternative order
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        lhs.switch_order();
+
+        // alternative order & alternative order
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        rhs.switch_order();
+
+        // alternative order & default order
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        let rhs = Matrix::<i32>::with_default((3, 1)).unwrap();
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        let rhs = Matrix::<i32>::with_default((3, 3)).unwrap();
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
+        let error = lhs
+            .ensure_multiplication_like_operation_conformable(&rhs)
+            .unwrap_err();
+        assert_eq!(error, Error::ShapeNotConformable);
+
+        let rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let error = lhs
+            .ensure_multiplication_like_operation_conformable(&rhs)
+            .unwrap_err();
+        assert_eq!(error, Error::ShapeNotConformable);
+    }
+
+    #[test]
     fn test_elementwise_operation() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
@@ -591,54 +641,6 @@ mod tests {
         let error = lhs.elementwise_operation_assign(&rhs, op).unwrap_err();
         assert_eq!(error, Error::ShapeNotConformable);
         assert_eq!(lhs, unchanged);
-    }
-
-    #[test]
-    fn test_ensure_multiplication_like_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
-
-        // default order & default order
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        rhs.switch_order();
-
-        // default order & alternative order
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        lhs.switch_order();
-
-        // alternative order & alternative order
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        rhs.switch_order();
-
-        // alternative order & default order
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        let rhs = Matrix::<i32>::with_default((3, 1)).unwrap();
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        let rhs = Matrix::<i32>::with_default((3, 3)).unwrap();
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
-        let error = lhs
-            .ensure_multiplication_like_operation_conformable(&rhs)
-            .unwrap_err();
-        assert_eq!(error, Error::ShapeNotConformable);
-
-        let rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
-        let error = lhs
-            .ensure_multiplication_like_operation_conformable(&rhs)
-            .unwrap_err();
-        assert_eq!(error, Error::ShapeNotConformable);
     }
 
     #[test]
