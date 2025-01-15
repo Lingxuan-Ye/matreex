@@ -13,6 +13,18 @@ mod rem;
 mod sub;
 
 impl<L> Matrix<L> {
+    #[inline]
+    pub fn is_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> bool {
+        self.shape().eq(&rhs.shape())
+    }
+
+    #[inline]
+    pub fn is_multiplication_like_operation_conformable<R>(&self, rhs: &Matrix<R>) -> bool {
+        self.ncols() == rhs.nrows()
+    }
+}
+
+impl<L> Matrix<L> {
     /// Ensures that two matrices are conformable for elementwise operations.
     ///
     /// # Errors
@@ -36,7 +48,7 @@ impl<L> Matrix<L> {
     /// ```
     #[inline]
     pub fn ensure_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> Result<&Self> {
-        if self.shape().eq(&rhs.shape()) {
+        if self.is_elementwise_operation_conformable(rhs) {
             Ok(self)
         } else {
             Err(Error::ShapeNotConformable)
@@ -70,7 +82,7 @@ impl<L> Matrix<L> {
         &self,
         rhs: &Matrix<R>,
     ) -> Result<&Self> {
-        if self.ncols() == rhs.nrows() {
+        if self.is_multiplication_like_operation_conformable(rhs) {
             Ok(self)
         } else {
             Err(Error::ShapeNotConformable)
