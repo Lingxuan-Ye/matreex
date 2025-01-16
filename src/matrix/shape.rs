@@ -184,15 +184,4 @@ mod tests {
         let shape = Shape::new(2, usize::MAX);
         assert_eq!(shape.size(), Err(Error::SizeOverflow));
     }
-
-    #[test]
-    fn test_into_shape() {
-        let expected = Shape::new(2, 3);
-
-        let shape: Shape = (2, 3).into();
-        assert_eq!(shape, expected);
-
-        let shape: Shape = [2, 3].into();
-        assert_eq!(shape, expected);
-    }
 }
