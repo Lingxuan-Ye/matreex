@@ -175,10 +175,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_shape() {
+    fn test_shape_new() {
         let shape = Shape::new(2, 3);
         assert_eq!(shape.nrows(), 2);
         assert_eq!(shape.ncols(), 3);
+
+        let shape = Shape::new(3, 2);
+        assert_eq!(shape.nrows(), 3);
+        assert_eq!(shape.ncols(), 2);
+    }
+
+    #[test]
+    fn test_shape_size() {
+        let shape = Shape::new(2, 3);
         assert_eq!(shape.size(), Ok(6));
 
         let shape = Shape::new(2, usize::MAX);
