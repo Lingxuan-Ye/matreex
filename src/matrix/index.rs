@@ -234,6 +234,7 @@ impl Index {
     /// let index = Index::new(2, 3);
     /// assert!(index.is_out_of_bounds(&matrix));
     /// ```
+    #[inline]
     pub fn is_out_of_bounds<T>(&self, matrix: &Matrix<T>) -> bool {
         let shape = matrix.shape();
         self.row >= shape.nrows() || self.col >= shape.ncols()
@@ -254,6 +255,7 @@ impl Index {
     /// let index = Index::new(0, 0);
     /// assert!(index.ensure_in_bounds(&matrix).is_ok());
     /// ```
+    #[inline]
     pub fn ensure_in_bounds<T>(&self, matrix: &Matrix<T>) -> Result<&Self> {
         if self.is_out_of_bounds(matrix) {
             Err(Error::IndexOutOfBounds)
@@ -273,6 +275,7 @@ impl Index {
     /// index.transpose();
     /// assert_eq!(index, Index::new(3, 2));
     /// ```
+    #[inline]
     pub fn transpose(&mut self) -> &mut Self {
         (self.row, self.col) = (self.col, self.row);
         self
