@@ -552,6 +552,17 @@ mod tests {
     }
 
     #[test]
+    fn test_ensure_square() {
+        let matrix = Matrix::<i32>::with_default((3, 3)).unwrap();
+        let result = matrix.ensure_square();
+        assert!(result.is_ok());
+
+        let matrix = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let result = matrix.ensure_square();
+        assert_eq!(result, Err(Error::SquareMatrixRequired));
+    }
+
+    #[test]
     fn test_ensure_elementwise_operation_conformable() {
         let lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
 
