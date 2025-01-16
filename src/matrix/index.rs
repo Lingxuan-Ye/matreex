@@ -264,7 +264,7 @@ impl Index {
         }
     }
 
-    /// Transposes the index.
+    /// Swaps the row and column indices.
     ///
     /// # Examples
     ///
@@ -272,11 +272,11 @@ impl Index {
     /// use matreex::Index;
     ///
     /// let mut index = Index::new(2, 3);
-    /// index.transpose();
+    /// index.swap();
     /// assert_eq!(index, Index::new(3, 2));
     /// ```
     #[inline]
-    pub fn transpose(&mut self) -> &mut Self {
+    pub fn swap(&mut self) -> &mut Self {
         (self.row, self.col) = (self.col, self.row);
         self
     }
@@ -605,9 +605,9 @@ mod tests {
     }
 
     #[test]
-    fn test_struct_index_transpose() {
+    fn test_struct_index_swap() {
         let mut index = Index::new(2, 3);
-        index.transpose();
+        index.swap();
         assert_eq!(index, Index::new(3, 2));
     }
 }
