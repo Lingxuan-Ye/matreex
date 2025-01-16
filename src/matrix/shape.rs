@@ -79,6 +79,12 @@ impl Shape {
             .ok_or(Error::SizeOverflow)
     }
 
+    #[inline]
+    pub fn transpose(&mut self) -> &mut Self {
+        (self.nrows, self.ncols) = (self.ncols, self.nrows);
+        self
+    }
+
     pub(super) fn try_to_axis_shape(self, order: Order) -> Result<AxisShape> {
         self.size()?;
         Ok(self.to_axis_shape_unchecked(order))
