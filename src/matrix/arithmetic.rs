@@ -76,6 +76,25 @@ impl<L> Matrix<L> {
 }
 
 impl<L> Matrix<L> {
+    /// Ensures that the matrix is a square matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SquareMatrixRequired`] if the matrix is not a square matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Error};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+    /// let result = matrix.ensure_square();
+    /// assert!(result.is_ok());
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let result = matrix.ensure_square();
+    /// assert_eq!(result, Err(Error::SquareMatrixRequired));
+    /// ```
     #[inline]
     pub fn ensure_square(&self) -> Result<&Self> {
         if self.is_square() {
