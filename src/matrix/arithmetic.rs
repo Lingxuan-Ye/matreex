@@ -410,6 +410,79 @@ mod tests {
     use crate::matrix;
 
     #[test]
+    fn test_is_elementwise_operation_conformable() {
+        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+
+        // default order & default order
+        assert!(lhs.is_elementwise_operation_conformable(&rhs));
+        assert!(rhs.is_elementwise_operation_conformable(&lhs));
+
+        rhs.switch_order();
+
+        // default order & alternative order
+        assert!(lhs.is_elementwise_operation_conformable(&rhs));
+        assert!(rhs.is_elementwise_operation_conformable(&lhs));
+
+        lhs.switch_order();
+
+        // alternative order & alternative order
+        assert!(lhs.is_elementwise_operation_conformable(&rhs));
+        assert!(rhs.is_elementwise_operation_conformable(&lhs));
+
+        rhs.switch_order();
+
+        // alternative order & default order
+        assert!(lhs.is_elementwise_operation_conformable(&rhs));
+        assert!(rhs.is_elementwise_operation_conformable(&lhs));
+
+        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
+        assert!(!lhs.is_elementwise_operation_conformable(&rhs));
+        assert!(!rhs.is_elementwise_operation_conformable(&lhs));
+
+        let rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
+        assert!(!lhs.is_elementwise_operation_conformable(&rhs));
+        assert!(!rhs.is_elementwise_operation_conformable(&lhs));
+
+        let rhs = Matrix::<i32>::with_default((3, 3)).unwrap();
+        assert!(!lhs.is_elementwise_operation_conformable(&rhs));
+        assert!(!rhs.is_elementwise_operation_conformable(&lhs));
+    }
+
+    #[test]
+    fn test_is_multiplication_like_operation_conformable() {
+        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let mut rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
+
+        // default order & default order
+        assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+
+        rhs.switch_order();
+
+        // default order & alternative order
+        assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+
+        lhs.switch_order();
+
+        // alternative order & alternative order
+        assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+
+        rhs.switch_order();
+
+        // alternative order & default order
+        assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+
+        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
+        assert!(!lhs.is_multiplication_like_operation_conformable(&rhs));
+
+        let rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        assert!(!lhs.is_multiplication_like_operation_conformable(&rhs));
+
+        let rhs = Matrix::<i32>::with_default((3, 3)).unwrap();
+        assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+    }
+
+    #[test]
     fn test_ensure_elementwise_operation_conformable() {
         let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
         let mut rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
