@@ -79,6 +79,17 @@ impl Shape {
             .ok_or(Error::SizeOverflow)
     }
 
+    /// Transposes the shape.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let mut shape = Shape::new(2, 3);
+    /// shape.transpose();
+    /// assert_eq!(shape, Shape::new(3, 2));
+    /// ```
     #[inline]
     pub fn transpose(&mut self) -> &mut Self {
         (self.nrows, self.ncols) = (self.ncols, self.nrows);
