@@ -76,6 +76,15 @@ impl<L> Matrix<L> {
 }
 
 impl<L> Matrix<L> {
+    #[inline]
+    pub fn ensure_square(&self) -> Result<&Self> {
+        if self.is_square() {
+            Ok(self)
+        } else {
+            Err(Error::SquareMatrixRequired)
+        }
+    }
+
     /// Ensures that two matrices are conformable for elementwise operations.
     ///
     /// # Errors
