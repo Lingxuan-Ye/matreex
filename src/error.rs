@@ -33,8 +33,12 @@ pub enum Error {
     /// Error for accessing an index out of bounds.
     IndexOutOfBounds,
 
-    /// Error when the shapes of two matrices are not conformable for
-    /// the intended operation.
+    /// Error when a square matrix is required but the current one does not
+    /// satisfy this requirement.
+    SquareMatrixRequired,
+
+    /// Error when the shapes of two matrices are not conformable for the
+    /// intended operation.
     ShapeNotConformable,
 }
 
@@ -46,6 +50,7 @@ impl std::fmt::Display for Error {
             Self::CapacityOverflow => "capacity overflow",
             Self::LengthInconsistent => "length inconsistent",
             Self::IndexOutOfBounds => "index out of bounds",
+            Self::SquareMatrixRequired => "square matrix required",
             Self::ShapeNotConformable => "shape not conformable",
         };
         write!(f, "{content}")
