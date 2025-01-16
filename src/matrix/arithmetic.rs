@@ -448,6 +448,15 @@ mod tests {
     use crate::matrix;
 
     #[test]
+    fn test_is_square() {
+        let matrix = Matrix::<i32>::with_default((3, 3)).unwrap();
+        assert!(matrix.is_square());
+
+        let matrix = Matrix::<i32>::with_default((2, 3)).unwrap();
+        assert!(!matrix.is_square());
+    }
+
+    #[test]
     fn test_is_elementwise_operation_conformable() {
         let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
         let mut rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
