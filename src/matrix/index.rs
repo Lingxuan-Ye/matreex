@@ -362,7 +362,7 @@ impl AxisIndex {
         }
     }
 
-    pub(super) fn transpose(&mut self) -> &mut Self {
+    pub(super) fn swap(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
     }
@@ -441,7 +441,7 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
 #[inline(always)]
 pub(super) fn transpose_flattened_index(index: usize, mut shape: AxisShape) -> usize {
     let mut index = AxisIndex::from_flattened(index, shape);
-    index.transpose();
+    index.swap();
     shape.transpose();
     index.to_flattened(shape)
 }
