@@ -13,11 +13,43 @@ mod rem;
 mod sub;
 
 impl<L> Matrix<L> {
+    /// Returns `true` if two matrices are conformable for elementwise
+    /// operations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// assert!(lhs.is_elementwise_operation_conformable(&rhs));
+    ///
+    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    /// assert!(!lhs.is_elementwise_operation_conformable(&rhs));
+    /// ```
     #[inline]
     pub fn is_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> bool {
         self.shape().eq(&rhs.shape())
     }
 
+    /// Returns `true` if two matrices are conformable for multiplication-like
+    /// operations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    /// assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+    ///
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// assert!(!lhs.is_multiplication_like_operation_conformable(&rhs));
+    /// ```
     #[inline]
     pub fn is_multiplication_like_operation_conformable<R>(&self, rhs: &Matrix<R>) -> bool {
         self.ncols() == rhs.nrows()
