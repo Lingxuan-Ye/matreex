@@ -484,90 +484,28 @@ mod tests {
 
     #[test]
     fn test_ensure_elementwise_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
 
-        // default order & default order
-        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        rhs.switch_order();
-
-        // default order & alternative order
-        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        lhs.switch_order();
-
-        // alternative order & alternative order
-        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        rhs.switch_order();
-
-        // alternative order & default order
+        let rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
-        let error = lhs
-            .ensure_elementwise_operation_conformable(&rhs)
-            .unwrap_err();
-        assert_eq!(error, Error::ShapeNotConformable);
-
-        let rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
-        let error = lhs
-            .ensure_elementwise_operation_conformable(&rhs)
-            .unwrap_err();
-        assert_eq!(error, Error::ShapeNotConformable);
+        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
+        assert_eq!(result, Err(Error::ShapeNotConformable));
     }
 
     #[test]
     fn test_ensure_multiplication_like_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
+        let lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
 
-        // default order & default order
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        rhs.switch_order();
-
-        // default order & alternative order
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        lhs.switch_order();
-
-        // alternative order & alternative order
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        rhs.switch_order();
-
-        // alternative order & default order
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        let rhs = Matrix::<i32>::with_default((3, 1)).unwrap();
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
-
-        let rhs = Matrix::<i32>::with_default((3, 3)).unwrap();
+        let rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
         let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
-        let error = lhs
-            .ensure_multiplication_like_operation_conformable(&rhs)
-            .unwrap_err();
-        assert_eq!(error, Error::ShapeNotConformable);
-
-        let rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
-        let error = lhs
-            .ensure_multiplication_like_operation_conformable(&rhs)
-            .unwrap_err();
-        assert_eq!(error, Error::ShapeNotConformable);
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert_eq!(result, Err(Error::ShapeNotConformable));
     }
 
     #[test]
