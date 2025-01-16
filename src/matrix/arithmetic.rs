@@ -13,6 +13,19 @@ mod rem;
 mod sub;
 
 impl<L> Matrix<L> {
+    /// Returns `true` if the matrix is a square matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+    /// assert!(matrix.is_square());
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert!(!matrix.is_square());
+    /// ```
     #[inline]
     pub fn is_square(&self) -> bool {
         let shape = self.shape();
