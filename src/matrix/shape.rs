@@ -193,4 +193,15 @@ mod tests {
         let shape = Shape::new(2, usize::MAX);
         assert_eq!(shape.size(), Err(Error::SizeOverflow));
     }
+
+    #[test]
+    fn test_shape_transpose() {
+        let mut shape = Shape::new(2, 3);
+        shape.transpose();
+        assert_eq!(shape, Shape::new(3, 2));
+
+        let mut shape = Shape::new(3, 2);
+        shape.transpose();
+        assert_eq!(shape, Shape::new(2, 3));
+    }
 }
