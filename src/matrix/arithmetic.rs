@@ -1,4 +1,4 @@
-use super::index::transpose_flattened_index;
+use super::index::map_flattened_index_for_transpose;
 use super::iter::VectorIter;
 use super::order::Order;
 use super::shape::Shape;
@@ -209,7 +209,7 @@ impl<L> Matrix<L> {
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = transpose_flattened_index(index, self.shape);
+                    let index = map_flattened_index_for_transpose(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -262,7 +262,7 @@ impl<L> Matrix<L> {
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = transpose_flattened_index(index, self.shape);
+                    let index = map_flattened_index_for_transpose(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -310,7 +310,7 @@ impl<L> Matrix<L> {
                 .for_each(|(left, right)| op(left, right));
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = transpose_flattened_index(index, self.shape);
+                let index = map_flattened_index_for_transpose(index, self.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) };
                 op(left, right)
             });

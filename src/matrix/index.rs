@@ -439,7 +439,7 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
 }
 
 #[inline(always)]
-pub(super) fn transpose_flattened_index(index: usize, mut shape: AxisShape) -> usize {
+pub(super) fn map_flattened_index_for_transpose(index: usize, mut shape: AxisShape) -> usize {
     let mut index = AxisIndex::from_flattened(index, shape);
     index.swap();
     shape.transpose();
