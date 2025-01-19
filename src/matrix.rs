@@ -187,9 +187,6 @@ impl<T> Matrix<T> {
         let mut visited = vec![false; size];
 
         for index in 0..size {
-            if visited[index] {
-                continue;
-            }
             let mut current = index;
             while !visited[current] {
                 visited[current] = true;
