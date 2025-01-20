@@ -280,13 +280,31 @@ impl Index {
         (self.row, self.col) = (self.col, self.row);
         self
     }
+}
 
-    pub(super) fn flatten(self, order: Order, shape: AxisShape) -> usize {
-        AxisIndex::from_index(self, order).to_flattened(shape)
+impl Index {
+    pub(super) fn from_axis_index(index: AxisIndex, order: Order) -> Self {
+        let (row, col) = match order {
+            Order::RowMajor => (index.major, index.minor),
+            Order::ColMajor => (index.minor, index.major),
+        };
+        Self { row, col }
     }
 
-    pub(super) fn unflatten(index: usize, order: Order, shape: AxisShape) -> Self {
-        AxisIndex::from_flattened(index, shape).to_index(order)
+    pub(super) fn to_axis_index(self, order: Order) -> AxisIndex {
+        let (major, minor) = match order {
+            Order::RowMajor => (self.row, self.col),
+            Order::ColMajor => (self.col, self.row),
+        };
+        AxisIndex { major, minor }
+    }
+
+    pub(super) fn from_flattened(index: usize, order: Order, shape: AxisShape) -> Self {
+        Self::from_axis_index(AxisIndex::from_flattened(index, shape), order)
+    }
+
+    pub(super) fn to_flattened(self, order: Order, shape: AxisShape) -> usize {
+        self.to_axis_index(order).to_flattened(shape)
     }
 }
 
@@ -314,32 +332,38 @@ where
 
     #[inline]
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        AxisIndex::from_index(self, matrix.order).get(matrix)
+        let index = self.into().to_axis_index(matrix.order);
+        index.get(matrix)
     }
 
     #[inline]
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        AxisIndex::from_index(self, matrix.order).get_mut(matrix)
+        let index = self.into().to_axis_index(matrix.order);
+        index.get_mut(matrix)
     }
 
     #[inline]
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked(matrix) }
+        let index = self.into().to_axis_index(matrix.order);
+        unsafe { index.get_unchecked(matrix) }
     }
 
     #[inline]
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked_mut(matrix) }
+        let index = self.into().to_axis_index(matrix.order);
+        unsafe { index.get_unchecked_mut(matrix) }
     }
 
     #[inline]
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        AxisIndex::from_index(self, matrix.order).index(matrix)
+        let index = self.into().to_axis_index(matrix.order);
+        index.index(matrix)
     }
 
     #[inline]
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        AxisIndex::from_index(self, matrix.order).index_mut(matrix)
+        let index = self.into().to_axis_index(matrix.order);
+        index.index_mut(matrix)
     }
 }
 
@@ -365,26 +389,6 @@ impl AxisIndex {
     pub(super) fn swap(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
-    }
-
-    pub(super) fn from_index<I>(index: I, order: Order) -> Self
-    where
-        I: Into<Index>,
-    {
-        let index = index.into();
-        let (major, minor) = match order {
-            Order::RowMajor => (index.row, index.col),
-            Order::ColMajor => (index.col, index.row),
-        };
-        Self { major, minor }
-    }
-
-    pub(super) fn to_index(self, order: Order) -> Index {
-        let (row, col) = match order {
-            Order::RowMajor => (self.major, self.minor),
-            Order::ColMajor => (self.minor, self.major),
-        };
-        Index { row, col }
     }
 
     pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {

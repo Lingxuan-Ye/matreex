@@ -167,7 +167,7 @@ impl<T> Matrix<T> {
         T: Sync,
     {
         self.data.par_iter().enumerate().map(|(index, element)| {
-            let index = Index::unflatten(index, self.order, self.shape);
+            let index = Index::from_flattened(index, self.order, self.shape);
             (index, element)
         })
     }
@@ -199,7 +199,7 @@ impl<T> Matrix<T> {
             .par_iter_mut()
             .enumerate()
             .map(|(index, element)| {
-                let index = Index::unflatten(index, self.order, self.shape);
+                let index = Index::from_flattened(index, self.order, self.shape);
                 (index, element)
             })
     }
@@ -229,7 +229,7 @@ impl<T> Matrix<T> {
             .into_par_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Index::unflatten(index, self.order, self.shape);
+                let index = Index::from_flattened(index, self.order, self.shape);
                 (index, element)
             })
     }

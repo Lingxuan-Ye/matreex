@@ -304,7 +304,7 @@ impl<T> Matrix<T> {
         self.data.iter().enumerate().map(|(index, element)| {
             // hope loop-invariant code motion applies here,
             // as well as to similar code
-            let index = Index::unflatten(index, self.order, self.shape);
+            let index = Index::from_flattened(index, self.order, self.shape);
             (index, element)
         })
     }
@@ -334,7 +334,7 @@ impl<T> Matrix<T> {
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &mut T)> {
         self.data.iter_mut().enumerate().map(|(index, element)| {
-            let index = Index::unflatten(index, self.order, self.shape);
+            let index = Index::from_flattened(index, self.order, self.shape);
             (index, element)
         })
     }
@@ -367,7 +367,7 @@ impl<T> Matrix<T> {
             .into_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Index::unflatten(index, self.order, self.shape);
+                let index = Index::from_flattened(index, self.order, self.shape);
                 (index, element)
             })
     }
