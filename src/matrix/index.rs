@@ -196,9 +196,7 @@ pub unsafe trait MatrixIndex<T>: internal::Sealed {
 
 /// A structure representing the index of an element in a [`Matrix<T>`].
 ///
-/// # Notes
-///
-/// Any type that implements [`Into<Index>`] can be used as an index.
+/// Refer to [`SingleElementIndex`] for more information.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Index {
     /// The row index of the element.
@@ -283,28 +281,12 @@ impl Index {
 }
 
 impl Index {
-    pub(super) fn from_axis_index(index: AxisIndex, order: Order) -> Self {
-        let (row, col) = match order {
-            Order::RowMajor => (index.major, index.minor),
-            Order::ColMajor => (index.minor, index.major),
-        };
-        Self { row, col }
-    }
-
-    pub(super) fn to_axis_index(self, order: Order) -> AxisIndex {
-        let (major, minor) = match order {
-            Order::RowMajor => (self.row, self.col),
-            Order::ColMajor => (self.col, self.row),
-        };
-        AxisIndex { major, minor }
-    }
-
     pub(super) fn from_flattened(index: usize, order: Order, shape: AxisShape) -> Self {
-        Self::from_axis_index(AxisIndex::from_flattened(index, shape), order)
+        AxisIndex::from_flattened(index, shape).to_index(order)
     }
 
     pub(super) fn to_flattened(self, order: Order, shape: AxisShape) -> usize {
-        self.to_axis_index(order).to_flattened(shape)
+        AxisIndex::from_index(self, order).to_flattened(shape)
     }
 }
 
@@ -324,46 +306,113 @@ impl From<[usize; 2]> for Index {
     }
 }
 
+/// A trait used for single-element indexing in a [`Matrix<T>`].
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::index::SingleElementIndex;
+///
+/// struct I(usize, usize);
+///
+/// impl SingleElementIndex for I {
+///     fn row(&self) -> usize {
+///         self.0
+///     }
+///
+///     fn col(&self) -> usize {
+///         self.1
+///     }
+/// }
+///
+/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+/// assert_eq!(matrix.get(I(1, 1)), Ok(&4));
+/// ```
+pub trait SingleElementIndex {
+    /// The row index of the element.
+    fn row(&self) -> usize;
+
+    /// The column index of the element.
+    fn col(&self) -> usize;
+}
+
 unsafe impl<T, I> MatrixIndex<T> for I
 where
-    I: Into<Index>,
+    I: SingleElementIndex,
 {
     type Output = T;
 
     #[inline]
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        let index = self.into().to_axis_index(matrix.order);
+        let index = AxisIndex::from_index(self, matrix.order);
         index.get(matrix)
     }
 
     #[inline]
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        let index = self.into().to_axis_index(matrix.order);
+        let index = AxisIndex::from_index(self, matrix.order);
         index.get_mut(matrix)
     }
 
     #[inline]
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        let index = self.into().to_axis_index(matrix.order);
+        let index = AxisIndex::from_index(self, matrix.order);
         unsafe { index.get_unchecked(matrix) }
     }
 
     #[inline]
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        let index = self.into().to_axis_index(matrix.order);
+        let index = AxisIndex::from_index(self, matrix.order);
         unsafe { index.get_unchecked_mut(matrix) }
     }
 
     #[inline]
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        let index = self.into().to_axis_index(matrix.order);
+        let index = AxisIndex::from_index(self, matrix.order);
         index.index(matrix)
     }
 
     #[inline]
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        let index = self.into().to_axis_index(matrix.order);
+        let index = AxisIndex::from_index(self, matrix.order);
         index.index_mut(matrix)
+    }
+}
+
+impl SingleElementIndex for Index {
+    #[inline]
+    fn row(&self) -> usize {
+        self.row
+    }
+
+    #[inline]
+    fn col(&self) -> usize {
+        self.col
+    }
+}
+
+impl SingleElementIndex for (usize, usize) {
+    #[inline]
+    fn row(&self) -> usize {
+        self.0
+    }
+
+    #[inline]
+    fn col(&self) -> usize {
+        self.1
+    }
+}
+
+impl SingleElementIndex for [usize; 2] {
+    #[inline]
+    fn row(&self) -> usize {
+        self[0]
+    }
+
+    #[inline]
+    fn col(&self) -> usize {
+        self[1]
     }
 }
 
@@ -389,6 +438,25 @@ impl AxisIndex {
     pub(super) fn swap(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
+    }
+
+    pub(super) fn from_index<I>(index: I, order: Order) -> Self
+    where
+        I: SingleElementIndex,
+    {
+        let (major, minor) = match order {
+            Order::RowMajor => (index.row(), index.col()),
+            Order::ColMajor => (index.col(), index.row()),
+        };
+        Self { major, minor }
+    }
+
+    pub(super) fn to_index(self, order: Order) -> Index {
+        let (row, col) = match order {
+            Order::RowMajor => (self.major, self.minor),
+            Order::ColMajor => (self.minor, self.major),
+        };
+        Index { row, col }
     }
 
     pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
@@ -451,11 +519,11 @@ pub(super) fn map_flattened_index_for_transpose(index: usize, mut shape: AxisSha
 }
 
 mod internal {
-    use super::{AxisIndex, Index};
+    use super::{AxisIndex, SingleElementIndex};
 
     pub trait Sealed {}
 
-    impl<I> Sealed for I where I: Into<Index> {}
+    impl<I> Sealed for I where I: SingleElementIndex {}
 
     impl Sealed for AxisIndex {}
 }

@@ -1,4 +1,4 @@
-use super::index::Index;
+use super::index::{AxisIndex, SingleElementIndex};
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
@@ -25,11 +25,11 @@ impl<T> Matrix<T> {
     /// ```
     pub fn swap<I, J>(&mut self, i: I, j: J) -> Result<&mut Self>
     where
-        I: Into<Index>,
-        J: Into<Index>,
+        I: SingleElementIndex,
+        J: SingleElementIndex,
     {
-        let index = i.into().to_axis_index(self.order);
-        let jndex = j.into().to_axis_index(self.order);
+        let index = AxisIndex::from_index(i, self.order);
+        let jndex = AxisIndex::from_index(j, self.order);
         index.ensure_in_bounds(self.shape)?;
         jndex.ensure_in_bounds(self.shape)?;
         let index = index.to_flattened(self.shape);
