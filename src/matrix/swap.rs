@@ -1,7 +1,8 @@
-use super::index::{AxisIndex, MatrixIndex, SingleElementIndex};
+use super::index::MatrixIndex;
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
+use std::ptr::swap;
 
 impl<T> Matrix<T> {
     /// Swaps the elements at the given indices.
@@ -25,16 +26,16 @@ impl<T> Matrix<T> {
     /// ```
     pub fn swap<I, J>(&mut self, i: I, j: J) -> Result<&mut Self>
     where
-        I: SingleElementIndex,
-        J: SingleElementIndex,
+        I: MatrixIndex<T, Output = T>,
+        J: MatrixIndex<T, Output = T>,
     {
-        let index = AxisIndex::from_index(&i, self.order);
-        let jndex = AxisIndex::from_index(&j, self.order);
-        index.ensure_in_bounds(self)?;
-        jndex.ensure_in_bounds(self)?;
-        let index = index.to_flattened(self.shape);
-        let jndex = jndex.to_flattened(self.shape);
-        self.data.swap(index, jndex);
+        i.ensure_in_bounds(self)?;
+        j.ensure_in_bounds(self)?;
+        unsafe {
+            let element_i = i.get_unchecked_mut(self);
+            let element_j = j.get_unchecked_mut(self);
+            swap(element_i, element_j);
+        }
         Ok(self)
     }
 
