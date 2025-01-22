@@ -131,12 +131,14 @@ where
     }
 }
 
-/// A helper trait used for [`Matrix<T>`] indexing.
+/// A helper trait used for indexing operations in a [`Matrix<T>`].
+///
+/// This trait is a poor imitation of [`SliceIndex`].
 ///
 /// # Safety
 ///
-/// Marking this trait as `unsafe` originates from a poor imitation
-/// of [`SliceIndex`]. In another words, I have no idea what I'm doing.
+/// Implementations of this trait have to promise that if the argument
+/// to `get_unchecked(_mut)` is a safe reference, then so is the result.
 ///
 /// [`SliceIndex`]: core::slice::SliceIndex
 pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
@@ -297,7 +299,7 @@ impl From<[usize; 2]> for Index {
     }
 }
 
-/// A trait used for single-element indexing in a [`Matrix<T>`].
+/// A trait used for single-element indexing operations in a [`Matrix<T>`].
 ///
 /// # Examples
 ///
