@@ -141,7 +141,7 @@ impl<T> Matrix<T> {
         let size = Self::check_size(shape.size())?;
         let mut data = Vec::with_capacity(size);
         for index in 0..size {
-            let index = Index::unflatten(index, order, shape);
+            let index = Index::from_flattened(index, order, shape);
             let element = initializer(index);
             data.push(element);
         }

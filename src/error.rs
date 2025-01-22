@@ -1,5 +1,7 @@
 //! Module for error handling.
 
+use std::fmt::{Display, Formatter, Result as FmtResult};
+
 /// An alias for [`std::result::Result`].
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -33,19 +35,24 @@ pub enum Error {
     /// Error for accessing an index out of bounds.
     IndexOutOfBounds,
 
-    /// Error when the shapes of two matrices are not conformable for
-    /// the intended operation.
+    /// Error when a square matrix is required but the current one does not
+    /// satisfy this requirement.
+    SquareMatrixRequired,
+
+    /// Error when the shapes of two matrices are not conformable for the
+    /// intended operation.
     ShapeNotConformable,
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let content = match self {
             Self::SizeOverflow => "size overflow",
             Self::SizeMismatch => "size mismatch",
             Self::CapacityOverflow => "capacity overflow",
             Self::LengthInconsistent => "length inconsistent",
             Self::IndexOutOfBounds => "index out of bounds",
+            Self::SquareMatrixRequired => "square matrix required",
             Self::ShapeNotConformable => "shape not conformable",
         };
         write!(f, "{content}")

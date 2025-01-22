@@ -1,6 +1,7 @@
 use super::index::Index;
 use super::Matrix;
 use std::collections::VecDeque;
+use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 
 const LEFT_DELIMITER: &str = "[";
 const RIGHT_DELIMITER: &str = "]";
@@ -24,8 +25,11 @@ macro_rules! write_index {
     };
 }
 
-impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<T> Debug for Matrix<T>
+where
+    T: Debug,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let shape = self.shape();
         let nrows = shape.nrows();
         let ncols = shape.ncols();
@@ -76,7 +80,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                 }
                 // hope loop-invariant code motion applies here,
                 // as well as to similar code
-                let index = Index::new(row, col).flatten(self.order, self.shape);
+                let index = Index::new(row, col).to_flattened(self.order, self.shape);
                 write_index!(f, "{index:>index_width$}")?;
                 write!(f, "{SPACE:INNER_GAP$}")?;
                 match cache[index].next() {
@@ -96,7 +100,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                     if col != 0 {
                         write!(f, "{SPACE:<INTER_GAP$}")?;
                     }
-                    let index = Index::new(row, col).flatten(self.order, self.shape);
+                    let index = Index::new(row, col).to_flattened(self.order, self.shape);
                     write!(f, "{SPACE:>index_width$}")?;
                     write!(f, "{SPACE:INNER_GAP$}")?;
                     match cache[index].next() {
@@ -112,8 +116,11 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
     }
 }
 
-impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<T> Display for Matrix<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         if self.is_empty() {
             return write!(f, "{LEFT_DELIMITER}{RIGHT_DELIMITER}");
         }
@@ -147,7 +154,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
                 if col != 0 {
                     write!(f, "{SPACE:INTER_GAP$}")?;
                 }
-                let index = Index::new(row, col).flatten(self.order, self.shape);
+                let index = Index::new(row, col).to_flattened(self.order, self.shape);
                 match cache[index].next() {
                     None => write!(f, "{SPACE:<element_width$}")?,
                     Some(line) => write!(f, "{line:<element_width$}")?,
@@ -163,7 +170,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
                     if col != 0 {
                         write!(f, "{SPACE:INTER_GAP$}")?;
                     }
-                    let index = Index::new(row, col).flatten(self.order, self.shape);
+                    let index = Index::new(row, col).to_flattened(self.order, self.shape);
                     match cache[index].next() {
                         None => write!(f, "{SPACE:<element_width$}")?,
                         Some(line) => write!(f, "{line:<element_width$}")?,
@@ -180,11 +187,17 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
 struct Lines(VecDeque<String>);
 
 impl Lines {
-    fn from_debug<T: std::fmt::Debug>(element: T) -> Self {
+    fn from_debug<T>(element: T) -> Self
+    where
+        T: Debug,
+    {
         Self(format!("{:?}", element).lines().map(String::from).collect())
     }
 
-    fn from_display<T: std::fmt::Display>(element: T) -> Self {
+    fn from_display<T>(element: T) -> Self
+    where
+        T: Display,
+    {
         Self(format!("{}", element).lines().map(String::from).collect())
     }
 

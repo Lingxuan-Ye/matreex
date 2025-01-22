@@ -2,7 +2,7 @@
 //!
 //! # Quick Start
 //!
-//! First, we need to import `matrix!`.
+//! First, we need to import [`matrix!`].
 //!
 //! ```
 //! use matreex::matrix;
@@ -82,7 +82,7 @@
 //! Hmm ... Who knows? Could be a name conflict.
 
 pub use self::error::{Error, Result};
-pub use self::matrix::index::Index;
+pub use self::matrix::index::{Index, WrappingIndex};
 pub use self::matrix::iter::{MatrixIter, VectorIter};
 pub use self::matrix::order::Order;
 pub use self::matrix::shape::Shape;

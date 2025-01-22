@@ -79,6 +79,23 @@ impl Shape {
             .ok_or(Error::SizeOverflow)
     }
 
+    /// Transposes the shape.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let mut shape = Shape::new(2, 3);
+    /// shape.transpose();
+    /// assert_eq!(shape, Shape::new(3, 2));
+    /// ```
+    #[inline]
+    pub fn transpose(&mut self) -> &mut Self {
+        (self.nrows, self.ncols) = (self.ncols, self.nrows);
+        self
+    }
+
     pub(super) fn try_to_axis_shape(self, order: Order) -> Result<AxisShape> {
         self.size()?;
         Ok(self.to_axis_shape_unchecked(order))
@@ -169,10 +186,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_shape() {
+    fn test_shape_new() {
         let shape = Shape::new(2, 3);
         assert_eq!(shape.nrows(), 2);
         assert_eq!(shape.ncols(), 3);
+
+        let shape = Shape::new(3, 2);
+        assert_eq!(shape.nrows(), 3);
+        assert_eq!(shape.ncols(), 2);
+    }
+
+    #[test]
+    fn test_shape_size() {
+        let shape = Shape::new(2, 3);
         assert_eq!(shape.size(), Ok(6));
 
         let shape = Shape::new(2, usize::MAX);
@@ -180,13 +206,13 @@ mod tests {
     }
 
     #[test]
-    fn test_into_shape() {
-        let expected = Shape::new(2, 3);
+    fn test_shape_transpose() {
+        let mut shape = Shape::new(2, 3);
+        shape.transpose();
+        assert_eq!(shape, Shape::new(3, 2));
 
-        let shape: Shape = (2, 3).into();
-        assert_eq!(shape, expected);
-
-        let shape: Shape = [2, 3].into();
-        assert_eq!(shape, expected);
+        let mut shape = Shape::new(3, 2);
+        shape.transpose();
+        assert_eq!(shape, Shape::new(2, 3));
     }
 }
