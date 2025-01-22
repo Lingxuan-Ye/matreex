@@ -388,6 +388,80 @@ impl SingleElementIndex for [usize; 2] {
     }
 }
 
+    pub row: isize,
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct WrappingIndex {
+    pub col: isize,
+}
+
+impl WrappingIndex {
+    #[inline]
+    pub fn new(row: isize, col: isize) -> Self {
+        Self { row, col }
+    }
+
+    #[inline]
+    pub fn swap(&mut self) -> &mut Self {
+        (self.row, self.col) = (self.col, self.row);
+        self
+    }
+
+    pub(super) fn to_flattened(self, order: Order, shape: AxisShape) -> usize {
+        let (major, minor) = match order {
+            Order::RowMajor => (self.row, self.col),
+            Order::ColMajor => (self.col, self.row),
+        };
+        let major = if major < 0 {
+            (shape.major() - major.unsigned_abs() % shape.major()) % shape.major()
+        } else {
+            major as usize % shape.major()
+        };
+        let minor = if minor < 0 {
+            (shape.minor() - minor.unsigned_abs() % shape.minor()) % shape.minor()
+        } else {
+            minor as usize % shape.minor()
+        };
+        AxisIndex { major, minor }.to_flattened(shape)
+    }
+}
+
+impl From<(isize, isize)> for WrappingIndex {
+    #[inline]
+    fn from(value: (isize, isize)) -> Self {
+        let (row, col) = value;
+        Self { row, col }
+    }
+}
+
+impl From<[isize; 2]> for WrappingIndex {
+    #[inline]
+    fn from(value: [isize; 2]) -> Self {
+        let [row, col] = value;
+        Self { row, col }
+    }
+}
+
+unsafe impl<T> MatrixIndex<T> for WrappingIndex {
+    type Output = T;
+
+    #[inline]
+    fn is_out_of_bounds(&self, matrix: &Matrix<T>) -> bool {
+        matrix.is_empty()
+    }
+
+    #[inline]
+    unsafe fn get_unchecked(self, matrix: *const Matrix<T>) -> *const Self::Output {
+        let index = self.to_flattened((*matrix).order, (*matrix).shape);
+        unsafe { (*matrix).data.get_unchecked(index) }
+    }
+
+    #[inline]
+    unsafe fn get_unchecked_mut(self, matrix: *mut Matrix<T>) -> *mut Self::Output {
+        let index = self.to_flattened((*matrix).order, (*matrix).shape);
+        unsafe { (*matrix).data.get_unchecked_mut(index) }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(super) struct AxisIndex {
     pub(super) major: usize,
@@ -459,11 +533,13 @@ pub(super) fn map_flattened_index_for_transpose(index: usize, mut shape: AxisSha
 }
 
 mod internal {
-    use super::{AxisIndex, SingleElementIndex};
+    use super::{AxisIndex, SingleElementIndex, WrappingIndex};
 
     pub trait Sealed {}
 
     impl<I> Sealed for I where I: SingleElementIndex {}
+
+    impl Sealed for WrappingIndex {}
 
     impl Sealed for AxisIndex {}
 }
