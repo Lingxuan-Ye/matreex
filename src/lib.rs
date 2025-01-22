@@ -2,7 +2,7 @@
 //!
 //! # Quick Start
 //!
-//! First, we need to import `matrix!`.
+//! First, we need to import [`matrix!`].
 //!
 //! ```
 //! use matreex::matrix;
