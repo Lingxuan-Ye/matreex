@@ -388,24 +388,67 @@ impl SingleElementIndex for [usize; 2] {
     }
 }
 
-    pub row: isize,
+/// A structure representing the wrapping index of an element in a
+/// [`Matrix<T>`].
+///
+/// Unlike [`Index`], this type does not implement [`SingleElementIndex`],
+/// and there is no wrapping equivalent for that trait. Additionally,
+/// [`WrappingIndex`] is the only type that exhibits wrapping indexing
+/// behavior. You cannot pass a `(isize, isize)` or a `[isize; 2]` to
+/// methods expecting an index, or more precisely, a type that implements
+/// [`MatrixIndex<T>`].
+///
+/// The design choice is based on the following considerations
+/// - Wrapping indexing does not follow standard indexing conventions,
+///   and should always be used explicitly.
+/// - Both `(isize, isize)` and `[isize; 2]` are not sufficiently
+///   distinguishable from their `usize` counterparts, which would
+///   introduce ambiguity and prevent type inference, making type
+///   annotations necessary.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct WrappingIndex {
+    /// The row index of the element.
+    pub row: isize,
+
+    /// The column index of the element.
     pub col: isize,
 }
 
 impl WrappingIndex {
+    /// Creates a new [`WrappingIndex`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::WrappingIndex;
+    ///
+    /// let index = WrappingIndex::new(2, 3);
+    /// ```
     #[inline]
     pub fn new(row: isize, col: isize) -> Self {
         Self { row, col }
     }
 
+    /// Swaps the row and column indices.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::WrappingIndex;
+    ///
+    /// let mut index = WrappingIndex::new(2, 3);
+    /// index.swap();
+    /// assert_eq!(index, WrappingIndex::new(3, 2));
+    /// ```
     #[inline]
     pub fn swap(&mut self) -> &mut Self {
         (self.row, self.col) = (self.col, self.row);
         self
     }
 
+    /// # Panics
+    ///
+    /// Panics if the size of the `shape` is zero.
     pub(super) fn to_flattened(self, order: Order, shape: AxisShape) -> usize {
         let (major, minor) = match order {
             Order::RowMajor => (self.row, self.col),
@@ -444,17 +487,58 @@ impl From<[isize; 2]> for WrappingIndex {
 unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     type Output = T;
 
+    /// Returns `true` if the index is out of bounds for the given matrix.
+    ///
+    /// # Notes
+    ///
+    /// A wrapping index is out of bounds if and only if the matrix is empty.
     #[inline]
     fn is_out_of_bounds(&self, matrix: &Matrix<T>) -> bool {
         matrix.is_empty()
     }
 
+    /// Returns a pointer to the output at this location, without
+    /// performing any bounds checking.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the matrix is empty.
+    ///
+    /// # Safety
+    ///
+    /// Calling this method with a dangling `matrix` pointer
+    /// is *[undefined behavior]* even if the resulting pointer is not used.
+    ///
+    /// # Notes
+    ///
+    /// If no panic occurs and no dangling pointer is passed, the output
+    /// returned is guaranteed to be valid.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline]
     unsafe fn get_unchecked(self, matrix: *const Matrix<T>) -> *const Self::Output {
         let index = self.to_flattened((*matrix).order, (*matrix).shape);
         unsafe { (*matrix).data.get_unchecked(index) }
     }
 
+    /// Returns a mutable pointer to the output at this location, without
+    /// performing any bounds checking.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the matrix is empty.
+    ///
+    /// # Safety
+    ///
+    /// Calling this method with a dangling `matrix` pointer
+    /// is *[undefined behavior]* even if the resulting pointer is not used.
+    ///
+    /// # Notes
+    ///
+    /// If no panic occurs and no dangling pointer is passed, the output
+    /// returned is guaranteed to be valid.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline]
     unsafe fn get_unchecked_mut(self, matrix: *mut Matrix<T>) -> *mut Self::Output {
         let index = self.to_flattened((*matrix).order, (*matrix).shape);
