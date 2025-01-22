@@ -568,58 +568,150 @@ mod tests {
     }
 
     #[test]
-    fn test_struct_index_is_out_of_bounds() {
-        let matrix = Matrix::<i32>::with_default((2, 3)).unwrap();
-
-        let index = Index::new(0, 0);
-        assert!(!index.is_out_of_bounds(&matrix));
-
-        let index = Index::new(1, 2);
-        assert!(!index.is_out_of_bounds(&matrix));
-
-        let index = Index::new(1, 3);
-        assert!(index.is_out_of_bounds(&matrix));
-
-        let index = Index::new(2, 2);
-        assert!(index.is_out_of_bounds(&matrix));
-
-        let index = Index::new(2, 3);
-        assert!(index.is_out_of_bounds(&matrix));
-    }
-
-    #[test]
-    fn test_struct_index_ensure_in_bounds() {
-        let matrix = Matrix::<i32>::with_default((2, 3)).unwrap();
-
-        let index = Index::new(0, 0);
-        assert_eq!(index.ensure_in_bounds(&matrix), Ok(&index));
-
-        let index = Index::new(1, 2);
-        assert_eq!(index.ensure_in_bounds(&matrix), Ok(&index));
-
-        let index = Index::new(1, 3);
-        assert_eq!(
-            index.ensure_in_bounds(&matrix),
-            Err(Error::IndexOutOfBounds)
-        );
-
-        let index = Index::new(2, 2);
-        assert_eq!(
-            index.ensure_in_bounds(&matrix),
-            Err(Error::IndexOutOfBounds)
-        );
-
-        let index = Index::new(2, 3);
-        assert_eq!(
-            index.ensure_in_bounds(&matrix),
-            Err(Error::IndexOutOfBounds)
-        );
-    }
-
-    #[test]
     fn test_struct_index_swap() {
         let mut index = Index::new(2, 3);
         index.swap();
         assert_eq!(index, Index::new(3, 2));
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    struct I(usize, usize);
+
+    impl SingleElementIndex for I {
+        fn row(&self) -> usize {
+            self.0
+        }
+
+        fn col(&self) -> usize {
+            self.1
+        }
+    }
+
+    #[test]
+    fn test_single_element_index() {
+        let index = I(2, 3);
+        assert_eq!(index.row(), 2);
+        assert_eq!(index.col(), 3);
+    }
+
+    #[test]
+    fn test_single_element_index_is_out_of_bounds() {
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        assert!(!I(0, 0).is_out_of_bounds(&matrix));
+        assert!(!I(0, 1).is_out_of_bounds(&matrix));
+        assert!(!I(0, 2).is_out_of_bounds(&matrix));
+        assert!(!I(1, 0).is_out_of_bounds(&matrix));
+        assert!(!I(1, 1).is_out_of_bounds(&matrix));
+        assert!(!I(1, 2).is_out_of_bounds(&matrix));
+        assert!(I(1, 3).is_out_of_bounds(&matrix));
+        assert!(I(2, 2).is_out_of_bounds(&matrix));
+        assert!(I(2, 3).is_out_of_bounds(&matrix));
+    }
+
+    #[test]
+    fn test_single_element_index_ensure_in_bounds() {
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        assert!(I(0, 0).ensure_in_bounds(&matrix).is_ok());
+        assert!(I(0, 1).ensure_in_bounds(&matrix).is_ok());
+        assert!(I(0, 2).ensure_in_bounds(&matrix).is_ok());
+        assert!(I(1, 0).ensure_in_bounds(&matrix).is_ok());
+        assert!(I(1, 1).ensure_in_bounds(&matrix).is_ok());
+        assert!(I(1, 2).ensure_in_bounds(&matrix).is_ok());
+        assert_eq!(
+            I(1, 3).ensure_in_bounds(&matrix),
+            Err(Error::IndexOutOfBounds)
+        );
+        assert_eq!(
+            I(2, 2).ensure_in_bounds(&matrix),
+            Err(Error::IndexOutOfBounds)
+        );
+        assert_eq!(
+            I(2, 3).ensure_in_bounds(&matrix),
+            Err(Error::IndexOutOfBounds)
+        );
+    }
+
+    #[test]
+    fn test_single_element_index_get() {
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        assert_eq!(I(0, 0).get(&matrix), Ok(&0));
+        assert_eq!(I(0, 1).get(&matrix), Ok(&1));
+        assert_eq!(I(0, 2).get(&matrix), Ok(&2));
+        assert_eq!(I(1, 0).get(&matrix), Ok(&3));
+        assert_eq!(I(1, 1).get(&matrix), Ok(&4));
+        assert_eq!(I(1, 2).get(&matrix), Ok(&5));
+        assert_eq!(I(1, 3).get(&matrix), Err(Error::IndexOutOfBounds));
+        assert_eq!(I(2, 2).get(&matrix), Err(Error::IndexOutOfBounds));
+        assert_eq!(I(2, 3).get(&matrix), Err(Error::IndexOutOfBounds));
+    }
+
+    #[test]
+    fn test_single_element_index_get_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        assert_eq!(I(0, 0).get_mut(&mut matrix), Ok(&mut 0));
+        assert_eq!(I(0, 1).get_mut(&mut matrix), Ok(&mut 1));
+        assert_eq!(I(0, 2).get_mut(&mut matrix), Ok(&mut 2));
+        assert_eq!(I(1, 0).get_mut(&mut matrix), Ok(&mut 3));
+        assert_eq!(I(1, 1).get_mut(&mut matrix), Ok(&mut 4));
+        assert_eq!(I(1, 2).get_mut(&mut matrix), Ok(&mut 5));
+        assert_eq!(I(1, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
+        assert_eq!(I(2, 2).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
+        assert_eq!(I(2, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
+    }
+
+    #[test]
+    fn test_single_element_index_get_unchecked() {
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        unsafe {
+            assert_eq!(*I(0, 0).get_unchecked(&matrix), 0);
+            assert_eq!(*I(0, 1).get_unchecked(&matrix), 1);
+            assert_eq!(*I(0, 2).get_unchecked(&matrix), 2);
+            assert_eq!(*I(1, 0).get_unchecked(&matrix), 3);
+            assert_eq!(*I(1, 1).get_unchecked(&matrix), 4);
+            assert_eq!(*I(1, 2).get_unchecked(&matrix), 5);
+        }
+    }
+
+    #[test]
+    fn test_single_element_index_get_unchecked_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        unsafe {
+            assert_eq!(*I(0, 0).get_unchecked_mut(&mut matrix), 0);
+            assert_eq!(*I(0, 1).get_unchecked_mut(&mut matrix), 1);
+            assert_eq!(*I(0, 2).get_unchecked_mut(&mut matrix), 2);
+            assert_eq!(*I(1, 0).get_unchecked_mut(&mut matrix), 3);
+            assert_eq!(*I(1, 1).get_unchecked_mut(&mut matrix), 4);
+            assert_eq!(*I(1, 2).get_unchecked_mut(&mut matrix), 5);
+        }
+    }
+
+    #[test]
+    fn test_single_element_index_index() {
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        assert_eq!(I(0, 0).index(&matrix), &0);
+        assert_eq!(I(0, 1).index(&matrix), &1);
+        assert_eq!(I(0, 2).index(&matrix), &2);
+        assert_eq!(I(1, 0).index(&matrix), &3);
+        assert_eq!(I(1, 1).index(&matrix), &4);
+        assert_eq!(I(1, 2).index(&matrix), &5);
+    }
+
+    #[test]
+    fn test_single_element_index_index_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        *I(0, 0).index_mut(&mut matrix) += 1;
+        *I(0, 1).index_mut(&mut matrix) += 1;
+        *I(0, 2).index_mut(&mut matrix) += 1;
+        *I(1, 0).index_mut(&mut matrix) += 1;
+        *I(1, 1).index_mut(&mut matrix) += 1;
+        *I(1, 2).index_mut(&mut matrix) += 1;
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]])
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_single_element_index_out_of_bounds() {
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let _ = I(2, 3).index(&matrix);
     }
 }
