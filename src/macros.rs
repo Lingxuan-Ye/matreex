@@ -125,7 +125,7 @@ macro_rules! col_vec {
 macro_rules! impl_scalar_add {
     ($($t:ty)*) => {
         $(
-            impl std::ops::Add<$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::Add<$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -137,7 +137,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::Add<&$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -149,7 +149,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$t> for &$crate::matrix::Matrix<$t>
+            impl ::std::ops::Add<$t> for &$crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -161,7 +161,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$t> for &$crate::matrix::Matrix<$t>
+            impl ::std::ops::Add<&$t> for &$crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -173,7 +173,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$t> for $crate::matrix::Matrix<&$t>
+            impl ::std::ops::Add<$t> for $crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -185,7 +185,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$t> for $crate::matrix::Matrix<&$t>
+            impl ::std::ops::Add<&$t> for $crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -197,7 +197,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$t> for &$crate::matrix::Matrix<&$t>
+            impl ::std::ops::Add<$t> for &$crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -209,7 +209,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$t> for &$crate::matrix::Matrix<&$t>
+            impl ::std::ops::Add<&$t> for &$crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -221,7 +221,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$crate::matrix::Matrix<$t>> for $t
+            impl ::std::ops::Add<$crate::matrix::Matrix<$t>> for $t
             where
                 $t: Clone,
             {
@@ -233,7 +233,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$crate::matrix::Matrix<$t>> for $t
+            impl ::std::ops::Add<&$crate::matrix::Matrix<$t>> for $t
             where
                 $t: Clone,
             {
@@ -245,7 +245,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$crate::matrix::Matrix<&$t>> for $t
+            impl ::std::ops::Add<$crate::matrix::Matrix<&$t>> for $t
             where
                 $t: Clone,
             {
@@ -257,7 +257,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$crate::matrix::Matrix<&$t>> for $t
+            impl ::std::ops::Add<&$crate::matrix::Matrix<&$t>> for $t
             where
                 $t: Clone,
             {
@@ -269,7 +269,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$crate::matrix::Matrix<$t>> for &$t
+            impl ::std::ops::Add<$crate::matrix::Matrix<$t>> for &$t
             where
                 $t: Clone,
             {
@@ -281,7 +281,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$crate::matrix::Matrix<$t>> for &$t
+            impl ::std::ops::Add<&$crate::matrix::Matrix<$t>> for &$t
             where
                 $t: Clone,
             {
@@ -293,7 +293,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$crate::matrix::Matrix<&$t>> for &$t
+            impl ::std::ops::Add<$crate::matrix::Matrix<&$t>> for &$t
             where
                 $t: Clone,
             {
@@ -305,7 +305,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$crate::matrix::Matrix<&$t>> for &$t
+            impl ::std::ops::Add<&$crate::matrix::Matrix<&$t>> for &$t
             where
                 $t: Clone,
             {
@@ -317,7 +317,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::AddAssign<$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::AddAssign<$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -327,7 +327,7 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::AddAssign<&$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::AddAssign<&$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -355,7 +355,7 @@ macro_rules! impl_scalar_add {
 macro_rules! impl_scalar_sub {
     ($($t:ty)*) => {
         $(
-            impl std::ops::Sub<$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::Sub<$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -367,7 +367,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::Sub<&$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -379,7 +379,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<$t>
+            impl ::std::ops::Sub<$t> for &$crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -391,7 +391,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<$t>
+            impl ::std::ops::Sub<&$t> for &$crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -403,7 +403,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$t> for $crate::matrix::Matrix<&$t>
+            impl ::std::ops::Sub<$t> for $crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -415,7 +415,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<&$t>
+            impl ::std::ops::Sub<&$t> for $crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -427,7 +427,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<&$t>
+            impl ::std::ops::Sub<$t> for &$crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -439,7 +439,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<&$t>
+            impl ::std::ops::Sub<&$t> for &$crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -451,7 +451,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for $t
+            impl ::std::ops::Sub<$crate::matrix::Matrix<$t>> for $t
             where
                 $t: Clone,
             {
@@ -463,7 +463,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for $t
+            impl ::std::ops::Sub<&$crate::matrix::Matrix<$t>> for $t
             where
                 $t: Clone,
             {
@@ -475,7 +475,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for $t
+            impl ::std::ops::Sub<$crate::matrix::Matrix<&$t>> for $t
             where
                 $t: Clone,
             {
@@ -487,7 +487,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for $t
+            impl ::std::ops::Sub<&$crate::matrix::Matrix<&$t>> for $t
             where
                 $t: Clone,
             {
@@ -499,7 +499,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for &$t
+            impl ::std::ops::Sub<$crate::matrix::Matrix<$t>> for &$t
             where
                 $t: Clone,
             {
@@ -511,7 +511,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for &$t
+            impl ::std::ops::Sub<&$crate::matrix::Matrix<$t>> for &$t
             where
                 $t: Clone,
             {
@@ -523,7 +523,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for &$t
+            impl ::std::ops::Sub<$crate::matrix::Matrix<&$t>> for &$t
             where
                 $t: Clone,
             {
@@ -535,7 +535,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for &$t
+            impl ::std::ops::Sub<&$crate::matrix::Matrix<&$t>> for &$t
             where
                 $t: Clone,
             {
@@ -547,7 +547,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::SubAssign<$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::SubAssign<$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -557,7 +557,7 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::SubAssign<&$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::SubAssign<&$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -585,7 +585,7 @@ macro_rules! impl_scalar_sub {
 macro_rules! impl_scalar_mul {
     ($($t:ty)*) => {
         $(
-            impl std::ops::Mul<$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::Mul<$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -597,7 +597,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::Mul<&$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -609,7 +609,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$t> for &$crate::matrix::Matrix<$t>
+            impl ::std::ops::Mul<$t> for &$crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -621,7 +621,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$t> for &$crate::matrix::Matrix<$t>
+            impl ::std::ops::Mul<&$t> for &$crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -633,7 +633,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$t> for $crate::matrix::Matrix<&$t>
+            impl ::std::ops::Mul<$t> for $crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -645,7 +645,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$t> for $crate::matrix::Matrix<&$t>
+            impl ::std::ops::Mul<&$t> for $crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -657,7 +657,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$t> for &$crate::matrix::Matrix<&$t>
+            impl ::std::ops::Mul<$t> for &$crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -669,7 +669,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$t> for &$crate::matrix::Matrix<&$t>
+            impl ::std::ops::Mul<&$t> for &$crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -681,7 +681,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$crate::matrix::Matrix<$t>> for $t
+            impl ::std::ops::Mul<$crate::matrix::Matrix<$t>> for $t
             where
                 $t: Clone,
             {
@@ -693,7 +693,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$crate::matrix::Matrix<$t>> for $t
+            impl ::std::ops::Mul<&$crate::matrix::Matrix<$t>> for $t
             where
                 $t: Clone,
             {
@@ -705,7 +705,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$crate::matrix::Matrix<&$t>> for $t
+            impl ::std::ops::Mul<$crate::matrix::Matrix<&$t>> for $t
             where
                 $t: Clone,
             {
@@ -717,7 +717,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$crate::matrix::Matrix<&$t>> for $t
+            impl ::std::ops::Mul<&$crate::matrix::Matrix<&$t>> for $t
             where
                 $t: Clone,
             {
@@ -729,7 +729,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$crate::matrix::Matrix<$t>> for &$t
+            impl ::std::ops::Mul<$crate::matrix::Matrix<$t>> for &$t
             where
                 $t: Clone,
             {
@@ -741,7 +741,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$crate::matrix::Matrix<$t>> for &$t
+            impl ::std::ops::Mul<&$crate::matrix::Matrix<$t>> for &$t
             where
                 $t: Clone,
             {
@@ -753,7 +753,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$crate::matrix::Matrix<&$t>> for &$t
+            impl ::std::ops::Mul<$crate::matrix::Matrix<&$t>> for &$t
             where
                 $t: Clone,
             {
@@ -765,7 +765,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$crate::matrix::Matrix<&$t>> for &$t
+            impl ::std::ops::Mul<&$crate::matrix::Matrix<&$t>> for &$t
             where
                 $t: Clone,
             {
@@ -777,7 +777,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::MulAssign<$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::MulAssign<$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -787,7 +787,7 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::MulAssign<&$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::MulAssign<&$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -815,7 +815,7 @@ macro_rules! impl_scalar_mul {
 macro_rules! impl_scalar_div {
     ($($t:ty)*) => {
         $(
-            impl std::ops::Div<$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::Div<$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -827,7 +827,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::Div<&$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -839,7 +839,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$t> for &$crate::matrix::Matrix<$t>
+            impl ::std::ops::Div<$t> for &$crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -851,7 +851,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$t> for &$crate::matrix::Matrix<$t>
+            impl ::std::ops::Div<&$t> for &$crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -863,7 +863,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$t> for $crate::matrix::Matrix<&$t>
+            impl ::std::ops::Div<$t> for $crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -875,7 +875,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$t> for $crate::matrix::Matrix<&$t>
+            impl ::std::ops::Div<&$t> for $crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -887,7 +887,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$t> for &$crate::matrix::Matrix<&$t>
+            impl ::std::ops::Div<$t> for &$crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -899,7 +899,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$t> for &$crate::matrix::Matrix<&$t>
+            impl ::std::ops::Div<&$t> for &$crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -911,7 +911,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$crate::matrix::Matrix<$t>> for $t
+            impl ::std::ops::Div<$crate::matrix::Matrix<$t>> for $t
             where
                 $t: Clone,
             {
@@ -923,7 +923,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$crate::matrix::Matrix<$t>> for $t
+            impl ::std::ops::Div<&$crate::matrix::Matrix<$t>> for $t
             where
                 $t: Clone,
             {
@@ -935,7 +935,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$crate::matrix::Matrix<&$t>> for $t
+            impl ::std::ops::Div<$crate::matrix::Matrix<&$t>> for $t
             where
                 $t: Clone,
             {
@@ -947,7 +947,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$crate::matrix::Matrix<&$t>> for $t
+            impl ::std::ops::Div<&$crate::matrix::Matrix<&$t>> for $t
             where
                 $t: Clone,
             {
@@ -959,7 +959,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$crate::matrix::Matrix<$t>> for &$t
+            impl ::std::ops::Div<$crate::matrix::Matrix<$t>> for &$t
             where
                 $t: Clone,
             {
@@ -971,7 +971,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$crate::matrix::Matrix<$t>> for &$t
+            impl ::std::ops::Div<&$crate::matrix::Matrix<$t>> for &$t
             where
                 $t: Clone,
             {
@@ -983,7 +983,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$crate::matrix::Matrix<&$t>> for &$t
+            impl ::std::ops::Div<$crate::matrix::Matrix<&$t>> for &$t
             where
                 $t: Clone,
             {
@@ -995,7 +995,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$crate::matrix::Matrix<&$t>> for &$t
+            impl ::std::ops::Div<&$crate::matrix::Matrix<&$t>> for &$t
             where
                 $t: Clone,
             {
@@ -1007,7 +1007,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::DivAssign<$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::DivAssign<$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -1017,7 +1017,7 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::DivAssign<&$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::DivAssign<&$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -1045,7 +1045,7 @@ macro_rules! impl_scalar_div {
 macro_rules! impl_scalar_rem {
     ($($t:ty)*) => {
         $(
-            impl std::ops::Rem<$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::Rem<$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -1057,7 +1057,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::Rem<&$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -1069,7 +1069,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$t> for &$crate::matrix::Matrix<$t>
+            impl ::std::ops::Rem<$t> for &$crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -1081,7 +1081,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$t> for &$crate::matrix::Matrix<$t>
+            impl ::std::ops::Rem<&$t> for &$crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -1093,7 +1093,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$t> for $crate::matrix::Matrix<&$t>
+            impl ::std::ops::Rem<$t> for $crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -1105,7 +1105,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$t> for $crate::matrix::Matrix<&$t>
+            impl ::std::ops::Rem<&$t> for $crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -1117,7 +1117,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$t> for &$crate::matrix::Matrix<&$t>
+            impl ::std::ops::Rem<$t> for &$crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -1129,7 +1129,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$t> for &$crate::matrix::Matrix<&$t>
+            impl ::std::ops::Rem<&$t> for &$crate::matrix::Matrix<&$t>
             where
                 $t: Clone,
             {
@@ -1141,7 +1141,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$crate::matrix::Matrix<$t>> for $t
+            impl ::std::ops::Rem<$crate::matrix::Matrix<$t>> for $t
             where
                 $t: Clone,
             {
@@ -1153,7 +1153,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$crate::matrix::Matrix<$t>> for $t
+            impl ::std::ops::Rem<&$crate::matrix::Matrix<$t>> for $t
             where
                 $t: Clone,
             {
@@ -1165,7 +1165,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$crate::matrix::Matrix<&$t>> for $t
+            impl ::std::ops::Rem<$crate::matrix::Matrix<&$t>> for $t
             where
                 $t: Clone,
             {
@@ -1177,7 +1177,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$crate::matrix::Matrix<&$t>> for $t
+            impl ::std::ops::Rem<&$crate::matrix::Matrix<&$t>> for $t
             where
                 $t: Clone,
             {
@@ -1189,7 +1189,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$crate::matrix::Matrix<$t>> for &$t
+            impl ::std::ops::Rem<$crate::matrix::Matrix<$t>> for &$t
             where
                 $t: Clone,
             {
@@ -1201,7 +1201,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$crate::matrix::Matrix<$t>> for &$t
+            impl ::std::ops::Rem<&$crate::matrix::Matrix<$t>> for &$t
             where
                 $t: Clone,
             {
@@ -1213,7 +1213,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$crate::matrix::Matrix<&$t>> for &$t
+            impl ::std::ops::Rem<$crate::matrix::Matrix<&$t>> for &$t
             where
                 $t: Clone,
             {
@@ -1225,7 +1225,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$crate::matrix::Matrix<&$t>> for &$t
+            impl ::std::ops::Rem<&$crate::matrix::Matrix<&$t>> for &$t
             where
                 $t: Clone,
             {
@@ -1237,7 +1237,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::RemAssign<$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::RemAssign<$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {
@@ -1247,7 +1247,7 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::RemAssign<&$t> for $crate::matrix::Matrix<$t>
+            impl ::std::ops::RemAssign<&$t> for $crate::matrix::Matrix<$t>
             where
                 $t: Clone,
             {

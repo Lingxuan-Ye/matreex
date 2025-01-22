@@ -1,6 +1,6 @@
 //! Defines [`Matrix<T>`] and all its related components.
 
-use self::index::transpose_flattened_index;
+use self::index::map_flattened_index_for_transpose;
 use self::order::Order;
 use self::shape::{AxisShape, Shape};
 use crate::error::{Error, Result};
@@ -187,13 +187,10 @@ impl<T> Matrix<T> {
         let mut visited = vec![false; size];
 
         for index in 0..size {
-            if visited[index] {
-                continue;
-            }
             let mut current = index;
             while !visited[current] {
                 visited[current] = true;
-                let next = transpose_flattened_index(current, self.shape);
+                let next = map_flattened_index_for_transpose(current, self.shape);
                 self.data.swap(index, next);
                 current = next;
             }

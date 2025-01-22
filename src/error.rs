@@ -1,5 +1,7 @@
 //! Module for error handling.
 
+use std::fmt::{Display, Formatter, Result as FmtResult};
+
 /// An alias for [`std::result::Result`].
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -42,8 +44,8 @@ pub enum Error {
     ShapeNotConformable,
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let content = match self {
             Self::SizeOverflow => "size overflow",
             Self::SizeMismatch => "size mismatch",
