@@ -574,6 +574,22 @@ impl<T> Matrix<T> {
         Matrix { order, shape, data }
     }
 
+    /// Clears the matrix, removing all elements.
+    ///
+    /// Note that this method has no effect on the allocated capacity
+    /// of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// matrix.clear();
+    /// assert!(matrix.is_empty());
+    /// assert_eq!(matrix.nrows(), 0);
+    /// assert_eq!(matrix.ncols(), 0);
+    /// ```
     #[inline]
     pub fn clear(&mut self) -> &mut Self {
         self.shape = AxisShape::default();
