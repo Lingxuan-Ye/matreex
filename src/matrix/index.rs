@@ -447,27 +447,6 @@ impl WrappingIndex {
         (self.row, self.col) = (self.col, self.row);
         self
     }
-
-    /// # Panics
-    ///
-    /// Panics if the size of the `shape` is zero.
-    pub(super) fn to_flattened(self, order: Order, shape: AxisShape) -> usize {
-        let (major, minor) = match order {
-            Order::RowMajor => (self.row, self.col),
-            Order::ColMajor => (self.col, self.row),
-        };
-        let major = if major < 0 {
-            (shape.major() - major.unsigned_abs() % shape.major()) % shape.major()
-        } else {
-            major as usize % shape.major()
-        };
-        let minor = if minor < 0 {
-            (shape.minor() - minor.unsigned_abs() % shape.minor()) % shape.minor()
-        } else {
-            minor as usize % shape.minor()
-        };
-        AxisIndex { major, minor }.to_flattened(shape)
-    }
 }
 
 impl From<(isize, isize)> for WrappingIndex {
@@ -519,8 +498,8 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline]
     unsafe fn get_unchecked(self, matrix: *const Matrix<T>) -> *const Self::Output {
-        let index = self.to_flattened((*matrix).order, (*matrix).shape);
-        unsafe { (*matrix).data.get_unchecked(index) }
+        let index = AxisIndex::from_wrapping_index(self, (*matrix).order, (*matrix).shape);
+        unsafe { index.get_unchecked(matrix) }
     }
 
     /// Returns a mutable pointer to the output at this location, without
@@ -543,8 +522,8 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline]
     unsafe fn get_unchecked_mut(self, matrix: *mut Matrix<T>) -> *mut Self::Output {
-        let index = self.to_flattened((*matrix).order, (*matrix).shape);
-        unsafe { (*matrix).data.get_unchecked_mut(index) }
+        let index = AxisIndex::from_wrapping_index(self, (*matrix).order, (*matrix).shape);
+        unsafe { index.get_unchecked_mut(matrix) }
     }
 }
 
@@ -578,6 +557,35 @@ impl AxisIndex {
         };
         Index { row, col }
     }
+
+    /// # Panics
+    ///
+    /// Panics if the size of the `shape` is zero.
+    pub(super) fn from_wrapping_index(
+        index: WrappingIndex,
+        order: Order,
+        shape: AxisShape,
+    ) -> Self {
+        let (major, minor) = match order {
+            Order::RowMajor => (index.row, index.col),
+            Order::ColMajor => (index.col, index.row),
+        };
+        let major = if major < 0 {
+            (shape.major() - major.unsigned_abs() % shape.major()) % shape.major()
+        } else {
+            major as usize % shape.major()
+        };
+        let minor = if minor < 0 {
+            (shape.minor() - minor.unsigned_abs() % shape.minor()) % shape.minor()
+        } else {
+            minor as usize % shape.minor()
+        };
+        Self { major, minor }
+    }
+
+    // `to_wapping_index` is not implemented for two reasons:
+    // - It is a one-to-many mapping.
+    // - It serves no practical purpose.
 
     pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
