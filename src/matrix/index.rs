@@ -338,7 +338,20 @@ where
 
     #[inline]
     fn is_out_of_bounds(&self, matrix: &Matrix<T>) -> bool {
-        AxisIndex::from_index(self, matrix.order).is_out_of_bounds(matrix)
+        let index = AxisIndex::from_index(self, matrix.order);
+        index.is_out_of_bounds(matrix)
+    }
+
+    #[inline]
+    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
+        let index = AxisIndex::from_index(&self, matrix.order);
+        index.get(matrix)
+    }
+
+    #[inline]
+    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
+        let index = AxisIndex::from_index(&self, matrix.order);
+        index.get_mut(matrix)
     }
 
     #[inline]
