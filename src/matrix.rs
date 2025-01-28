@@ -573,6 +573,13 @@ impl<T> Matrix<T> {
         let data = self.data.iter().map(f).collect();
         Matrix { order, shape, data }
     }
+
+    #[inline]
+    pub fn clear(&mut self) -> &mut Self {
+        self.shape = AxisShape::default();
+        self.data.clear();
+        self
+    }
 }
 
 impl<T> Matrix<T> {
