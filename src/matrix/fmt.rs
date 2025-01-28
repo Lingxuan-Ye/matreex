@@ -30,12 +30,12 @@ where
     T: Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        if self.is_empty() {
+            return write!(f, "{LEFT_DELIMITER}{RIGHT_DELIMITER}");
+        }
         let shape = self.shape();
         let nrows = shape.nrows();
         let ncols = shape.ncols();
-        if nrows == 0 && ncols == 0 {
-            return write!(f, "{LEFT_DELIMITER}{RIGHT_DELIMITER}");
-        }
         let size = self.size();
         let index_width = size.to_string().chars().count();
         let mut element_width = 0;
@@ -54,8 +54,10 @@ where
             cache.push(lines);
         }
 
-        write!(f, "{LEFT_DELIMITER:<TAB_SIZE$}")?;
-        write!(f, "{SPACE:>index_width$}")?;
+        writeln!(f, "{LEFT_DELIMITER}")?;
+
+        write!(f, "{SPACE:TAB_SIZE$}")?;
+        write!(f, "{SPACE:index_width$}")?;
         write!(f, "{SPACE:OUTER_GAP$}")?;
         write!(f, "{SPACE}")?;
         for col in 0..ncols {
@@ -64,7 +66,7 @@ where
             }
             write_index!(f, "{col:>index_width$}")?;
             write!(f, "{SPACE:INNER_GAP$}")?;
-            write!(f, "{SPACE:<element_width$}")?;
+            write!(f, "{SPACE:element_width$}")?;
         }
         writeln!(f)?;
 
@@ -76,7 +78,7 @@ where
             write!(f, "{LEFT_DELIMITER}")?;
             for col in 0..ncols {
                 if col != 0 {
-                    write!(f, "{SPACE:<INTER_GAP$}")?;
+                    write!(f, "{SPACE:INTER_GAP$}")?;
                 }
                 // hope loop-invariant code motion applies here,
                 // as well as to similar code
@@ -84,7 +86,7 @@ where
                 write_index!(f, "{index:>index_width$}")?;
                 write!(f, "{SPACE:INNER_GAP$}")?;
                 match cache[index].next() {
-                    None => write!(f, "{SPACE:<element_width$}")?,
+                    None => write!(f, "{SPACE:element_width$}")?,
                     Some(line) => write!(f, "{line:<element_width$}")?,
                 }
             }
@@ -93,18 +95,18 @@ where
             // remaining lines of the element representation
             for _ in 1..element_hight {
                 write!(f, "{SPACE:TAB_SIZE$}")?;
-                write!(f, "{SPACE:>index_width$}")?;
+                write!(f, "{SPACE:index_width$}")?;
                 write!(f, "{SPACE:OUTER_GAP$}")?;
                 write!(f, "{SPACE}")?;
                 for col in 0..ncols {
                     if col != 0 {
-                        write!(f, "{SPACE:<INTER_GAP$}")?;
+                        write!(f, "{SPACE:INTER_GAP$}")?;
                     }
                     let index = Index::new(row, col).to_flattened(self.order, self.shape);
-                    write!(f, "{SPACE:>index_width$}")?;
+                    write!(f, "{SPACE:index_width$}")?;
                     write!(f, "{SPACE:INNER_GAP$}")?;
                     match cache[index].next() {
-                        None => write!(f, "{SPACE:<element_width$}")?,
+                        None => write!(f, "{SPACE:element_width$}")?,
                         Some(line) => write!(f, "{line:<element_width$}")?,
                     }
                 }
@@ -156,7 +158,7 @@ where
                 }
                 let index = Index::new(row, col).to_flattened(self.order, self.shape);
                 match cache[index].next() {
-                    None => write!(f, "{SPACE:<element_width$}")?,
+                    None => write!(f, "{SPACE:element_width$}")?,
                     Some(line) => write!(f, "{line:<element_width$}")?,
                 }
             }
@@ -172,7 +174,7 @@ where
                     }
                     let index = Index::new(row, col).to_flattened(self.order, self.shape);
                     match cache[index].next() {
-                        None => write!(f, "{SPACE:<element_width$}")?,
+                        None => write!(f, "{SPACE:element_width$}")?,
                         Some(line) => write!(f, "{line:<element_width$}")?,
                     }
                 }
