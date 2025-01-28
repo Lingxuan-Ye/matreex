@@ -50,7 +50,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Shape};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let shape = matrix.shape();
@@ -573,6 +573,29 @@ impl<T> Matrix<T> {
         let data = self.data.iter().map(f).collect();
         Matrix { order, shape, data }
     }
+
+    /// Clears the matrix, removing all elements.
+    ///
+    /// Note that this method has no effect on the allocated capacity
+    /// of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// matrix.clear();
+    /// assert!(matrix.is_empty());
+    /// assert_eq!(matrix.nrows(), 0);
+    /// assert_eq!(matrix.ncols(), 0);
+    /// ```
+    #[inline]
+    pub fn clear(&mut self) -> &mut Self {
+        self.shape = AxisShape::default();
+        self.data.clear();
+        self
+    }
 }
 
 impl<T> Matrix<T> {
@@ -996,5 +1019,14 @@ mod tests {
         let mut matrix_f64 = matrix_i32.map_ref(|x| *x as f64);
         matrix_f64.switch_order();
         assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    }
+
+    #[test]
+    fn test_clear() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        matrix.clear();
+        assert!(matrix.is_empty());
+        assert_eq!(matrix.nrows(), 0);
+        assert_eq!(matrix.ncols(), 0);
     }
 }

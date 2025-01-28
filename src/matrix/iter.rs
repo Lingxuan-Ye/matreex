@@ -320,7 +320,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Index};
+    /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// matrix
