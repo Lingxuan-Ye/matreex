@@ -50,7 +50,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Shape};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// let shape = matrix.shape();
