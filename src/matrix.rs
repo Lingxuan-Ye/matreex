@@ -1004,4 +1004,13 @@ mod tests {
         matrix_f64.switch_order();
         assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     }
+
+    #[test]
+    fn test_clear() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        matrix.clear();
+        assert!(matrix.is_empty());
+        assert_eq!(matrix.nrows(), 0);
+        assert_eq!(matrix.ncols(), 0);
+    }
 }
