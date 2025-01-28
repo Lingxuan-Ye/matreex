@@ -30,12 +30,12 @@ where
     T: Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        if self.is_empty() {
+            return write!(f, "{LEFT_DELIMITER}{RIGHT_DELIMITER}");
+        }
         let shape = self.shape();
         let nrows = shape.nrows();
         let ncols = shape.ncols();
-        if nrows == 0 && ncols == 0 {
-            return write!(f, "{LEFT_DELIMITER}{RIGHT_DELIMITER}");
-        }
         let size = self.size();
         let index_width = size.to_string().chars().count();
         let mut element_width = 0;
@@ -54,7 +54,9 @@ where
             cache.push(lines);
         }
 
-        write!(f, "{LEFT_DELIMITER:<TAB_SIZE$}")?;
+        writeln!(f, "{LEFT_DELIMITER}")?;
+
+        write!(f, "{SPACE:TAB_SIZE$}")?;
         write!(f, "{SPACE:>index_width$}")?;
         write!(f, "{SPACE:OUTER_GAP$}")?;
         write!(f, "{SPACE}")?;
