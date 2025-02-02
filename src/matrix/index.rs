@@ -137,10 +137,25 @@ where
 ///
 /// # Safety
 ///
-/// Implementations of this trait have to promise that if the argument
-/// to `get_unchecked(_mut)` is a safe reference, then so is the result.
+/// Implementations of this trait have to promise that:
+/// - If any default implementations of [`get`], [`get_mut`], [`index`]
+///   or [`index_mut`] are used, then [`is_out_of_bounds`] is implemented
+///   correctly and the default implementation of [`ensure_in_bounds`] is
+///   not overridden. Failing to do so may result in an out-of-bounds memory
+///   access, leading to *[undefined behavior]*.
+/// - If the argument to [`get_unchecked`] or [`get_unchecked_mut`]
+///   is a safe reference, then so is the result.
 ///
 /// [`SliceIndex`]: core::slice::SliceIndex
+/// [`is_out_of_bounds`]: MatrixIndex::is_out_of_bounds
+/// [`ensure_in_bounds`]: MatrixIndex::ensure_in_bounds
+/// [`get`]: MatrixIndex::get
+/// [`get_mut`]: MatrixIndex::get_mut
+/// [`get_unchecked`]: MatrixIndex::get_unchecked
+/// [`get_unchecked_mut`]: MatrixIndex::get_unchecked_mut
+/// [`index`]: MatrixIndex::index
+/// [`index_mut`]: MatrixIndex::index_mut
+/// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
 pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
     /// The output type returned by methods.
     type Output: ?Sized;
