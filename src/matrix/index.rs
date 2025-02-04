@@ -266,6 +266,8 @@ impl Index {
     /// use matreex::Index;
     ///
     /// let index = Index::new(2, 3);
+    /// assert_eq!(index.row, 2);
+    /// assert_eq!(index.col, 3);
     /// ```
     #[inline]
     pub fn new(row: usize, col: usize) -> Self {
@@ -453,6 +455,8 @@ impl WrappingIndex {
     /// use matreex::WrappingIndex;
     ///
     /// let index = WrappingIndex::new(2, 3);
+    /// assert_eq!(index.row, 2);
+    /// assert_eq!(index.col, 3);
     /// ```
     #[inline]
     pub fn new(row: isize, col: isize) -> Self {
