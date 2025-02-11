@@ -1,13 +1,20 @@
-/// Represents the memory order of a matrix.
+/// An enum representing the memory layout of a [`Matrix<T>`].
+///
+/// [`Matrix<T>`]: crate::matrix::Matrix
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Order {
+    /// Elements are stored row by row, with consecutive elements of
+    /// a row being stored contiguously in memory.
     #[default]
     RowMajor,
+
+    /// Elements are stored column by column, with consecutive elements of
+    /// a column being stored contiguously in memory.
     ColMajor,
 }
 
 impl Order {
-    /// Switches to the other memory order.
+    /// Switches the order.
     ///
     /// # Examples
     ///

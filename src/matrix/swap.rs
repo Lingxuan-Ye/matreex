@@ -2,7 +2,7 @@ use super::index::MatrixIndex;
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
-use std::ptr::swap;
+use std::ptr;
 
 impl<T> Matrix<T> {
     /// Swaps the elements at the given indices.
@@ -32,9 +32,9 @@ impl<T> Matrix<T> {
         i.ensure_in_bounds(self)?;
         j.ensure_in_bounds(self)?;
         unsafe {
-            let element_i = i.get_unchecked_mut(self);
-            let element_j = j.get_unchecked_mut(self);
-            swap(element_i, element_j);
+            let x = i.get_unchecked_mut(self);
+            let y = j.get_unchecked_mut(self);
+            ptr::swap(x, y);
         }
         Ok(self)
     }
@@ -99,12 +99,13 @@ impl<T> Matrix<T> {
         if m >= self.major() || n >= self.major() {
             return Err(Error::IndexOutOfBounds);
         }
-        let mut index = m * self.major_stride();
-        let mut jndex = n * self.major_stride();
-        for _ in 0..self.minor() {
-            self.data.swap(index, jndex);
-            index += 1;
-            jndex += 1;
+        let index = m * self.major_stride();
+        let jndex = n * self.major_stride();
+        unsafe {
+            let x: *mut T = self.data.get_unchecked_mut(index);
+            let y: *mut T = self.data.get_unchecked_mut(jndex);
+            let count = self.minor();
+            ptr::swap_nonoverlapping(x, y, count);
         }
         Ok(self)
     }
@@ -116,7 +117,11 @@ impl<T> Matrix<T> {
         let mut index = m;
         let mut jndex = n;
         for _ in 0..self.major() {
-            self.data.swap(index, jndex);
+            unsafe {
+                let x: *mut T = self.data.get_unchecked_mut(index);
+                let y: *mut T = self.data.get_unchecked_mut(jndex);
+                ptr::swap(x, y);
+            }
             index += self.major_stride();
             jndex += self.major_stride();
         }
