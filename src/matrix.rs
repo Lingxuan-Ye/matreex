@@ -5,7 +5,6 @@ use self::order::Order;
 use self::shape::{AxisShape, Shape};
 use crate::error::{Error, Result};
 use std::cmp::min;
-use std::mem::size_of;
 
 pub mod index;
 pub mod iter;
