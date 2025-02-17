@@ -201,7 +201,7 @@ impl<L> Matrix<L> {
         let data = if self.order == rhs.order {
             self.data
                 .iter()
-                .zip(rhs.data.iter())
+                .zip(&rhs.data)
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
@@ -254,7 +254,7 @@ impl<L> Matrix<L> {
         let data = if self.order == rhs.order {
             self.data
                 .into_iter()
-                .zip(rhs.data.iter())
+                .zip(&rhs.data)
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
@@ -306,7 +306,7 @@ impl<L> Matrix<L> {
         if self.order == rhs.order {
             self.data
                 .iter_mut()
-                .zip(rhs.data.iter())
+                .zip(&rhs.data)
                 .for_each(|(left, right)| op(left, right));
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
