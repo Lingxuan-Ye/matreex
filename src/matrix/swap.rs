@@ -18,9 +18,9 @@ impl<T> Matrix<T> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix.swap((0, 0), (1, 1))?;
-    /// assert_eq!(matrix, matrix![[4, 1, 2], [3, 0, 5]]);
+    /// assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
     /// # Ok(())
     /// # }
     /// ```
@@ -52,9 +52,9 @@ impl<T> Matrix<T> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix.swap_rows(0, 1)?;
-    /// assert_eq!(matrix, matrix![[3, 4, 5], [0, 1, 2]]);
+    /// assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
     /// # Ok(())
     /// # }
     /// ```
@@ -79,9 +79,9 @@ impl<T> Matrix<T> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix.swap_cols(0, 1)?;
-    /// assert_eq!(matrix, matrix![[1, 0, 2], [4, 3, 5]]);
+    /// assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
     /// # Ok(())
     /// # }
     /// ```

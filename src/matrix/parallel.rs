@@ -11,9 +11,9 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// matrix.par_apply(|x| *x += 1);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix.par_apply(|x| *x += 2);
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
     pub fn par_apply<F>(&mut self, f: F) -> &mut Self
@@ -33,9 +33,9 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
     /// let matrix_f64 = matrix_i32.par_map(|x| x as f64);
-    /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    /// assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
     /// ```
     #[inline]
     pub fn par_map<U, F>(self, f: F) -> Matrix<U>
@@ -61,9 +61,9 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
     /// let matrix_f64 = matrix_i32.par_map_ref(|x| *x as f64);
-    /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    /// assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
     /// ```
     ///
     /// [`par_map`]: Matrix::par_map
@@ -90,9 +90,9 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     /// use rayon::prelude::*;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let sum = matrix.par_iter_elements().sum::<i32>();
-    /// assert_eq!(sum, 15);
+    /// assert_eq!(sum, 21);
     /// ```
     #[inline]
     pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T>
@@ -111,11 +111,11 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     /// use rayon::prelude::*;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
     ///     .par_iter_elements_mut()
-    ///     .for_each(|element| *element += 1);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    ///     .for_each(|element| *element += 2);
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
     pub fn par_iter_elements_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
@@ -134,9 +134,9 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     /// use rayon::prelude::*;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let sum = matrix.into_par_iter_elements().sum::<i32>();
-    /// assert_eq!(sum, 15);
+    /// assert_eq!(sum, 21);
     /// ```
     #[inline]
     pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T>
@@ -155,7 +155,7 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     /// use rayon::prelude::*;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
     ///     .par_iter_elements_with_index()
     ///     .for_each(|(index, element)| {
@@ -181,13 +181,13 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     /// use rayon::prelude::*;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
     ///     .par_iter_elements_mut_with_index()
     ///     .for_each(|(index, element)| {
     ///         *element += index.row as i32 + index.col as i32;
     ///     });
-    /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
+    /// assert_eq!(matrix, matrix![[1, 3, 5], [5, 7, 9]]);
     /// ```
     pub fn par_iter_elements_mut_with_index(
         &mut self,
@@ -213,7 +213,7 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     /// use rayon::prelude::*;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
     ///     .clone()
     ///     .into_par_iter_elements_with_index()

@@ -18,10 +18,10 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let lhs = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+    /// let rhs = matrix![[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]];
     /// let result = lhs.elementwise_div(&rhs);
-    /// assert_eq!(result, Ok(matrix![[0, 0, 1], [1, 2, 2]]));
+    /// assert_eq!(result, Ok(matrix![[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]]));
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
@@ -49,10 +49,10 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let lhs = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+    /// let rhs = matrix![[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]];
     /// let result = lhs.elementwise_div_consume_self(&rhs);
-    /// assert_eq!(result, Ok(matrix![[0, 0, 1], [1, 2, 2]]));
+    /// assert_eq!(result, Ok(matrix![[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]]));
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
@@ -79,10 +79,10 @@ impl<L> Matrix<L> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let mut lhs = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+    /// let rhs = matrix![[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]];
     /// lhs.elementwise_div_assign(&rhs)?;
-    /// assert_eq!(lhs, matrix![[0, 0, 1], [1, 2, 2]]);
+    /// assert_eq!(lhs, matrix![[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]]);
     /// # Ok(())
     /// # }
     /// ```

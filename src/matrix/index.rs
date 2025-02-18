@@ -16,8 +16,8 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{matrix, Error};
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(matrix.get((1, 1)), Ok(&4));
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(matrix.get((1, 1)), Ok(&5));
     /// assert_eq!(matrix.get((2, 3)), Err(Error::IndexOutOfBounds));
     /// ```
     #[inline]
@@ -40,8 +40,8 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{matrix, Error};
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 4));
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 5));
     /// assert_eq!(matrix.get_mut((2, 3)), Err(Error::IndexOutOfBounds));
     /// ```
     #[inline]
@@ -66,8 +66,8 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(unsafe { matrix.get_unchecked((1, 1)) }, &4);
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(unsafe { matrix.get_unchecked((1, 1)) }, &5);
     /// ```
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
@@ -94,8 +94,8 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// assert_eq!(unsafe { matrix.get_unchecked_mut((1, 1)) }, &mut 4);
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(unsafe { matrix.get_unchecked_mut((1, 1)) }, &mut 5);
     /// ```
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
@@ -336,8 +336,8 @@ impl From<[usize; 2]> for Index {
 ///     }
 /// }
 ///
-/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-/// assert_eq!(matrix.get(I(1, 1)), Ok(&4));
+/// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+/// assert_eq!(matrix.get(I(1, 1)), Ok(&5));
 /// ```
 pub trait SingleElementIndex {
     /// The row index of the element.

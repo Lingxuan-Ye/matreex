@@ -20,10 +20,10 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+    /// let matrix =matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
     /// assert!(matrix.is_square());
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert!(!matrix.is_square());
     /// ```
     #[inline]
@@ -40,12 +40,12 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     ///
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// assert!(lhs.is_elementwise_operation_conformable(&rhs));
     ///
-    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
     /// assert!(!lhs.is_elementwise_operation_conformable(&rhs));
     /// ```
     #[inline]
@@ -61,9 +61,9 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     ///
-    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
     /// assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
     ///
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
@@ -87,11 +87,11 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::{matrix, Error};
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+    /// let matrix =matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
     /// let result = matrix.ensure_square();
     /// assert!(result.is_ok());
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let result = matrix.ensure_square();
     /// assert_eq!(result, Err(Error::SquareMatrixRequired));
     /// ```
@@ -115,13 +115,13 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::{matrix, Error};
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     ///
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert_eq!(result, Err(Error::ShapeNotConformable));
     /// ```
@@ -146,9 +146,9 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::{matrix, Error};
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     ///
-    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
@@ -185,10 +185,10 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y);
-    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
     pub fn elementwise_operation<R, F, U>(&self, rhs: &Matrix<R>, mut op: F) -> Result<Matrix<U>>
     where
@@ -234,10 +234,10 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// let result = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y);
-    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
     pub fn elementwise_operation_consume_self<R, F, U>(
         self,
@@ -286,10 +286,10 @@ impl<L> Matrix<L> {
     /// # use matreex::Result;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)?;
-    /// assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// assert_eq!(lhs, matrix![[3, 4, 5], [6, 7, 8]]);
     /// # Ok(())
     /// # }
     /// ```
@@ -341,13 +341,13 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::{matrix, VectorIter};
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[1, 2], [3, 4], [5, 6]];
     /// let op = |lv: VectorIter<&i32>, rv: VectorIter<&i32>| {
     ///     lv.zip(rv).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
     /// };
     /// let result = lhs.multiplication_like_operation(rhs, op);
-    /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
+    /// assert_eq!(result, Ok(matrix![[22, 28], [49, 64]]));
     /// ```
     pub fn multiplication_like_operation<R, F, U>(
         mut self,
@@ -413,10 +413,10 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let scalar = 2;
     /// let output = matrix.scalar_operation(&scalar, |x, y| x + y);
-    /// assert_eq!(output, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
     pub fn scalar_operation<S, F, U>(&self, scalar: &S, mut op: F) -> Matrix<U>
@@ -440,10 +440,10 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let scalar = 2;
     /// let output = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
-    /// assert_eq!(output, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
     pub fn scalar_operation_consume_self<S, F, U>(self, scalar: &S, mut op: F) -> Matrix<U>
@@ -468,10 +468,10 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let scalar = 2;
     /// matrix.scalar_operation_assign(&scalar, |x, y| *x += y);
-    /// assert_eq!(matrix, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
     pub fn scalar_operation_assign<S, F>(&mut self, scalar: &S, mut op: F) -> &mut Self

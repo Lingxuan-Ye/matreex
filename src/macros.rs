@@ -13,8 +13,8 @@
 ///
 /// let foo: Matrix<i32> = matrix![];
 /// let bar = matrix![[0; 3]; 2];
-/// let baz = matrix![[0, 1, 2]; 2];
-/// let qux = matrix![[0, 1, 2], [3, 4, 5]];
+/// let baz = matrix![[1, 2, 3]; 2];
+/// let qux = matrix![[1, 2, 3], [4, 5, 6]];
 /// ```
 ///
 /// [`Matrix<T>`]: crate::matrix::Matrix
