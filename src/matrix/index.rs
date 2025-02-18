@@ -677,26 +677,26 @@ mod tests {
 
     #[test]
     fn test_matrix_get() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        assert_eq!(matrix.get((0, 0)), Ok(&0));
-        assert_eq!(matrix.get((0, 1)), Ok(&1));
-        assert_eq!(matrix.get((0, 2)), Ok(&2));
-        assert_eq!(matrix.get((1, 0)), Ok(&3));
-        assert_eq!(matrix.get((1, 1)), Ok(&4));
-        assert_eq!(matrix.get((1, 2)), Ok(&5));
+        assert_eq!(matrix.get((0, 0)), Ok(&1));
+        assert_eq!(matrix.get((0, 1)), Ok(&2));
+        assert_eq!(matrix.get((0, 2)), Ok(&3));
+        assert_eq!(matrix.get((1, 0)), Ok(&4));
+        assert_eq!(matrix.get((1, 1)), Ok(&5));
+        assert_eq!(matrix.get((1, 2)), Ok(&6));
         assert_eq!(matrix.get((2, 0)), Err(Error::IndexOutOfBounds));
         assert_eq!(matrix.get((0, 3)), Err(Error::IndexOutOfBounds));
         assert_eq!(matrix.get((2, 3)), Err(Error::IndexOutOfBounds));
 
         matrix.switch_order();
 
-        assert_eq!(matrix.get((0, 0)), Ok(&0));
-        assert_eq!(matrix.get((0, 1)), Ok(&1));
-        assert_eq!(matrix.get((0, 2)), Ok(&2));
-        assert_eq!(matrix.get((1, 0)), Ok(&3));
-        assert_eq!(matrix.get((1, 1)), Ok(&4));
-        assert_eq!(matrix.get((1, 2)), Ok(&5));
+        assert_eq!(matrix.get((0, 0)), Ok(&1));
+        assert_eq!(matrix.get((0, 1)), Ok(&2));
+        assert_eq!(matrix.get((0, 2)), Ok(&3));
+        assert_eq!(matrix.get((1, 0)), Ok(&4));
+        assert_eq!(matrix.get((1, 1)), Ok(&5));
+        assert_eq!(matrix.get((1, 2)), Ok(&6));
         assert_eq!(matrix.get((2, 0)), Err(Error::IndexOutOfBounds));
         assert_eq!(matrix.get((0, 3)), Err(Error::IndexOutOfBounds));
         assert_eq!(matrix.get((2, 3)), Err(Error::IndexOutOfBounds));
@@ -704,26 +704,26 @@ mod tests {
 
     #[test]
     fn test_matrix_get_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        assert_eq!(matrix.get_mut((0, 0)), Ok(&mut 0));
-        assert_eq!(matrix.get_mut((0, 1)), Ok(&mut 1));
-        assert_eq!(matrix.get_mut((0, 2)), Ok(&mut 2));
-        assert_eq!(matrix.get_mut((1, 0)), Ok(&mut 3));
-        assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 4));
-        assert_eq!(matrix.get_mut((1, 2)), Ok(&mut 5));
+        assert_eq!(matrix.get_mut((0, 0)), Ok(&mut 1));
+        assert_eq!(matrix.get_mut((0, 1)), Ok(&mut 2));
+        assert_eq!(matrix.get_mut((0, 2)), Ok(&mut 3));
+        assert_eq!(matrix.get_mut((1, 0)), Ok(&mut 4));
+        assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 5));
+        assert_eq!(matrix.get_mut((1, 2)), Ok(&mut 6));
         assert_eq!(matrix.get_mut((2, 0)), Err(Error::IndexOutOfBounds));
         assert_eq!(matrix.get_mut((0, 3)), Err(Error::IndexOutOfBounds));
         assert_eq!(matrix.get_mut((2, 3)), Err(Error::IndexOutOfBounds));
 
         matrix.switch_order();
 
-        assert_eq!(matrix.get_mut((0, 0)), Ok(&mut 0));
-        assert_eq!(matrix.get_mut((0, 1)), Ok(&mut 1));
-        assert_eq!(matrix.get_mut((0, 2)), Ok(&mut 2));
-        assert_eq!(matrix.get_mut((1, 0)), Ok(&mut 3));
-        assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 4));
-        assert_eq!(matrix.get_mut((1, 2)), Ok(&mut 5));
+        assert_eq!(matrix.get_mut((0, 0)), Ok(&mut 1));
+        assert_eq!(matrix.get_mut((0, 1)), Ok(&mut 2));
+        assert_eq!(matrix.get_mut((0, 2)), Ok(&mut 3));
+        assert_eq!(matrix.get_mut((1, 0)), Ok(&mut 4));
+        assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 5));
+        assert_eq!(matrix.get_mut((1, 2)), Ok(&mut 6));
         assert_eq!(matrix.get_mut((2, 0)), Err(Error::IndexOutOfBounds));
         assert_eq!(matrix.get_mut((0, 3)), Err(Error::IndexOutOfBounds));
         assert_eq!(matrix.get_mut((2, 3)), Err(Error::IndexOutOfBounds));
@@ -731,114 +731,111 @@ mod tests {
 
     #[test]
     fn test_matrix_get_unchecked() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         unsafe {
-            assert_eq!(matrix.get_unchecked((0, 0)), &0);
-            assert_eq!(matrix.get_unchecked((0, 1)), &1);
-            assert_eq!(matrix.get_unchecked((0, 2)), &2);
-            assert_eq!(matrix.get_unchecked((1, 0)), &3);
-            assert_eq!(matrix.get_unchecked((1, 1)), &4);
-            assert_eq!(matrix.get_unchecked((1, 2)), &5);
+            assert_eq!(matrix.get_unchecked((0, 0)), &1);
+            assert_eq!(matrix.get_unchecked((0, 1)), &2);
+            assert_eq!(matrix.get_unchecked((0, 2)), &3);
+            assert_eq!(matrix.get_unchecked((1, 0)), &4);
+            assert_eq!(matrix.get_unchecked((1, 1)), &5);
+            assert_eq!(matrix.get_unchecked((1, 2)), &6);
         }
 
         matrix.switch_order();
 
         unsafe {
-            assert_eq!(matrix.get_unchecked((0, 0)), &0);
-            assert_eq!(matrix.get_unchecked((0, 1)), &1);
-            assert_eq!(matrix.get_unchecked((0, 2)), &2);
-            assert_eq!(matrix.get_unchecked((1, 0)), &3);
-            assert_eq!(matrix.get_unchecked((1, 1)), &4);
-            assert_eq!(matrix.get_unchecked((1, 2)), &5);
+            assert_eq!(matrix.get_unchecked((0, 0)), &1);
+            assert_eq!(matrix.get_unchecked((0, 1)), &2);
+            assert_eq!(matrix.get_unchecked((0, 2)), &3);
+            assert_eq!(matrix.get_unchecked((1, 0)), &4);
+            assert_eq!(matrix.get_unchecked((1, 1)), &5);
+            assert_eq!(matrix.get_unchecked((1, 2)), &6);
         }
     }
 
     #[test]
     fn test_matrix_get_unchecked_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         unsafe {
-            *matrix.get_unchecked_mut((0, 0)) += 1;
-            *matrix.get_unchecked_mut((0, 1)) += 1;
-            *matrix.get_unchecked_mut((0, 2)) += 1;
-            *matrix.get_unchecked_mut((1, 0)) += 1;
-            *matrix.get_unchecked_mut((1, 1)) += 1;
-            *matrix.get_unchecked_mut((1, 2)) += 1;
+            assert_eq!(matrix.get_unchecked_mut((0, 0)), &mut 1);
+            assert_eq!(matrix.get_unchecked_mut((0, 1)), &mut 2);
+            assert_eq!(matrix.get_unchecked_mut((0, 2)), &mut 3);
+            assert_eq!(matrix.get_unchecked_mut((1, 0)), &mut 4);
+            assert_eq!(matrix.get_unchecked_mut((1, 1)), &mut 5);
+            assert_eq!(matrix.get_unchecked_mut((1, 2)), &mut 6);
         }
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
 
         unsafe {
-            *matrix.get_unchecked_mut((0, 0)) -= 1;
-            *matrix.get_unchecked_mut((0, 1)) -= 1;
-            *matrix.get_unchecked_mut((0, 2)) -= 1;
-            *matrix.get_unchecked_mut((1, 0)) -= 1;
-            *matrix.get_unchecked_mut((1, 1)) -= 1;
-            *matrix.get_unchecked_mut((1, 2)) -= 1;
+            assert_eq!(matrix.get_unchecked_mut((0, 0)), &mut 1);
+            assert_eq!(matrix.get_unchecked_mut((0, 1)), &mut 2);
+            assert_eq!(matrix.get_unchecked_mut((0, 2)), &mut 3);
+            assert_eq!(matrix.get_unchecked_mut((1, 0)), &mut 4);
+            assert_eq!(matrix.get_unchecked_mut((1, 1)), &mut 5);
+            assert_eq!(matrix.get_unchecked_mut((1, 2)), &mut 6);
         }
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
     #[test]
     fn test_matrix_index() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        assert_eq!(matrix[(0, 0)], 0);
-        assert_eq!(matrix[(0, 1)], 1);
-        assert_eq!(matrix[(0, 2)], 2);
-        assert_eq!(matrix[(1, 0)], 3);
-        assert_eq!(matrix[(1, 1)], 4);
-        assert_eq!(matrix[(1, 2)], 5);
+        assert_eq!(matrix[(0, 0)], 1);
+        assert_eq!(matrix[(0, 1)], 2);
+        assert_eq!(matrix[(0, 2)], 3);
+        assert_eq!(matrix[(1, 0)], 4);
+        assert_eq!(matrix[(1, 1)], 5);
+        assert_eq!(matrix[(1, 2)], 6);
 
         matrix.switch_order();
 
-        assert_eq!(matrix[(0, 0)], 0);
-        assert_eq!(matrix[(0, 1)], 1);
-        assert_eq!(matrix[(0, 2)], 2);
-        assert_eq!(matrix[(1, 0)], 3);
-        assert_eq!(matrix[(1, 1)], 4);
-        assert_eq!(matrix[(1, 2)], 5);
+        assert_eq!(matrix[(0, 0)], 1);
+        assert_eq!(matrix[(0, 1)], 2);
+        assert_eq!(matrix[(0, 2)], 3);
+        assert_eq!(matrix[(1, 0)], 4);
+        assert_eq!(matrix[(1, 1)], 5);
+        assert_eq!(matrix[(1, 2)], 6);
     }
 
     #[test]
     #[should_panic]
     fn test_matrix_index_out_of_bounds() {
-        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let _ = matrix[(2, 3)];
     }
 
     #[test]
     fn test_matrix_index_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        matrix[(0, 0)] += 1;
-        matrix[(0, 1)] += 1;
-        matrix[(0, 2)] += 1;
-        matrix[(1, 0)] += 1;
-        matrix[(1, 1)] += 1;
-        matrix[(1, 2)] += 1;
+        matrix[(0, 0)] += 2;
+        matrix[(0, 1)] += 2;
+        matrix[(0, 2)] += 2;
+        matrix[(1, 0)] += 2;
+        matrix[(1, 1)] += 2;
+        matrix[(1, 2)] += 2;
+        assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
+
+        matrix.switch_order();
+
+        matrix[(0, 0)] -= 2;
+        matrix[(0, 1)] -= 2;
+        matrix[(0, 2)] -= 2;
+        matrix[(1, 0)] -= 2;
+        matrix[(1, 1)] -= 2;
+        matrix[(1, 2)] -= 2;
+        matrix.switch_order();
         assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-        matrix.switch_order();
-
-        matrix[(0, 0)] -= 1;
-        matrix[(0, 1)] -= 1;
-        matrix[(0, 2)] -= 1;
-        matrix[(1, 0)] -= 1;
-        matrix[(1, 1)] -= 1;
-        matrix[(1, 2)] -= 1;
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
     #[test]
     #[should_panic]
     fn test_matrix_index_mut_out_of_bounds() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        matrix[(2, 3)] += 1;
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        matrix[(2, 3)] += 2;
     }
 
     #[test]
@@ -877,7 +874,7 @@ mod tests {
 
     #[test]
     fn test_single_element_index_is_out_of_bounds() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         assert!(!I(0, 0).is_out_of_bounds(&matrix));
         assert!(!I(0, 1).is_out_of_bounds(&matrix));
@@ -904,7 +901,7 @@ mod tests {
 
     #[test]
     fn test_single_element_index_ensure_in_bounds() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         assert!(I(0, 0).ensure_in_bounds(&matrix).is_ok());
         assert!(I(0, 1).ensure_in_bounds(&matrix).is_ok());
@@ -949,26 +946,26 @@ mod tests {
 
     #[test]
     fn test_single_element_index_get() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        assert_eq!(I(0, 0).get(&matrix), Ok(&0));
-        assert_eq!(I(0, 1).get(&matrix), Ok(&1));
-        assert_eq!(I(0, 2).get(&matrix), Ok(&2));
-        assert_eq!(I(1, 0).get(&matrix), Ok(&3));
-        assert_eq!(I(1, 1).get(&matrix), Ok(&4));
-        assert_eq!(I(1, 2).get(&matrix), Ok(&5));
+        assert_eq!(I(0, 0).get(&matrix), Ok(&1));
+        assert_eq!(I(0, 1).get(&matrix), Ok(&2));
+        assert_eq!(I(0, 2).get(&matrix), Ok(&3));
+        assert_eq!(I(1, 0).get(&matrix), Ok(&4));
+        assert_eq!(I(1, 1).get(&matrix), Ok(&5));
+        assert_eq!(I(1, 2).get(&matrix), Ok(&6));
         assert_eq!(I(2, 0).get(&matrix), Err(Error::IndexOutOfBounds));
         assert_eq!(I(0, 3).get(&matrix), Err(Error::IndexOutOfBounds));
         assert_eq!(I(2, 3).get(&matrix), Err(Error::IndexOutOfBounds));
 
         matrix.switch_order();
 
-        assert_eq!(I(0, 0).get(&matrix), Ok(&0));
-        assert_eq!(I(0, 1).get(&matrix), Ok(&1));
-        assert_eq!(I(0, 2).get(&matrix), Ok(&2));
-        assert_eq!(I(1, 0).get(&matrix), Ok(&3));
-        assert_eq!(I(1, 1).get(&matrix), Ok(&4));
-        assert_eq!(I(1, 2).get(&matrix), Ok(&5));
+        assert_eq!(I(0, 0).get(&matrix), Ok(&1));
+        assert_eq!(I(0, 1).get(&matrix), Ok(&2));
+        assert_eq!(I(0, 2).get(&matrix), Ok(&3));
+        assert_eq!(I(1, 0).get(&matrix), Ok(&4));
+        assert_eq!(I(1, 1).get(&matrix), Ok(&5));
+        assert_eq!(I(1, 2).get(&matrix), Ok(&6));
         assert_eq!(I(2, 0).get(&matrix), Err(Error::IndexOutOfBounds));
         assert_eq!(I(0, 3).get(&matrix), Err(Error::IndexOutOfBounds));
         assert_eq!(I(2, 3).get(&matrix), Err(Error::IndexOutOfBounds));
@@ -976,26 +973,26 @@ mod tests {
 
     #[test]
     fn test_single_element_index_get_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        assert_eq!(I(0, 0).get_mut(&mut matrix), Ok(&mut 0));
-        assert_eq!(I(0, 1).get_mut(&mut matrix), Ok(&mut 1));
-        assert_eq!(I(0, 2).get_mut(&mut matrix), Ok(&mut 2));
-        assert_eq!(I(1, 0).get_mut(&mut matrix), Ok(&mut 3));
-        assert_eq!(I(1, 1).get_mut(&mut matrix), Ok(&mut 4));
-        assert_eq!(I(1, 2).get_mut(&mut matrix), Ok(&mut 5));
+        assert_eq!(I(0, 0).get_mut(&mut matrix), Ok(&mut 1));
+        assert_eq!(I(0, 1).get_mut(&mut matrix), Ok(&mut 2));
+        assert_eq!(I(0, 2).get_mut(&mut matrix), Ok(&mut 3));
+        assert_eq!(I(1, 0).get_mut(&mut matrix), Ok(&mut 4));
+        assert_eq!(I(1, 1).get_mut(&mut matrix), Ok(&mut 5));
+        assert_eq!(I(1, 2).get_mut(&mut matrix), Ok(&mut 6));
         assert_eq!(I(2, 0).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
         assert_eq!(I(0, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
         assert_eq!(I(2, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
 
         matrix.switch_order();
 
-        assert_eq!(I(0, 0).get_mut(&mut matrix), Ok(&mut 0));
-        assert_eq!(I(0, 1).get_mut(&mut matrix), Ok(&mut 1));
-        assert_eq!(I(0, 2).get_mut(&mut matrix), Ok(&mut 2));
-        assert_eq!(I(1, 0).get_mut(&mut matrix), Ok(&mut 3));
-        assert_eq!(I(1, 1).get_mut(&mut matrix), Ok(&mut 4));
-        assert_eq!(I(1, 2).get_mut(&mut matrix), Ok(&mut 5));
+        assert_eq!(I(0, 0).get_mut(&mut matrix), Ok(&mut 1));
+        assert_eq!(I(0, 1).get_mut(&mut matrix), Ok(&mut 2));
+        assert_eq!(I(0, 2).get_mut(&mut matrix), Ok(&mut 3));
+        assert_eq!(I(1, 0).get_mut(&mut matrix), Ok(&mut 4));
+        assert_eq!(I(1, 1).get_mut(&mut matrix), Ok(&mut 5));
+        assert_eq!(I(1, 2).get_mut(&mut matrix), Ok(&mut 6));
         assert_eq!(I(2, 0).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
         assert_eq!(I(0, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
         assert_eq!(I(2, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
@@ -1003,114 +1000,111 @@ mod tests {
 
     #[test]
     fn test_single_element_index_get_unchecked() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         unsafe {
-            assert_eq!(*I(0, 0).get_unchecked(&matrix), 0);
-            assert_eq!(*I(0, 1).get_unchecked(&matrix), 1);
-            assert_eq!(*I(0, 2).get_unchecked(&matrix), 2);
-            assert_eq!(*I(1, 0).get_unchecked(&matrix), 3);
-            assert_eq!(*I(1, 1).get_unchecked(&matrix), 4);
-            assert_eq!(*I(1, 2).get_unchecked(&matrix), 5);
+            assert_eq!(*I(0, 0).get_unchecked(&matrix), 1);
+            assert_eq!(*I(0, 1).get_unchecked(&matrix), 2);
+            assert_eq!(*I(0, 2).get_unchecked(&matrix), 3);
+            assert_eq!(*I(1, 0).get_unchecked(&matrix), 4);
+            assert_eq!(*I(1, 1).get_unchecked(&matrix), 5);
+            assert_eq!(*I(1, 2).get_unchecked(&matrix), 6);
         }
 
         matrix.switch_order();
 
         unsafe {
-            assert_eq!(*I(0, 0).get_unchecked(&matrix), 0);
-            assert_eq!(*I(0, 1).get_unchecked(&matrix), 1);
-            assert_eq!(*I(0, 2).get_unchecked(&matrix), 2);
-            assert_eq!(*I(1, 0).get_unchecked(&matrix), 3);
-            assert_eq!(*I(1, 1).get_unchecked(&matrix), 4);
-            assert_eq!(*I(1, 2).get_unchecked(&matrix), 5);
+            assert_eq!(*I(0, 0).get_unchecked(&matrix), 1);
+            assert_eq!(*I(0, 1).get_unchecked(&matrix), 2);
+            assert_eq!(*I(0, 2).get_unchecked(&matrix), 3);
+            assert_eq!(*I(1, 0).get_unchecked(&matrix), 4);
+            assert_eq!(*I(1, 1).get_unchecked(&matrix), 5);
+            assert_eq!(*I(1, 2).get_unchecked(&matrix), 6);
         }
     }
 
     #[test]
     fn test_single_element_index_get_unchecked_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         unsafe {
-            *I(0, 0).get_unchecked_mut(&mut matrix) += 1;
-            *I(0, 1).get_unchecked_mut(&mut matrix) += 1;
-            *I(0, 2).get_unchecked_mut(&mut matrix) += 1;
-            *I(1, 0).get_unchecked_mut(&mut matrix) += 1;
-            *I(1, 1).get_unchecked_mut(&mut matrix) += 1;
-            *I(1, 2).get_unchecked_mut(&mut matrix) += 1;
+            *I(0, 0).get_unchecked_mut(&mut matrix) += 2;
+            *I(0, 1).get_unchecked_mut(&mut matrix) += 2;
+            *I(0, 2).get_unchecked_mut(&mut matrix) += 2;
+            *I(1, 0).get_unchecked_mut(&mut matrix) += 2;
+            *I(1, 1).get_unchecked_mut(&mut matrix) += 2;
+            *I(1, 2).get_unchecked_mut(&mut matrix) += 2;
         }
+        assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
+
+        matrix.switch_order();
+
+        unsafe {
+            *I(0, 0).get_unchecked_mut(&mut matrix) -= 2;
+            *I(0, 1).get_unchecked_mut(&mut matrix) -= 2;
+            *I(0, 2).get_unchecked_mut(&mut matrix) -= 2;
+            *I(1, 0).get_unchecked_mut(&mut matrix) -= 2;
+            *I(1, 1).get_unchecked_mut(&mut matrix) -= 2;
+            *I(1, 2).get_unchecked_mut(&mut matrix) -= 2;
+        }
+        matrix.switch_order();
         assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-        matrix.switch_order();
-
-        unsafe {
-            *I(0, 0).get_unchecked_mut(&mut matrix) -= 1;
-            *I(0, 1).get_unchecked_mut(&mut matrix) -= 1;
-            *I(0, 2).get_unchecked_mut(&mut matrix) -= 1;
-            *I(1, 0).get_unchecked_mut(&mut matrix) -= 1;
-            *I(1, 1).get_unchecked_mut(&mut matrix) -= 1;
-            *I(1, 2).get_unchecked_mut(&mut matrix) -= 1;
-        }
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
     #[test]
     fn test_single_element_index_index() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        assert_eq!(I(0, 0).index(&matrix), &0);
-        assert_eq!(I(0, 1).index(&matrix), &1);
-        assert_eq!(I(0, 2).index(&matrix), &2);
-        assert_eq!(I(1, 0).index(&matrix), &3);
-        assert_eq!(I(1, 1).index(&matrix), &4);
-        assert_eq!(I(1, 2).index(&matrix), &5);
+        assert_eq!(I(0, 0).index(&matrix), &1);
+        assert_eq!(I(0, 1).index(&matrix), &2);
+        assert_eq!(I(0, 2).index(&matrix), &3);
+        assert_eq!(I(1, 0).index(&matrix), &4);
+        assert_eq!(I(1, 1).index(&matrix), &5);
+        assert_eq!(I(1, 2).index(&matrix), &6);
 
         matrix.switch_order();
 
-        assert_eq!(I(0, 0).index(&matrix), &0);
-        assert_eq!(I(0, 1).index(&matrix), &1);
-        assert_eq!(I(0, 2).index(&matrix), &2);
-        assert_eq!(I(1, 0).index(&matrix), &3);
-        assert_eq!(I(1, 1).index(&matrix), &4);
-        assert_eq!(I(1, 2).index(&matrix), &5);
+        assert_eq!(I(0, 0).index(&matrix), &1);
+        assert_eq!(I(0, 1).index(&matrix), &2);
+        assert_eq!(I(0, 2).index(&matrix), &3);
+        assert_eq!(I(1, 0).index(&matrix), &4);
+        assert_eq!(I(1, 1).index(&matrix), &5);
+        assert_eq!(I(1, 2).index(&matrix), &6);
     }
 
     #[test]
     #[should_panic]
     fn test_single_element_index_index_out_of_bounds() {
-        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let _ = I(2, 3).index(&matrix);
     }
 
     #[test]
     fn test_single_element_index_index_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        *I(0, 0).index_mut(&mut matrix) += 1;
-        *I(0, 1).index_mut(&mut matrix) += 1;
-        *I(0, 2).index_mut(&mut matrix) += 1;
-        *I(1, 0).index_mut(&mut matrix) += 1;
-        *I(1, 1).index_mut(&mut matrix) += 1;
-        *I(1, 2).index_mut(&mut matrix) += 1;
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+        assert_eq!(I(0, 0).index_mut(&mut matrix), &mut 1);
+        assert_eq!(I(0, 1).index_mut(&mut matrix), &mut 2);
+        assert_eq!(I(0, 2).index_mut(&mut matrix), &mut 3);
+        assert_eq!(I(1, 0).index_mut(&mut matrix), &mut 4);
+        assert_eq!(I(1, 1).index_mut(&mut matrix), &mut 5);
+        assert_eq!(I(1, 2).index_mut(&mut matrix), &mut 6);
 
         matrix.switch_order();
 
-        *I(0, 0).index_mut(&mut matrix) -= 1;
-        *I(0, 1).index_mut(&mut matrix) -= 1;
-        *I(0, 2).index_mut(&mut matrix) -= 1;
-        *I(1, 0).index_mut(&mut matrix) -= 1;
-        *I(1, 1).index_mut(&mut matrix) -= 1;
-        *I(1, 2).index_mut(&mut matrix) -= 1;
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(I(0, 0).index_mut(&mut matrix), &mut 1);
+        assert_eq!(I(0, 1).index_mut(&mut matrix), &mut 2);
+        assert_eq!(I(0, 2).index_mut(&mut matrix), &mut 3);
+        assert_eq!(I(1, 0).index_mut(&mut matrix), &mut 4);
+        assert_eq!(I(1, 1).index_mut(&mut matrix), &mut 5);
+        assert_eq!(I(1, 2).index_mut(&mut matrix), &mut 6);
     }
 
     #[test]
     #[should_panic]
     fn test_single_element_index_index_mut_out_of_bounds() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        *I(2, 3).index_mut(&mut matrix) += 1;
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        *I(2, 3).index_mut(&mut matrix) += 2;
     }
 
     #[test]
@@ -1130,7 +1124,7 @@ mod tests {
     #[test]
     fn test_wrapping_index_is_out_of_bounds() {
         {
-            let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
@@ -1169,7 +1163,7 @@ mod tests {
     #[test]
     fn test_wrapping_index_ensure_in_bounds() {
         {
-            let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
@@ -1218,31 +1212,31 @@ mod tests {
     #[test]
     fn test_wrapping_index_get() {
         {
-            let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-            assert_eq!(WrappingIndex::new(0, 0).get(&matrix), Ok(&0));
-            assert_eq!(WrappingIndex::new(0, 1).get(&matrix), Ok(&1));
-            assert_eq!(WrappingIndex::new(0, 2).get(&matrix), Ok(&2));
-            assert_eq!(WrappingIndex::new(1, 0).get(&matrix), Ok(&3));
-            assert_eq!(WrappingIndex::new(1, 1).get(&matrix), Ok(&4));
-            assert_eq!(WrappingIndex::new(1, 2).get(&matrix), Ok(&5));
+            assert_eq!(WrappingIndex::new(0, 0).get(&matrix), Ok(&1));
+            assert_eq!(WrappingIndex::new(0, 1).get(&matrix), Ok(&2));
+            assert_eq!(WrappingIndex::new(0, 2).get(&matrix), Ok(&3));
+            assert_eq!(WrappingIndex::new(1, 0).get(&matrix), Ok(&4));
+            assert_eq!(WrappingIndex::new(1, 1).get(&matrix), Ok(&5));
+            assert_eq!(WrappingIndex::new(1, 2).get(&matrix), Ok(&6));
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
-                    assert_eq!(WrappingIndex::new(row, col).get(&matrix), Ok(&0));
+                    assert_eq!(WrappingIndex::new(row, col).get(&matrix), Ok(&1));
                 }
             }
 
             matrix.switch_order();
 
-            assert_eq!(WrappingIndex::new(0, 0).get(&matrix), Ok(&0));
-            assert_eq!(WrappingIndex::new(0, 1).get(&matrix), Ok(&1));
-            assert_eq!(WrappingIndex::new(0, 2).get(&matrix), Ok(&2));
-            assert_eq!(WrappingIndex::new(1, 0).get(&matrix), Ok(&3));
-            assert_eq!(WrappingIndex::new(1, 1).get(&matrix), Ok(&4));
-            assert_eq!(WrappingIndex::new(1, 2).get(&matrix), Ok(&5));
+            assert_eq!(WrappingIndex::new(0, 0).get(&matrix), Ok(&1));
+            assert_eq!(WrappingIndex::new(0, 1).get(&matrix), Ok(&2));
+            assert_eq!(WrappingIndex::new(0, 2).get(&matrix), Ok(&3));
+            assert_eq!(WrappingIndex::new(1, 0).get(&matrix), Ok(&4));
+            assert_eq!(WrappingIndex::new(1, 1).get(&matrix), Ok(&5));
+            assert_eq!(WrappingIndex::new(1, 2).get(&matrix), Ok(&6));
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
-                    assert_eq!(WrappingIndex::new(row, col).get(&matrix), Ok(&0));
+                    assert_eq!(WrappingIndex::new(row, col).get(&matrix), Ok(&1));
                 }
             }
         }
@@ -1323,36 +1317,36 @@ mod tests {
     #[test]
     fn test_wrapping_index_get_mut() {
         {
-            let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-            assert_eq!(WrappingIndex::new(0, 0).get_mut(&mut matrix), Ok(&mut 0));
-            assert_eq!(WrappingIndex::new(0, 1).get_mut(&mut matrix), Ok(&mut 1));
-            assert_eq!(WrappingIndex::new(0, 2).get_mut(&mut matrix), Ok(&mut 2));
-            assert_eq!(WrappingIndex::new(1, 0).get_mut(&mut matrix), Ok(&mut 3));
-            assert_eq!(WrappingIndex::new(1, 1).get_mut(&mut matrix), Ok(&mut 4));
-            assert_eq!(WrappingIndex::new(1, 2).get_mut(&mut matrix), Ok(&mut 5));
+            assert_eq!(WrappingIndex::new(0, 0).get_mut(&mut matrix), Ok(&mut 1));
+            assert_eq!(WrappingIndex::new(0, 1).get_mut(&mut matrix), Ok(&mut 2));
+            assert_eq!(WrappingIndex::new(0, 2).get_mut(&mut matrix), Ok(&mut 3));
+            assert_eq!(WrappingIndex::new(1, 0).get_mut(&mut matrix), Ok(&mut 4));
+            assert_eq!(WrappingIndex::new(1, 1).get_mut(&mut matrix), Ok(&mut 5));
+            assert_eq!(WrappingIndex::new(1, 2).get_mut(&mut matrix), Ok(&mut 6));
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
                     assert_eq!(
                         WrappingIndex::new(row, col).get_mut(&mut matrix),
-                        Ok(&mut 0)
+                        Ok(&mut 1)
                     );
                 }
             }
 
             matrix.switch_order();
 
-            assert_eq!(WrappingIndex::new(0, 0).get_mut(&mut matrix), Ok(&mut 0));
-            assert_eq!(WrappingIndex::new(0, 1).get_mut(&mut matrix), Ok(&mut 1));
-            assert_eq!(WrappingIndex::new(0, 2).get_mut(&mut matrix), Ok(&mut 2));
-            assert_eq!(WrappingIndex::new(1, 0).get_mut(&mut matrix), Ok(&mut 3));
-            assert_eq!(WrappingIndex::new(1, 1).get_mut(&mut matrix), Ok(&mut 4));
-            assert_eq!(WrappingIndex::new(1, 2).get_mut(&mut matrix), Ok(&mut 5));
+            assert_eq!(WrappingIndex::new(0, 0).get_mut(&mut matrix), Ok(&mut 1));
+            assert_eq!(WrappingIndex::new(0, 1).get_mut(&mut matrix), Ok(&mut 2));
+            assert_eq!(WrappingIndex::new(0, 2).get_mut(&mut matrix), Ok(&mut 3));
+            assert_eq!(WrappingIndex::new(1, 0).get_mut(&mut matrix), Ok(&mut 4));
+            assert_eq!(WrappingIndex::new(1, 1).get_mut(&mut matrix), Ok(&mut 5));
+            assert_eq!(WrappingIndex::new(1, 2).get_mut(&mut matrix), Ok(&mut 6));
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
                     assert_eq!(
                         WrappingIndex::new(row, col).get_mut(&mut matrix),
-                        Ok(&mut 0)
+                        Ok(&mut 1)
                     );
                 }
             }
@@ -1433,18 +1427,18 @@ mod tests {
 
     #[test]
     fn test_wrapping_index_get_unchecked() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         unsafe {
-            assert_eq!(*WrappingIndex::new(0, 0).get_unchecked(&matrix), 0);
-            assert_eq!(*WrappingIndex::new(0, 1).get_unchecked(&matrix), 1);
-            assert_eq!(*WrappingIndex::new(0, 2).get_unchecked(&matrix), 2);
-            assert_eq!(*WrappingIndex::new(1, 0).get_unchecked(&matrix), 3);
-            assert_eq!(*WrappingIndex::new(1, 1).get_unchecked(&matrix), 4);
-            assert_eq!(*WrappingIndex::new(1, 2).get_unchecked(&matrix), 5);
+            assert_eq!(*WrappingIndex::new(0, 0).get_unchecked(&matrix), 1);
+            assert_eq!(*WrappingIndex::new(0, 1).get_unchecked(&matrix), 2);
+            assert_eq!(*WrappingIndex::new(0, 2).get_unchecked(&matrix), 3);
+            assert_eq!(*WrappingIndex::new(1, 0).get_unchecked(&matrix), 4);
+            assert_eq!(*WrappingIndex::new(1, 1).get_unchecked(&matrix), 5);
+            assert_eq!(*WrappingIndex::new(1, 2).get_unchecked(&matrix), 6);
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
-                    assert_eq!(*WrappingIndex::new(row, col).get_unchecked(&matrix), 0);
+                    assert_eq!(*WrappingIndex::new(row, col).get_unchecked(&matrix), 1);
                 }
             }
         }
@@ -1452,15 +1446,15 @@ mod tests {
         matrix.switch_order();
 
         unsafe {
-            assert_eq!(*WrappingIndex::new(0, 0).get_unchecked(&matrix), 0);
-            assert_eq!(*WrappingIndex::new(0, 1).get_unchecked(&matrix), 1);
-            assert_eq!(*WrappingIndex::new(0, 2).get_unchecked(&matrix), 2);
-            assert_eq!(*WrappingIndex::new(1, 0).get_unchecked(&matrix), 3);
-            assert_eq!(*WrappingIndex::new(1, 1).get_unchecked(&matrix), 4);
-            assert_eq!(*WrappingIndex::new(1, 2).get_unchecked(&matrix), 5);
+            assert_eq!(*WrappingIndex::new(0, 0).get_unchecked(&matrix), 1);
+            assert_eq!(*WrappingIndex::new(0, 1).get_unchecked(&matrix), 2);
+            assert_eq!(*WrappingIndex::new(0, 2).get_unchecked(&matrix), 3);
+            assert_eq!(*WrappingIndex::new(1, 0).get_unchecked(&matrix), 4);
+            assert_eq!(*WrappingIndex::new(1, 1).get_unchecked(&matrix), 5);
+            assert_eq!(*WrappingIndex::new(1, 2).get_unchecked(&matrix), 6);
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
-                    assert_eq!(*WrappingIndex::new(row, col).get_unchecked(&matrix), 0);
+                    assert_eq!(*WrappingIndex::new(row, col).get_unchecked(&matrix), 1);
                 }
             }
         }
@@ -1477,40 +1471,40 @@ mod tests {
 
     #[test]
     fn test_wrapping_index_get_unchecked_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         unsafe {
-            *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) += 1;
-            *WrappingIndex::new(0, 1).get_unchecked_mut(&mut matrix) += 1;
-            *WrappingIndex::new(0, 2).get_unchecked_mut(&mut matrix) += 1;
-            *WrappingIndex::new(1, 0).get_unchecked_mut(&mut matrix) += 1;
-            *WrappingIndex::new(1, 1).get_unchecked_mut(&mut matrix) += 1;
-            *WrappingIndex::new(1, 2).get_unchecked_mut(&mut matrix) += 1;
+            *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) += 2;
+            *WrappingIndex::new(0, 1).get_unchecked_mut(&mut matrix) += 2;
+            *WrappingIndex::new(0, 2).get_unchecked_mut(&mut matrix) += 2;
+            *WrappingIndex::new(1, 0).get_unchecked_mut(&mut matrix) += 2;
+            *WrappingIndex::new(1, 1).get_unchecked_mut(&mut matrix) += 2;
+            *WrappingIndex::new(1, 2).get_unchecked_mut(&mut matrix) += 2;
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
-                    *WrappingIndex::new(row, col).get_unchecked_mut(&mut matrix) += 1;
+                    *WrappingIndex::new(row, col).get_unchecked_mut(&mut matrix) += 2;
                 }
             }
         }
-        assert_eq!(matrix, matrix![[36, 2, 3], [4, 5, 6]]);
+        assert_eq!(matrix, matrix![[73, 4, 5], [6, 7, 8]]);
 
         matrix.switch_order();
 
         unsafe {
-            *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) -= 1;
-            *WrappingIndex::new(0, 1).get_unchecked_mut(&mut matrix) -= 1;
-            *WrappingIndex::new(0, 2).get_unchecked_mut(&mut matrix) -= 1;
-            *WrappingIndex::new(1, 0).get_unchecked_mut(&mut matrix) -= 1;
-            *WrappingIndex::new(1, 1).get_unchecked_mut(&mut matrix) -= 1;
-            *WrappingIndex::new(1, 2).get_unchecked_mut(&mut matrix) -= 1;
+            *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) -= 2;
+            *WrappingIndex::new(0, 1).get_unchecked_mut(&mut matrix) -= 2;
+            *WrappingIndex::new(0, 2).get_unchecked_mut(&mut matrix) -= 2;
+            *WrappingIndex::new(1, 0).get_unchecked_mut(&mut matrix) -= 2;
+            *WrappingIndex::new(1, 1).get_unchecked_mut(&mut matrix) -= 2;
+            *WrappingIndex::new(1, 2).get_unchecked_mut(&mut matrix) -= 2;
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
-                    *WrappingIndex::new(row, col).get_unchecked_mut(&mut matrix) -= 1;
+                    *WrappingIndex::new(row, col).get_unchecked_mut(&mut matrix) -= 2;
                 }
             }
         }
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     }
 
     #[test]
@@ -1518,37 +1512,37 @@ mod tests {
     fn test_wrapping_index_get_unchecked_mut_fails() {
         let mut matrix = Matrix::<i32>::new();
         unsafe {
-            *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) += 1;
+            *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) += 2;
         }
     }
 
     #[test]
     fn test_wrapping_index_index() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        assert_eq!(WrappingIndex::new(0, 0).index(&matrix), &0);
-        assert_eq!(WrappingIndex::new(0, 1).index(&matrix), &1);
-        assert_eq!(WrappingIndex::new(0, 2).index(&matrix), &2);
-        assert_eq!(WrappingIndex::new(1, 0).index(&matrix), &3);
-        assert_eq!(WrappingIndex::new(1, 1).index(&matrix), &4);
-        assert_eq!(WrappingIndex::new(1, 2).index(&matrix), &5);
+        assert_eq!(WrappingIndex::new(0, 0).index(&matrix), &1);
+        assert_eq!(WrappingIndex::new(0, 1).index(&matrix), &2);
+        assert_eq!(WrappingIndex::new(0, 2).index(&matrix), &3);
+        assert_eq!(WrappingIndex::new(1, 0).index(&matrix), &4);
+        assert_eq!(WrappingIndex::new(1, 1).index(&matrix), &5);
+        assert_eq!(WrappingIndex::new(1, 2).index(&matrix), &6);
         for row in (-6..=6).step_by(2) {
             for col in (-6..=6).step_by(3) {
-                assert_eq!(WrappingIndex::new(row, col).index(&matrix), &0);
+                assert_eq!(WrappingIndex::new(row, col).index(&matrix), &1);
             }
         }
 
         matrix.switch_order();
 
-        assert_eq!(WrappingIndex::new(0, 0).index(&matrix), &0);
-        assert_eq!(WrappingIndex::new(0, 1).index(&matrix), &1);
-        assert_eq!(WrappingIndex::new(0, 2).index(&matrix), &2);
-        assert_eq!(WrappingIndex::new(1, 0).index(&matrix), &3);
-        assert_eq!(WrappingIndex::new(1, 1).index(&matrix), &4);
-        assert_eq!(WrappingIndex::new(1, 2).index(&matrix), &5);
+        assert_eq!(WrappingIndex::new(0, 0).index(&matrix), &1);
+        assert_eq!(WrappingIndex::new(0, 1).index(&matrix), &2);
+        assert_eq!(WrappingIndex::new(0, 2).index(&matrix), &3);
+        assert_eq!(WrappingIndex::new(1, 0).index(&matrix), &4);
+        assert_eq!(WrappingIndex::new(1, 1).index(&matrix), &5);
+        assert_eq!(WrappingIndex::new(1, 2).index(&matrix), &6);
         for row in (-6..=6).step_by(2) {
             for col in (-6..=6).step_by(3) {
-                assert_eq!(WrappingIndex::new(row, col).index(&matrix), &0);
+                assert_eq!(WrappingIndex::new(row, col).index(&matrix), &1);
             }
         }
     }
@@ -1562,42 +1556,42 @@ mod tests {
 
     #[test]
     fn test_wrapping_index_index_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        *WrappingIndex::new(0, 0).index_mut(&mut matrix) += 1;
-        *WrappingIndex::new(0, 1).index_mut(&mut matrix) += 1;
-        *WrappingIndex::new(0, 2).index_mut(&mut matrix) += 1;
-        *WrappingIndex::new(1, 0).index_mut(&mut matrix) += 1;
-        *WrappingIndex::new(1, 1).index_mut(&mut matrix) += 1;
-        *WrappingIndex::new(1, 2).index_mut(&mut matrix) += 1;
+        *WrappingIndex::new(0, 0).index_mut(&mut matrix) += 2;
+        *WrappingIndex::new(0, 1).index_mut(&mut matrix) += 2;
+        *WrappingIndex::new(0, 2).index_mut(&mut matrix) += 2;
+        *WrappingIndex::new(1, 0).index_mut(&mut matrix) += 2;
+        *WrappingIndex::new(1, 1).index_mut(&mut matrix) += 2;
+        *WrappingIndex::new(1, 2).index_mut(&mut matrix) += 2;
         for row in (-6..=6).step_by(2) {
             for col in (-6..=6).step_by(3) {
-                *WrappingIndex::new(row, col).index_mut(&mut matrix) += 1;
+                *WrappingIndex::new(row, col).index_mut(&mut matrix) += 2;
             }
         }
-        assert_eq!(matrix, matrix![[36, 2, 3], [4, 5, 6]]);
+        assert_eq!(matrix, matrix![[73, 4, 5], [6, 7, 8]]);
 
         matrix.switch_order();
 
-        *WrappingIndex::new(0, 0).index_mut(&mut matrix) -= 1;
-        *WrappingIndex::new(0, 1).index_mut(&mut matrix) -= 1;
-        *WrappingIndex::new(0, 2).index_mut(&mut matrix) -= 1;
-        *WrappingIndex::new(1, 0).index_mut(&mut matrix) -= 1;
-        *WrappingIndex::new(1, 1).index_mut(&mut matrix) -= 1;
-        *WrappingIndex::new(1, 2).index_mut(&mut matrix) -= 1;
+        *WrappingIndex::new(0, 0).index_mut(&mut matrix) -= 2;
+        *WrappingIndex::new(0, 1).index_mut(&mut matrix) -= 2;
+        *WrappingIndex::new(0, 2).index_mut(&mut matrix) -= 2;
+        *WrappingIndex::new(1, 0).index_mut(&mut matrix) -= 2;
+        *WrappingIndex::new(1, 1).index_mut(&mut matrix) -= 2;
+        *WrappingIndex::new(1, 2).index_mut(&mut matrix) -= 2;
         for row in (-6..=6).step_by(2) {
             for col in (-6..=6).step_by(3) {
-                *WrappingIndex::new(row, col).index_mut(&mut matrix) -= 1;
+                *WrappingIndex::new(row, col).index_mut(&mut matrix) -= 2;
             }
         }
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     }
 
     #[test]
     #[should_panic]
     fn test_wrapping_index_index_mut_out_of_bounds() {
         let mut matrix = Matrix::<i32>::new();
-        *WrappingIndex::new(0, 0).index_mut(&mut matrix) += 1;
+        *WrappingIndex::new(0, 0).index_mut(&mut matrix) += 2;
     }
 }

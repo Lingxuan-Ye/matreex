@@ -609,10 +609,10 @@ mod tests {
 
     #[test]
     fn test_elementwise_operation() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
         let op = |x: &i32, y: &i32| x + y;
-        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order & default order
         let output = lhs.elementwise_operation(&rhs, op).unwrap();
@@ -649,10 +649,10 @@ mod tests {
 
     #[test]
     fn test_elementwise_operation_consume_self() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
         let op = |x, y: &i32| x + y;
-        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order & default order
         {
@@ -711,10 +711,10 @@ mod tests {
 
     #[test]
     fn test_elementwise_operation_assign() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
         let op = |x: &mut i32, y: &i32| *x += y;
-        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order & default order
         {
@@ -767,15 +767,15 @@ mod tests {
 
     #[test]
     fn test_multiplication_like_operation() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let mut rhs = matrix![[0, 1], [2, 3], [4, 5]];
+        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let mut rhs = matrix![[1, 2], [3, 4], [5, 6]];
         let op = |vl: VectorIter<&i32>, vr: VectorIter<&i32>| {
             vl.zip(vr)
                 .map(|(x, y)| x * y)
                 .reduce(|acc, p| acc + p)
                 .unwrap()
         };
-        let expected = matrix![[10, 13], [28, 40]];
+        let expected = matrix![[22, 28], [49, 64]];
 
         // default order & default order
         {
@@ -821,28 +821,28 @@ mod tests {
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0], [1], [2]];
+            let rhs = matrix![[1], [2], [3]];
             let output = lhs.multiplication_like_operation(rhs, op).unwrap();
-            assert_eq!(output, matrix![[5], [14]]);
+            assert_eq!(output, matrix![[14], [32]]);
         }
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+            let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
             let output = lhs.multiplication_like_operation(rhs, op).unwrap();
-            assert_eq!(output, matrix![[15, 18, 21], [42, 54, 66]]);
+            assert_eq!(output, matrix![[30, 36, 42], [66, 81, 96]]);
         }
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0, 1], [2, 3]];
+            let rhs = matrix![[1, 2], [3, 4]];
             let error = lhs.multiplication_like_operation(rhs, op).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0, 1, 3], [4, 5, 6]];
+            let rhs = matrix![[1, 2, 3], [4, 5, 6]];
             let error = lhs.multiplication_like_operation(rhs, op).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
@@ -850,10 +850,10 @@ mod tests {
 
     #[test]
     fn test_scalar_operation() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let scalar = 2;
         let op = |x: &i32, y: &i32| x + y;
-        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order
         let output = matrix.scalar_operation(&scalar, op);
@@ -869,10 +869,10 @@ mod tests {
 
     #[test]
     fn test_scalar_operation_consume_self() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let scalar = 2;
         let op = |x: i32, y: &i32| x + y;
-        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order
         {
@@ -894,10 +894,10 @@ mod tests {
 
     #[test]
     fn test_scalar_operation_assign() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let scalar = 2;
         let op = |x: &mut i32, y: &i32| *x += y;
-        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order
         {

@@ -136,39 +136,39 @@ mod tests {
 
     #[test]
     fn test_swap() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         matrix.swap((0, 0), (1, 1)).unwrap();
-        assert_eq!(matrix, matrix![[4, 1, 2], [3, 0, 5]]);
+        assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
 
         matrix.swap((0, 0), (1, 1)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.swap((1, 1), (0, 0)).unwrap();
-        assert_eq!(matrix, matrix![[4, 1, 2], [3, 0, 5]]);
+        assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
 
         matrix.swap((1, 1), (0, 0)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-
-        matrix.switch_order();
-        matrix.swap((0, 0), (1, 1)).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[4, 1, 2], [3, 0, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
         matrix.swap((0, 0), (1, 1)).unwrap();
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
+
+        matrix.switch_order();
+        matrix.swap((0, 0), (1, 1)).unwrap();
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
         matrix.swap((1, 1), (0, 0)).unwrap();
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[4, 1, 2], [3, 0, 5]]);
+        assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
 
         matrix.switch_order();
         matrix.swap((1, 1), (0, 0)).unwrap();
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         let unchanged = matrix.clone();
 
@@ -199,39 +199,39 @@ mod tests {
 
     #[test]
     fn test_swap_rows() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         matrix.swap_rows(0, 1).unwrap();
-        assert_eq!(matrix, matrix![[3, 4, 5], [0, 1, 2]]);
+        assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
 
         matrix.swap_rows(0, 1).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.swap_rows(1, 0).unwrap();
-        assert_eq!(matrix, matrix![[3, 4, 5], [0, 1, 2]]);
+        assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
 
         matrix.swap_rows(1, 0).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-
-        matrix.switch_order();
-        matrix.swap_rows(0, 1).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[3, 4, 5], [0, 1, 2]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
         matrix.swap_rows(0, 1).unwrap();
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
+
+        matrix.switch_order();
+        matrix.swap_rows(0, 1).unwrap();
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
         matrix.swap_rows(1, 0).unwrap();
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[3, 4, 5], [0, 1, 2]]);
+        assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
 
         matrix.switch_order();
         matrix.swap_rows(1, 0).unwrap();
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         let unchanged = matrix.clone();
 
@@ -262,39 +262,39 @@ mod tests {
 
     #[test]
     fn test_swap_cols() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         matrix.swap_cols(0, 1).unwrap();
-        assert_eq!(matrix, matrix![[1, 0, 2], [4, 3, 5]]);
+        assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
 
         matrix.swap_cols(0, 1).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.swap_cols(1, 0).unwrap();
-        assert_eq!(matrix, matrix![[1, 0, 2], [4, 3, 5]]);
+        assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
 
         matrix.swap_cols(1, 0).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-
-        matrix.switch_order();
-        matrix.swap_cols(0, 1).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 0, 2], [4, 3, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
         matrix.swap_cols(0, 1).unwrap();
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
+
+        matrix.switch_order();
+        matrix.swap_cols(0, 1).unwrap();
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
         matrix.swap_cols(1, 0).unwrap();
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 0, 2], [4, 3, 5]]);
+        assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
 
         matrix.switch_order();
         matrix.swap_cols(1, 0).unwrap();
         matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         let unchanged = matrix.clone();
 

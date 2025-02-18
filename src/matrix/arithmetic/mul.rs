@@ -326,9 +326,9 @@ mod tests {
 
     #[test]
     fn test_multiply() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let mut rhs = matrix![[0, 1], [2, 3], [4, 5]];
-        let expected = matrix![[10, 13], [28, 40]];
+        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let mut rhs = matrix![[1, 2], [3, 4], [5, 6]];
+        let expected = matrix![[22, 28], [49, 64]];
 
         // default order & default order
         {
@@ -374,28 +374,28 @@ mod tests {
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0], [1], [2]];
+            let rhs = matrix![[1], [2], [3]];
             let output = lhs.multiply(rhs).unwrap();
-            assert_eq!(output, matrix![[5], [14]]);
+            assert_eq!(output, matrix![[14], [32]]);
         }
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+            let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
             let output = lhs.multiply(rhs).unwrap();
-            assert_eq!(output, matrix![[15, 18, 21], [42, 54, 66]]);
+            assert_eq!(output, matrix![[30, 36, 42], [66, 81, 96]]);
         }
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0, 1], [2, 3]];
+            let rhs = matrix![[1, 2], [3, 4]];
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0, 1, 3], [4, 5, 6]];
+            let rhs = matrix![[1, 2, 3], [4, 5, 6]];
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
