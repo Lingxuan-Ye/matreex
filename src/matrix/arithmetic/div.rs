@@ -1,6 +1,5 @@
 use super::super::Matrix;
 use crate::error::Result;
-use crate::impl_scalar_div;
 use std::ops::{Div, DivAssign};
 
 impl<L> Matrix<L> {
@@ -99,4 +98,73 @@ impl<L> Matrix<L> {
     }
 }
 
-impl_scalar_div! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
+macro_rules! impl_helper {
+    ($(($t:ty, $s:ty, $u:ty))*) => {
+        $(
+            impl Div<$s> for Matrix<$t> {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn div(self, rhs: $s) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element / *scalar)
+                }
+            }
+
+            impl Div<$s> for &Matrix<$t> {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn div(self, rhs: $s) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| *element / *scalar)
+                }
+            }
+
+            impl Div<Matrix<$t>> for $s {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn div(self, rhs: Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| *scalar / element)
+                }
+            }
+
+            impl Div<&Matrix<$t>> for $s {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn div(self, rhs: &Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| *scalar / *element)
+                }
+            }
+        )*
+    }
+}
+
+macro_rules! impl_primitive_scalar_div {
+    ($($t:ty)*) => {
+        $(
+            impl_helper! {
+                ($t, $t, $t)
+                ($t, &$t, $t)
+                (&$t, $t, $t)
+                (&$t, &$t, $t)
+            }
+
+            impl DivAssign<$t> for Matrix<$t> {
+                #[inline]
+                fn div_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element /= *scalar);
+                }
+            }
+
+            impl DivAssign<&$t> for Matrix<$t> {
+                #[inline]
+                fn div_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element /= *scalar);
+                }
+            }
+        )*
+    }
+}
+
+impl_primitive_scalar_div! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}

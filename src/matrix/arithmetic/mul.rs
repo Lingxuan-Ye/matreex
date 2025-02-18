@@ -2,7 +2,6 @@ use super::super::order::Order;
 use super::super::shape::Shape;
 use super::super::Matrix;
 use crate::error::Result;
-use crate::impl_scalar_mul;
 use std::iter::zip;
 use std::ops::{Add, Mul, MulAssign};
 
@@ -249,7 +248,76 @@ impl<L> Matrix<L> {
     }
 }
 
-impl_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
+macro_rules! impl_helper {
+    ($(($t:ty, $s:ty, $u:ty))*) => {
+        $(
+            impl Mul<$s> for Matrix<$t> {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn mul(self, rhs: $s) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element * *scalar)
+                }
+            }
+
+            impl Mul<$s> for &Matrix<$t> {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn mul(self, rhs: $s) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| *element * *scalar)
+                }
+            }
+
+            impl Mul<Matrix<$t>> for $s {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn mul(self, rhs: Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| *scalar * element)
+                }
+            }
+
+            impl Mul<&Matrix<$t>> for $s {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn mul(self, rhs: &Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| *scalar * *element)
+                }
+            }
+        )*
+    }
+}
+
+macro_rules! impl_primitive_scalar_mul {
+    ($($t:ty)*) => {
+        $(
+            impl_helper! {
+                ($t, $t, $t)
+                ($t, &$t, $t)
+                (&$t, $t, $t)
+                (&$t, &$t, $t)
+            }
+
+            impl MulAssign<$t> for Matrix<$t> {
+                #[inline]
+                fn mul_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element *= *scalar);
+                }
+            }
+
+            impl MulAssign<&$t> for Matrix<$t> {
+                #[inline]
+                fn mul_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element *= *scalar);
+                }
+            }
+        )*
+    }
+}
+
+impl_primitive_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
 
 #[cfg(test)]
 mod tests {
