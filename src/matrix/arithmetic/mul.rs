@@ -400,4 +400,32 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
         }
     }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_primitive_scalar_mul() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let scalar = 2;
+        let expected = matrix![[2, 4, 6], [8, 10, 12]];
+
+        assert_eq!(matrix.clone() * scalar, expected);
+        assert_eq!(matrix.clone() * &scalar, expected);
+        assert_eq!(&matrix * scalar, expected);
+        assert_eq!(&matrix * &scalar, expected);
+        assert_eq!(scalar * matrix.clone(), expected);
+        assert_eq!(&scalar * matrix.clone(), expected);
+        assert_eq!(scalar * &matrix, expected);
+        assert_eq!(&scalar * &matrix, expected);
+
+        let matrix = matrix![[&1, &2, &3], [&4, &5, &6]];
+
+        assert_eq!(matrix.clone() * scalar, expected);
+        assert_eq!(matrix.clone() * &scalar, expected);
+        assert_eq!(&matrix * scalar, expected);
+        assert_eq!(&matrix * &scalar, expected);
+        assert_eq!(scalar * matrix.clone(), expected);
+        assert_eq!(&scalar * matrix.clone(), expected);
+        assert_eq!(scalar * &matrix, expected);
+        assert_eq!(&scalar * &matrix, expected);
+    }
 }

@@ -250,3 +250,36 @@ macro_rules! impl_primitive_scalar_add {
 }
 
 impl_primitive_scalar_add! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
+
+#[cfg(test)]
+mod tests {
+    use crate::matrix;
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_primitive_scalar_add() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let scalar = 2;
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+
+        assert_eq!(matrix.clone() + scalar, expected);
+        assert_eq!(matrix.clone() + &scalar, expected);
+        assert_eq!(&matrix + scalar, expected);
+        assert_eq!(&matrix + &scalar, expected);
+        assert_eq!(scalar + matrix.clone(), expected);
+        assert_eq!(&scalar + matrix.clone(), expected);
+        assert_eq!(scalar + &matrix, expected);
+        assert_eq!(&scalar + &matrix, expected);
+
+        let matrix = matrix![[&1, &2, &3], [&4, &5, &6]];
+
+        assert_eq!(matrix.clone() + scalar, expected);
+        assert_eq!(matrix.clone() + &scalar, expected);
+        assert_eq!(&matrix + scalar, expected);
+        assert_eq!(&matrix + &scalar, expected);
+        assert_eq!(scalar + matrix.clone(), expected);
+        assert_eq!(&scalar + matrix.clone(), expected);
+        assert_eq!(scalar + &matrix, expected);
+        assert_eq!(&scalar + &matrix, expected);
+    }
+}

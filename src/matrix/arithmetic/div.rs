@@ -168,3 +168,37 @@ macro_rules! impl_primitive_scalar_div {
 }
 
 impl_primitive_scalar_div! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
+
+#[cfg(test)]
+mod tests {
+    use crate::matrix;
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_primitive_scalar_div() {
+        let matrix = matrix![[1.0, 2.0, 4.0], [8.0, 16.0, 32.0]];
+        let scalar = 2.0;
+        let expected = matrix![[0.5, 1.0, 2.0], [4.0, 8.0, 16.0]];
+        let rexpected = matrix![[2.0, 1.0, 0.5], [0.25, 0.125, 0.0625]];
+
+        assert_eq!(matrix.clone() / scalar, expected);
+        assert_eq!(matrix.clone() / &scalar, expected);
+        assert_eq!(&matrix / scalar, expected);
+        assert_eq!(&matrix / &scalar, expected);
+        assert_eq!(scalar / matrix.clone(), rexpected);
+        assert_eq!(&scalar / matrix.clone(), rexpected);
+        assert_eq!(scalar / &matrix, rexpected);
+        assert_eq!(&scalar / &matrix, rexpected);
+
+        let matrix = matrix![[&1.0, &2.0, &4.0], [&8.0, &16.0, &32.0]];
+
+        assert_eq!(matrix.clone() / scalar, expected);
+        assert_eq!(matrix.clone() / &scalar, expected);
+        assert_eq!(&matrix / scalar, expected);
+        assert_eq!(&matrix / &scalar, expected);
+        assert_eq!(scalar / matrix.clone(), rexpected);
+        assert_eq!(&scalar / matrix.clone(), rexpected);
+        assert_eq!(scalar / &matrix, rexpected);
+        assert_eq!(&scalar / &matrix, rexpected);
+    }
+}

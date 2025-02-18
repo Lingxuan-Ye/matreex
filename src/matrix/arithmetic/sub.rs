@@ -250,3 +250,37 @@ macro_rules! impl_primitive_scalar_sub {
 }
 
 impl_primitive_scalar_sub! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
+
+#[cfg(test)]
+mod tests {
+    use crate::matrix;
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_primitive_scalar_sub() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let scalar = 2;
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+        let rexpected = matrix![[1, 0, -1], [-2, -3, -4]];
+
+        assert_eq!(matrix.clone() - scalar, expected);
+        assert_eq!(matrix.clone() - &scalar, expected);
+        assert_eq!(&matrix - scalar, expected);
+        assert_eq!(&matrix - &scalar, expected);
+        assert_eq!(scalar - matrix.clone(), rexpected);
+        assert_eq!(&scalar - matrix.clone(), rexpected);
+        assert_eq!(scalar - &matrix, rexpected);
+        assert_eq!(&scalar - &matrix, rexpected);
+
+        let matrix = matrix![[&1, &2, &3], [&4, &5, &6]];
+
+        assert_eq!(matrix.clone() - scalar, expected);
+        assert_eq!(matrix.clone() - &scalar, expected);
+        assert_eq!(&matrix - scalar, expected);
+        assert_eq!(&matrix - &scalar, expected);
+        assert_eq!(scalar - matrix.clone(), rexpected);
+        assert_eq!(&scalar - matrix.clone(), rexpected);
+        assert_eq!(scalar - &matrix, rexpected);
+        assert_eq!(&scalar - &matrix, rexpected);
+    }
+}
