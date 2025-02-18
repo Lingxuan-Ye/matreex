@@ -904,6 +904,33 @@ mod tests {
     }
 
     #[test]
+    fn test_shrink_to_fit() {
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        assert!(matrix.capacity() >= 6);
+
+        matrix.resize((1, 3)).unwrap();
+        assert!(matrix.capacity() >= 6);
+
+        matrix.shrink_to_fit();
+        assert!(matrix.capacity() >= 3);
+    }
+
+    #[test]
+    fn test_shrink_to() {
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        assert!(matrix.capacity() >= 6);
+
+        matrix.resize((1, 3)).unwrap();
+        assert!(matrix.capacity() >= 6);
+
+        matrix.shrink_to(4);
+        assert!(matrix.capacity() >= 4);
+
+        matrix.shrink_to(0);
+        assert!(matrix.capacity() >= 3);
+    }
+
+    #[test]
     fn test_overwrite() {
         let blank = matrix![[0, 0, 0], [0, 0, 0]];
 
