@@ -190,9 +190,13 @@ impl<L> Matrix<L> {
     /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
-    pub fn elementwise_operation<R, F, U>(&self, rhs: &Matrix<R>, mut op: F) -> Result<Matrix<U>>
+    pub fn elementwise_operation<'a, R, F, U>(
+        &'a self,
+        rhs: &'a Matrix<R>,
+        mut op: F,
+    ) -> Result<Matrix<U>>
     where
-        F: FnMut(&L, &R) -> U,
+        F: FnMut(&'a L, &'a R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
@@ -239,13 +243,13 @@ impl<L> Matrix<L> {
     /// let result = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
-    pub fn elementwise_operation_consume_self<R, F, U>(
+    pub fn elementwise_operation_consume_self<'a, R, F, U>(
         self,
-        rhs: &Matrix<R>,
+        rhs: &'a Matrix<R>,
         mut op: F,
     ) -> Result<Matrix<U>>
     where
-        F: FnMut(L, &R) -> U,
+        F: FnMut(L, &'a R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
@@ -419,9 +423,9 @@ impl<T> Matrix<T> {
     /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
-    pub fn scalar_operation<S, F, U>(&self, scalar: &S, mut op: F) -> Matrix<U>
+    pub fn scalar_operation<'a, S, F, U>(&'a self, scalar: &'a S, mut op: F) -> Matrix<U>
     where
-        F: FnMut(&T, &S) -> U,
+        F: FnMut(&'a T, &'a S) -> U,
     {
         let order = self.order;
         let shape = self.shape;
@@ -446,9 +450,9 @@ impl<T> Matrix<T> {
     /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
-    pub fn scalar_operation_consume_self<S, F, U>(self, scalar: &S, mut op: F) -> Matrix<U>
+    pub fn scalar_operation_consume_self<'a, S, F, U>(self, scalar: &'a S, mut op: F) -> Matrix<U>
     where
-        F: FnMut(T, &S) -> U,
+        F: FnMut(T, &'a S) -> U,
     {
         let order = self.order;
         let shape = self.shape;

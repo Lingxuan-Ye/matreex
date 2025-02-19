@@ -68,11 +68,11 @@ impl<T> Matrix<T> {
     ///
     /// [`par_map`]: Matrix::par_map
     #[inline]
-    pub fn par_map_ref<U, F>(&self, f: F) -> Matrix<U>
+    pub fn par_map_ref<'a, U, F>(&'a self, f: F) -> Matrix<U>
     where
         T: Sync,
         U: Send,
-        F: Fn(&T) -> U + Sync + Send,
+        F: Fn(&'a T) -> U + Sync + Send,
     {
         let order = self.order;
         let shape = self.shape;

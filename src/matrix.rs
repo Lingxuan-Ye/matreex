@@ -563,9 +563,9 @@ impl<T> Matrix<T> {
     ///
     /// [`map`]: Matrix::map
     #[inline]
-    pub fn map_ref<U, F>(&self, f: F) -> Matrix<U>
+    pub fn map_ref<'a, U, F>(&'a self, f: F) -> Matrix<U>
     where
-        F: FnMut(&T) -> U,
+        F: FnMut(&'a T) -> U,
     {
         let order = self.order;
         let shape = self.shape;
