@@ -1,8 +1,8 @@
+use super::Matrix;
 use super::index::map_flattened_index_for_transpose;
 use super::iter::VectorIter;
 use super::order::Order;
 use super::shape::Shape;
-use super::Matrix;
 use crate::error::{Error, Result};
 
 mod add;

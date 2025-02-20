@@ -1,6 +1,6 @@
+use super::super::Matrix;
 use super::super::order::Order;
 use super::super::shape::Shape;
-use super::super::Matrix;
 use crate::error::Result;
 use std::iter::zip;
 use std::ops::{Add, Mul, MulAssign};

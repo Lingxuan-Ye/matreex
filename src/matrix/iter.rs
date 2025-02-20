@@ -1,6 +1,6 @@
+use super::Matrix;
 use super::index::Index;
 use super::order::Order;
-use super::Matrix;
 use crate::error::{Error, Result};
 
 /// An iterator that knows its exact length and can yield elements

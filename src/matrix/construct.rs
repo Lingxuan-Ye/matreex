@@ -1,7 +1,7 @@
+use super::Matrix;
 use super::index::Index;
 use super::order::Order;
 use super::shape::{AxisShape, Shape};
-use super::Matrix;
 use crate::error::Result;
 
 impl<T> Matrix<T> {

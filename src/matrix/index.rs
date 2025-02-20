@@ -1,6 +1,6 @@
+use super::Matrix;
 use super::order::Order;
 use super::shape::AxisShape;
-use super::Matrix;
 use crate::error::{Error, Result};
 
 impl<T> Matrix<T> {

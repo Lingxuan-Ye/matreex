@@ -1,6 +1,6 @@
+use super::Matrix;
 use super::index::MatrixIndex;
 use super::order::Order;
-use super::Matrix;
 use crate::error::{Error, Result};
 use std::ptr;
 
