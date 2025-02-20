@@ -373,13 +373,15 @@ where
 
     #[inline]
     unsafe fn get_unchecked(self, matrix: *const Matrix<T>) -> *const Self::Output {
-        let index = AxisIndex::from_index(&self, (*matrix).order);
+        let order = unsafe { (*matrix).order };
+        let index = AxisIndex::from_index(&self, order);
         unsafe { index.get_unchecked(matrix) }
     }
 
     #[inline]
     unsafe fn get_unchecked_mut(self, matrix: *mut Matrix<T>) -> *mut Self::Output {
-        let index = AxisIndex::from_index(&self, (*matrix).order);
+        let order = unsafe { (*matrix).order };
+        let index = AxisIndex::from_index(&self, order);
         unsafe { index.get_unchecked_mut(matrix) }
     }
 }
@@ -530,7 +532,9 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline]
     unsafe fn get_unchecked(self, matrix: *const Matrix<T>) -> *const Self::Output {
-        let index = AxisIndex::from_wrapping_index(self, (*matrix).order, (*matrix).shape);
+        let order = unsafe { (*matrix).order };
+        let shape = unsafe { (*matrix).shape };
+        let index = AxisIndex::from_wrapping_index(self, order, shape);
         unsafe { index.get_unchecked(matrix) }
     }
 
@@ -554,7 +558,9 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline]
     unsafe fn get_unchecked_mut(self, matrix: *mut Matrix<T>) -> *mut Self::Output {
-        let index = AxisIndex::from_wrapping_index(self, (*matrix).order, (*matrix).shape);
+        let order = unsafe { (*matrix).order };
+        let shape = unsafe { (*matrix).shape };
+        let index = AxisIndex::from_wrapping_index(self, order, shape);
         unsafe { index.get_unchecked_mut(matrix) }
     }
 }
@@ -640,12 +646,14 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     }
 
     unsafe fn get_unchecked(self, matrix: *const Matrix<T>) -> *const Self::Output {
-        let index = self.to_flattened((*matrix).shape);
+        let shape = unsafe { (*matrix).shape };
+        let index = self.to_flattened(shape);
         unsafe { (*matrix).data.get_unchecked(index) }
     }
 
     unsafe fn get_unchecked_mut(self, matrix: *mut Matrix<T>) -> *mut Self::Output {
-        let index = self.to_flattened((*matrix).shape);
+        let shape = unsafe { (*matrix).shape };
+        let index = self.to_flattened(shape);
         unsafe { (*matrix).data.get_unchecked_mut(index) }
     }
 }
@@ -1167,9 +1175,11 @@ mod tests {
 
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
-                    assert!(WrappingIndex::new(row, col)
-                        .ensure_in_bounds(&matrix)
-                        .is_ok());
+                    assert!(
+                        WrappingIndex::new(row, col)
+                            .ensure_in_bounds(&matrix)
+                            .is_ok()
+                    );
                 }
             }
 
@@ -1177,9 +1187,11 @@ mod tests {
 
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
-                    assert!(WrappingIndex::new(row, col)
-                        .ensure_in_bounds(&matrix)
-                        .is_ok());
+                    assert!(
+                        WrappingIndex::new(row, col)
+                            .ensure_in_bounds(&matrix)
+                            .is_ok()
+                    );
                 }
             }
         }
