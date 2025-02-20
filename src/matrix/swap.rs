@@ -99,11 +99,12 @@ impl<T> Matrix<T> {
         if m >= self.major() || n >= self.major() {
             return Err(Error::IndexOutOfBounds);
         }
+        let base = self.data.as_mut_ptr();
         let index = m * self.major_stride();
         let jndex = n * self.major_stride();
         unsafe {
-            let x: *mut T = self.data.get_unchecked_mut(index);
-            let y: *mut T = self.data.get_unchecked_mut(jndex);
+            let x = base.add(index);
+            let y = base.add(jndex);
             let count = self.minor();
             ptr::swap_nonoverlapping(x, y, count);
         }
@@ -114,12 +115,13 @@ impl<T> Matrix<T> {
         if m >= self.minor() || n >= self.minor() {
             return Err(Error::IndexOutOfBounds);
         }
+        let base = self.data.as_mut_ptr();
         let mut index = m;
         let mut jndex = n;
         for _ in 0..self.major() {
             unsafe {
-                let x: *mut T = self.data.get_unchecked_mut(index);
-                let y: *mut T = self.data.get_unchecked_mut(jndex);
+                let x = base.add(index);
+                let y = base.add(jndex);
                 ptr::swap(x, y);
             }
             index += self.major_stride();

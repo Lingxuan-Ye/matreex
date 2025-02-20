@@ -5,6 +5,7 @@ use self::order::Order;
 use self::shape::{AxisShape, Shape};
 use crate::error::{Error, Result};
 use std::cmp::min;
+use std::ptr;
 
 pub mod index;
 pub mod iter;
@@ -182,6 +183,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix[(2, 1)], 6);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
+        let base = self.data.as_mut_ptr();
         let size = self.size();
         let mut visited = vec![false; size];
 
@@ -190,7 +192,11 @@ impl<T> Matrix<T> {
             while !visited[current] {
                 visited[current] = true;
                 let next = map_flattened_index_for_transpose(current, self.shape);
-                self.data.swap(index, next);
+                unsafe {
+                    let x = base.add(index);
+                    let y = base.add(next);
+                    ptr::swap(x, y);
+                }
                 current = next;
             }
         }
