@@ -175,9 +175,40 @@ mod tests {
     use crate::matrix;
 
     #[test]
+    fn test_elementwise_rem() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[1, 0, 1], [0, 1, 0]];
+
+        let output = lhs.elementwise_rem(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_rem_consume_self() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[1, 0, 1], [0, 1, 0]];
+
+        let output = lhs.elementwise_rem_consume_self(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_rem_assign() {
+        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[1, 0, 1], [0, 1, 0]];
+
+        lhs.elementwise_rem_assign(&rhs).unwrap();
+        assert_eq!(lhs, expected);
+    }
+
+    #[test]
     #[allow(clippy::op_ref)]
     fn test_primitive_scalar_rem() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix_ref = matrix.map_ref(|x| x);
         let scalar = 2;
         let expected = matrix![[1, 0, 1], [0, 1, 0]];
         let rexpected = matrix![[0, 0, 2], [2, 2, 2]];
@@ -191,15 +222,25 @@ mod tests {
         assert_eq!(scalar % &matrix, rexpected);
         assert_eq!(&scalar % &matrix, rexpected);
 
-        let matrix = matrix![[&1, &2, &3], [&4, &5, &6]];
+        assert_eq!(matrix_ref.clone() % scalar, expected);
+        assert_eq!(matrix_ref.clone() % &scalar, expected);
+        assert_eq!(&matrix_ref % scalar, expected);
+        assert_eq!(&matrix_ref % &scalar, expected);
+        assert_eq!(scalar % matrix_ref.clone(), rexpected);
+        assert_eq!(&scalar % matrix_ref.clone(), rexpected);
+        assert_eq!(scalar % &matrix_ref, rexpected);
+        assert_eq!(&scalar % &matrix_ref, rexpected);
 
-        assert_eq!(matrix.clone() % scalar, expected);
-        assert_eq!(matrix.clone() % &scalar, expected);
-        assert_eq!(&matrix % scalar, expected);
-        assert_eq!(&matrix % &scalar, expected);
-        assert_eq!(scalar % matrix.clone(), rexpected);
-        assert_eq!(&scalar % matrix.clone(), rexpected);
-        assert_eq!(scalar % &matrix, rexpected);
-        assert_eq!(&scalar % &matrix, rexpected);
+        {
+            let mut matrix = matrix.clone();
+            matrix %= scalar;
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let mut matrix = matrix.clone();
+            matrix %= &scalar;
+            assert_eq!(matrix, expected);
+        }
     }
 }

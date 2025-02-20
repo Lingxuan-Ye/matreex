@@ -222,9 +222,8 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let mut data: Vec<&i32> = matrix.iter_elements().collect();
-    /// data.sort(); // sort because the order of the elements is not guaranteed
-    /// assert_eq!(data, vec![&1, &2, &3, &4, &5, &6]);
+    /// let sum = matrix.iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 21);
     /// ```
     #[inline]
     pub fn iter_elements(&self) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
@@ -269,9 +268,8 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let mut data: Vec<i32> = matrix.into_iter_elements().collect();
-    /// data.sort(); // sort because the order of the elements is not guaranteed
-    /// assert_eq!(data, vec![1, 2, 3, 4, 5, 6]);
+    /// let sum = matrix.into_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 21);
     /// ```
     #[inline]
     pub fn into_iter_elements(self) -> impl ExactSizeDoubleEndedIterator<Item = T> {
@@ -820,111 +818,145 @@ mod tests {
 
     #[test]
     fn test_iter_elements() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = 21;
 
-        let mut data: Vec<&i32> = matrix.iter_elements().collect();
-        data.sort();
-        assert_eq!(data, vec![&1, &2, &3, &4, &5, &6]);
+        // default order
+        {
+            let sum = matrix.iter_elements().sum::<i32>();
+            assert_eq!(sum, expected);
+        }
 
-        matrix.switch_order();
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
 
-        let mut data: Vec<&i32> = matrix.iter_elements().collect();
-        data.sort();
-        assert_eq!(data, vec![&1, &2, &3, &4, &5, &6]);
+            let sum = matrix.iter_elements().sum::<i32>();
+            assert_eq!(sum, expected);
+        }
     }
 
     #[test]
     fn test_iter_elements_mut() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        fn add_two(x: &mut i32) {
+            *x += 2;
+        }
 
-        matrix.iter_elements_mut().for_each(|element| {
-            *element += 2;
-        });
-        assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
-        matrix.switch_order();
+        // default order
+        {
+            let mut matrix = matrix.clone();
 
-        matrix.iter_elements_mut().for_each(|element| {
-            *element -= 2;
-        });
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            matrix.iter_elements_mut().for_each(add_two);
+            assert_eq!(matrix, expected);
+        }
+
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
+
+            matrix.iter_elements_mut().for_each(add_two);
+            matrix.switch_order();
+            assert_eq!(matrix, expected);
+        }
     }
 
     #[test]
     fn test_into_iter_elements() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = 21;
 
-        let mut data: Vec<i32> = matrix.clone().into_iter_elements().collect();
-        data.sort();
-        assert_eq!(data, vec![1, 2, 3, 4, 5, 6]);
+        // default order
+        {
+            let matrix = matrix.clone();
 
-        matrix.switch_order();
+            let sum = matrix.into_iter_elements().sum::<i32>();
+            assert_eq!(sum, expected);
+        }
 
-        let mut data: Vec<i32> = matrix.clone().into_iter_elements().collect();
-        data.sort();
-        assert_eq!(data, vec![1, 2, 3, 4, 5, 6]);
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
+
+            let sum = matrix.into_iter_elements().sum::<i32>();
+            assert_eq!(sum, expected);
+        }
     }
 
     #[test]
     fn test_iter_elements_with_index() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let test_index = |(index, element)| {
+            assert_eq!(element, &matrix[index]);
+        };
 
-        matrix
-            .iter_elements_with_index()
-            .for_each(|(index, element)| {
-                assert_eq!(element, &matrix[index]);
-            });
+        // default order
+        {
+            matrix.iter_elements_with_index().for_each(test_index);
+        }
 
-        matrix.switch_order();
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
 
-        matrix
-            .iter_elements_with_index()
-            .for_each(|(index, element)| {
-                assert_eq!(element, &matrix[index]);
-            });
+            matrix.iter_elements_with_index().for_each(test_index);
+        }
     }
 
     #[test]
     fn test_iter_elements_mut_with_index() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        fn add_index((index, element): (Index, &mut i32)) {
+            *element += index.row as i32 + index.col as i32;
+        }
 
-        matrix
-            .iter_elements_mut_with_index()
-            .for_each(|(index, element)| {
-                *element += index.row as i32 + index.col as i32;
-            });
-        assert_eq!(matrix, matrix![[1, 3, 5], [5, 7, 9]]);
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = matrix![[1, 3, 5], [5, 7, 9]];
 
-        matrix.switch_order();
+        // default order
+        {
+            let mut matrix = matrix.clone();
 
-        matrix
-            .iter_elements_mut_with_index()
-            .for_each(|(index, element)| {
-                *element -= index.row as i32 + index.col as i32;
-            });
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            matrix.iter_elements_mut_with_index().for_each(add_index);
+            assert_eq!(matrix, expected);
+        }
+
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
+
+            matrix.iter_elements_mut_with_index().for_each(add_index);
+            matrix.switch_order();
+            assert_eq!(matrix, expected);
+        }
     }
 
     #[test]
     fn test_into_iter_elements_with_index() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let test_index = |(index, element)| {
+            assert_eq!(element, matrix[index]);
+        };
 
-        matrix
-            .clone()
-            .into_iter_elements_with_index()
-            .for_each(|(index, element)| {
-                assert_eq!(element, matrix[index]);
-            });
+        // default order
+        {
+            let matrix = matrix.clone();
 
-        matrix.switch_order();
+            matrix.into_iter_elements_with_index().for_each(test_index);
+        }
 
-        matrix
-            .clone()
-            .into_iter_elements_with_index()
-            .for_each(|(index, element)| {
-                assert_eq!(element, matrix[index]);
-            });
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
+
+            matrix.into_iter_elements_with_index().for_each(test_index);
+        }
     }
 }

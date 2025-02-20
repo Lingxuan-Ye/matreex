@@ -256,9 +256,73 @@ mod tests {
     use crate::matrix;
 
     #[test]
+    fn test_sub() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+
+        assert_eq!(lhs.clone() - rhs.clone(), expected);
+        assert_eq!(lhs.clone() - &rhs, expected);
+        assert_eq!(&lhs - rhs.clone(), expected);
+        assert_eq!(&lhs - &rhs, expected);
+    }
+
+    #[test]
+    fn test_sub_assign() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+
+        {
+            let mut lhs = lhs.clone();
+
+            lhs -= rhs.clone();
+            assert_eq!(lhs, expected);
+        }
+
+        {
+            let mut lhs = lhs.clone();
+
+            lhs -= &rhs;
+            assert_eq!(lhs, expected);
+        }
+    }
+
+    #[test]
+    fn test_elementwise_sub() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+
+        let output = lhs.elementwise_sub(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_sub_consume_self() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+
+        let output = lhs.elementwise_sub_consume_self(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_sub_assign() {
+        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+
+        lhs.elementwise_sub_assign(&rhs).unwrap();
+        assert_eq!(lhs, expected);
+    }
+
+    #[test]
     #[allow(clippy::op_ref)]
     fn test_primitive_scalar_sub() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix_ref = matrix.map_ref(|x| x);
         let scalar = 2;
         let expected = matrix![[-1, 0, 1], [2, 3, 4]];
         let rexpected = matrix![[1, 0, -1], [-2, -3, -4]];
@@ -272,15 +336,27 @@ mod tests {
         assert_eq!(scalar - &matrix, rexpected);
         assert_eq!(&scalar - &matrix, rexpected);
 
-        let matrix = matrix![[&1, &2, &3], [&4, &5, &6]];
+        assert_eq!(matrix_ref.clone() - scalar, expected);
+        assert_eq!(matrix_ref.clone() - &scalar, expected);
+        assert_eq!(&matrix_ref - scalar, expected);
+        assert_eq!(&matrix_ref - &scalar, expected);
+        assert_eq!(scalar - matrix_ref.clone(), rexpected);
+        assert_eq!(&scalar - matrix_ref.clone(), rexpected);
+        assert_eq!(scalar - &matrix_ref, rexpected);
+        assert_eq!(&scalar - &matrix_ref, rexpected);
 
-        assert_eq!(matrix.clone() - scalar, expected);
-        assert_eq!(matrix.clone() - &scalar, expected);
-        assert_eq!(&matrix - scalar, expected);
-        assert_eq!(&matrix - &scalar, expected);
-        assert_eq!(scalar - matrix.clone(), rexpected);
-        assert_eq!(&scalar - matrix.clone(), rexpected);
-        assert_eq!(scalar - &matrix, rexpected);
-        assert_eq!(&scalar - &matrix, rexpected);
+        {
+            let mut matrix = matrix.clone();
+
+            matrix -= scalar;
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let mut matrix = matrix.clone();
+
+            matrix -= &scalar;
+            assert_eq!(matrix, expected);
+        }
     }
 }

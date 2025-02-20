@@ -932,119 +932,174 @@ mod tests {
 
     #[test]
     fn test_overwrite() {
-        let blank = matrix![[0, 0, 0], [0, 0, 0]];
+        fn test_helper(destination: Matrix<i32>, source: Matrix<i32>, expected: Matrix<i32>) {
+            // assume all inputs are of default order
+
+            // default order & default order
+            {
+                let mut destination = destination.clone();
+
+                destination.overwrite(&source);
+                assert_eq!(destination, expected);
+            }
+
+            // default order & alternative order
+            {
+                let mut destination = destination.clone();
+                let mut source = source.clone();
+                source.switch_order();
+
+                destination.overwrite(&source);
+                assert_eq!(destination, expected);
+            }
+
+            // alternative order & default order
+            {
+                let mut destination = destination.clone();
+                destination.switch_order();
+
+                destination.overwrite(&source);
+                destination.switch_order();
+                assert_eq!(destination, expected);
+            }
+
+            // alternative order & alternative order
+            {
+                let mut destination = destination.clone();
+                let mut source = source.clone();
+                destination.switch_order();
+                source.switch_order();
+
+                destination.overwrite(&source);
+                destination.switch_order();
+                assert_eq!(destination, expected);
+            }
+        }
+
+        let destination = matrix![[0, 0, 0], [0, 0, 0]];
 
         {
-            let mut source = matrix![[1, 2]];
+            let source = matrix![[1, 2]];
+            let expected = matrix![[1, 2, 0], [0, 0, 0]];
 
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
-
-            source.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
+            test_helper(destination.clone(), source, expected);
         }
 
         {
-            let mut source = matrix![[1, 2], [3, 4]];
+            let source = matrix![[1, 2], [3, 4]];
+            let expected = matrix![[1, 2, 0], [3, 4, 0]];
 
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
-
-            source.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+            test_helper(destination.clone(), source, expected);
         }
 
         {
-            let mut source = matrix![[1, 2], [3, 4], [5, 6]];
+            let source = matrix![[1, 2], [3, 4], [5, 6]];
+            let expected = matrix![[1, 2, 0], [3, 4, 0]];
 
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
-
-            source.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+            test_helper(destination.clone(), source, expected);
         }
 
         {
-            let mut source = matrix![[1, 2, 3]];
+            let source = matrix![[1, 2, 3]];
+            let expected = matrix![[1, 2, 3], [0, 0, 0]];
 
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
-
-            source.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+            test_helper(destination.clone(), source, expected);
         }
 
         {
-            let mut source = matrix![[1, 2, 3, 4]];
+            let source = matrix![[1, 2, 3, 4]];
+            let expected = matrix![[1, 2, 3], [0, 0, 0]];
 
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
-
-            source.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+            test_helper(destination.clone(), source, expected);
         }
     }
 
     #[test]
     fn test_apply() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        fn add_two(x: &mut i32) {
+            *x += 2;
+        }
 
-        matrix.apply(|x| *x += 2);
-        assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
-        matrix.switch_order();
+        // default order
+        {
+            let mut matrix = matrix.clone();
 
-        matrix.apply(|x| *x -= 2);
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            matrix.apply(add_two);
+            assert_eq!(matrix, expected);
+        }
+
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
+
+            matrix.apply(add_two);
+            matrix.switch_order();
+            assert_eq!(matrix, expected);
+        }
     }
 
     #[test]
     fn test_map() {
+        fn to_f64(x: i32) -> f64 {
+            x as f64
+        }
+
         let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
-        let mut matrix_f64 = matrix_i32.map(|x| x as f64);
-        assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        // default order
+        {
+            let matrix_i32 = matrix_i32.clone();
 
-        matrix_f64.switch_order();
+            let matrix_f64 = matrix_i32.map(to_f64);
+            assert_eq!(matrix_f64, expected);
+        }
 
-        let mut matrix_i32 = matrix_f64.map(|x| x as i32);
-        matrix_i32.switch_order();
-        assert_eq!(matrix_i32, matrix![[1, 2, 3], [4, 5, 6]]);
+        // alternative order
+        {
+            let mut matrix_i32 = matrix_i32.clone();
+            matrix_i32.switch_order();
+
+            let mut matrix_f64 = matrix_i32.map(to_f64);
+            matrix_f64.switch_order();
+            assert_eq!(matrix_f64, expected);
+        }
     }
 
     #[test]
     fn test_map_ref() {
-        let mut matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
+        fn to_f64(x: &i32) -> f64 {
+            *x as f64
+        }
 
-        let matrix_f64 = matrix_i32.map_ref(|x| *x as f64);
-        assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
-        matrix_i32.switch_order();
+        // default order
+        {
+            let matrix_f64 = matrix_i32.map_ref(to_f64);
+            assert_eq!(matrix_f64, expected);
+        }
 
-        let mut matrix_f64 = matrix_i32.map_ref(|x| *x as f64);
-        matrix_f64.switch_order();
-        assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        // alternative order
+        {
+            let mut matrix_i32 = matrix_i32.clone();
+            matrix_i32.switch_order();
+
+            let mut matrix_f64 = matrix_i32.map_ref(to_f64);
+            matrix_f64.switch_order();
+            assert_eq!(matrix_f64, expected);
+        }
+
+        // to matrix of references
+        {
+            let matrix_ref = matrix_i32.map_ref(|x| x);
+            assert_eq!(matrix_ref, matrix![[&1, &2, &3], [&4, &5, &6]]);
+        }
     }
 
     #[test]

@@ -325,56 +325,101 @@ mod tests {
     use crate::matrix;
 
     #[test]
-    fn test_multiply() {
+    fn test_mul() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[1, 2], [3, 4], [5, 6]];
+        let expected = matrix![[22, 28], [49, 64]];
+
+        assert_eq!(lhs.clone() * rhs.clone(), expected);
+        assert_eq!(lhs.clone() * &rhs, expected);
+        assert_eq!(&lhs * rhs.clone(), expected);
+        assert_eq!(&lhs * &rhs, expected);
+    }
+
+    #[test]
+    fn test_elementwise_mul() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[2, 4, 6], [8, 10, 12]];
+
+        let output = lhs.elementwise_mul(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_mul_consume_self() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[2, 4, 6], [8, 10, 12]];
+
+        let output = lhs.elementwise_mul_consume_self(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_mul_assign() {
         let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
-        let mut rhs = matrix![[1, 2], [3, 4], [5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[2, 4, 6], [8, 10, 12]];
+
+        lhs.elementwise_mul_assign(&rhs).unwrap();
+        assert_eq!(lhs, expected);
+    }
+
+    #[test]
+    fn test_multiply() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[1, 2], [3, 4], [5, 6]];
         let expected = matrix![[22, 28], [49, 64]];
 
         // default order & default order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
+
             let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, expected);
         }
-
-        rhs.switch_order();
 
         // default order &  alternative order
         {
             let lhs = lhs.clone();
-            let rhs = rhs.clone();
+            let mut rhs = rhs.clone();
+            rhs.switch_order();
+
             let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, expected);
         }
 
-        lhs.switch_order();
+        // alternative order & default order
+        {
+            let mut lhs = lhs.clone();
+            let rhs = rhs.clone();
+            lhs.switch_order();
+
+            let mut output = lhs.multiply(rhs).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
 
         // alternative order & alternative order
         {
-            let lhs = lhs.clone();
-            let rhs = rhs.clone();
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.switch_order();
+            rhs.switch_order();
+
             let mut output = lhs.multiply(rhs).unwrap();
             output.switch_order();
             assert_eq!(output, expected);
         }
 
-        rhs.switch_order();
-
-        // alternative order & default order
-        {
-            let lhs = lhs.clone();
-            let rhs = rhs.clone();
-            let mut output = lhs.multiply(rhs).unwrap();
-            output.switch_order();
-            assert_eq!(output, expected);
-        }
-
-        lhs.switch_order();
+        // more test cases
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[1], [2], [3]];
+
             let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, matrix![[14], [32]]);
         }
@@ -382,6 +427,7 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+
             let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, matrix![[30, 36, 42], [66, 81, 96]]);
         }
@@ -389,6 +435,7 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = matrix![[1, 2], [3, 4]];
+
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
@@ -396,6 +443,7 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = matrix![[1, 2, 3], [4, 5, 6]];
+
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
@@ -405,6 +453,7 @@ mod tests {
     #[allow(clippy::op_ref)]
     fn test_primitive_scalar_mul() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix_ref = matrix.map_ref(|x| x);
         let scalar = 2;
         let expected = matrix![[2, 4, 6], [8, 10, 12]];
 
@@ -417,15 +466,27 @@ mod tests {
         assert_eq!(scalar * &matrix, expected);
         assert_eq!(&scalar * &matrix, expected);
 
-        let matrix = matrix![[&1, &2, &3], [&4, &5, &6]];
+        assert_eq!(matrix_ref.clone() * scalar, expected);
+        assert_eq!(matrix_ref.clone() * &scalar, expected);
+        assert_eq!(&matrix_ref * scalar, expected);
+        assert_eq!(&matrix_ref * &scalar, expected);
+        assert_eq!(scalar * matrix_ref.clone(), expected);
+        assert_eq!(&scalar * matrix_ref.clone(), expected);
+        assert_eq!(scalar * &matrix_ref, expected);
+        assert_eq!(&scalar * &matrix_ref, expected);
 
-        assert_eq!(matrix.clone() * scalar, expected);
-        assert_eq!(matrix.clone() * &scalar, expected);
-        assert_eq!(&matrix * scalar, expected);
-        assert_eq!(&matrix * &scalar, expected);
-        assert_eq!(scalar * matrix.clone(), expected);
-        assert_eq!(&scalar * matrix.clone(), expected);
-        assert_eq!(scalar * &matrix, expected);
-        assert_eq!(&scalar * &matrix, expected);
+        {
+            let mut matrix = matrix.clone();
+
+            matrix *= scalar;
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let mut matrix = matrix.clone();
+
+            matrix *= &scalar;
+            assert_eq!(matrix, expected);
+        }
     }
 }

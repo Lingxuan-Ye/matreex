@@ -345,12 +345,13 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::{matrix, VectorIter};
     ///
+    /// fn dot_product(lv: VectorIter<&i32>, rv: VectorIter<&i32>) -> i32 {
+    ///     lv.zip(rv).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
+    /// }
+    ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[1, 2], [3, 4], [5, 6]];
-    /// let op = |lv: VectorIter<&i32>, rv: VectorIter<&i32>| {
-    ///     lv.zip(rv).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
-    /// };
-    /// let result = lhs.multiplication_like_operation(rhs, op);
+    /// let result = lhs.multiplication_like_operation(rhs, dot_product);
     /// assert_eq!(result, Ok(matrix![[22, 28], [49, 64]]));
     /// ```
     pub fn multiplication_like_operation<R, F, U>(
@@ -494,211 +495,303 @@ mod tests {
 
     #[test]
     fn test_is_square() {
-        let matrix = Matrix::<i32>::with_default((3, 3)).unwrap();
+        let matrix = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
         assert!(matrix.is_square());
 
-        let matrix = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         assert!(!matrix.is_square());
     }
 
     #[test]
     fn test_is_elementwise_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
 
         // default order & default order
-        assert!(lhs.is_elementwise_operation_conformable(&rhs));
-        assert!(rhs.is_elementwise_operation_conformable(&lhs));
-
-        rhs.switch_order();
+        {
+            assert!(lhs.is_elementwise_operation_conformable(&rhs));
+            assert!(rhs.is_elementwise_operation_conformable(&lhs));
+        }
 
         // default order & alternative order
-        assert!(lhs.is_elementwise_operation_conformable(&rhs));
-        assert!(rhs.is_elementwise_operation_conformable(&lhs));
+        {
+            let mut rhs = rhs.clone();
+            rhs.switch_order();
 
-        lhs.switch_order();
-
-        // alternative order & alternative order
-        assert!(lhs.is_elementwise_operation_conformable(&rhs));
-        assert!(rhs.is_elementwise_operation_conformable(&lhs));
-
-        rhs.switch_order();
+            assert!(lhs.is_elementwise_operation_conformable(&rhs));
+            assert!(rhs.is_elementwise_operation_conformable(&lhs));
+        }
 
         // alternative order & default order
-        assert!(lhs.is_elementwise_operation_conformable(&rhs));
-        assert!(rhs.is_elementwise_operation_conformable(&lhs));
+        {
+            let mut lhs = lhs.clone();
+            lhs.switch_order();
 
-        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
-        assert!(!lhs.is_elementwise_operation_conformable(&rhs));
-        assert!(!rhs.is_elementwise_operation_conformable(&lhs));
+            assert!(lhs.is_elementwise_operation_conformable(&rhs));
+            assert!(rhs.is_elementwise_operation_conformable(&lhs));
+        }
 
-        let rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
-        assert!(!lhs.is_elementwise_operation_conformable(&rhs));
-        assert!(!rhs.is_elementwise_operation_conformable(&lhs));
+        // alternative order & alternative order
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.switch_order();
+            rhs.switch_order();
 
-        let rhs = Matrix::<i32>::with_default((3, 3)).unwrap();
-        assert!(!lhs.is_elementwise_operation_conformable(&rhs));
-        assert!(!rhs.is_elementwise_operation_conformable(&lhs));
+            assert!(lhs.is_elementwise_operation_conformable(&rhs));
+            assert!(rhs.is_elementwise_operation_conformable(&lhs));
+        }
+
+        // more test cases
+
+        {
+            let rhs = matrix![[2, 2], [2, 2]];
+
+            assert!(!lhs.is_elementwise_operation_conformable(&rhs));
+            assert!(!rhs.is_elementwise_operation_conformable(&lhs));
+        }
+
+        {
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+
+            assert!(!lhs.is_elementwise_operation_conformable(&rhs));
+            assert!(!rhs.is_elementwise_operation_conformable(&lhs));
+        }
+
+        {
+            let rhs = matrix![[2, 2, 2], [2, 2, 2], [2, 2, 2]];
+
+            assert!(!lhs.is_elementwise_operation_conformable(&rhs));
+            assert!(!rhs.is_elementwise_operation_conformable(&lhs));
+        }
     }
 
     #[test]
     fn test_is_multiplication_like_operation_conformable() {
-        let mut lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
-        let mut rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
 
         // default order & default order
-        assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
-
-        rhs.switch_order();
+        {
+            assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+        }
 
         // default order & alternative order
-        assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+        {
+            let mut rhs = rhs.clone();
+            rhs.switch_order();
 
-        lhs.switch_order();
-
-        // alternative order & alternative order
-        assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
-
-        rhs.switch_order();
+            assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+        }
 
         // alternative order & default order
-        assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+        {
+            let mut lhs = lhs.clone();
+            lhs.switch_order();
 
-        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
-        assert!(!lhs.is_multiplication_like_operation_conformable(&rhs));
+            assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+        }
 
-        let rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
-        assert!(!lhs.is_multiplication_like_operation_conformable(&rhs));
+        // alternative order & alternative order
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.switch_order();
+            rhs.switch_order();
 
-        let rhs = Matrix::<i32>::with_default((3, 3)).unwrap();
-        assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+            assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+        }
+
+        // more test cases
+
+        {
+            let rhs = matrix![[2, 2], [2, 2]];
+
+            assert!(!lhs.is_multiplication_like_operation_conformable(&rhs));
+        }
+
+        {
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+
+            assert!(!lhs.is_multiplication_like_operation_conformable(&rhs));
+        }
+
+        {
+            let rhs = matrix![[2, 2, 2], [2, 2, 2], [2, 2, 2]];
+
+            assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
+        }
     }
 
     #[test]
     fn test_ensure_square() {
-        let matrix = Matrix::<i32>::with_default((3, 3)).unwrap();
+        let matrix = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
         let result = matrix.ensure_square();
         assert!(result.is_ok());
 
-        let matrix = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let result = matrix.ensure_square();
         assert_eq!(result, Err(Error::SquareMatrixRequired));
     }
 
     #[test]
     fn test_ensure_elementwise_operation_conformable() {
-        let lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
 
-        let rhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
         let result = lhs.ensure_elementwise_operation_conformable(&rhs);
         assert_eq!(result, Err(Error::ShapeNotConformable));
     }
 
     #[test]
     fn test_ensure_multiplication_like_operation_conformable() {
-        let lhs = Matrix::<i32>::with_default((2, 3)).unwrap();
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
 
-        let rhs = Matrix::<i32>::with_default((3, 2)).unwrap();
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert!(result.is_ok());
 
-        let rhs = Matrix::<i32>::with_default((2, 2)).unwrap();
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
         assert_eq!(result, Err(Error::ShapeNotConformable));
     }
 
     #[test]
     fn test_elementwise_operation() {
-        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
-        let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |x: &i32, y: &i32| x + y;
+        fn add(x: &i32, y: &i32) -> i32 {
+            x + y
+        }
+
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order & default order
-        let output = lhs.elementwise_operation(&rhs, op).unwrap();
-        assert_eq!(output, expected);
-
-        rhs.switch_order();
+        {
+            let output = lhs.elementwise_operation(&rhs, add).unwrap();
+            assert_eq!(output, expected);
+        }
 
         // default order & alternative order
-        let output = lhs.elementwise_operation(&rhs, op).unwrap();
-        assert_eq!(output, expected);
+        {
+            let mut rhs = rhs.clone();
+            rhs.switch_order();
 
-        lhs.switch_order();
-
-        // alternative order & alternative order
-        let mut output = lhs.elementwise_operation(&rhs, op).unwrap();
-        output.switch_order();
-        assert_eq!(output, expected);
-
-        rhs.switch_order();
+            let output = lhs.elementwise_operation(&rhs, add).unwrap();
+            assert_eq!(output, expected);
+        }
 
         // alternative order & default order
-        let mut output = lhs.elementwise_operation(&rhs, op).unwrap();
-        output.switch_order();
-        assert_eq!(output, expected);
+        {
+            let mut lhs = lhs.clone();
+            lhs.switch_order();
 
-        let rhs = matrix![[2, 2], [2, 2]];
-        let error = lhs.elementwise_operation(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::ShapeNotConformable);
+            let mut output = lhs.elementwise_operation(&rhs, add).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
 
-        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-        let error = lhs.elementwise_operation(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::ShapeNotConformable);
+        // alternative order & alternative order
+
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.switch_order();
+            rhs.switch_order();
+
+            let mut output = lhs.elementwise_operation(&rhs, add).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        // more test cases
+
+        {
+            let rhs = matrix![[2, 2], [2, 2]];
+
+            let error = lhs.elementwise_operation(&rhs, add).unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+        }
+
+        {
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+
+            let error = lhs.elementwise_operation(&rhs, add).unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+        }
+
+        // misuse but should work
+        {
+            let output = lhs.elementwise_operation(&rhs, |x, _| x).unwrap();
+            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
+
+            let output = lhs.elementwise_operation(&rhs, |_, y| y).unwrap();
+            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
+        }
     }
 
     #[test]
     fn test_elementwise_operation_consume_self() {
-        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
-        let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |x, y: &i32| x + y;
+        fn add(x: i32, y: &i32) -> i32 {
+            x + y
+        }
+
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order & default order
         {
             let lhs = lhs.clone();
-            let output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
+
+            let output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
             assert_eq!(output, expected);
         }
-
-        rhs.switch_order();
 
         // default order & alternative order
         {
             let lhs = lhs.clone();
-            let output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
+            let mut rhs = rhs.clone();
+            rhs.switch_order();
+
+            let output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
             assert_eq!(output, expected);
         }
-
-        lhs.switch_order();
-
-        // alternative order & alternative order
-        {
-            let lhs = lhs.clone();
-            let mut output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
-            output.switch_order();
-            assert_eq!(output, expected);
-        }
-
-        rhs.switch_order();
 
         // alternative order & default order
         {
-            let lhs = lhs.clone();
-            let mut output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
+            let mut lhs = lhs.clone();
+            lhs.switch_order();
+
+            let mut output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
             output.switch_order();
             assert_eq!(output, expected);
         }
+
+        // alternative order & alternative order
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.switch_order();
+            rhs.switch_order();
+
+            let mut output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        // more test cases
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[2, 2], [2, 2]];
+
             let error = lhs
-                .elementwise_operation_consume_self(&rhs, op)
+                .elementwise_operation_consume_self(&rhs, add)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
@@ -706,216 +799,292 @@ mod tests {
         {
             let lhs = lhs.clone();
             let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+
             let error = lhs
-                .elementwise_operation_consume_self(&rhs, op)
+                .elementwise_operation_consume_self(&rhs, add)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
+        }
+
+        // misuse but should work
+        {
+            let lhs = lhs.clone();
+
+            let output = lhs
+                .elementwise_operation_consume_self(&rhs, |_, y| y)
+                .unwrap();
+            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
         }
     }
 
     #[test]
     fn test_elementwise_operation_assign() {
-        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
-        let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let op = |x: &mut i32, y: &i32| *x += y;
+        fn add_assign(x: &mut i32, y: &i32) {
+            *x += y;
+        }
+
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order & default order
         {
             let mut lhs = lhs.clone();
-            lhs.elementwise_operation_assign(&rhs, op).unwrap();
+
+            lhs.elementwise_operation_assign(&rhs, add_assign).unwrap();
             assert_eq!(lhs, expected);
         }
-
-        rhs.switch_order();
 
         // default order & alternative order
         {
             let mut lhs = lhs.clone();
-            lhs.elementwise_operation_assign(&rhs, op).unwrap();
+            let mut rhs = rhs.clone();
+            rhs.switch_order();
+
+            lhs.elementwise_operation_assign(&rhs, add_assign).unwrap();
             assert_eq!(lhs, expected);
         }
-
-        lhs.switch_order();
-
-        // alternative order & alternative order
-        {
-            let mut lhs = lhs.clone();
-            lhs.elementwise_operation_assign(&rhs, op).unwrap();
-            lhs.switch_order();
-            assert_eq!(lhs, expected);
-        }
-
-        rhs.switch_order();
 
         // alternative order & default order
         {
             let mut lhs = lhs.clone();
-            lhs.elementwise_operation_assign(&rhs, op).unwrap();
+            lhs.switch_order();
+
+            lhs.elementwise_operation_assign(&rhs, add_assign).unwrap();
             lhs.switch_order();
             assert_eq!(lhs, expected);
         }
 
+        // alternative order & alternative order
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.switch_order();
+            rhs.switch_order();
+
+            lhs.elementwise_operation_assign(&rhs, add_assign).unwrap();
+            lhs.switch_order();
+            assert_eq!(lhs, expected);
+        }
+
+        // more test cases
+
         let unchanged = lhs.clone();
 
-        let rhs = matrix![[2, 2], [2, 2]];
-        let error = lhs.elementwise_operation_assign(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::ShapeNotConformable);
-        assert_eq!(lhs, unchanged);
+        {
+            let mut lhs = lhs.clone();
+            let rhs = matrix![[2, 2], [2, 2]];
 
-        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-        let error = lhs.elementwise_operation_assign(&rhs, op).unwrap_err();
-        assert_eq!(error, Error::ShapeNotConformable);
-        assert_eq!(lhs, unchanged);
+            let error = lhs
+                .elementwise_operation_assign(&rhs, add_assign)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+            assert_eq!(lhs, unchanged);
+        }
+
+        {
+            let mut lhs = lhs.clone();
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+
+            let error = lhs
+                .elementwise_operation_assign(&rhs, add_assign)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+            assert_eq!(lhs, unchanged);
+        }
     }
 
     #[test]
     fn test_multiplication_like_operation() {
-        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
-        let mut rhs = matrix![[1, 2], [3, 4], [5, 6]];
-        let op = |vl: VectorIter<&i32>, vr: VectorIter<&i32>| {
-            vl.zip(vr)
+        fn dot_product(lv: VectorIter<&i32>, rv: VectorIter<&i32>) -> i32 {
+            lv.zip(rv)
                 .map(|(x, y)| x * y)
                 .reduce(|acc, p| acc + p)
                 .unwrap()
-        };
+        }
+
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[1, 2], [3, 4], [5, 6]];
         let expected = matrix![[22, 28], [49, 64]];
 
         // default order & default order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
-            let output = lhs.multiplication_like_operation(rhs, op).unwrap();
+
+            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             assert_eq!(output, expected);
         }
-
-        rhs.switch_order();
 
         // default order & alternative order
         {
             let lhs = lhs.clone();
-            let rhs = rhs.clone();
-            let output = lhs.multiplication_like_operation(rhs, op).unwrap();
+            let mut rhs = rhs.clone();
+            rhs.switch_order();
+
+            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             assert_eq!(output, expected);
         }
-
-        lhs.switch_order();
-
-        // alternative order & alternative order
-        {
-            let lhs = lhs.clone();
-            let rhs = rhs.clone();
-            let mut output = lhs.multiplication_like_operation(rhs, op).unwrap();
-            output.switch_order();
-            assert_eq!(output, expected);
-        }
-
-        rhs.switch_order();
 
         // alternative order & default order
         {
-            let lhs = lhs.clone();
+            let mut lhs = lhs.clone();
             let rhs = rhs.clone();
-            let mut output = lhs.multiplication_like_operation(rhs, op).unwrap();
+            lhs.switch_order();
+
+            let mut output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             output.switch_order();
             assert_eq!(output, expected);
         }
 
-        lhs.switch_order();
+        // alternative order & alternative order
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.switch_order();
+            rhs.switch_order();
+
+            let mut output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        // more test cases
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[1], [2], [3]];
-            let output = lhs.multiplication_like_operation(rhs, op).unwrap();
+
+            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             assert_eq!(output, matrix![[14], [32]]);
         }
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
-            let output = lhs.multiplication_like_operation(rhs, op).unwrap();
+
+            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             assert_eq!(output, matrix![[30, 36, 42], [66, 81, 96]]);
         }
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[1, 2], [3, 4]];
-            let error = lhs.multiplication_like_operation(rhs, op).unwrap_err();
+
+            let error = lhs
+                .multiplication_like_operation(rhs, dot_product)
+                .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
 
         {
             let lhs = lhs.clone();
             let rhs = matrix![[1, 2, 3], [4, 5, 6]];
-            let error = lhs.multiplication_like_operation(rhs, op).unwrap_err();
+
+            let error = lhs
+                .multiplication_like_operation(rhs, dot_product)
+                .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
     }
 
     #[test]
     fn test_scalar_operation() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        fn add(x: &i32, y: &i32) -> i32 {
+            x + y
+        }
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let scalar = 2;
-        let op = |x: &i32, y: &i32| x + y;
         let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order
-        let output = matrix.scalar_operation(&scalar, op);
-        assert_eq!(output, expected);
-
-        matrix.switch_order();
+        {
+            let output = matrix.scalar_operation(&scalar, add);
+            assert_eq!(output, expected);
+        }
 
         // alternative order
-        let mut output = matrix.scalar_operation(&scalar, op);
-        output.switch_order();
-        assert_eq!(output, expected);
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
+
+            let mut output = matrix.scalar_operation(&scalar, add);
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        // misuse but should work
+        {
+            let output = matrix.scalar_operation(&scalar, |x, _| x);
+            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
+
+            let output = matrix.scalar_operation(&scalar, |_, y| y);
+            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
+        }
     }
 
     #[test]
     fn test_scalar_operation_consume_self() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        fn add(x: i32, y: &i32) -> i32 {
+            x + y
+        }
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let scalar = 2;
-        let op = |x: i32, y: &i32| x + y;
         let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order
         {
             let matrix = matrix.clone();
-            let output = matrix.scalar_operation_consume_self(&scalar, op);
+
+            let output = matrix.scalar_operation_consume_self(&scalar, add);
             assert_eq!(output, expected);
         }
 
-        matrix.switch_order();
-
         // alternative order
         {
-            let matrix = matrix.clone();
-            let mut output = matrix.scalar_operation_consume_self(&scalar, op);
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
+
+            let mut output = matrix.scalar_operation_consume_self(&scalar, add);
             output.switch_order();
             assert_eq!(output, expected);
+        }
+
+        // misuse but should work
+        {
+            let matrix = matrix.clone();
+
+            let output = matrix.scalar_operation_consume_self(&scalar, |_, y| y);
+            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
         }
     }
 
     #[test]
     fn test_scalar_operation_assign() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        fn add_assign(x: &mut i32, y: &i32) {
+            *x += y;
+        }
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let scalar = 2;
-        let op = |x: &mut i32, y: &i32| *x += y;
         let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
         // default order
         {
             let mut matrix = matrix.clone();
-            matrix.scalar_operation_assign(&scalar, op);
+
+            matrix.scalar_operation_assign(&scalar, add_assign);
             assert_eq!(matrix, expected);
         }
-
-        matrix.switch_order();
 
         // alternative order
         {
             let mut matrix = matrix.clone();
-            matrix.scalar_operation_assign(&scalar, op);
+            matrix.switch_order();
+
+            matrix.scalar_operation_assign(&scalar, add_assign);
             matrix.switch_order();
             assert_eq!(matrix, expected);
         }

@@ -174,9 +174,40 @@ mod tests {
     use crate::matrix;
 
     #[test]
+    fn test_elementwise_div() {
+        let lhs = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+        let rhs = matrix![[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]];
+        let expected = matrix![[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]];
+
+        let output = lhs.elementwise_div(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_div_consume_self() {
+        let lhs = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+        let rhs = matrix![[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]];
+        let expected = matrix![[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]];
+
+        let output = lhs.elementwise_div_consume_self(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_div_assign() {
+        let mut lhs = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+        let rhs = matrix![[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]];
+        let expected = matrix![[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]];
+
+        lhs.elementwise_div_assign(&rhs).unwrap();
+        assert_eq!(lhs, expected);
+    }
+
+    #[test]
     #[allow(clippy::op_ref)]
     fn test_primitive_scalar_div() {
         let matrix = matrix![[1.0, 2.0, 4.0], [8.0, 16.0, 32.0]];
+        let matrix_ref = matrix.map_ref(|x| x);
         let scalar = 2.0;
         let expected = matrix![[0.5, 1.0, 2.0], [4.0, 8.0, 16.0]];
         let rexpected = matrix![[2.0, 1.0, 0.5], [0.25, 0.125, 0.0625]];
@@ -190,15 +221,27 @@ mod tests {
         assert_eq!(scalar / &matrix, rexpected);
         assert_eq!(&scalar / &matrix, rexpected);
 
-        let matrix = matrix![[&1.0, &2.0, &4.0], [&8.0, &16.0, &32.0]];
+        assert_eq!(matrix_ref.clone() / scalar, expected);
+        assert_eq!(matrix_ref.clone() / &scalar, expected);
+        assert_eq!(&matrix_ref / scalar, expected);
+        assert_eq!(&matrix_ref / &scalar, expected);
+        assert_eq!(scalar / matrix_ref.clone(), rexpected);
+        assert_eq!(&scalar / matrix_ref.clone(), rexpected);
+        assert_eq!(scalar / &matrix_ref, rexpected);
+        assert_eq!(&scalar / &matrix_ref, rexpected);
 
-        assert_eq!(matrix.clone() / scalar, expected);
-        assert_eq!(matrix.clone() / &scalar, expected);
-        assert_eq!(&matrix / scalar, expected);
-        assert_eq!(&matrix / &scalar, expected);
-        assert_eq!(scalar / matrix.clone(), rexpected);
-        assert_eq!(&scalar / matrix.clone(), rexpected);
-        assert_eq!(scalar / &matrix, rexpected);
-        assert_eq!(&scalar / &matrix, rexpected);
+        {
+            let mut matrix = matrix.clone();
+
+            matrix /= scalar;
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let mut matrix = matrix.clone();
+
+            matrix /= &scalar;
+            assert_eq!(matrix, expected);
+        }
     }
 }

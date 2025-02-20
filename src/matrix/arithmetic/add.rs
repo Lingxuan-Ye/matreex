@@ -256,9 +256,73 @@ mod tests {
     use crate::matrix;
 
     #[test]
+    fn test_add() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+
+        assert_eq!(lhs.clone() + rhs.clone(), expected);
+        assert_eq!(lhs.clone() + &rhs, expected);
+        assert_eq!(&lhs + rhs.clone(), expected);
+        assert_eq!(&lhs + &rhs, expected);
+    }
+
+    #[test]
+    fn test_add_assign() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+
+        {
+            let mut lhs = lhs.clone();
+
+            lhs += rhs.clone();
+            assert_eq!(lhs, expected);
+        }
+
+        {
+            let mut lhs = lhs.clone();
+
+            lhs += &rhs;
+            assert_eq!(lhs, expected);
+        }
+    }
+
+    #[test]
+    fn test_elementwise_add() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+
+        let output = lhs.elementwise_add(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_add_consume_self() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+
+        let output = lhs.elementwise_add_consume_self(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_add_assign() {
+        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+
+        lhs.elementwise_add_assign(&rhs).unwrap();
+        assert_eq!(lhs, expected);
+    }
+
+    #[test]
     #[allow(clippy::op_ref)]
     fn test_primitive_scalar_add() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix_ref = matrix.map_ref(|x| x);
         let scalar = 2;
         let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
@@ -271,15 +335,27 @@ mod tests {
         assert_eq!(scalar + &matrix, expected);
         assert_eq!(&scalar + &matrix, expected);
 
-        let matrix = matrix![[&1, &2, &3], [&4, &5, &6]];
+        assert_eq!(matrix_ref.clone() + scalar, expected);
+        assert_eq!(matrix_ref.clone() + &scalar, expected);
+        assert_eq!(&matrix_ref + scalar, expected);
+        assert_eq!(&matrix_ref + &scalar, expected);
+        assert_eq!(scalar + matrix_ref.clone(), expected);
+        assert_eq!(&scalar + matrix_ref.clone(), expected);
+        assert_eq!(scalar + &matrix_ref, expected);
+        assert_eq!(&scalar + &matrix_ref, expected);
 
-        assert_eq!(matrix.clone() + scalar, expected);
-        assert_eq!(matrix.clone() + &scalar, expected);
-        assert_eq!(&matrix + scalar, expected);
-        assert_eq!(&matrix + &scalar, expected);
-        assert_eq!(scalar + matrix.clone(), expected);
-        assert_eq!(&scalar + matrix.clone(), expected);
-        assert_eq!(scalar + &matrix, expected);
-        assert_eq!(&scalar + &matrix, expected);
+        {
+            let mut matrix = matrix.clone();
+
+            matrix += scalar;
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let mut matrix = matrix.clone();
+
+            matrix += &scalar;
+            assert_eq!(matrix, expected);
+        }
     }
 }
