@@ -14,7 +14,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
+    /// use matreex::{Error, matrix};
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert_eq!(matrix.get((1, 1)), Ok(&5));
@@ -38,7 +38,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
+    /// use matreex::{Error, matrix};
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 5));

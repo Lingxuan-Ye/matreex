@@ -85,7 +85,7 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
+    /// use matreex::{Error, matrix};
     ///
     /// let matrix =matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
     /// let result = matrix.ensure_square();
@@ -113,7 +113,7 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
+    /// use matreex::{Error, matrix};
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     ///
@@ -144,7 +144,7 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
+    /// use matreex::{Error, matrix};
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     ///
@@ -286,8 +286,8 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
@@ -343,7 +343,7 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, VectorIter};
+    /// use matreex::{VectorIter, matrix};
     ///
     /// fn dot_product(lv: VectorIter<&i32>, rv: VectorIter<&i32>) -> i32 {
     ///     lv.zip(rv).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()

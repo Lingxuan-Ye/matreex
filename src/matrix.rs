@@ -35,7 +35,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::{Order, matrix};
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert_eq!(matrix.order(), Order::default());
@@ -264,7 +264,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::{Order, matrix};
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
@@ -333,8 +333,8 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
@@ -369,8 +369,8 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
     /// # use matreex::Result;
+    /// use matreex::{Error, matrix};
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
@@ -402,8 +402,8 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
@@ -434,8 +434,8 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];

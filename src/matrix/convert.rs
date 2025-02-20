@@ -8,7 +8,7 @@ impl<T> Matrix<T> {
     ///
     /// # Examples
     /// ```
-    /// use matreex::{matrix, Matrix};
+    /// use matreex::{Matrix, matrix};
     ///
     /// let row_vec = Matrix::from_row(vec![0, 1, 2]);
     /// assert_eq!(row_vec, matrix![[0, 1, 2]]);
@@ -24,7 +24,7 @@ impl<T> Matrix<T> {
     ///
     /// # Examples
     /// ```
-    /// use matreex::{matrix, Matrix};
+    /// use matreex::{Matrix, matrix};
     ///
     /// let col_vec = Matrix::from_col(vec![0, 1, 2]);
     /// assert_eq!(col_vec, matrix![[0], [1], [2]]);

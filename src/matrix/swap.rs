@@ -14,8 +14,8 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
@@ -48,8 +48,8 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
@@ -75,8 +75,8 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];

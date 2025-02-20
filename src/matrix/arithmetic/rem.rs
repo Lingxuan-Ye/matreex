@@ -76,8 +76,8 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];

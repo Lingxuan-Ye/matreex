@@ -9,7 +9,7 @@
 /// # Examples
 ///
 /// ```
-/// use matreex::{matrix, Matrix};
+/// use matreex::{Matrix, matrix};
 ///
 /// let foo: Matrix<i32> = matrix![];
 /// let bar = matrix![[0; 3]; 2];
@@ -46,7 +46,7 @@ macro_rules! matrix {
 /// # Examples
 ///
 /// ```
-/// use matreex::{matrix, row_vec, Matrix};
+/// use matreex::{Matrix, matrix, row_vec};
 ///
 /// let foo: Matrix<i32> = row_vec![];
 /// assert_eq!(foo.nrows(), 1);
@@ -78,7 +78,7 @@ macro_rules! row_vec {
 /// # Examples
 ///
 /// ```
-/// use matreex::{matrix, col_vec, Matrix};
+/// use matreex::{Matrix, matrix, col_vec};
 ///
 /// let foo: Matrix<i32> = col_vec![];
 /// assert_eq!(foo.nrows(), 0);
