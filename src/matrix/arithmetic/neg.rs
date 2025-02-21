@@ -24,3 +24,17 @@ where
         self.map_ref(|element| element.clone().neg())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::matrix;
+
+    #[test]
+    fn neg() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = matrix![[-1, -2, -3], [-4, -5, -6]];
+
+        assert_eq!(-matrix.clone(), expected);
+        assert_eq!(-&matrix, expected);
+    }
+}

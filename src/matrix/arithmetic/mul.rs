@@ -1,8 +1,7 @@
+use super::super::Matrix;
 use super::super::order::Order;
 use super::super::shape::Shape;
-use super::super::Matrix;
 use crate::error::Result;
-use crate::impl_scalar_mul;
 use std::iter::zip;
 use std::ops::{Add, Mul, MulAssign};
 
@@ -81,10 +80,10 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// let result = lhs.elementwise_mul(&rhs);
-    /// assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
+    /// assert_eq!(result, Ok(matrix![[2, 4, 6], [8, 10, 12]]));
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
@@ -112,10 +111,10 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// let result = lhs.elementwise_mul_consume_self(&rhs);
-    /// assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
+    /// assert_eq!(result, Ok(matrix![[2, 4, 6], [8, 10, 12]]));
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
@@ -138,14 +137,14 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// lhs.elementwise_mul_assign(&rhs)?;
-    /// assert_eq!(lhs, matrix![[0, 2, 4], [6, 8, 10]]);
+    /// assert_eq!(lhs, matrix![[2, 4, 6], [8, 10, 12]]);
     /// # Ok(())
     /// # }
     /// ```
@@ -179,10 +178,10 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[1, 2], [3, 4], [5, 6]];
     /// let result = lhs.multiply(rhs);
-    /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
+    /// assert_eq!(result, Ok(matrix![[22, 28], [49, 64]]));
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
@@ -249,7 +248,76 @@ impl<L> Matrix<L> {
     }
 }
 
-impl_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
+macro_rules! impl_helper {
+    ($(($t:ty, $s:ty, $u:ty))*) => {
+        $(
+            impl Mul<$s> for Matrix<$t> {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn mul(self, rhs: $s) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element * *scalar)
+                }
+            }
+
+            impl Mul<$s> for &Matrix<$t> {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn mul(self, rhs: $s) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| *element * *scalar)
+                }
+            }
+
+            impl Mul<Matrix<$t>> for $s {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn mul(self, rhs: Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| *scalar * element)
+                }
+            }
+
+            impl Mul<&Matrix<$t>> for $s {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn mul(self, rhs: &Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| *scalar * *element)
+                }
+            }
+        )*
+    }
+}
+
+macro_rules! impl_primitive_scalar_mul {
+    ($($t:ty)*) => {
+        $(
+            impl_helper! {
+                ($t, $t, $t)
+                ($t, &$t, $t)
+                (&$t, $t, $t)
+                (&$t, &$t, $t)
+            }
+
+            impl MulAssign<$t> for Matrix<$t> {
+                #[inline]
+                fn mul_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element *= *scalar);
+                }
+            }
+
+            impl MulAssign<&$t> for Matrix<$t> {
+                #[inline]
+                fn mul_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element *= *scalar);
+                }
+            }
+        )*
+    }
+}
+
+impl_primitive_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
 
 #[cfg(test)]
 mod tests {
@@ -257,79 +325,168 @@ mod tests {
     use crate::matrix;
 
     #[test]
+    fn test_mul() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[1, 2], [3, 4], [5, 6]];
+        let expected = matrix![[22, 28], [49, 64]];
+
+        assert_eq!(lhs.clone() * rhs.clone(), expected);
+        assert_eq!(lhs.clone() * &rhs, expected);
+        assert_eq!(&lhs * rhs.clone(), expected);
+        assert_eq!(&lhs * &rhs, expected);
+    }
+
+    #[test]
+    fn test_elementwise_mul() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[2, 4, 6], [8, 10, 12]];
+
+        let output = lhs.elementwise_mul(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_mul_consume_self() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[2, 4, 6], [8, 10, 12]];
+
+        let output = lhs.elementwise_mul_consume_self(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_mul_assign() {
+        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[2, 4, 6], [8, 10, 12]];
+
+        lhs.elementwise_mul_assign(&rhs).unwrap();
+        assert_eq!(lhs, expected);
+    }
+
+    #[test]
     fn test_multiply() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let mut rhs = matrix![[0, 1], [2, 3], [4, 5]];
-        let expected = matrix![[10, 13], [28, 40]];
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[1, 2], [3, 4], [5, 6]];
+        let expected = matrix![[22, 28], [49, 64]];
 
         // default order & default order
         {
             let lhs = lhs.clone();
             let rhs = rhs.clone();
+
             let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, expected);
         }
-
-        rhs.switch_order();
 
         // default order &  alternative order
         {
             let lhs = lhs.clone();
-            let rhs = rhs.clone();
+            let mut rhs = rhs.clone();
+            rhs.switch_order();
+
             let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, expected);
         }
-
-        lhs.switch_order();
-
-        // alternative order & alternative order
-        {
-            let lhs = lhs.clone();
-            let rhs = rhs.clone();
-            let mut output = lhs.multiply(rhs).unwrap();
-            output.switch_order();
-            assert_eq!(output, expected);
-        }
-
-        rhs.switch_order();
 
         // alternative order & default order
         {
-            let lhs = lhs.clone();
+            let mut lhs = lhs.clone();
             let rhs = rhs.clone();
+            lhs.switch_order();
+
             let mut output = lhs.multiply(rhs).unwrap();
             output.switch_order();
             assert_eq!(output, expected);
         }
 
-        lhs.switch_order();
+        // alternative order & alternative order
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.switch_order();
+            rhs.switch_order();
+
+            let mut output = lhs.multiply(rhs).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        // more test cases
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0], [1], [2]];
+            let rhs = matrix![[1], [2], [3]];
+
             let output = lhs.multiply(rhs).unwrap();
-            assert_eq!(output, matrix![[5], [14]]);
+            assert_eq!(output, matrix![[14], [32]]);
         }
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+            let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+
             let output = lhs.multiply(rhs).unwrap();
-            assert_eq!(output, matrix![[15, 18, 21], [42, 54, 66]]);
+            assert_eq!(output, matrix![[30, 36, 42], [66, 81, 96]]);
         }
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0, 1], [2, 3]];
+            let rhs = matrix![[1, 2], [3, 4]];
+
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         }
 
         {
             let lhs = lhs.clone();
-            let rhs = matrix![[0, 1, 3], [4, 5, 6]];
+            let rhs = matrix![[1, 2, 3], [4, 5, 6]];
+
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
+        }
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_primitive_scalar_mul() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix_ref = matrix.map_ref(|x| x);
+        let scalar = 2;
+        let expected = matrix![[2, 4, 6], [8, 10, 12]];
+
+        assert_eq!(matrix.clone() * scalar, expected);
+        assert_eq!(matrix.clone() * &scalar, expected);
+        assert_eq!(&matrix * scalar, expected);
+        assert_eq!(&matrix * &scalar, expected);
+        assert_eq!(scalar * matrix.clone(), expected);
+        assert_eq!(&scalar * matrix.clone(), expected);
+        assert_eq!(scalar * &matrix, expected);
+        assert_eq!(&scalar * &matrix, expected);
+
+        assert_eq!(matrix_ref.clone() * scalar, expected);
+        assert_eq!(matrix_ref.clone() * &scalar, expected);
+        assert_eq!(&matrix_ref * scalar, expected);
+        assert_eq!(&matrix_ref * &scalar, expected);
+        assert_eq!(scalar * matrix_ref.clone(), expected);
+        assert_eq!(&scalar * matrix_ref.clone(), expected);
+        assert_eq!(scalar * &matrix_ref, expected);
+        assert_eq!(&scalar * &matrix_ref, expected);
+
+        {
+            let mut matrix = matrix.clone();
+
+            matrix *= scalar;
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let mut matrix = matrix.clone();
+
+            matrix *= &scalar;
+            assert_eq!(matrix, expected);
         }
     }
 }

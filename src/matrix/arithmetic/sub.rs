@@ -1,6 +1,5 @@
 use super::super::Matrix;
 use crate::error::Result;
-use crate::impl_scalar_sub;
 use std::ops::{Sub, SubAssign};
 
 impl<L, R, U> Sub<Matrix<R>> for Matrix<L>
@@ -101,10 +100,10 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// let result = lhs.elementwise_sub(&rhs);
-    /// assert_eq!(result, Ok(matrix![[-2, -1, 0], [1, 2, 3]]));
+    /// assert_eq!(result, Ok(matrix![[-1, 0, 1], [2, 3, 4]]));
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
@@ -132,10 +131,10 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// let result = lhs.elementwise_sub_consume_self(&rhs);
-    /// assert_eq!(result, Ok(matrix![[-2, -1, 0], [1, 2, 3]]));
+    /// assert_eq!(result, Ok(matrix![[-1, 0, 1], [2, 3, 4]]));
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
@@ -158,14 +157,14 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// lhs.elementwise_sub_assign(&rhs)?;
-    /// assert_eq!(lhs, matrix![[-2, -1, 0], [1, 2, 3]]);
+    /// assert_eq!(lhs, matrix![[-1, 0, 1], [2, 3, 4]]);
     /// # Ok(())
     /// # }
     /// ```
@@ -181,4 +180,183 @@ impl<L> Matrix<L> {
     }
 }
 
-impl_scalar_sub! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
+macro_rules! impl_helper {
+    ($(($t:ty, $s:ty, $u:ty))*) => {
+        $(
+            impl Sub<$s> for Matrix<$t> {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn sub(self, rhs: $s) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element - *scalar)
+                }
+            }
+
+            impl Sub<$s> for &Matrix<$t> {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn sub(self, rhs: $s) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| *element - *scalar)
+                }
+            }
+
+            impl Sub<Matrix<$t>> for $s {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn sub(self, rhs: Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| *scalar - element)
+                }
+            }
+
+            impl Sub<&Matrix<$t>> for $s {
+                type Output = Matrix<$u>;
+
+                #[inline]
+                fn sub(self, rhs: &Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| *scalar - *element)
+                }
+            }
+        )*
+    }
+}
+
+macro_rules! impl_primitive_scalar_sub {
+    ($($t:ty)*) => {
+        $(
+            impl_helper! {
+                ($t, $t, $t)
+                ($t, &$t, $t)
+                (&$t, $t, $t)
+                (&$t, &$t, $t)
+            }
+
+            impl SubAssign<$t> for Matrix<$t> {
+                #[inline]
+                fn sub_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element -= *scalar);
+                }
+            }
+
+            impl SubAssign<&$t> for Matrix<$t> {
+                #[inline]
+                fn sub_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element -= *scalar);
+                }
+            }
+        )*
+    }
+}
+
+impl_primitive_scalar_sub! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
+
+#[cfg(test)]
+mod tests {
+    use crate::matrix;
+
+    #[test]
+    fn test_sub() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+
+        assert_eq!(lhs.clone() - rhs.clone(), expected);
+        assert_eq!(lhs.clone() - &rhs, expected);
+        assert_eq!(&lhs - rhs.clone(), expected);
+        assert_eq!(&lhs - &rhs, expected);
+    }
+
+    #[test]
+    fn test_sub_assign() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+
+        {
+            let mut lhs = lhs.clone();
+
+            lhs -= rhs.clone();
+            assert_eq!(lhs, expected);
+        }
+
+        {
+            let mut lhs = lhs.clone();
+
+            lhs -= &rhs;
+            assert_eq!(lhs, expected);
+        }
+    }
+
+    #[test]
+    fn test_elementwise_sub() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+
+        let output = lhs.elementwise_sub(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_sub_consume_self() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+
+        let output = lhs.elementwise_sub_consume_self(&rhs).unwrap();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_elementwise_sub_assign() {
+        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+
+        lhs.elementwise_sub_assign(&rhs).unwrap();
+        assert_eq!(lhs, expected);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_primitive_scalar_sub() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix_ref = matrix.map_ref(|x| x);
+        let scalar = 2;
+        let expected = matrix![[-1, 0, 1], [2, 3, 4]];
+        let rexpected = matrix![[1, 0, -1], [-2, -3, -4]];
+
+        assert_eq!(matrix.clone() - scalar, expected);
+        assert_eq!(matrix.clone() - &scalar, expected);
+        assert_eq!(&matrix - scalar, expected);
+        assert_eq!(&matrix - &scalar, expected);
+        assert_eq!(scalar - matrix.clone(), rexpected);
+        assert_eq!(&scalar - matrix.clone(), rexpected);
+        assert_eq!(scalar - &matrix, rexpected);
+        assert_eq!(&scalar - &matrix, rexpected);
+
+        assert_eq!(matrix_ref.clone() - scalar, expected);
+        assert_eq!(matrix_ref.clone() - &scalar, expected);
+        assert_eq!(&matrix_ref - scalar, expected);
+        assert_eq!(&matrix_ref - &scalar, expected);
+        assert_eq!(scalar - matrix_ref.clone(), rexpected);
+        assert_eq!(&scalar - matrix_ref.clone(), rexpected);
+        assert_eq!(scalar - &matrix_ref, rexpected);
+        assert_eq!(&scalar - &matrix_ref, rexpected);
+
+        {
+            let mut matrix = matrix.clone();
+
+            matrix -= scalar;
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let mut matrix = matrix.clone();
+
+            matrix -= &scalar;
+            assert_eq!(matrix, expected);
+        }
+    }
+}

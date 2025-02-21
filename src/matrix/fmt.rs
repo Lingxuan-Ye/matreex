@@ -1,5 +1,5 @@
-use super::index::Index;
 use super::Matrix;
+use super::index::Index;
 use std::collections::VecDeque;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 
