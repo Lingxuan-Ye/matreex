@@ -154,7 +154,7 @@ impl<T> Matrix<T> {
 
     /// Returns the stride of the minor axis.
     #[allow(dead_code)]
-    const fn minor_stride(&self) -> usize {
+    fn minor_stride(&self) -> usize {
         self.shape.minor_stride()
     }
 }

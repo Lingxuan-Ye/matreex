@@ -147,7 +147,7 @@ impl AxisShape {
         self.minor
     }
 
-    pub(super) const fn minor_stride(&self) -> usize {
+    pub(super) fn minor_stride(&self) -> usize {
         1
     }
 
