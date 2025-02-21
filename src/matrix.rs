@@ -5,7 +5,7 @@ use self::order::Order;
 use self::shape::{AxisShape, Shape};
 use crate::error::{Error, Result};
 use std::cmp::min;
-use std::mem::size_of;
+use std::ptr;
 
 pub mod index;
 pub mod iter;
@@ -35,9 +35,9 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::{Order, matrix};
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert_eq!(matrix.order(), Order::default());
     /// ```
     #[inline]
@@ -52,7 +52,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let shape = matrix.shape();
     /// assert_eq!(shape.nrows(), 2);
     /// assert_eq!(shape.ncols(), 3);
@@ -69,7 +69,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert_eq!(matrix.nrows(), 2);
     /// ```
     #[inline]
@@ -84,7 +84,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert_eq!(matrix.ncols(), 3);
     /// ```
     #[inline]
@@ -99,7 +99,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert_eq!(matrix.size(), 6);
     /// ```
     #[inline]
@@ -154,7 +154,7 @@ impl<T> Matrix<T> {
 
     /// Returns the stride of the minor axis.
     #[allow(dead_code)]
-    const fn minor_stride(&self) -> usize {
+    fn minor_stride(&self) -> usize {
         self.shape.minor_stride()
     }
 }
@@ -167,22 +167,23 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix.transpose();
     ///
     /// // row 0
-    /// assert_eq!(matrix[(0, 0)], 0);
-    /// assert_eq!(matrix[(0, 1)], 3);
+    /// assert_eq!(matrix[(0, 0)], 1);
+    /// assert_eq!(matrix[(0, 1)], 4);
     ///
     /// // row 1
-    /// assert_eq!(matrix[(1, 0)], 1);
-    /// assert_eq!(matrix[(1, 1)], 4);
+    /// assert_eq!(matrix[(1, 0)], 2);
+    /// assert_eq!(matrix[(1, 1)], 5);
     ///
     /// // row 2
-    /// assert_eq!(matrix[(2, 0)], 2);
-    /// assert_eq!(matrix[(2, 1)], 5);
+    /// assert_eq!(matrix[(2, 0)], 3);
+    /// assert_eq!(matrix[(2, 1)], 6);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
+        let base = self.data.as_mut_ptr();
         let size = self.size();
         let mut visited = vec![false; size];
 
@@ -191,7 +192,11 @@ impl<T> Matrix<T> {
             while !visited[current] {
                 visited[current] = true;
                 let next = map_flattened_index_for_transpose(current, self.shape);
-                self.data.swap(index, next);
+                unsafe {
+                    let x = base.add(index);
+                    let y = base.add(next);
+                    ptr::swap(x, y);
+                }
                 current = next;
             }
         }
@@ -207,7 +212,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let order = matrix.order();
     ///
     /// matrix.switch_order();
@@ -231,22 +236,22 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let order = matrix.order();
     /// matrix.switch_order_without_rearrangement();
     /// assert_ne!(matrix.order(), order);
     ///
     /// // row 0
-    /// assert_eq!(matrix[(0, 0)], 0);
-    /// assert_eq!(matrix[(0, 1)], 3);
+    /// assert_eq!(matrix[(0, 0)], 1);
+    /// assert_eq!(matrix[(0, 1)], 4);
     ///
     /// // row 1
-    /// assert_eq!(matrix[(1, 0)], 1);
-    /// assert_eq!(matrix[(1, 1)], 4);
+    /// assert_eq!(matrix[(1, 0)], 2);
+    /// assert_eq!(matrix[(1, 1)], 5);
     ///
     /// // row 2
-    /// assert_eq!(matrix[(2, 0)], 2);
-    /// assert_eq!(matrix[(2, 1)], 5);
+    /// assert_eq!(matrix[(2, 0)], 3);
+    /// assert_eq!(matrix[(2, 1)], 6);
     /// ```
     #[inline]
     pub fn switch_order_without_rearrangement(&mut self) -> &mut Self {
@@ -259,9 +264,9 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Order};
+    /// use matreex::{Order, matrix};
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
     /// matrix.set_order(Order::RowMajor);
     /// assert_eq!(matrix.order(), Order::RowMajor);
@@ -286,23 +291,23 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let mut order = matrix.order();
     /// order.switch();
     /// matrix.set_order_without_rearrangement(order);
     /// assert_eq!(matrix.order(), order);
     ///
     /// // row 0
-    /// assert_eq!(matrix[(0, 0)], 0);
-    /// assert_eq!(matrix[(0, 1)], 3);
+    /// assert_eq!(matrix[(0, 0)], 1);
+    /// assert_eq!(matrix[(0, 1)], 4);
     ///
     /// // row 1
-    /// assert_eq!(matrix[(1, 0)], 1);
-    /// assert_eq!(matrix[(1, 1)], 4);
+    /// assert_eq!(matrix[(1, 0)], 2);
+    /// assert_eq!(matrix[(1, 1)], 5);
     ///
     /// // row 2
-    /// assert_eq!(matrix[(2, 0)], 2);
-    /// assert_eq!(matrix[(2, 1)], 5);
+    /// assert_eq!(matrix[(2, 0)], 3);
+    /// assert_eq!(matrix[(2, 1)], 6);
     /// ```
     #[inline]
     pub fn set_order_without_rearrangement(&mut self, order: Order) -> &mut Self {
@@ -328,17 +333,17 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
     /// matrix.resize((2, 2))?;
-    /// assert_eq!(matrix, matrix![[0, 1], [2, 3]]);
+    /// assert_eq!(matrix, matrix![[1, 2], [3, 4]]);
     ///
     /// matrix.resize((2, 3))?;
-    /// assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0]]);
     /// # Ok(())
     /// # }
     /// ```
@@ -364,14 +369,14 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Error};
     /// # use matreex::Result;
+    /// use matreex::{Error, matrix};
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
     /// matrix.reshape((3, 2))?;
-    /// assert_eq!(matrix, matrix![[0, 1], [2, 3], [4, 5]]);
+    /// assert_eq!(matrix, matrix![[1, 2], [3, 4], [5, 6]]);
     ///
     /// let result = matrix.reshape((2, 2));
     /// assert_eq!(result, Err(Error::SizeMismatch));
@@ -397,11 +402,11 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert!(matrix.capacity() >= 6);
     ///
     /// matrix.resize((1, 3))?;
@@ -429,11 +434,11 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
     /// # use matreex::Result;
+    /// use matreex::matrix;
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert!(matrix.capacity() >= 6);
     ///
     /// matrix.resize((1, 3))?;
@@ -451,6 +456,25 @@ impl<T> Matrix<T> {
     pub fn shrink_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
         self
+    }
+
+    /// Returns `true` if the matrix contains an element with the given value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert!(matrix.contains(&5));
+    /// assert!(!matrix.contains(&10));
+    /// ```
+    #[inline]
+    pub fn contains(&self, value: &T) -> bool
+    where
+        T: PartialEq,
+    {
+        self.data.contains(value)
     }
 
     /// Overwrites the overlapping part of this matrix with `source`,
@@ -510,9 +534,9 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// matrix.apply(|x| *x += 1);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix.apply(|x| *x += 2);
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
     pub fn apply<F>(&mut self, f: F) -> &mut Self
@@ -531,9 +555,9 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
     /// let matrix_f64 = matrix_i32.map(|x| x as f64);
-    /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    /// assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
     /// ```
     #[inline]
     pub fn map<U, F>(self, f: F) -> Matrix<U>
@@ -557,16 +581,16 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
     /// let matrix_f64 = matrix_i32.map_ref(|x| *x as f64);
-    /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    /// assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
     /// ```
     ///
     /// [`map`]: Matrix::map
     #[inline]
-    pub fn map_ref<U, F>(&self, f: F) -> Matrix<U>
+    pub fn map_ref<'a, U, F>(&'a self, f: F) -> Matrix<U>
     where
-        F: FnMut(&T) -> U,
+        F: FnMut(&'a T) -> U,
     {
         let order = self.order;
         let shape = self.shape;
@@ -584,7 +608,7 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix.clear();
     /// assert!(matrix.is_empty());
     /// assert_eq!(matrix.nrows(), 0);
@@ -616,7 +640,7 @@ mod tests {
 
     #[test]
     fn test_transpose() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let order = matrix.order;
         let major = matrix.major();
         let minor = matrix.minor();
@@ -625,16 +649,16 @@ mod tests {
 
         {
             // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 3);
+            assert_eq!(matrix[(0, 0)], 1);
+            assert_eq!(matrix[(0, 1)], 4);
 
             // row 1
-            assert_eq!(matrix[(1, 0)], 1);
-            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 0)], 2);
+            assert_eq!(matrix[(1, 1)], 5);
 
             // row 2
-            assert_eq!(matrix[(2, 0)], 2);
-            assert_eq!(matrix[(2, 1)], 5);
+            assert_eq!(matrix[(2, 0)], 3);
+            assert_eq!(matrix[(2, 1)], 6);
 
             assert_eq!(matrix.order, order);
             assert_eq!(matrix.major(), minor);
@@ -645,14 +669,14 @@ mod tests {
 
         {
             // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 1);
-            assert_eq!(matrix[(0, 2)], 2);
+            assert_eq!(matrix[(0, 0)], 1);
+            assert_eq!(matrix[(0, 1)], 2);
+            assert_eq!(matrix[(0, 2)], 3);
 
             // row 1
-            assert_eq!(matrix[(1, 0)], 3);
-            assert_eq!(matrix[(1, 1)], 4);
-            assert_eq!(matrix[(1, 2)], 5);
+            assert_eq!(matrix[(1, 0)], 4);
+            assert_eq!(matrix[(1, 1)], 5);
+            assert_eq!(matrix[(1, 2)], 6);
 
             assert_eq!(matrix.order, order);
             assert_eq!(matrix.major(), major);
@@ -662,7 +686,7 @@ mod tests {
 
     #[test]
     fn test_switch_order() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let order = matrix.order;
         let major = matrix.major();
         let minor = matrix.minor();
@@ -671,14 +695,14 @@ mod tests {
 
         {
             // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 1);
-            assert_eq!(matrix[(0, 2)], 2);
+            assert_eq!(matrix[(0, 0)], 1);
+            assert_eq!(matrix[(0, 1)], 2);
+            assert_eq!(matrix[(0, 2)], 3);
 
             // row 1
-            assert_eq!(matrix[(1, 0)], 3);
-            assert_eq!(matrix[(1, 1)], 4);
-            assert_eq!(matrix[(1, 2)], 5);
+            assert_eq!(matrix[(1, 0)], 4);
+            assert_eq!(matrix[(1, 1)], 5);
+            assert_eq!(matrix[(1, 2)], 6);
 
             assert_ne!(matrix.order, order);
             assert_eq!(matrix.major(), minor);
@@ -689,14 +713,14 @@ mod tests {
 
         {
             // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 1);
-            assert_eq!(matrix[(0, 2)], 2);
+            assert_eq!(matrix[(0, 0)], 1);
+            assert_eq!(matrix[(0, 1)], 2);
+            assert_eq!(matrix[(0, 2)], 3);
 
             // row 1
-            assert_eq!(matrix[(1, 0)], 3);
-            assert_eq!(matrix[(1, 1)], 4);
-            assert_eq!(matrix[(1, 2)], 5);
+            assert_eq!(matrix[(1, 0)], 4);
+            assert_eq!(matrix[(1, 1)], 5);
+            assert_eq!(matrix[(1, 2)], 6);
 
             assert_eq!(matrix.order, order);
             assert_eq!(matrix.major(), major);
@@ -706,7 +730,7 @@ mod tests {
 
     #[test]
     fn test_switch_order_without_rearrangement() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let order = matrix.order;
         let major = matrix.major();
         let minor = matrix.minor();
@@ -715,16 +739,16 @@ mod tests {
 
         {
             // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 3);
+            assert_eq!(matrix[(0, 0)], 1);
+            assert_eq!(matrix[(0, 1)], 4);
 
             // row 1
-            assert_eq!(matrix[(1, 0)], 1);
-            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 0)], 2);
+            assert_eq!(matrix[(1, 1)], 5);
 
             // row 2
-            assert_eq!(matrix[(2, 0)], 2);
-            assert_eq!(matrix[(2, 1)], 5);
+            assert_eq!(matrix[(2, 0)], 3);
+            assert_eq!(matrix[(2, 1)], 6);
 
             assert_ne!(matrix.order, order);
             assert_eq!(matrix.major(), major);
@@ -735,14 +759,14 @@ mod tests {
 
         {
             // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 1);
-            assert_eq!(matrix[(0, 2)], 2);
+            assert_eq!(matrix[(0, 0)], 1);
+            assert_eq!(matrix[(0, 1)], 2);
+            assert_eq!(matrix[(0, 2)], 3);
 
             // row 1
-            assert_eq!(matrix[(1, 0)], 3);
-            assert_eq!(matrix[(1, 1)], 4);
-            assert_eq!(matrix[(1, 2)], 5);
+            assert_eq!(matrix[(1, 0)], 4);
+            assert_eq!(matrix[(1, 1)], 5);
+            assert_eq!(matrix[(1, 2)], 6);
 
             assert_eq!(matrix.order, order);
             assert_eq!(matrix.major(), major);
@@ -752,7 +776,7 @@ mod tests {
 
     #[test]
     fn test_set_order() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let major = matrix.major();
         let minor = matrix.minor();
 
@@ -760,14 +784,14 @@ mod tests {
 
         {
             // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 1);
-            assert_eq!(matrix[(0, 2)], 2);
+            assert_eq!(matrix[(0, 0)], 1);
+            assert_eq!(matrix[(0, 1)], 2);
+            assert_eq!(matrix[(0, 2)], 3);
 
             // row 1
-            assert_eq!(matrix[(1, 0)], 3);
-            assert_eq!(matrix[(1, 1)], 4);
-            assert_eq!(matrix[(1, 2)], 5);
+            assert_eq!(matrix[(1, 0)], 4);
+            assert_eq!(matrix[(1, 1)], 5);
+            assert_eq!(matrix[(1, 2)], 6);
 
             assert_eq!(matrix.order, Order::RowMajor);
             assert_eq!(matrix.major(), major);
@@ -778,14 +802,14 @@ mod tests {
 
         {
             // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 1);
-            assert_eq!(matrix[(0, 2)], 2);
+            assert_eq!(matrix[(0, 0)], 1);
+            assert_eq!(matrix[(0, 1)], 2);
+            assert_eq!(matrix[(0, 2)], 3);
 
             // row 1
-            assert_eq!(matrix[(1, 0)], 3);
-            assert_eq!(matrix[(1, 1)], 4);
-            assert_eq!(matrix[(1, 2)], 5);
+            assert_eq!(matrix[(1, 0)], 4);
+            assert_eq!(matrix[(1, 1)], 5);
+            assert_eq!(matrix[(1, 2)], 6);
 
             assert_eq!(matrix.order, Order::ColMajor);
             assert_eq!(matrix.major(), minor);
@@ -795,7 +819,7 @@ mod tests {
 
     #[test]
     fn test_set_order_without_rearrangement() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let mut order = matrix.order();
         let major = matrix.major();
         let minor = matrix.minor();
@@ -804,14 +828,14 @@ mod tests {
 
         {
             // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 1);
-            assert_eq!(matrix[(0, 2)], 2);
+            assert_eq!(matrix[(0, 0)], 1);
+            assert_eq!(matrix[(0, 1)], 2);
+            assert_eq!(matrix[(0, 2)], 3);
 
             // row 1
-            assert_eq!(matrix[(1, 0)], 3);
-            assert_eq!(matrix[(1, 1)], 4);
-            assert_eq!(matrix[(1, 2)], 5);
+            assert_eq!(matrix[(1, 0)], 4);
+            assert_eq!(matrix[(1, 1)], 5);
+            assert_eq!(matrix[(1, 2)], 6);
 
             assert_eq!(matrix.order, order);
             assert_eq!(matrix.major(), major);
@@ -823,16 +847,16 @@ mod tests {
 
         {
             // row 0
-            assert_eq!(matrix[(0, 0)], 0);
-            assert_eq!(matrix[(0, 1)], 3);
+            assert_eq!(matrix[(0, 0)], 1);
+            assert_eq!(matrix[(0, 1)], 4);
 
             // row 1
-            assert_eq!(matrix[(1, 0)], 1);
-            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 0)], 2);
+            assert_eq!(matrix[(1, 1)], 5);
 
             // row 2
-            assert_eq!(matrix[(2, 0)], 2);
-            assert_eq!(matrix[(2, 1)], 5);
+            assert_eq!(matrix[(2, 0)], 3);
+            assert_eq!(matrix[(2, 1)], 6);
 
             assert_eq!(matrix.order, order);
             assert_eq!(matrix.major(), major);
@@ -842,19 +866,19 @@ mod tests {
 
     #[test]
     fn test_resize() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         matrix.resize((2, 3)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.resize((2, 2)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1], [2, 3]]);
+        assert_eq!(matrix, matrix![[1, 2], [3, 4]]);
 
         matrix.resize((3, 3)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0], [0, 0, 0]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0], [0, 0, 0]]);
 
         matrix.resize((2, 3)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0]]);
 
         matrix.resize((2, 0)).unwrap();
         assert_eq!(matrix, matrix![[], []]);
@@ -872,22 +896,22 @@ mod tests {
 
     #[test]
     fn test_reshape() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         matrix.reshape((2, 3)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.reshape((3, 2)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1], [2, 3], [4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2], [3, 4], [5, 6]]);
 
         matrix.reshape((1, 6)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2, 3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3, 4, 5, 6]]);
 
         matrix.reshape((6, 1)).unwrap();
-        assert_eq!(matrix, matrix![[0], [1], [2], [3], [4], [5]]);
+        assert_eq!(matrix, matrix![[1], [2], [3], [4], [5], [6]]);
 
         matrix.reshape((2, 3)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         let unchanged = matrix.clone();
 
@@ -905,125 +929,219 @@ mod tests {
     }
 
     #[test]
+    fn test_shrink_to_fit() {
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        assert!(matrix.capacity() >= 6);
+
+        matrix.resize((1, 3)).unwrap();
+        assert!(matrix.capacity() >= 6);
+
+        matrix.shrink_to_fit();
+        assert!(matrix.capacity() >= 3);
+    }
+
+    #[test]
+    fn test_shrink_to() {
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        assert!(matrix.capacity() >= 6);
+
+        matrix.resize((1, 3)).unwrap();
+        assert!(matrix.capacity() >= 6);
+
+        matrix.shrink_to(4);
+        assert!(matrix.capacity() >= 4);
+
+        matrix.shrink_to(0);
+        assert!(matrix.capacity() >= 3);
+    }
+
+    #[test]
+    fn test_contains() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        assert!(!matrix.contains(&0));
+        assert!(matrix.contains(&1));
+        assert!(matrix.contains(&2));
+        assert!(matrix.contains(&3));
+        assert!(matrix.contains(&4));
+        assert!(matrix.contains(&5));
+        assert!(matrix.contains(&6));
+    }
+
+    #[test]
     fn test_overwrite() {
-        let blank = matrix![[0, 0, 0], [0, 0, 0]];
+        fn test_helper(destination: Matrix<i32>, source: Matrix<i32>, expected: Matrix<i32>) {
+            // assume all inputs are of default order
+
+            // default order & default order
+            {
+                let mut destination = destination.clone();
+
+                destination.overwrite(&source);
+                assert_eq!(destination, expected);
+            }
+
+            // default order & alternative order
+            {
+                let mut destination = destination.clone();
+                let mut source = source.clone();
+                source.switch_order();
+
+                destination.overwrite(&source);
+                assert_eq!(destination, expected);
+            }
+
+            // alternative order & default order
+            {
+                let mut destination = destination.clone();
+                destination.switch_order();
+
+                destination.overwrite(&source);
+                destination.switch_order();
+                assert_eq!(destination, expected);
+            }
+
+            // alternative order & alternative order
+            {
+                let mut destination = destination.clone();
+                let mut source = source.clone();
+                destination.switch_order();
+                source.switch_order();
+
+                destination.overwrite(&source);
+                destination.switch_order();
+                assert_eq!(destination, expected);
+            }
+        }
+
+        let destination = matrix![[0, 0, 0], [0, 0, 0]];
 
         {
-            let mut source = matrix![[1, 2]];
+            let source = matrix![[1, 2]];
+            let expected = matrix![[1, 2, 0], [0, 0, 0]];
 
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
-
-            source.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
+            test_helper(destination.clone(), source, expected);
         }
 
         {
-            let mut source = matrix![[1, 2], [3, 4]];
+            let source = matrix![[1, 2], [3, 4]];
+            let expected = matrix![[1, 2, 0], [3, 4, 0]];
 
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
-
-            source.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+            test_helper(destination.clone(), source, expected);
         }
 
         {
-            let mut source = matrix![[1, 2], [3, 4], [5, 6]];
+            let source = matrix![[1, 2], [3, 4], [5, 6]];
+            let expected = matrix![[1, 2, 0], [3, 4, 0]];
 
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
-
-            source.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+            test_helper(destination.clone(), source, expected);
         }
 
         {
-            let mut source = matrix![[1, 2, 3]];
+            let source = matrix![[1, 2, 3]];
+            let expected = matrix![[1, 2, 3], [0, 0, 0]];
 
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
-
-            source.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+            test_helper(destination.clone(), source, expected);
         }
 
         {
-            let mut source = matrix![[1, 2, 3, 4]];
+            let source = matrix![[1, 2, 3, 4]];
+            let expected = matrix![[1, 2, 3], [0, 0, 0]];
 
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
-
-            source.switch_order();
-
-            let mut matrix = blank.clone();
-            matrix.overwrite(&source);
-            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+            test_helper(destination.clone(), source, expected);
         }
     }
 
     #[test]
     fn test_apply() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        fn add_two(x: &mut i32) {
+            *x += 2;
+        }
 
-        matrix.apply(|x| *x += 2);
-        assert_eq!(matrix, matrix![[2, 3, 4], [5, 6, 7]]);
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
-        matrix.switch_order();
+        // default order
+        {
+            let mut matrix = matrix.clone();
 
-        matrix.apply(|x| *x -= 2);
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+            matrix.apply(add_two);
+            assert_eq!(matrix, expected);
+        }
+
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
+
+            matrix.apply(add_two);
+            matrix.switch_order();
+            assert_eq!(matrix, expected);
+        }
     }
 
     #[test]
     fn test_map() {
-        let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+        fn to_f64(x: i32) -> f64 {
+            x as f64
+        }
 
-        let mut matrix_f64 = matrix_i32.map(|x| x as f64);
-        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+        let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
-        matrix_f64.switch_order();
+        // default order
+        {
+            let matrix_i32 = matrix_i32.clone();
 
-        let mut matrix_i32 = matrix_f64.map(|x| x as i32);
-        matrix_i32.switch_order();
-        assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
+            let matrix_f64 = matrix_i32.map(to_f64);
+            assert_eq!(matrix_f64, expected);
+        }
+
+        // alternative order
+        {
+            let mut matrix_i32 = matrix_i32.clone();
+            matrix_i32.switch_order();
+
+            let mut matrix_f64 = matrix_i32.map(to_f64);
+            matrix_f64.switch_order();
+            assert_eq!(matrix_f64, expected);
+        }
     }
 
     #[test]
     fn test_map_ref() {
-        let mut matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+        fn to_f64(x: &i32) -> f64 {
+            *x as f64
+        }
 
-        let matrix_f64 = matrix_i32.map_ref(|x| *x as f64);
-        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+        let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
-        matrix_i32.switch_order();
+        // default order
+        {
+            let matrix_f64 = matrix_i32.map_ref(to_f64);
+            assert_eq!(matrix_f64, expected);
+        }
 
-        let mut matrix_f64 = matrix_i32.map_ref(|x| *x as f64);
-        matrix_f64.switch_order();
-        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+        // alternative order
+        {
+            let mut matrix_i32 = matrix_i32.clone();
+            matrix_i32.switch_order();
+
+            let mut matrix_f64 = matrix_i32.map_ref(to_f64);
+            matrix_f64.switch_order();
+            assert_eq!(matrix_f64, expected);
+        }
+
+        // to matrix of references
+        {
+            let matrix_ref = matrix_i32.map_ref(|x| x);
+            assert_eq!(matrix_ref, matrix![[&1, &2, &3], [&4, &5, &6]]);
+        }
     }
 
     #[test]
     fn test_clear() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         matrix.clear();
         assert!(matrix.is_empty());
         assert_eq!(matrix.nrows(), 0);

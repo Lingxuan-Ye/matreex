@@ -1,7 +1,7 @@
 [package]
 name = "matreex"
-version = "0.23.3"
-edition = "2021"
+version = "0.24.0"
+edition = "2024"
 authors = ["Lingxuan Ye <love@lingxuan.io>"]
 categories = ["data-structures"]
 repository = "https://github.com/Lingxuan-Ye/matreex"

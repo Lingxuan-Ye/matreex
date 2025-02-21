@@ -1,7 +1,7 @@
+use super::Matrix;
 use super::index::Index;
 use super::order::Order;
 use super::shape::{AxisShape, Shape};
-use super::Matrix;
 use crate::error::Result;
 
 impl<T> Matrix<T> {
@@ -60,7 +60,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Matrix};
+    /// use matreex::{Matrix, matrix};
     ///
     /// let result = Matrix::with_default((2, 3));
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
@@ -92,7 +92,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Matrix};
+    /// use matreex::{Matrix, matrix};
     ///
     /// let result = Matrix::with_value((2, 3), 0);
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
@@ -123,7 +123,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Matrix};
+    /// use matreex::{Matrix, matrix};
     ///
     /// let result = Matrix::with_initializer((2, 3), |index| index.row + index.col);
     /// assert_eq!(result, Ok(matrix![[0, 1, 2], [1, 2, 3]]));

@@ -19,6 +19,8 @@ impl Shape {
     /// use matreex::Shape;
     ///
     /// let shape = Shape::new(2, 3);
+    /// assert_eq!(shape.nrows(), 2);
+    /// assert_eq!(shape.ncols(), 3);
     /// ```
     #[inline]
     pub fn new(nrows: usize, ncols: usize) -> Self {
@@ -145,7 +147,7 @@ impl AxisShape {
         self.minor
     }
 
-    pub(super) const fn minor_stride(&self) -> usize {
+    pub(super) fn minor_stride(&self) -> usize {
         1
     }
 
