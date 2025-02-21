@@ -458,6 +458,14 @@ impl<T> Matrix<T> {
         self
     }
 
+    #[inline]
+    pub fn contains(&self, value: &T) -> bool
+    where
+        T: PartialEq,
+    {
+        self.data.contains(value)
+    }
+
     /// Overwrites the overlapping part of this matrix with `source`,
     /// leaving the non-overlapping part unchanged.
     ///
