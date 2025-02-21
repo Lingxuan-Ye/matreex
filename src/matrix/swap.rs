@@ -29,11 +29,9 @@ impl<T> Matrix<T> {
         I: MatrixIndex<T, Output = T>,
         J: MatrixIndex<T, Output = T>,
     {
-        i.ensure_in_bounds(self)?;
-        j.ensure_in_bounds(self)?;
+        let x = self.get_mut(i)? as *mut T;
+        let y = self.get_mut(j)? as *mut T;
         unsafe {
-            let x = i.get_unchecked_mut(self);
-            let y = j.get_unchecked_mut(self);
             ptr::swap(x, y);
         }
         Ok(self)
