@@ -1,3 +1,5 @@
+//! Defines indexing operations.
+
 use super::Matrix;
 use super::order::Order;
 use super::shape::AxisShape;

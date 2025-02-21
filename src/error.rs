@@ -1,4 +1,4 @@
-//! Module for error handling.
+//! Error handling for the crate.
 
 /// An alias for [`std::result::Result`].
 pub type Result<T> = std::result::Result<T, Error>;
