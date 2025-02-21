@@ -458,6 +458,17 @@ impl<T> Matrix<T> {
         self
     }
 
+    /// Returns `true` if the matrix contains an element with the given value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert!(matrix.contains(&5));
+    /// assert!(!matrix.contains(&10));
+    /// ```
     #[inline]
     pub fn contains(&self, value: &T) -> bool
     where
