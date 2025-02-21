@@ -945,6 +945,18 @@ mod tests {
     }
 
     #[test]
+    fn test_contains() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        assert!(!matrix.contains(&0));
+        assert!(matrix.contains(&1));
+        assert!(matrix.contains(&2));
+        assert!(matrix.contains(&3));
+        assert!(matrix.contains(&4));
+        assert!(matrix.contains(&5));
+        assert!(matrix.contains(&6));
+    }
+
+    #[test]
     fn test_overwrite() {
         fn test_helper(destination: Matrix<i32>, source: Matrix<i32>, expected: Matrix<i32>) {
             // assume all inputs are of default order
