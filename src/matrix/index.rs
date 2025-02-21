@@ -247,7 +247,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
 
 /// A structure representing the index of an element in a [`Matrix<T>`].
 ///
-/// Refer to [`SingleElementIndex`] for more information.
+/// Refer to [`AsIndex`] for more information.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Index {
     /// The row index of the element.
@@ -321,12 +321,11 @@ impl From<[usize; 2]> for Index {
 /// # Examples
 ///
 /// ```
-/// use matreex::matrix;
-/// use matreex::matrix::index::SingleElementIndex;
+/// use matreex::{AsIndex, matrix};
 ///
 /// struct I(usize, usize);
 ///
-/// impl SingleElementIndex for I {
+/// impl AsIndex for I {
 ///     fn row(&self) -> usize {
 ///         self.0
 ///     }
@@ -339,7 +338,7 @@ impl From<[usize; 2]> for Index {
 /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
 /// assert_eq!(matrix.get(I(1, 1)), Ok(&5));
 /// ```
-pub trait SingleElementIndex {
+pub trait AsIndex {
     /// The row index of the element.
     fn row(&self) -> usize;
 
@@ -349,7 +348,7 @@ pub trait SingleElementIndex {
 
 unsafe impl<T, I> MatrixIndex<T> for I
 where
-    I: SingleElementIndex,
+    I: AsIndex,
 {
     type Output = T;
 
@@ -386,7 +385,7 @@ where
     }
 }
 
-impl SingleElementIndex for Index {
+impl AsIndex for Index {
     #[inline]
     fn row(&self) -> usize {
         self.row
@@ -398,7 +397,7 @@ impl SingleElementIndex for Index {
     }
 }
 
-impl SingleElementIndex for (usize, usize) {
+impl AsIndex for (usize, usize) {
     #[inline]
     fn row(&self) -> usize {
         self.0
@@ -410,7 +409,7 @@ impl SingleElementIndex for (usize, usize) {
     }
 }
 
-impl SingleElementIndex for [usize; 2] {
+impl AsIndex for [usize; 2] {
     #[inline]
     fn row(&self) -> usize {
         self[0]
@@ -425,12 +424,11 @@ impl SingleElementIndex for [usize; 2] {
 /// A structure representing the wrapping index of an element in a
 /// [`Matrix<T>`].
 ///
-/// Unlike [`Index`], this type does not implement [`SingleElementIndex`],
-/// and there is no wrapping equivalent for that trait. Additionally,
 /// [`WrappingIndex`] is the only type that exhibits wrapping indexing
-/// behavior. You cannot pass a `(isize, isize)` or a `[isize; 2]` to
-/// methods expecting an index, or more precisely, a type that implements
-/// [`MatrixIndex<T>`].
+/// behavior. It does not implement [`AsIndex`], and there is no wrapping
+/// equivalent for that trait. You cannot pass a `(isize, isize)` or a
+/// `[isize; 2]` to methods expecting an index, or more precisely, a type
+/// that implements [`MatrixIndex<T>`].
 ///
 /// The design choice is based on the following considerations
 /// - Wrapping indexing does not follow standard indexing conventions,
@@ -579,7 +577,7 @@ impl AxisIndex {
 
     pub(super) fn from_index<I>(index: &I, order: Order) -> Self
     where
-        I: SingleElementIndex,
+        I: AsIndex,
     {
         let (major, minor) = match order {
             Order::RowMajor => (index.row(), index.col()),
@@ -667,11 +665,11 @@ pub(super) fn map_flattened_index_for_transpose(index: usize, mut shape: AxisSha
 }
 
 mod internal {
-    use super::{AxisIndex, SingleElementIndex, WrappingIndex};
+    use super::{AsIndex, AxisIndex, WrappingIndex};
 
     pub trait Sealed {}
 
-    impl<I> Sealed for I where I: SingleElementIndex {}
+    impl<I> Sealed for I where I: AsIndex {}
 
     impl Sealed for WrappingIndex {}
 
@@ -863,7 +861,7 @@ mod tests {
     #[derive(Clone, Copy, Debug, PartialEq)]
     struct I(usize, usize);
 
-    impl SingleElementIndex for I {
+    impl AsIndex for I {
         fn row(&self) -> usize {
             self.0
         }
@@ -874,14 +872,14 @@ mod tests {
     }
 
     #[test]
-    fn test_single_element_index() {
+    fn test_as_index() {
         let index = I(2, 3);
         assert_eq!(index.row(), 2);
         assert_eq!(index.col(), 3);
     }
 
     #[test]
-    fn test_single_element_index_is_out_of_bounds() {
+    fn test_as_index_is_out_of_bounds() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         assert!(!I(0, 0).is_out_of_bounds(&matrix));
@@ -908,7 +906,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_element_index_ensure_in_bounds() {
+    fn test_as_index_ensure_in_bounds() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         assert!(I(0, 0).ensure_in_bounds(&matrix).is_ok());
@@ -953,7 +951,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_element_index_get() {
+    fn test_as_index_get() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         assert_eq!(I(0, 0).get(&matrix), Ok(&1));
@@ -980,7 +978,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_element_index_get_mut() {
+    fn test_as_index_get_mut() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         assert_eq!(I(0, 0).get_mut(&mut matrix), Ok(&mut 1));
@@ -1007,7 +1005,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_element_index_get_unchecked() {
+    fn test_as_index_get_unchecked() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         unsafe {
@@ -1032,7 +1030,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_element_index_get_unchecked_mut() {
+    fn test_as_index_get_unchecked_mut() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         unsafe {
@@ -1060,7 +1058,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_element_index_index() {
+    fn test_as_index_index() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         assert_eq!(I(0, 0).index(&matrix), &1);
@@ -1082,13 +1080,13 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_single_element_index_index_out_of_bounds() {
+    fn test_as_index_index_out_of_bounds() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let _ = I(2, 3).index(&matrix);
     }
 
     #[test]
-    fn test_single_element_index_index_mut() {
+    fn test_as_index_index_mut() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
         assert_eq!(I(0, 0).index_mut(&mut matrix), &mut 1);
@@ -1110,7 +1108,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_single_element_index_index_mut_out_of_bounds() {
+    fn test_as_index_index_mut_out_of_bounds() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         *I(2, 3).index_mut(&mut matrix) += 2;
     }
