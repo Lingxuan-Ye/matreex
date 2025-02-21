@@ -458,6 +458,25 @@ impl<T> Matrix<T> {
         self
     }
 
+    /// Returns `true` if the matrix contains an element with the given value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert!(matrix.contains(&5));
+    /// assert!(!matrix.contains(&10));
+    /// ```
+    #[inline]
+    pub fn contains(&self, value: &T) -> bool
+    where
+        T: PartialEq,
+    {
+        self.data.contains(value)
+    }
+
     /// Overwrites the overlapping part of this matrix with `source`,
     /// leaving the non-overlapping part unchanged.
     ///
@@ -934,6 +953,18 @@ mod tests {
 
         matrix.shrink_to(0);
         assert!(matrix.capacity() >= 3);
+    }
+
+    #[test]
+    fn test_contains() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        assert!(!matrix.contains(&0));
+        assert!(matrix.contains(&1));
+        assert!(matrix.contains(&2));
+        assert!(matrix.contains(&3));
+        assert!(matrix.contains(&4));
+        assert!(matrix.contains(&5));
+        assert!(matrix.contains(&6));
     }
 
     #[test]
