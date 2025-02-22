@@ -191,8 +191,12 @@ impl<T> Matrix<T> {
 
         for index in 0..size {
             let mut current = index;
-            while !visited[current] {
-                visited[current] = true;
+            loop {
+                let state = unsafe { visited.get_unchecked_mut(current) };
+                if *state {
+                    break;
+                }
+                *state = true;
                 let next = AxisIndex::from_flattened(current, old_shape)
                     .swap()
                     .to_flattened(self.shape);
