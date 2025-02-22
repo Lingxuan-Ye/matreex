@@ -351,8 +351,8 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::{VectorIter, matrix};
     ///
-    /// fn dot_product(lv: VectorIter<&i32>, rv: VectorIter<&i32>) -> i32 {
-    ///     lv.zip(rv).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
+    /// fn dot_product(lhs: VectorIter<&i32>, rhs: VectorIter<&i32>) -> i32 {
+    ///     lhs.zip(rhs).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
     /// }
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
@@ -902,8 +902,8 @@ mod tests {
 
     #[test]
     fn test_multiplication_like_operation() {
-        fn dot_product(lv: VectorIter<&i32>, rv: VectorIter<&i32>) -> i32 {
-            lv.zip(rv)
+        fn dot_product(lhs: VectorIter<&i32>, rhs: VectorIter<&i32>) -> i32 {
+            lhs.zip(rhs)
                 .map(|(x, y)| x * y)
                 .reduce(|acc, p| acc + p)
                 .unwrap()
