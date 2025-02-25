@@ -4,7 +4,7 @@ use self::index::AxisIndex;
 use self::order::Order;
 use self::shape::{AxisShape, Shape};
 use crate::error::{Error, Result};
-use std::cmp::min;
+use std::cmp;
 use std::ptr;
 
 pub mod index;
@@ -502,8 +502,8 @@ impl<T> Matrix<T> {
         T: Clone,
     {
         if self.order == source.order {
-            let major = min(self.major(), source.major());
-            let minor = min(self.minor(), source.minor());
+            let major = cmp::min(self.major(), source.major());
+            let minor = cmp::min(self.minor(), source.minor());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
@@ -516,8 +516,8 @@ impl<T> Matrix<T> {
                 }
             }
         } else {
-            let major = min(self.major(), source.minor());
-            let minor = min(self.minor(), source.major());
+            let major = cmp::min(self.major(), source.minor());
+            let minor = cmp::min(self.minor(), source.major());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
                 let self_upper = self_lower + minor;
