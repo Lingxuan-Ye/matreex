@@ -23,7 +23,9 @@ pub enum Error {
 
     /// Error when the capacity exceeds [`isize::MAX`].
     ///
-    /// Refer to [`Vec::with_capacity`] for more information.
+    /// Refer to [`std::vec`] and *[The Rustonomicon]* for more information.
+    ///
+    /// [The Rustonomicon]: https://doc.rust-lang.org/stable/nomicon/vec/vec-alloc.html#allocating-memory
     CapacityOverflow,
 
     /// Error when creating a matrix from a sequence of vectors with
