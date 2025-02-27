@@ -2,7 +2,6 @@ use super::super::Matrix;
 use super::super::order::Order;
 use super::super::shape::Shape;
 use crate::error::Result;
-use std::iter::zip;
 use std::ops::{Add, Mul, MulAssign};
 
 impl<L, R, U> Mul<Matrix<R>> for Matrix<L>
@@ -213,12 +212,10 @@ impl<L> Matrix<L> {
                 for row in 0..nrows {
                     for col in 0..ncols {
                         let element = unsafe {
-                            zip(
+                            dot_product(
                                 self.iter_nth_major_axis_vector_unchecked(row),
                                 rhs.iter_nth_major_axis_vector_unchecked(col),
                             )
-                            .map(|(left, right)| left.clone() * right.clone())
-                            .reduce(|accumulator, product| accumulator + product)
                             .unwrap_unchecked()
                         };
                         data.push(element);
@@ -230,12 +227,10 @@ impl<L> Matrix<L> {
                 for col in 0..ncols {
                     for row in 0..nrows {
                         let element = unsafe {
-                            zip(
+                            dot_product(
                                 self.iter_nth_major_axis_vector_unchecked(row),
                                 rhs.iter_nth_major_axis_vector_unchecked(col),
                             )
-                            .map(|(left, right)| left.clone() * right.clone())
-                            .reduce(|accumulator, product| accumulator + product)
                             .unwrap_unchecked()
                         };
                         data.push(element);
@@ -246,6 +241,21 @@ impl<L> Matrix<L> {
 
         Ok(Matrix { order, shape, data })
     }
+}
+
+#[inline(always)]
+fn dot_product<'a, L, R, U>(
+    lhs: impl Iterator<Item = &'a L>,
+    rhs: impl Iterator<Item = &'a R>,
+) -> Option<U>
+where
+    L: Mul<R, Output = U> + Clone + 'a,
+    R: Clone + 'a,
+    U: Add<Output = U>,
+{
+    lhs.zip(rhs)
+        .map(|(left, right)| left.clone() * right.clone())
+        .reduce(|accumulator, product| accumulator + product)
 }
 
 macro_rules! impl_helper {

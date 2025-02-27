@@ -1,3 +1,5 @@
+//! Defines indexing operations.
+
 use super::Matrix;
 use super::order::Order;
 use super::shape::AxisShape;
@@ -654,14 +656,6 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
         let index = self.to_flattened(shape);
         unsafe { (*matrix).data.get_unchecked_mut(index) }
     }
-}
-
-#[inline(always)]
-pub(super) fn map_flattened_index_for_transpose(index: usize, mut shape: AxisShape) -> usize {
-    let mut index = AxisIndex::from_flattened(index, shape);
-    index.swap();
-    shape.transpose();
-    index.to_flattened(shape)
 }
 
 mod internal {

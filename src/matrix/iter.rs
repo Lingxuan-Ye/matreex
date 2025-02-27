@@ -1,3 +1,5 @@
+//! Defines iterating operations.
+
 use super::Matrix;
 use super::index::Index;
 use super::order::Order;

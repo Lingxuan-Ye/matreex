@@ -1,3 +1,5 @@
+//! Describes the shape of a matrix.
+
 use super::order::Order;
 use crate::error::{Error, Result};
 
