@@ -1,3 +1,5 @@
+//! Describes the memory layout of a matrix.
+
 /// An enum representing the memory layout of a [`Matrix<T>`].
 ///
 /// [`Matrix<T>`]: crate::matrix::Matrix
