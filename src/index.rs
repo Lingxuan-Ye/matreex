@@ -323,7 +323,8 @@ impl From<[usize; 2]> for Index {
 /// # Examples
 ///
 /// ```
-/// use matreex::{AsIndex, matrix};
+/// use matreex::index::AsIndex;
+/// use matreex::matrix;
 ///
 /// struct I(usize, usize);
 ///
@@ -432,7 +433,7 @@ impl AsIndex for [usize; 2] {
 /// `[isize; 2]` to methods expecting an index, or more precisely, a type
 /// that implements [`MatrixIndex<T>`].
 ///
-/// The design choice is based on the following considerations
+/// The design choice is based on the following considerations:
 /// - Wrapping indexing does not follow standard indexing conventions,
 ///   and should always be used explicitly.
 /// - Both `(isize, isize)` and `[isize; 2]` are not sufficiently
