@@ -1,7 +1,7 @@
-use super::Matrix;
-use super::index::Index;
+use crate::Matrix;
+use crate::index::Index;
 use std::collections::VecDeque;
-use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
+use std::fmt;
 
 const LEFT_DELIMITER: &str = "[";
 const RIGHT_DELIMITER: &str = "]";
@@ -25,11 +25,11 @@ macro_rules! write_index {
     };
 }
 
-impl<T> Debug for Matrix<T>
+impl<T> fmt::Debug for Matrix<T>
 where
-    T: Debug,
+    T: fmt::Debug,
 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_empty() {
             return write!(f, "{LEFT_DELIMITER}{RIGHT_DELIMITER}");
         }
@@ -118,11 +118,11 @@ where
     }
 }
 
-impl<T> Display for Matrix<T>
+impl<T> fmt::Display for Matrix<T>
 where
-    T: Display,
+    T: fmt::Display,
 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_empty() {
             return write!(f, "{LEFT_DELIMITER}{RIGHT_DELIMITER}");
         }
@@ -191,14 +191,14 @@ struct Lines(VecDeque<String>);
 impl Lines {
     fn from_debug<T>(element: T) -> Self
     where
-        T: Debug,
+        T: fmt::Debug,
     {
         Self(format!("{:?}", element).lines().map(String::from).collect())
     }
 
     fn from_display<T>(element: T) -> Self
     where
-        T: Display,
+        T: fmt::Display,
     {
         Self(format!("{}", element).lines().map(String::from).collect())
     }

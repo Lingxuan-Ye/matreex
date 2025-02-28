@@ -1,5 +1,5 @@
-use super::Matrix;
-use super::index::Index;
+use crate::Matrix;
+use crate::index::Index;
 use rayon::prelude::*;
 
 impl<T> Matrix<T> {

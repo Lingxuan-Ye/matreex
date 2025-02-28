@@ -1,9 +1,9 @@
 //! Defines indexing operations.
 
-use super::Matrix;
-use super::order::Order;
-use super::shape::AxisShape;
+use crate::Matrix;
 use crate::error::{Error, Result};
+use crate::order::Order;
+use crate::shape::AxisShape;
 
 impl<T> Matrix<T> {
     /// Returns a reference to the [`MatrixIndex::Output`]

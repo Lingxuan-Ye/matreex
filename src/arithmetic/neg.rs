@@ -1,4 +1,4 @@
-use super::super::Matrix;
+use crate::Matrix;
 use std::ops::Neg;
 
 impl<T, U> Neg for Matrix<T>

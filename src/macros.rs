@@ -17,27 +17,27 @@
 /// let qux = matrix![[1, 2, 3], [4, 5, 6]];
 /// ```
 ///
-/// [`Matrix<T>`]: crate::matrix::Matrix
+/// [`Matrix<T>`]: crate::Matrix
 /// [`matrix!`]: crate::matrix!
 #[macro_export]
 macro_rules! matrix {
     [] => {
-        $crate::matrix::Matrix::new()
+        $crate::Matrix::new()
     };
 
     [[$elem:expr; $ncols:expr]; $nrows:expr] => {
-        match $crate::matrix::Matrix::with_value(($nrows, $ncols), $elem) {
+        match $crate::Matrix::with_value(($nrows, $ncols), $elem) {
             Err(error) => ::std::panic!("{error}"),
             Ok(matrix) => matrix,
         }
     };
 
     [[$($elem:expr),+ $(,)?]; $nrows:expr] => {
-        $crate::matrix::Matrix::from(::std::vec![[$($elem),+]; $nrows])
+        $crate::Matrix::from(::std::vec![[$($elem),+]; $nrows])
     };
 
     [$($row:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from([$($row),+])
+        $crate::Matrix::from([$($row),+])
     };
 }
 
@@ -61,15 +61,15 @@ macro_rules! matrix {
 #[macro_export]
 macro_rules! row_vec {
     [] => {
-        $crate::matrix::Matrix::from_row(::std::vec::Vec::new());
+        $crate::Matrix::from_row(::std::vec::Vec::new());
     };
 
     [$elem:expr; $n:expr] => {
-        $crate::matrix::Matrix::from_row(::std::vec![$elem; $n])
+        $crate::Matrix::from_row(::std::vec![$elem; $n])
     };
 
     [$($elem:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from_row(::std::vec![$($elem),+])
+        $crate::Matrix::from_row(::std::vec![$($elem),+])
     };
 }
 
@@ -93,14 +93,14 @@ macro_rules! row_vec {
 #[macro_export]
 macro_rules! col_vec {
     [] => {
-        $crate::matrix::Matrix::from_col(::std::vec::Vec::new());
+        $crate::Matrix::from_col(::std::vec::Vec::new());
     };
 
     [$elem:expr; $n:expr] => {
-        $crate::matrix::Matrix::from_col(::std::vec![$elem; $n])
+        $crate::Matrix::from_col(::std::vec![$elem; $n])
     };
 
     [$($elem:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from_col(::std::vec![$($elem),+])
+        $crate::Matrix::from_col(::std::vec![$($elem),+])
     };
 }

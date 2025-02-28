@@ -1,7 +1,7 @@
-use super::super::Matrix;
-use super::super::order::Order;
-use super::super::shape::Shape;
+use crate::Matrix;
 use crate::error::Result;
+use crate::order::Order;
+use crate::shape::Shape;
 use std::ops::{Add, Mul, MulAssign};
 
 impl<L, R, U> Mul<Matrix<R>> for Matrix<L>
