@@ -1,9 +1,9 @@
-use super::Matrix;
-use super::index::AxisIndex;
-use super::iter::VectorIter;
-use super::order::Order;
-use super::shape::Shape;
+use crate::Matrix;
 use crate::error::{Error, Result};
+use crate::index::AxisIndex;
+use crate::iter::VectorIter;
+use crate::order::Order;
+use crate::shape::Shape;
 
 mod add;
 mod div;

@@ -1,4 +1,4 @@
-use super::super::Matrix;
+use crate::Matrix;
 use crate::error::Result;
 use std::ops::{Add, AddAssign};
 

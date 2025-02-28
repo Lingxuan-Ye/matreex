@@ -1,11 +1,11 @@
 //! Describes the shape of a matrix.
 
-use super::order::Order;
 use crate::error::{Error, Result};
+use crate::order::Order;
 
 /// A structure representing the shape of a [`Matrix<T>`].
 ///
-/// [`Matrix<T>`]: crate::matrix::Matrix<T>
+/// [`Matrix<T>`]: crate::Matrix
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Shape {
     nrows: usize,
