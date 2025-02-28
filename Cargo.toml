@@ -1,6 +1,6 @@
 [package]
 name = "matreex"
-version = "0.24.1"
+version = "0.25.0"
 edition = "2024"
 authors = ["Lingxuan Ye <love@lingxuan.io>"]
 categories = ["data-structures"]
@@ -8,8 +8,6 @@ repository = "https://github.com/Lingxuan-Ye/matreex"
 readme = "README.md"
 license = "MIT"
 description = "A simple matrix implementation."
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 ansi_term = { version = "0.12.1", optional = true }
