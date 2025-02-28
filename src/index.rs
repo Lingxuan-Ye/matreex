@@ -323,7 +323,8 @@ impl From<[usize; 2]> for Index {
 /// # Examples
 ///
 /// ```
-/// use matreex::{AsIndex, matrix};
+/// use matreex::index::AsIndex;
+/// use matreex::matrix;
 ///
 /// struct I(usize, usize);
 ///
