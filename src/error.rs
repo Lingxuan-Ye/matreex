@@ -23,8 +23,9 @@ pub enum Error {
 
     /// Error when the capacity exceeds [`isize::MAX`].
     ///
-    /// Refer to [`std::vec`] and *[The Rustonomicon]* for more information.
+    /// Refer to [`vec`] and *[The Rustonomicon]* for more information.
     ///
+    /// [`vec`]: mod@std::vec
     /// [The Rustonomicon]: https://doc.rust-lang.org/stable/nomicon/vec/vec-alloc.html#allocating-memory
     CapacityOverflow,
 
