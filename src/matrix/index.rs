@@ -483,22 +483,6 @@ impl WrappingIndex {
     }
 }
 
-impl From<(isize, isize)> for WrappingIndex {
-    #[inline]
-    fn from(value: (isize, isize)) -> Self {
-        let (row, col) = value;
-        Self { row, col }
-    }
-}
-
-impl From<[isize; 2]> for WrappingIndex {
-    #[inline]
-    fn from(value: [isize; 2]) -> Self {
-        let [row, col] = value;
-        Self { row, col }
-    }
-}
-
 unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     type Output = T;
 
@@ -660,13 +644,9 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
 
 mod internal {
     use super::{AsIndex, AxisIndex, WrappingIndex};
-
     pub trait Sealed {}
-
     impl<I> Sealed for I where I: AsIndex {}
-
     impl Sealed for WrappingIndex {}
-
     impl Sealed for AxisIndex {}
 }
 
