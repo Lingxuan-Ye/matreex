@@ -1,9 +1,9 @@
 //! Defines iterating operations.
 
-use super::Matrix;
-use super::index::Index;
-use super::order::Order;
+use crate::Matrix;
 use crate::error::{Error, Result};
+use crate::index::Index;
+use crate::order::Order;
 
 /// An iterator that knows its exact length and can yield elements
 /// from both ends.

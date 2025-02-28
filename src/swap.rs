@@ -1,7 +1,7 @@
-use super::Matrix;
-use super::index::MatrixIndex;
-use super::order::Order;
+use crate::Matrix;
 use crate::error::{Error, Result};
+use crate::index::MatrixIndex;
+use crate::order::Order;
 use std::ptr;
 
 impl<T> Matrix<T> {

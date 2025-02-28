@@ -1,8 +1,8 @@
-use super::Matrix;
-use super::index::Index;
-use super::order::Order;
-use super::shape::{AxisShape, Shape};
+use crate::Matrix;
 use crate::error::Result;
+use crate::index::Index;
+use crate::order::Order;
+use crate::shape::{AxisShape, Shape};
 
 impl<T> Matrix<T> {
     /// Creates a new, empty [`Matrix<T>`].

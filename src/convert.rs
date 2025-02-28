@@ -1,7 +1,7 @@
-use super::Matrix;
-use super::order::Order;
-use super::shape::Shape;
+use crate::Matrix;
 use crate::error::{Error, Result};
+use crate::order::Order;
+use crate::shape::Shape;
 
 impl<T> Matrix<T> {
     /// Creates a new single-row [`Matrix<T>`] from a vector.
@@ -164,7 +164,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::super::order::Order;
     use super::*;
     use crate::matrix;
 
