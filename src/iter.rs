@@ -215,8 +215,7 @@ impl<T> Matrix<T> {
     ///
     /// # Notes
     ///
-    /// The iteration order of elements is not guaranteed. In the current
-    /// implementation, elements are iterated in memory order.
+    /// Elements are iterated in memory order.
     ///
     /// # Examples
     ///
@@ -237,8 +236,7 @@ impl<T> Matrix<T> {
     ///
     /// # Notes
     ///
-    /// The iteration order of elements is not guaranteed. In the current
-    /// implementation, elements are iterated in memory order.
+    /// Elements are iterated in memory order.
     ///
     /// # Examples
     ///
@@ -261,8 +259,7 @@ impl<T> Matrix<T> {
     ///
     /// # Notes
     ///
-    /// The iteration order of elements is not guaranteed. In the current
-    /// implementation, elements are iterated in memory order.
+    /// Elements are iterated in memory order.
     ///
     /// # Examples
     ///
@@ -283,8 +280,7 @@ impl<T> Matrix<T> {
     ///
     /// # Notes
     ///
-    /// The iteration order of elements is not guaranteed. In the current
-    /// implementation, elements are iterated in memory order.
+    /// Elements are iterated in memory order.
     ///
     /// # Examples
     ///
@@ -314,8 +310,7 @@ impl<T> Matrix<T> {
     ///
     /// # Notes
     ///
-    /// The iteration order of elements is not guaranteed. In the current
-    /// implementation, elements are iterated in memory order.
+    /// Elements are iterated in memory order.
     ///
     /// # Examples
     ///
@@ -344,8 +339,7 @@ impl<T> Matrix<T> {
     ///
     /// # Notes
     ///
-    /// The iteration order of elements is not guaranteed. In the current
-    /// implementation, elements are iterated in memory order.
+    /// Elements are iterated in memory order.
     ///
     /// # Examples
     ///
