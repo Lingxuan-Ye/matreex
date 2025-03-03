@@ -105,7 +105,7 @@ mod fmt;
 mod macros;
 mod swap;
 
-#[cfg(feature = "rayon")]
+#[cfg(feature = "parallel")]
 mod parallel;
 
 /// [`Matrix<T>`] means matrix.
