@@ -190,13 +190,13 @@ impl<L> Matrix<L> {
     /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
-    pub fn elementwise_operation<'a, R, F, U>(
+    pub fn elementwise_operation<'a, 'b, R, F, U>(
         &'a self,
-        rhs: &'a Matrix<R>,
+        rhs: &'b Matrix<R>,
         mut op: F,
     ) -> Result<Matrix<U>>
     where
-        F: FnMut(&'a L, &'a R) -> U,
+        F: FnMut(&'a L, &'b R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
@@ -301,13 +301,13 @@ impl<L> Matrix<L> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn elementwise_operation_assign<R, F>(
+    pub fn elementwise_operation_assign<'a, R, F>(
         &mut self,
-        rhs: &Matrix<R>,
+        rhs: &'a Matrix<R>,
         mut op: F,
     ) -> Result<&mut Self>
     where
-        F: FnMut(&mut L, &R),
+        F: FnMut(&mut L, &'a R),
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
@@ -430,9 +430,9 @@ impl<T> Matrix<T> {
     /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
-    pub fn scalar_operation<'a, S, F, U>(&'a self, scalar: &'a S, mut op: F) -> Matrix<U>
+    pub fn scalar_operation<'a, 'b, S, F, U>(&'a self, scalar: &'b S, mut op: F) -> Matrix<U>
     where
-        F: FnMut(&'a T, &'a S) -> U,
+        F: FnMut(&'a T, &'b S) -> U,
     {
         let order = self.order;
         let shape = self.shape;
@@ -485,9 +485,9 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
-    pub fn scalar_operation_assign<S, F>(&mut self, scalar: &S, mut op: F) -> &mut Self
+    pub fn scalar_operation_assign<'a, S, F>(&mut self, scalar: &'a S, mut op: F) -> &mut Self
     where
-        F: FnMut(&mut T, &S),
+        F: FnMut(&mut T, &'a S),
     {
         self.data.iter_mut().for_each(|element| op(element, scalar));
         self
@@ -737,6 +737,18 @@ mod tests {
 
             let output = lhs.elementwise_operation(&rhs, |_, y| y).unwrap();
             assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
+
+            let output = {
+                let rhs = rhs.clone();
+                lhs.elementwise_operation(&rhs, |x, _| x).unwrap()
+            };
+            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
+
+            let output = {
+                let lhs = lhs.clone();
+                lhs.elementwise_operation(&rhs, |_, y| y).unwrap()
+            };
+            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
         }
     }
 
@@ -898,6 +910,15 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
             assert_eq!(lhs, unchanged);
         }
+
+        // misuse but should work
+        {
+            let mut lhs = lhs.map_ref(|x| x);
+
+            lhs.elementwise_operation_assign(&rhs, |x, y| *x = y)
+                .unwrap();
+            assert_eq!(lhs, matrix![[&2, &2, &2], [&2, &2, &2]]);
+        }
     }
 
     #[test]
@@ -1027,6 +1048,18 @@ mod tests {
 
             let output = matrix.scalar_operation(&scalar, |_, y| y);
             assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
+
+            let output = {
+                let scalar = 2;
+                matrix.scalar_operation(&scalar, |x, _| x)
+            };
+            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
+
+            let output = {
+                let matrix = matrix.clone();
+                matrix.scalar_operation(&scalar, |_, y| y)
+            };
+            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
         }
     }
 
@@ -1093,6 +1126,14 @@ mod tests {
             matrix.scalar_operation_assign(&scalar, add_assign);
             matrix.switch_order();
             assert_eq!(matrix, expected);
+        }
+
+        // misuse but should work
+        {
+            let mut matrix = matrix.map_ref(|x| x);
+
+            matrix.scalar_operation_assign(&scalar, |x, y| *x = y);
+            assert_eq!(matrix, matrix![[&2, &2, &2], [&2, &2, &2]]);
         }
     }
 }
