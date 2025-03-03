@@ -1,6 +1,12 @@
+//! Defines parallel operations.
+//!
+//! This module re-exports [`rayon::prelude`] to avoid potential version
+//! conflicts.
+
+pub use rayon::prelude::*;
+
 use crate::Matrix;
 use crate::index::Index;
-use rayon::prelude::*;
 
 impl<T> Matrix<T> {
     /// Applies a closure to each element of the matrix in parallel,
@@ -88,7 +94,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let sum = matrix.par_iter_elements().sum::<i32>();
@@ -109,7 +115,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
@@ -132,7 +138,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let sum = matrix.into_par_iter_elements().sum::<i32>();
@@ -153,7 +159,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
@@ -179,7 +185,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
@@ -211,7 +217,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix

@@ -98,15 +98,15 @@ pub mod iter;
 pub mod order;
 pub mod shape;
 
+#[cfg(feature = "parallel")]
+pub mod parallel;
+
 mod arithmetic;
 mod construct;
 mod convert;
 mod fmt;
 mod macros;
 mod swap;
-
-#[cfg(feature = "parallel")]
-mod parallel;
 
 /// [`Matrix<T>`] means matrix.
 #[derive(Clone, PartialEq, Eq)]
