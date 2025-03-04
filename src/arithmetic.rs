@@ -1,7 +1,6 @@
 use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::index::AxisIndex;
-use crate::iter::VectorIter;
 use crate::order::Order;
 use crate::shape::Shape;
 
@@ -339,20 +338,22 @@ impl<L> Matrix<L> {
     ///
     /// # Notes
     ///
-    /// The resulting matrix will always have the same order as `self`.
-    ///
-    /// For performance reasons, this method consumes both `self` and `rhs`.
-    ///
     /// The closure `op` is guaranteed to receive two non-empty, equal-length
-    /// vectors. It should always return a valid value derived from them.
+    /// slices. It should always return a valid value derived from them.
+    ///
+    /// The resulting matrix will always have the same order as `self`.
     ///
     /// # Examples
     ///
     /// ```
-    /// use matreex::{VectorIter, matrix};
+    /// use matreex::matrix;
     ///
-    /// fn dot_product(lhs: VectorIter<&i32>, rhs: VectorIter<&i32>) -> i32 {
-    ///     lhs.zip(rhs).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
+    /// fn dot_product(lhs: &[i32], rhs: &[i32]) -> i32 {
+    ///     lhs.iter()
+    ///         .zip(rhs)
+    ///         .map(|(x, y)| x * y)
+    ///         .reduce(|acc, p| acc + p)
+    ///         .unwrap()
     /// }
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
@@ -366,7 +367,7 @@ impl<L> Matrix<L> {
         mut op: F,
     ) -> Result<Matrix<U>>
     where
-        F: FnMut(VectorIter<&L>, VectorIter<&R>) -> U,
+        F: FnMut(&[L], &[R]) -> U,
         U: Default,
     {
         self.ensure_multiplication_like_operation_conformable(&rhs)?;
@@ -390,10 +391,9 @@ impl<L> Matrix<L> {
             Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        let element = op(
-                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
-                            unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
-                        );
+                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let element = op(lhs, rhs);
                         data.push(element);
                     }
                 }
@@ -402,10 +402,9 @@ impl<L> Matrix<L> {
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        let element = op(
-                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
-                            unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
-                        );
+                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let element = op(lhs, rhs);
                         data.push(element);
                     }
                 }
@@ -491,6 +490,20 @@ impl<T> Matrix<T> {
     {
         self.data.iter_mut().for_each(|element| op(element, scalar));
         self
+    }
+}
+
+impl<T> Matrix<T> {
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    #[inline(always)]
+    unsafe fn get_nth_major_axis_vector(&self, n: usize) -> &[T] {
+        let lower = n * self.major_stride();
+        let upper = lower + self.major_stride();
+        unsafe { self.data.get_unchecked(lower..upper) }
     }
 }
 
@@ -923,8 +936,9 @@ mod tests {
 
     #[test]
     fn test_multiplication_like_operation() {
-        fn dot_product(lhs: VectorIter<&i32>, rhs: VectorIter<&i32>) -> i32 {
-            lhs.zip(rhs)
+        fn dot_product(lhs: &[i32], rhs: &[i32]) -> i32 {
+            lhs.iter()
+                .zip(rhs)
                 .map(|(x, y)| x * y)
                 .reduce(|acc, p| acc + p)
                 .unwrap()

@@ -170,8 +170,6 @@ impl<L> Matrix<L> {
     ///
     /// The resulting matrix will always have the same order as `self`.
     ///
-    /// For performance reasons, this method consumes both `self` and `rhs`.
-    ///
     /// # Examples
     ///
     /// ```
@@ -211,13 +209,9 @@ impl<L> Matrix<L> {
             Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        let element = unsafe {
-                            dot_product(
-                                self.iter_nth_major_axis_vector_unchecked(row),
-                                rhs.iter_nth_major_axis_vector_unchecked(col),
-                            )
-                            .unwrap_unchecked()
-                        };
+                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let element = unsafe { dot_product(lhs, rhs).unwrap_unchecked() };
                         data.push(element);
                     }
                 }
@@ -226,13 +220,9 @@ impl<L> Matrix<L> {
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        let element = unsafe {
-                            dot_product(
-                                self.iter_nth_major_axis_vector_unchecked(row),
-                                rhs.iter_nth_major_axis_vector_unchecked(col),
-                            )
-                            .unwrap_unchecked()
-                        };
+                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let element = unsafe { dot_product(lhs, rhs).unwrap_unchecked() };
                         data.push(element);
                     }
                 }
@@ -244,16 +234,14 @@ impl<L> Matrix<L> {
 }
 
 #[inline(always)]
-fn dot_product<'a, L, R, U>(
-    lhs: impl Iterator<Item = &'a L>,
-    rhs: impl Iterator<Item = &'a R>,
-) -> Option<U>
+fn dot_product<L, R, U>(lhs: &[L], rhs: &[R]) -> Option<U>
 where
-    L: Mul<R, Output = U> + Clone + 'a,
-    R: Clone + 'a,
+    L: Mul<R, Output = U> + Clone,
+    R: Clone,
     U: Add<Output = U>,
 {
-    lhs.zip(rhs)
+    lhs.iter()
+        .zip(rhs)
         .map(|(left, right)| left.clone() * right.clone())
         .reduce(|accumulator, product| accumulator + product)
 }

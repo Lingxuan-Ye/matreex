@@ -612,7 +612,7 @@ impl<T> Matrix<T> {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)
                         .iter_mut()
-                        .zip(source.iter_nth_minor_axis_vector_unchecked(i))
+                        .zip(source.data.iter().skip(i).step_by(source.major_stride()))
                         .for_each(|(x, y)| *x = y.clone());
                 }
             }
