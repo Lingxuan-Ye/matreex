@@ -100,12 +100,12 @@ impl Shape {
         self
     }
 
-    pub(super) fn try_to_axis_shape(self, order: Order) -> Result<AxisShape> {
+    pub(crate) fn try_to_axis_shape(self, order: Order) -> Result<AxisShape> {
         self.size()?;
         Ok(self.to_axis_shape_unchecked(order))
     }
 
-    pub(super) fn to_axis_shape_unchecked(self, order: Order) -> AxisShape {
+    pub(crate) fn to_axis_shape_unchecked(self, order: Order) -> AxisShape {
         let (major, minor) = match order {
             Order::RowMajor => (self.nrows, self.ncols),
             Order::ColMajor => (self.ncols, self.nrows),
@@ -131,52 +131,52 @@ impl From<[usize; 2]> for Shape {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(super) struct AxisShape {
+pub(crate) struct AxisShape {
     major: usize,
     minor: usize,
 }
 
 impl AxisShape {
-    pub(super) fn major(&self) -> usize {
+    pub(crate) fn major(&self) -> usize {
         self.major
     }
 
-    pub(super) fn minor(&self) -> usize {
+    pub(crate) fn minor(&self) -> usize {
         self.minor
     }
 
-    pub(super) fn major_stride(&self) -> usize {
+    pub(crate) fn major_stride(&self) -> usize {
         self.minor
     }
 
-    pub(super) fn minor_stride(&self) -> usize {
+    pub(crate) fn minor_stride(&self) -> usize {
         1
     }
 
-    pub(super) fn size(&self) -> usize {
+    pub(crate) fn size(&self) -> usize {
         self.major * self.minor
     }
 
-    pub(super) fn transpose(&mut self) -> &mut Self {
+    pub(crate) fn transpose(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
     }
 
-    pub(super) fn nrows(&self, order: Order) -> usize {
+    pub(crate) fn nrows(&self, order: Order) -> usize {
         match order {
             Order::RowMajor => self.major,
             Order::ColMajor => self.minor,
         }
     }
 
-    pub(super) fn ncols(&self, order: Order) -> usize {
+    pub(crate) fn ncols(&self, order: Order) -> usize {
         match order {
             Order::RowMajor => self.minor,
             Order::ColMajor => self.major,
         }
     }
 
-    pub(super) fn to_shape(self, order: Order) -> Shape {
+    pub(crate) fn to_shape(self, order: Order) -> Shape {
         let (nrows, ncols) = match order {
             Order::RowMajor => (self.major, self.minor),
             Order::ColMajor => (self.minor, self.major),

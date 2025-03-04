@@ -293,11 +293,11 @@ impl Index {
         self
     }
 
-    pub(super) fn from_flattened(index: usize, order: Order, shape: AxisShape) -> Self {
+    pub(crate) fn from_flattened(index: usize, order: Order, shape: AxisShape) -> Self {
         AxisIndex::from_flattened(index, shape).to_index(order)
     }
 
-    pub(super) fn to_flattened(self, order: Order, shape: AxisShape) -> usize {
+    pub(crate) fn to_flattened(self, order: Order, shape: AxisShape) -> usize {
         AxisIndex::from_index(&self, order).to_flattened(shape)
     }
 }
@@ -551,18 +551,18 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(super) struct AxisIndex {
-    pub(super) major: usize,
-    pub(super) minor: usize,
+pub(crate) struct AxisIndex {
+    pub(crate) major: usize,
+    pub(crate) minor: usize,
 }
 
 impl AxisIndex {
-    pub(super) fn swap(&mut self) -> &mut Self {
+    pub(crate) fn swap(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
     }
 
-    pub(super) fn from_index<I>(index: &I, order: Order) -> Self
+    pub(crate) fn from_index<I>(index: &I, order: Order) -> Self
     where
         I: AsIndex,
     {
@@ -573,7 +573,7 @@ impl AxisIndex {
         Self { major, minor }
     }
 
-    pub(super) fn to_index(self, order: Order) -> Index {
+    pub(crate) fn to_index(self, order: Order) -> Index {
         let (row, col) = match order {
             Order::RowMajor => (self.major, self.minor),
             Order::ColMajor => (self.minor, self.major),
@@ -584,7 +584,7 @@ impl AxisIndex {
     /// # Panics
     ///
     /// Panics if the size of the `shape` is zero.
-    pub(super) fn from_wrapping_index(
+    pub(crate) fn from_wrapping_index(
         index: WrappingIndex,
         order: Order,
         shape: AxisShape,
@@ -610,14 +610,14 @@ impl AxisIndex {
     // - It is a one-to-many mapping.
     // - It serves no practical purpose.
 
-    pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
+    pub(crate) fn from_flattened(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
         // let minor = (index % shape.major_stride()) / shape.minor_stride();
         let minor = index % shape.major_stride();
         Self { major, minor }
     }
 
-    pub(super) fn to_flattened(self, shape: AxisShape) -> usize {
+    pub(crate) fn to_flattened(self, shape: AxisShape) -> usize {
         // self.major * shape.major_stride() + self.minor * shape.minor_stride()
         self.major * shape.major_stride() + self.minor
     }

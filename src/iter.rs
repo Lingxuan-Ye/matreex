@@ -368,7 +368,7 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    pub(super) fn iter_nth_major_axis_vector(
+    pub(crate) fn iter_nth_major_axis_vector(
         &self,
         n: usize,
     ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
@@ -379,7 +379,7 @@ impl<T> Matrix<T> {
         }
     }
 
-    pub(super) fn iter_nth_major_axis_vector_mut(
+    pub(crate) fn iter_nth_major_axis_vector_mut(
         &mut self,
         n: usize,
     ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
@@ -390,7 +390,7 @@ impl<T> Matrix<T> {
         }
     }
 
-    pub(super) fn iter_nth_minor_axis_vector(
+    pub(crate) fn iter_nth_minor_axis_vector(
         &self,
         n: usize,
     ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
@@ -401,7 +401,7 @@ impl<T> Matrix<T> {
         }
     }
 
-    pub(super) fn iter_nth_minor_axis_vector_mut(
+    pub(crate) fn iter_nth_minor_axis_vector_mut(
         &mut self,
         n: usize,
     ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
@@ -417,7 +417,7 @@ impl<T> Matrix<T> {
     /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    pub(super) unsafe fn iter_nth_major_axis_vector_unchecked(
+    pub(crate) unsafe fn iter_nth_major_axis_vector_unchecked(
         &self,
         n: usize,
     ) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
@@ -431,7 +431,7 @@ impl<T> Matrix<T> {
     /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    pub(super) unsafe fn iter_nth_major_axis_vector_unchecked_mut(
+    pub(crate) unsafe fn iter_nth_major_axis_vector_unchecked_mut(
         &mut self,
         n: usize,
     ) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
@@ -443,7 +443,7 @@ impl<T> Matrix<T> {
     /// # Safety
     ///
     /// Calling this method when `n >= self.minor()` is erroneous but safe.
-    pub(super) fn iter_nth_minor_axis_vector_unchecked(
+    pub(crate) fn iter_nth_minor_axis_vector_unchecked(
         &self,
         n: usize,
     ) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
@@ -454,7 +454,7 @@ impl<T> Matrix<T> {
     /// # Safety
     ///
     /// Calling this method when `n >= self.minor()` is erroneous but safe.
-    pub(super) fn iter_nth_minor_axis_vector_unchecked_mut(
+    pub(crate) fn iter_nth_minor_axis_vector_unchecked_mut(
         &mut self,
         n: usize,
     ) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
