@@ -20,9 +20,15 @@ macro_rules! write_index {
 
 #[cfg(feature = "pretty-debug")]
 macro_rules! write_index {
-    ($dst:expr, $($arg:tt)*) => {
-        write!($dst, "{}", ansi_term::Colour::Green.dimmed().paint(format!($($arg)*)))
-    };
+    ($dst:expr, $($arg:tt)*) => {{
+        use owo_colors::{OwoColorize, Stream, Style};
+
+        let plain = format!($($arg)*);
+        let styled = plain.if_supports_color(Stream::Stdout, |text| {
+            Style::new().green().dimmed().style(text)
+        });
+        write!($dst, "{}", styled)
+    }};
 }
 
 impl<T> fmt::Debug for Matrix<T>
