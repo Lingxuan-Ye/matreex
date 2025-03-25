@@ -122,6 +122,35 @@ impl<T> Matrix<T> {
         }
     }
 
+    /// Returns an iterator over the elements of the nth column in the matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
+    ///   the number of columns in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use matreex::Result;
+    /// use matreex::matrix;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let mut col_1 = matrix.iter_nth_col(1)?;
+    /// assert_eq!(col_1.next(), Some(&2));
+    /// assert_eq!(col_1.next(), Some(&5));
+    /// assert_eq!(col_1.next(), None);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn iter_nth_col(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
+        match self.order {
+            Order::RowMajor => self.iter_nth_minor_vector(n),
+            Order::ColMajor => self.iter_nth_major_vector(n),
+        }
+    }
+
     /// Returns an iterator that allows modifying each element of the
     /// nth row in the matrix.
     ///
@@ -152,35 +181,6 @@ impl<T> Matrix<T> {
         match self.order {
             Order::RowMajor => self.iter_nth_major_vector_mut(n),
             Order::ColMajor => self.iter_nth_minor_vector_mut(n),
-        }
-    }
-
-    /// Returns an iterator over the elements of the nth column in the matrix.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
-    ///   the number of columns in the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use matreex::Result;
-    /// use matreex::matrix;
-    ///
-    /// # fn main() -> Result<()> {
-    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let mut col_1 = matrix.iter_nth_col(1)?;
-    /// assert_eq!(col_1.next(), Some(&2));
-    /// assert_eq!(col_1.next(), Some(&5));
-    /// assert_eq!(col_1.next(), None);
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn iter_nth_col(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
-        match self.order {
-            Order::RowMajor => self.iter_nth_minor_vector(n),
-            Order::ColMajor => self.iter_nth_major_vector(n),
         }
     }
 
@@ -648,56 +648,6 @@ mod tests {
     }
 
     #[test]
-    fn test_iter_nth_row_mut() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        {
-            let mut matrix = matrix.clone();
-
-            let row_0 = matrix.iter_nth_row_mut(0).unwrap();
-            for element in row_0 {
-                *element += 2;
-            }
-
-            let row_1 = matrix.iter_nth_row_mut(1).unwrap();
-            for element in row_1.rev() {
-                *element -= 2;
-            }
-
-            assert!(matches!(
-                matrix.iter_nth_row_mut(2),
-                Err(Error::IndexOutOfBounds)
-            ));
-
-            assert_eq!(matrix, matrix![[3, 4, 5], [2, 3, 4]]);
-        }
-
-        matrix.switch_order();
-
-        {
-            let mut matrix = matrix.clone();
-
-            let row_0 = matrix.iter_nth_row_mut(0).unwrap();
-            for element in row_0 {
-                *element += 2;
-            }
-
-            let row_1 = matrix.iter_nth_row_mut(1).unwrap();
-            for element in row_1.rev() {
-                *element -= 2;
-            }
-
-            assert!(matches!(
-                matrix.iter_nth_row_mut(2),
-                Err(Error::IndexOutOfBounds)
-            ));
-
-            matrix.switch_order();
-            assert_eq!(matrix, matrix![[3, 4, 5], [2, 3, 4]]);
-        }
-    }
-
-    #[test]
     fn test_iter_nth_col() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
@@ -745,6 +695,56 @@ mod tests {
                 matrix.iter_nth_col(3),
                 Err(Error::IndexOutOfBounds)
             ));
+        }
+    }
+
+    #[test]
+    fn test_iter_nth_row_mut() {
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+
+        {
+            let mut matrix = matrix.clone();
+
+            let row_0 = matrix.iter_nth_row_mut(0).unwrap();
+            for element in row_0 {
+                *element += 2;
+            }
+
+            let row_1 = matrix.iter_nth_row_mut(1).unwrap();
+            for element in row_1.rev() {
+                *element -= 2;
+            }
+
+            assert!(matches!(
+                matrix.iter_nth_row_mut(2),
+                Err(Error::IndexOutOfBounds)
+            ));
+
+            assert_eq!(matrix, matrix![[3, 4, 5], [2, 3, 4]]);
+        }
+
+        matrix.switch_order();
+
+        {
+            let mut matrix = matrix.clone();
+
+            let row_0 = matrix.iter_nth_row_mut(0).unwrap();
+            for element in row_0 {
+                *element += 2;
+            }
+
+            let row_1 = matrix.iter_nth_row_mut(1).unwrap();
+            for element in row_1.rev() {
+                *element -= 2;
+            }
+
+            assert!(matches!(
+                matrix.iter_nth_row_mut(2),
+                Err(Error::IndexOutOfBounds)
+            ));
+
+            matrix.switch_order();
+            assert_eq!(matrix, matrix![[3, 4, 5], [2, 3, 4]]);
         }
     }
 
