@@ -49,11 +49,9 @@ impl<T> Matrix<T> {
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &T>>
     {
-        (0..self.nrows()).map(|n| unsafe {
-            match self.order {
-                Order::RowMajor => IterNthVector::iter_nth_major_axis_vector_unchecked(self, n),
-                Order::ColMajor => IterNthVector::iter_nth_minor_axis_vector_unchecked(self, n),
-            }
+        (0..self.nrows()).map(|n| match self.order {
+            Order::RowMajor => IterNthVector::on_major_axis_unchecked(self, n),
+            Order::ColMajor => IterNthVector::on_minor_axis_unchecked(self, n),
         })
     }
 
@@ -88,11 +86,9 @@ impl<T> Matrix<T> {
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &T>>
     {
-        (0..self.ncols()).map(|n| unsafe {
-            match self.order {
-                Order::RowMajor => IterNthVector::iter_nth_minor_axis_vector_unchecked(self, n),
-                Order::ColMajor => IterNthVector::iter_nth_major_axis_vector_unchecked(self, n),
-            }
+        (0..self.ncols()).map(|n| match self.order {
+            Order::RowMajor => IterNthVector::on_minor_axis_unchecked(self, n),
+            Order::ColMajor => IterNthVector::on_major_axis_unchecked(self, n),
         })
     }
 
@@ -122,8 +118,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_nth_row(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match self.order {
-            Order::RowMajor => IterNthVector::iter_nth_major_axis_vector(self, n),
-            Order::ColMajor => IterNthVector::iter_nth_minor_axis_vector(self, n),
+            Order::RowMajor => IterNthVector::on_major_axis(self, n),
+            Order::ColMajor => IterNthVector::on_minor_axis(self, n),
         }
     }
 
@@ -181,8 +177,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_nth_col(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match self.order {
-            Order::RowMajor => IterNthVector::iter_nth_minor_axis_vector(self, n),
-            Order::ColMajor => IterNthVector::iter_nth_major_axis_vector(self, n),
+            Order::RowMajor => IterNthVector::on_minor_axis(self, n),
+            Order::ColMajor => IterNthVector::on_major_axis(self, n),
         }
     }
 
