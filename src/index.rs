@@ -59,7 +59,8 @@ impl<T> Matrix<T> {
     ///
     /// # Safety
     ///
-    /// Calling this method with an out-of-bounds index is *[undefined behavior]*.
+    /// Calling this method with an out-of-bounds index is *[undefined behavior]*
+    /// even if the resulting reference is not used.
     ///
     /// For a safe alternative see [`get`].
     ///
@@ -87,7 +88,8 @@ impl<T> Matrix<T> {
     ///
     /// # Safety
     ///
-    /// Calling this method with an out-of-bounds index is *[undefined behavior]*.
+    /// Calling this method with an out-of-bounds index is *[undefined behavior]*
+    /// even if the resulting reference is not used.
     ///
     /// For a safe alternative see [`get_mut`].
     ///
@@ -139,22 +141,17 @@ where
 ///
 /// # Safety
 ///
-/// Implementations of this trait have to promise that:
-/// - If any default implementations of [`get`], [`get_mut`], [`index`]
-///   or [`index_mut`] are used, then [`is_out_of_bounds`] is implemented
-///   correctly and the default implementation of [`ensure_in_bounds`] is
-///   not overridden. Failing to do so may result in an out-of-bounds memory
-///   access, leading to *[undefined behavior]*.
-/// - If the argument to [`get_unchecked`] or [`get_unchecked_mut`]
-///   is a safe reference, then so is the result.
+/// Implementations of this trait have to promise that if any default
+/// implementations of [`get`], [`get_mut`], [`index`] or [`index_mut`]
+/// are used, then [`is_out_of_bounds`] is implemented correctly and
+/// [`ensure_in_bounds`] is not overridden. Failing to do so may result
+/// in an out-of-bounds memory access, leading to *[undefined behavior]*.
 ///
 /// [`SliceIndex`]: core::slice::SliceIndex
 /// [`is_out_of_bounds`]: MatrixIndex::is_out_of_bounds
 /// [`ensure_in_bounds`]: MatrixIndex::ensure_in_bounds
 /// [`get`]: MatrixIndex::get
 /// [`get_mut`]: MatrixIndex::get_mut
-/// [`get_unchecked`]: MatrixIndex::get_unchecked
-/// [`get_unchecked_mut`]: MatrixIndex::get_unchecked_mut
 /// [`index`]: MatrixIndex::index
 /// [`index_mut`]: MatrixIndex::index_mut
 /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
@@ -200,24 +197,24 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
         unsafe { Ok(self.get_unchecked_mut(matrix)) }
     }
 
-    /// Returns a pointer to the output at this location, without
+    /// Returns a shared reference to the output at this location, without
     /// performing any bounds checking.
     ///
     /// # Safety
     ///
-    /// Calling this method with an out-of-bounds index or a dangling `matrix` pointer
-    /// is *[undefined behavior]* even if the resulting pointer is not used.
+    /// Calling this method with an out-of-bounds index is *[undefined behavior]*
+    /// even if the resulting reference is not used.
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output;
 
-    /// Returns a mutable pointer to the output at this location, without
+    /// Returns a mutable reference to the output at this location, without
     /// performing any bounds checking.
     ///
     /// # Safety
     ///
-    /// Calling this method with an out-of-bounds index or a dangling `matrix` pointer
-    /// is *[undefined behavior]* even if the resulting pointer is not used.
+    /// Calling this method with an out-of-bounds index is *[undefined behavior]*
+    /// even if the resulting reference is not used.
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output;
@@ -495,7 +492,7 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
         matrix.is_empty()
     }
 
-    /// Returns a pointer to the output at this location, without
+    /// Returns a shared reference to the output at this location, without
     /// performing any bounds checking.
     ///
     /// # Panics
@@ -504,22 +501,15 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     ///
     /// # Safety
     ///
-    /// Calling this method with a dangling `matrix` pointer
-    /// is *[undefined behavior]* even if the resulting pointer is not used.
-    ///
-    /// # Notes
-    ///
-    /// If no panic occurs and no dangling pointer is passed, the output
-    /// returned is guaranteed to be valid.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    /// This method is safe regardless of it being marked unsafe.
+    /// If no panic occurs, the output returned is guaranteed to be valid.
     #[inline]
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
         let index = AxisIndex::from_wrapping_index(self, matrix.order, matrix.shape);
         unsafe { index.get_unchecked(matrix) }
     }
 
-    /// Returns a mutable pointer to the output at this location, without
+    /// Returns a mutable reference to the output at this location, without
     /// performing any bounds checking.
     ///
     /// # Panics
@@ -528,15 +518,8 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     ///
     /// # Safety
     ///
-    /// Calling this method with a dangling `matrix` pointer
-    /// is *[undefined behavior]* even if the resulting pointer is not used.
-    ///
-    /// # Notes
-    ///
-    /// If no panic occurs and no dangling pointer is passed, the output
-    /// returned is guaranteed to be valid.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    /// This method is safe regardless of it being marked unsafe.
+    /// If no panic occurs, the output returned is guaranteed to be valid.
     #[inline]
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
         let index = AxisIndex::from_wrapping_index(self, matrix.order, matrix.shape);
