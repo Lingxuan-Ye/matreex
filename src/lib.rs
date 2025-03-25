@@ -83,7 +83,6 @@
 
 pub use self::error::{Error, Result};
 pub use self::index::{Index, WrappingIndex};
-pub use self::iter::{MatrixIter, VectorIter};
 pub use self::order::Order;
 pub use self::shape::Shape;
 

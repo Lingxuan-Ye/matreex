@@ -13,12 +13,6 @@ pub trait ExactSizeDoubleEndedIterator: ExactSizeIterator + DoubleEndedIterator 
 
 impl<I> ExactSizeDoubleEndedIterator for I where I: ExactSizeIterator + DoubleEndedIterator {}
 
-/// A trait object that represents a double-ended iterator over a vector.
-pub type VectorIter<'a, T> = Box<dyn ExactSizeDoubleEndedIterator<Item = T> + 'a>;
-
-/// A trait object that represents a double-ended iterator over a matrix.
-pub type MatrixIter<'a, T> = Box<dyn ExactSizeDoubleEndedIterator<Item = VectorIter<'a, T>> + 'a>;
-
 impl<T> Matrix<T> {
     /// Returns an iterator over the rows of the matrix.
     ///
