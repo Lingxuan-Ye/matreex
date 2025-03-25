@@ -1,12 +1,11 @@
 //! Defines iterating operations.
 
-use self::iter_nth_vector::IterNthVector;
 use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::index::Index;
 use crate::order::Order;
-
-mod iter_nth_vector;
+use std::iter::{Skip, StepBy, Take};
+use std::slice::Iter;
 
 /// An iterator that knows its exact length and can yield elements
 /// from both ends.
@@ -50,8 +49,8 @@ impl<T> Matrix<T> {
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &T>>
     {
         (0..self.nrows()).map(|n| match self.order {
-            Order::RowMajor => IterNthVector::on_major_axis_unchecked(self, n),
-            Order::ColMajor => IterNthVector::on_minor_axis_unchecked(self, n),
+            Order::RowMajor => self.iter_nth_major_vector_unchecked(n),
+            Order::ColMajor => self.iter_nth_minor_vector_unchecked(n),
         })
     }
 
@@ -87,8 +86,8 @@ impl<T> Matrix<T> {
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &T>>
     {
         (0..self.ncols()).map(|n| match self.order {
-            Order::RowMajor => IterNthVector::on_minor_axis_unchecked(self, n),
-            Order::ColMajor => IterNthVector::on_major_axis_unchecked(self, n),
+            Order::RowMajor => self.iter_nth_minor_vector_unchecked(n),
+            Order::ColMajor => self.iter_nth_major_vector_unchecked(n),
         })
     }
 
@@ -118,8 +117,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_nth_row(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match self.order {
-            Order::RowMajor => IterNthVector::on_major_axis(self, n),
-            Order::ColMajor => IterNthVector::on_minor_axis(self, n),
+            Order::RowMajor => self.iter_nth_major_vector(n),
+            Order::ColMajor => self.iter_nth_minor_vector(n),
         }
     }
 
@@ -177,8 +176,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_nth_col(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match self.order {
-            Order::RowMajor => IterNthVector::on_minor_axis(self, n),
-            Order::ColMajor => IterNthVector::on_major_axis(self, n),
+            Order::RowMajor => self.iter_nth_minor_vector(n),
+            Order::ColMajor => self.iter_nth_major_vector(n),
         }
     }
 
@@ -369,6 +368,48 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
+    pub(crate) fn iter_nth_major_vector(
+        &self,
+        n: usize,
+    ) -> Result<Take<StepBy<Skip<Iter<'_, T>>>>> {
+        if n >= self.major() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self.iter_nth_major_vector_unchecked(n))
+        }
+    }
+
+    pub(crate) fn iter_nth_minor_vector(
+        &self,
+        n: usize,
+    ) -> Result<Take<StepBy<Skip<Iter<'_, T>>>>> {
+        if n >= self.minor() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self.iter_nth_minor_vector_unchecked(n))
+        }
+    }
+
+    pub(crate) fn iter_nth_major_vector_unchecked(
+        &self,
+        n: usize,
+    ) -> Take<StepBy<Skip<Iter<'_, T>>>> {
+        let skip = n * self.major_stride();
+        let step = self.minor_stride();
+        let take = self.minor();
+        self.data.iter().skip(skip).step_by(step).take(take)
+    }
+
+    pub(crate) fn iter_nth_minor_vector_unchecked(
+        &self,
+        n: usize,
+    ) -> Take<StepBy<Skip<Iter<'_, T>>>> {
+        let skip = n;
+        let step = self.major_stride();
+        let take = self.major();
+        self.data.iter().skip(skip).step_by(step).take(take)
+    }
+
     pub(crate) fn iter_nth_major_axis_vector_mut(
         &mut self,
         n: usize,
