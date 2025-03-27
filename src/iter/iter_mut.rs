@@ -126,7 +126,7 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let vector_layout = self.vector_layout?;
-        let stride = vector_layout.inter_stride.get();
+
         let result = unsafe {
             IterNthVectorMut::new_unchecked(
                 self.lower,
@@ -138,6 +138,7 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
         if self.lower == self.upper {
             self.vector_layout = None;
         } else {
+            let stride = vector_layout.inter_stride.get();
             self.lower = if size_of::<T>() == 0 {
                 let addr = self.lower.as_ptr() as usize + stride;
                 unsafe { NonNull::new_unchecked(addr as *mut T) }
@@ -172,7 +173,7 @@ impl<T> ExactSizeIterator for IterVectorsMut<'_, T> {
 impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         let vector_layout = self.vector_layout?;
-        let stride = vector_layout.inter_stride.get();
+
         let result = unsafe {
             IterNthVectorMut::new_unchecked(
                 self.upper,
@@ -184,6 +185,7 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
         if self.lower == self.upper {
             self.vector_layout = None;
         } else {
+            let stride = vector_layout.inter_stride.get();
             self.upper = if size_of::<T>() == 0 {
                 let addr = self.upper.as_ptr() as usize - stride;
                 unsafe { NonNull::new_unchecked(addr as *mut T) }
@@ -308,7 +310,12 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let stride = self.stride?.get();
-        let result = unsafe { self.lower.as_mut() };
+
+        let result = if size_of::<T>() == 0 {
+            unsafe { NonNull::dangling().as_mut() }
+        } else {
+            unsafe { self.lower.as_mut() }
+        };
 
         if self.lower == self.upper {
             self.stride = None;
@@ -347,7 +354,12 @@ impl<T> ExactSizeIterator for IterNthVectorMut<'_, T> {
 impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         let stride = self.stride?.get();
-        let result = unsafe { self.upper.as_mut() };
+
+        let result = if size_of::<T>() == 0 {
+            unsafe { NonNull::dangling().as_mut() }
+        } else {
+            unsafe { self.upper.as_mut() }
+        };
 
         if self.lower == self.upper {
             self.stride = None;
