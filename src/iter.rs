@@ -1,5 +1,6 @@
 //! Defines iterating operations.
 
+use self::iter_mut::IterVectorsMut;
 use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::index::Index;
@@ -85,6 +86,26 @@ impl<T> Matrix<T> {
             Order::RowMajor => self.iter_nth_minor_axis_vector_unchecked(n),
             Order::ColMajor => self.iter_nth_major_axis_vector_unchecked(n),
         })
+    }
+
+    pub fn iter_rows_mut(
+        &mut self,
+    ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
+    {
+        match self.order {
+            Order::RowMajor => IterVectorsMut::on_major_axis(self),
+            Order::ColMajor => IterVectorsMut::on_minor_axis(self),
+        }
+    }
+
+    pub fn iter_cols_mut(
+        &mut self,
+    ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
+    {
+        match self.order {
+            Order::RowMajor => IterVectorsMut::on_minor_axis(self),
+            Order::ColMajor => IterVectorsMut::on_major_axis(self),
+        }
     }
 
     /// Returns an iterator over the elements of the nth row in the matrix.
