@@ -103,12 +103,13 @@ pub mod parallel;
 mod arithmetic;
 mod construct;
 mod convert;
+mod eq;
 mod fmt;
 mod macros;
 mod swap;
 
 /// [`Matrix<T>`] means matrix.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct Matrix<T> {
     order: Order,
     shape: AxisShape,
