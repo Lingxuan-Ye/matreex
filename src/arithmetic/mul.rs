@@ -395,8 +395,7 @@ mod tests {
             let rhs = rhs.clone();
             lhs.switch_order();
 
-            let mut output = lhs.multiply(rhs).unwrap();
-            output.switch_order();
+            let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -407,8 +406,7 @@ mod tests {
             lhs.switch_order();
             rhs.switch_order();
 
-            let mut output = lhs.multiply(rhs).unwrap();
-            output.switch_order();
+            let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, expected);
         }
 

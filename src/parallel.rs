@@ -269,7 +269,6 @@ mod tests {
             matrix.switch_order();
 
             matrix.par_apply(add_two);
-            matrix.switch_order();
             assert_eq!(matrix, expected);
         }
     }
@@ -296,8 +295,7 @@ mod tests {
             let mut matrix_i32 = matrix_i32.clone();
             matrix_i32.switch_order();
 
-            let mut matrix_f64 = matrix_i32.par_map(to_f64);
-            matrix_f64.switch_order();
+            let matrix_f64 = matrix_i32.par_map(to_f64);
             assert_eq!(matrix_f64, expected);
         }
     }
@@ -322,8 +320,7 @@ mod tests {
             let mut matrix_i32 = matrix_i32.clone();
             matrix_i32.switch_order();
 
-            let mut matrix_f64 = matrix_i32.par_map_ref(to_f64);
-            matrix_f64.switch_order();
+            let matrix_f64 = matrix_i32.par_map_ref(to_f64);
             assert_eq!(matrix_f64, expected);
         }
 
@@ -378,7 +375,6 @@ mod tests {
             matrix.switch_order();
 
             matrix.par_iter_elements_mut().for_each(add_two);
-            matrix.switch_order();
             assert_eq!(matrix, expected);
         }
     }
@@ -454,7 +450,6 @@ mod tests {
             matrix
                 .par_iter_elements_mut_with_index()
                 .for_each(add_index);
-            matrix.switch_order();
             assert_eq!(matrix, expected);
         }
     }

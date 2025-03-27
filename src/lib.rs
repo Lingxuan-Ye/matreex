@@ -1089,7 +1089,6 @@ mod tests {
                 destination.switch_order();
 
                 destination.overwrite(&source);
-                destination.switch_order();
                 assert_eq!(destination, expected);
             }
 
@@ -1101,7 +1100,6 @@ mod tests {
                 source.switch_order();
 
                 destination.overwrite(&source);
-                destination.switch_order();
                 assert_eq!(destination, expected);
             }
         }
@@ -1167,7 +1165,6 @@ mod tests {
             matrix.switch_order();
 
             matrix.apply(add_two);
-            matrix.switch_order();
             assert_eq!(matrix, expected);
         }
     }
@@ -1194,8 +1191,7 @@ mod tests {
             let mut matrix_i32 = matrix_i32.clone();
             matrix_i32.switch_order();
 
-            let mut matrix_f64 = matrix_i32.map(to_f64);
-            matrix_f64.switch_order();
+            let matrix_f64 = matrix_i32.map(to_f64);
             assert_eq!(matrix_f64, expected);
         }
     }
@@ -1220,8 +1216,7 @@ mod tests {
             let mut matrix_i32 = matrix_i32.clone();
             matrix_i32.switch_order();
 
-            let mut matrix_f64 = matrix_i32.map_ref(to_f64);
-            matrix_f64.switch_order();
+            let matrix_f64 = matrix_i32.map_ref(to_f64);
             assert_eq!(matrix_f64, expected);
         }
 

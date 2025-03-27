@@ -713,8 +713,7 @@ mod tests {
             let mut lhs = lhs.clone();
             lhs.switch_order();
 
-            let mut output = lhs.elementwise_operation(&rhs, add).unwrap();
-            output.switch_order();
+            let output = lhs.elementwise_operation(&rhs, add).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -726,8 +725,7 @@ mod tests {
             lhs.switch_order();
             rhs.switch_order();
 
-            let mut output = lhs.elementwise_operation(&rhs, add).unwrap();
-            output.switch_order();
+            let output = lhs.elementwise_operation(&rhs, add).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -802,8 +800,7 @@ mod tests {
             let mut lhs = lhs.clone();
             lhs.switch_order();
 
-            let mut output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
-            output.switch_order();
+            let output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -814,8 +811,7 @@ mod tests {
             lhs.switch_order();
             rhs.switch_order();
 
-            let mut output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
-            output.switch_order();
+            let output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -886,7 +882,6 @@ mod tests {
             lhs.switch_order();
 
             lhs.elementwise_operation_assign(&rhs, add_assign).unwrap();
-            lhs.switch_order();
             assert_eq!(lhs, expected);
         }
 
@@ -898,7 +893,6 @@ mod tests {
             rhs.switch_order();
 
             lhs.elementwise_operation_assign(&rhs, add_assign).unwrap();
-            lhs.switch_order();
             assert_eq!(lhs, expected);
         }
 
@@ -977,8 +971,7 @@ mod tests {
             let rhs = rhs.clone();
             lhs.switch_order();
 
-            let mut output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            output.switch_order();
+            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -989,8 +982,7 @@ mod tests {
             lhs.switch_order();
             rhs.switch_order();
 
-            let mut output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            output.switch_order();
+            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -1054,8 +1046,7 @@ mod tests {
             let mut matrix = matrix.clone();
             matrix.switch_order();
 
-            let mut output = matrix.scalar_operation(&scalar, add);
-            output.switch_order();
+            let output = matrix.scalar_operation(&scalar, add);
             assert_eq!(output, expected);
         }
 
@@ -1104,8 +1095,7 @@ mod tests {
             let mut matrix = matrix.clone();
             matrix.switch_order();
 
-            let mut output = matrix.scalar_operation_consume_self(&scalar, add);
-            output.switch_order();
+            let output = matrix.scalar_operation_consume_self(&scalar, add);
             assert_eq!(output, expected);
         }
 
@@ -1142,7 +1132,6 @@ mod tests {
             matrix.switch_order();
 
             matrix.scalar_operation_assign(&scalar, add_assign);
-            matrix.switch_order();
             assert_eq!(matrix, expected);
         }
 
