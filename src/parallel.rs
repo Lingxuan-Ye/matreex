@@ -1,6 +1,12 @@
+//! Defines parallel operations.
+//!
+//! This module re-exports [`rayon::prelude`] to avoid potential version
+//! conflicts.
+
+pub use rayon::prelude::*;
+
 use crate::Matrix;
 use crate::index::Index;
-use rayon::prelude::*;
 
 impl<T> Matrix<T> {
     /// Applies a closure to each element of the matrix in parallel,
@@ -88,7 +94,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let sum = matrix.par_iter_elements().sum::<i32>();
@@ -109,7 +115,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
@@ -132,7 +138,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let sum = matrix.into_par_iter_elements().sum::<i32>();
@@ -153,7 +159,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
@@ -179,7 +185,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
@@ -211,7 +217,7 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// use matreex::matrix;
-    /// use rayon::prelude::*;
+    /// use matreex::parallel::*;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix
@@ -263,7 +269,6 @@ mod tests {
             matrix.switch_order();
 
             matrix.par_apply(add_two);
-            matrix.switch_order();
             assert_eq!(matrix, expected);
         }
     }
@@ -290,8 +295,7 @@ mod tests {
             let mut matrix_i32 = matrix_i32.clone();
             matrix_i32.switch_order();
 
-            let mut matrix_f64 = matrix_i32.par_map(to_f64);
-            matrix_f64.switch_order();
+            let matrix_f64 = matrix_i32.par_map(to_f64);
             assert_eq!(matrix_f64, expected);
         }
     }
@@ -316,8 +320,7 @@ mod tests {
             let mut matrix_i32 = matrix_i32.clone();
             matrix_i32.switch_order();
 
-            let mut matrix_f64 = matrix_i32.par_map_ref(to_f64);
-            matrix_f64.switch_order();
+            let matrix_f64 = matrix_i32.par_map_ref(to_f64);
             assert_eq!(matrix_f64, expected);
         }
 
@@ -372,7 +375,6 @@ mod tests {
             matrix.switch_order();
 
             matrix.par_iter_elements_mut().for_each(add_two);
-            matrix.switch_order();
             assert_eq!(matrix, expected);
         }
     }
@@ -448,7 +450,6 @@ mod tests {
             matrix
                 .par_iter_elements_mut_with_index()
                 .for_each(add_index);
-            matrix.switch_order();
             assert_eq!(matrix, expected);
         }
     }

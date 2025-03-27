@@ -83,7 +83,6 @@
 
 pub use self::error::{Error, Result};
 pub use self::index::{Index, WrappingIndex};
-pub use self::iter::{MatrixIter, VectorIter};
 pub use self::order::Order;
 pub use self::shape::Shape;
 
@@ -98,18 +97,19 @@ pub mod iter;
 pub mod order;
 pub mod shape;
 
+#[cfg(feature = "parallel")]
+pub mod parallel;
+
 mod arithmetic;
 mod construct;
 mod convert;
+mod eq;
 mod fmt;
 mod macros;
 mod swap;
 
-#[cfg(feature = "rayon")]
-mod parallel;
-
 /// [`Matrix<T>`] means matrix.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct Matrix<T> {
     order: Order,
     shape: AxisShape,
@@ -612,7 +612,7 @@ impl<T> Matrix<T> {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)
                         .iter_mut()
-                        .zip(source.iter_nth_minor_axis_vector_unchecked(i))
+                        .zip(source.data.iter().skip(i).step_by(source.major_stride()))
                         .for_each(|(x, y)| *x = y.clone());
                 }
             }
@@ -1089,7 +1089,6 @@ mod tests {
                 destination.switch_order();
 
                 destination.overwrite(&source);
-                destination.switch_order();
                 assert_eq!(destination, expected);
             }
 
@@ -1101,7 +1100,6 @@ mod tests {
                 source.switch_order();
 
                 destination.overwrite(&source);
-                destination.switch_order();
                 assert_eq!(destination, expected);
             }
         }
@@ -1167,7 +1165,6 @@ mod tests {
             matrix.switch_order();
 
             matrix.apply(add_two);
-            matrix.switch_order();
             assert_eq!(matrix, expected);
         }
     }
@@ -1194,8 +1191,7 @@ mod tests {
             let mut matrix_i32 = matrix_i32.clone();
             matrix_i32.switch_order();
 
-            let mut matrix_f64 = matrix_i32.map(to_f64);
-            matrix_f64.switch_order();
+            let matrix_f64 = matrix_i32.map(to_f64);
             assert_eq!(matrix_f64, expected);
         }
     }
@@ -1220,8 +1216,7 @@ mod tests {
             let mut matrix_i32 = matrix_i32.clone();
             matrix_i32.switch_order();
 
-            let mut matrix_f64 = matrix_i32.map_ref(to_f64);
-            matrix_f64.switch_order();
+            let matrix_f64 = matrix_i32.map_ref(to_f64);
             assert_eq!(matrix_f64, expected);
         }
 

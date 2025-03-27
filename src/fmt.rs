@@ -11,18 +11,24 @@ const OUTER_GAP: usize = 2;
 const INTER_GAP: usize = 2;
 const INNER_GAP: usize = 1;
 
-#[cfg(not(feature = "pretty_debug"))]
+#[cfg(not(feature = "pretty-debug"))]
 macro_rules! write_index {
     ($dst:expr, $($arg:tt)*) => {
         write!($dst, $($arg)*)
     };
 }
 
-#[cfg(feature = "pretty_debug")]
+#[cfg(feature = "pretty-debug")]
 macro_rules! write_index {
-    ($dst:expr, $($arg:tt)*) => {
-        write!($dst, "{}", ansi_term::Colour::Green.dimmed().paint(format!($($arg)*)))
-    };
+    ($dst:expr, $($arg:tt)*) => {{
+        use owo_colors::{OwoColorize, Stream, Style};
+
+        let plain = format!($($arg)*);
+        let styled = plain.if_supports_color(Stream::Stdout, |text| {
+            Style::new().green().dimmed().style(text)
+        });
+        write!($dst, "{}", styled)
+    }};
 }
 
 impl<T> fmt::Debug for Matrix<T>

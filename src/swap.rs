@@ -136,190 +136,187 @@ mod tests {
 
     #[test]
     fn test_swap() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        matrix.swap((0, 0), (1, 1)).unwrap();
-        assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
+        // default order
+        {
+            let mut matrix = matrix.clone();
 
-        matrix.swap((0, 0), (1, 1)).unwrap();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            matrix.swap((0, 0), (1, 1)).unwrap();
+            assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
 
-        matrix.swap((1, 1), (0, 0)).unwrap();
-        assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
+            matrix.swap((0, 0), (1, 1)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.swap((1, 1), (0, 0)).unwrap();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            matrix.swap((1, 1), (0, 0)).unwrap();
+            assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
 
-        matrix.switch_order();
-        matrix.swap((0, 0), (1, 1)).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
+            matrix.swap((1, 1), (0, 0)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.switch_order();
-        matrix.swap((0, 0), (1, 1)).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            let unchanged = matrix.clone();
 
-        matrix.switch_order();
-        matrix.swap((1, 1), (0, 0)).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
+            assert_eq!(matrix.swap((0, 0), (2, 2)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
 
-        matrix.switch_order();
-        matrix.swap((1, 1), (0, 0)).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            assert_eq!(matrix.swap((2, 2), (0, 0)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
 
-        let unchanged = matrix.clone();
+            assert_eq!(matrix.swap((2, 2), (3, 3)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+        }
 
-        assert_eq!(matrix.swap((0, 0), (2, 2)), Err(Error::IndexOutOfBounds));
-        assert_eq!(matrix, unchanged);
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
 
-        assert_eq!(matrix.swap((2, 2), (0, 0)), Err(Error::IndexOutOfBounds));
-        assert_eq!(matrix, unchanged);
+            matrix.swap((0, 0), (1, 1)).unwrap();
+            assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
 
-        assert_eq!(matrix.swap((2, 2), (3, 3)), Err(Error::IndexOutOfBounds));
-        assert_eq!(matrix, unchanged);
+            matrix.swap((0, 0), (1, 1)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.switch_order();
-        assert_eq!(matrix.swap((0, 0), (2, 2)), Err(Error::IndexOutOfBounds));
-        matrix.switch_order();
-        assert_eq!(matrix, unchanged);
+            matrix.swap((1, 1), (0, 0)).unwrap();
+            assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
 
-        matrix.switch_order();
-        assert_eq!(matrix.swap((2, 2), (0, 0)), Err(Error::IndexOutOfBounds));
-        matrix.switch_order();
-        assert_eq!(matrix, unchanged);
+            matrix.swap((1, 1), (0, 0)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.switch_order();
-        assert_eq!(matrix.swap((2, 2), (3, 3)), Err(Error::IndexOutOfBounds));
-        matrix.switch_order();
-        assert_eq!(matrix, unchanged);
+            let unchanged = matrix.clone();
+
+            assert_eq!(matrix.swap((0, 0), (2, 2)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+
+            assert_eq!(matrix.swap((2, 2), (0, 0)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+
+            assert_eq!(matrix.swap((2, 2), (3, 3)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+        }
     }
 
     #[test]
     fn test_swap_rows() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        matrix.swap_rows(0, 1).unwrap();
-        assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
+        // default order
+        {
+            let mut matrix = matrix.clone();
 
-        matrix.swap_rows(0, 1).unwrap();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            matrix.swap_rows(0, 1).unwrap();
+            assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
 
-        matrix.swap_rows(1, 0).unwrap();
-        assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
+            matrix.swap_rows(0, 1).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.swap_rows(1, 0).unwrap();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            matrix.swap_rows(1, 0).unwrap();
+            assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
 
-        matrix.switch_order();
-        matrix.swap_rows(0, 1).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
+            matrix.swap_rows(1, 0).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.switch_order();
-        matrix.swap_rows(0, 1).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            let unchanged = matrix.clone();
 
-        matrix.switch_order();
-        matrix.swap_rows(1, 0).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
+            assert_eq!(matrix.swap_rows(0, 2), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
 
-        matrix.switch_order();
-        matrix.swap_rows(1, 0).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            assert_eq!(matrix.swap_rows(2, 0), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
 
-        let unchanged = matrix.clone();
+            assert_eq!(matrix.swap_rows(2, 3), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+        }
 
-        assert_eq!(matrix.swap_rows(0, 2), Err(Error::IndexOutOfBounds));
-        assert_eq!(matrix, unchanged);
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
 
-        assert_eq!(matrix.swap_rows(2, 0), Err(Error::IndexOutOfBounds));
-        assert_eq!(matrix, unchanged);
+            matrix.swap_rows(0, 1).unwrap();
+            assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
 
-        assert_eq!(matrix.swap_rows(2, 3), Err(Error::IndexOutOfBounds));
-        assert_eq!(matrix, unchanged);
+            matrix.swap_rows(0, 1).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.switch_order();
-        assert_eq!(matrix.swap_rows(0, 2), Err(Error::IndexOutOfBounds));
-        matrix.switch_order();
-        assert_eq!(matrix, unchanged);
+            matrix.swap_rows(1, 0).unwrap();
+            assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
 
-        matrix.switch_order();
-        assert_eq!(matrix.swap_rows(2, 0), Err(Error::IndexOutOfBounds));
-        matrix.switch_order();
-        assert_eq!(matrix, unchanged);
+            matrix.swap_rows(1, 0).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.switch_order();
-        assert_eq!(matrix.swap_rows(2, 3), Err(Error::IndexOutOfBounds));
-        matrix.switch_order();
-        assert_eq!(matrix, unchanged);
+            let unchanged = matrix.clone();
+
+            assert_eq!(matrix.swap_rows(0, 2), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+
+            assert_eq!(matrix.swap_rows(2, 0), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+
+            assert_eq!(matrix.swap_rows(2, 3), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+        }
     }
 
     #[test]
     fn test_swap_cols() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        matrix.swap_cols(0, 1).unwrap();
-        assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
+        // default order
+        {
+            let mut matrix = matrix.clone();
 
-        matrix.swap_cols(0, 1).unwrap();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            matrix.swap_cols(0, 1).unwrap();
+            assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
 
-        matrix.swap_cols(1, 0).unwrap();
-        assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
+            matrix.swap_cols(0, 1).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.swap_cols(1, 0).unwrap();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            matrix.swap_cols(1, 0).unwrap();
+            assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
 
-        matrix.switch_order();
-        matrix.swap_cols(0, 1).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
+            matrix.swap_cols(1, 0).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.switch_order();
-        matrix.swap_cols(0, 1).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            let unchanged = matrix.clone();
 
-        matrix.switch_order();
-        matrix.swap_cols(1, 0).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
+            assert_eq!(matrix.swap_cols(0, 3), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
 
-        matrix.switch_order();
-        matrix.swap_cols(1, 0).unwrap();
-        matrix.switch_order();
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            assert_eq!(matrix.swap_cols(3, 0), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
 
-        let unchanged = matrix.clone();
+            assert_eq!(matrix.swap_cols(3, 4), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+        }
 
-        assert_eq!(matrix.swap_cols(0, 3), Err(Error::IndexOutOfBounds));
-        assert_eq!(matrix, unchanged);
+        // alternative order
+        {
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
 
-        assert_eq!(matrix.swap_cols(3, 0), Err(Error::IndexOutOfBounds));
-        assert_eq!(matrix, unchanged);
+            matrix.swap_cols(0, 1).unwrap();
+            assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
 
-        assert_eq!(matrix.swap_cols(3, 4), Err(Error::IndexOutOfBounds));
-        assert_eq!(matrix, unchanged);
+            matrix.swap_cols(0, 1).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.switch_order();
-        assert_eq!(matrix.swap_cols(0, 3), Err(Error::IndexOutOfBounds));
-        matrix.switch_order();
-        assert_eq!(matrix, unchanged);
+            matrix.swap_cols(1, 0).unwrap();
+            assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
 
-        matrix.switch_order();
-        assert_eq!(matrix.swap_cols(3, 0), Err(Error::IndexOutOfBounds));
-        matrix.switch_order();
-        assert_eq!(matrix, unchanged);
+            matrix.swap_cols(1, 0).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        matrix.switch_order();
-        assert_eq!(matrix.swap_cols(3, 4), Err(Error::IndexOutOfBounds));
-        matrix.switch_order();
-        assert_eq!(matrix, unchanged);
+            let unchanged = matrix.clone();
+
+            assert_eq!(matrix.swap_cols(0, 3), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+
+            assert_eq!(matrix.swap_cols(3, 0), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+
+            assert_eq!(matrix.swap_cols(3, 4), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix, unchanged);
+        }
     }
 }

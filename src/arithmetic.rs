@@ -1,7 +1,6 @@
 use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::index::AxisIndex;
-use crate::iter::VectorIter;
 use crate::order::Order;
 use crate::shape::Shape;
 
@@ -50,7 +49,11 @@ impl<L> Matrix<L> {
     /// ```
     #[inline]
     pub fn is_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> bool {
-        self.shape().eq(&rhs.shape())
+        if self.order == rhs.order {
+            self.shape == rhs.shape
+        } else {
+            self.major() == rhs.minor() && self.minor() == rhs.major()
+        }
     }
 
     /// Returns `true` if two matrices are conformable for multiplication-like
@@ -190,13 +193,13 @@ impl<L> Matrix<L> {
     /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
-    pub fn elementwise_operation<'a, R, F, U>(
+    pub fn elementwise_operation<'a, 'b, R, F, U>(
         &'a self,
-        rhs: &'a Matrix<R>,
+        rhs: &'b Matrix<R>,
         mut op: F,
     ) -> Result<Matrix<U>>
     where
-        F: FnMut(&'a L, &'a R) -> U,
+        F: FnMut(&'a L, &'b R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
@@ -301,13 +304,13 @@ impl<L> Matrix<L> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn elementwise_operation_assign<R, F>(
+    pub fn elementwise_operation_assign<'a, R, F>(
         &mut self,
-        rhs: &Matrix<R>,
+        rhs: &'a Matrix<R>,
         mut op: F,
     ) -> Result<&mut Self>
     where
-        F: FnMut(&mut L, &R),
+        F: FnMut(&mut L, &'a R),
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
@@ -339,20 +342,22 @@ impl<L> Matrix<L> {
     ///
     /// # Notes
     ///
-    /// The resulting matrix will always have the same order as `self`.
-    ///
-    /// For performance reasons, this method consumes both `self` and `rhs`.
-    ///
     /// The closure `op` is guaranteed to receive two non-empty, equal-length
-    /// vectors. It should always return a valid value derived from them.
+    /// slices. It should always return a valid value derived from them.
+    ///
+    /// The resulting matrix will always have the same order as `self`.
     ///
     /// # Examples
     ///
     /// ```
-    /// use matreex::{VectorIter, matrix};
+    /// use matreex::matrix;
     ///
-    /// fn dot_product(lhs: VectorIter<&i32>, rhs: VectorIter<&i32>) -> i32 {
-    ///     lhs.zip(rhs).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
+    /// fn dot_product(lhs: &[i32], rhs: &[i32]) -> i32 {
+    ///     lhs.iter()
+    ///         .zip(rhs)
+    ///         .map(|(x, y)| x * y)
+    ///         .reduce(|acc, p| acc + p)
+    ///         .unwrap()
     /// }
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
@@ -366,7 +371,7 @@ impl<L> Matrix<L> {
         mut op: F,
     ) -> Result<Matrix<U>>
     where
-        F: FnMut(VectorIter<&L>, VectorIter<&R>) -> U,
+        F: FnMut(&[L], &[R]) -> U,
         U: Default,
     {
         self.ensure_multiplication_like_operation_conformable(&rhs)?;
@@ -390,10 +395,9 @@ impl<L> Matrix<L> {
             Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        let element = op(
-                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
-                            unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
-                        );
+                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let element = op(lhs, rhs);
                         data.push(element);
                     }
                 }
@@ -402,10 +406,9 @@ impl<L> Matrix<L> {
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        let element = op(
-                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
-                            unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
-                        );
+                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let element = op(lhs, rhs);
                         data.push(element);
                     }
                 }
@@ -430,9 +433,9 @@ impl<T> Matrix<T> {
     /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
-    pub fn scalar_operation<'a, S, F, U>(&'a self, scalar: &'a S, mut op: F) -> Matrix<U>
+    pub fn scalar_operation<'a, 'b, S, F, U>(&'a self, scalar: &'b S, mut op: F) -> Matrix<U>
     where
-        F: FnMut(&'a T, &'a S) -> U,
+        F: FnMut(&'a T, &'b S) -> U,
     {
         let order = self.order;
         let shape = self.shape;
@@ -485,12 +488,26 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
-    pub fn scalar_operation_assign<S, F>(&mut self, scalar: &S, mut op: F) -> &mut Self
+    pub fn scalar_operation_assign<'a, S, F>(&mut self, scalar: &'a S, mut op: F) -> &mut Self
     where
-        F: FnMut(&mut T, &S),
+        F: FnMut(&mut T, &'a S),
     {
         self.data.iter_mut().for_each(|element| op(element, scalar));
         self
+    }
+}
+
+impl<T> Matrix<T> {
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    #[inline(always)]
+    unsafe fn get_nth_major_axis_vector(&self, n: usize) -> &[T] {
+        let lower = n * self.major_stride();
+        let upper = lower + self.major_stride();
+        unsafe { self.data.get_unchecked(lower..upper) }
     }
 }
 
@@ -696,8 +713,7 @@ mod tests {
             let mut lhs = lhs.clone();
             lhs.switch_order();
 
-            let mut output = lhs.elementwise_operation(&rhs, add).unwrap();
-            output.switch_order();
+            let output = lhs.elementwise_operation(&rhs, add).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -709,8 +725,7 @@ mod tests {
             lhs.switch_order();
             rhs.switch_order();
 
-            let mut output = lhs.elementwise_operation(&rhs, add).unwrap();
-            output.switch_order();
+            let output = lhs.elementwise_operation(&rhs, add).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -736,6 +751,18 @@ mod tests {
             assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
 
             let output = lhs.elementwise_operation(&rhs, |_, y| y).unwrap();
+            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
+
+            let output = {
+                let rhs = rhs.clone();
+                lhs.elementwise_operation(&rhs, |x, _| x).unwrap()
+            };
+            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
+
+            let output = {
+                let lhs = lhs.clone();
+                lhs.elementwise_operation(&rhs, |_, y| y).unwrap()
+            };
             assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
         }
     }
@@ -773,8 +800,7 @@ mod tests {
             let mut lhs = lhs.clone();
             lhs.switch_order();
 
-            let mut output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
-            output.switch_order();
+            let output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -785,8 +811,7 @@ mod tests {
             lhs.switch_order();
             rhs.switch_order();
 
-            let mut output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
-            output.switch_order();
+            let output = lhs.elementwise_operation_consume_self(&rhs, add).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -857,7 +882,6 @@ mod tests {
             lhs.switch_order();
 
             lhs.elementwise_operation_assign(&rhs, add_assign).unwrap();
-            lhs.switch_order();
             assert_eq!(lhs, expected);
         }
 
@@ -869,7 +893,6 @@ mod tests {
             rhs.switch_order();
 
             lhs.elementwise_operation_assign(&rhs, add_assign).unwrap();
-            lhs.switch_order();
             assert_eq!(lhs, expected);
         }
 
@@ -898,12 +921,22 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
             assert_eq!(lhs, unchanged);
         }
+
+        // misuse but should work
+        {
+            let mut lhs = lhs.map_ref(|x| x);
+
+            lhs.elementwise_operation_assign(&rhs, |x, y| *x = y)
+                .unwrap();
+            assert_eq!(lhs, matrix![[&2, &2, &2], [&2, &2, &2]]);
+        }
     }
 
     #[test]
     fn test_multiplication_like_operation() {
-        fn dot_product(lhs: VectorIter<&i32>, rhs: VectorIter<&i32>) -> i32 {
-            lhs.zip(rhs)
+        fn dot_product(lhs: &[i32], rhs: &[i32]) -> i32 {
+            lhs.iter()
+                .zip(rhs)
                 .map(|(x, y)| x * y)
                 .reduce(|acc, p| acc + p)
                 .unwrap()
@@ -938,8 +971,7 @@ mod tests {
             let rhs = rhs.clone();
             lhs.switch_order();
 
-            let mut output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            output.switch_order();
+            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -950,8 +982,7 @@ mod tests {
             lhs.switch_order();
             rhs.switch_order();
 
-            let mut output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            output.switch_order();
+            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             assert_eq!(output, expected);
         }
 
@@ -1015,8 +1046,7 @@ mod tests {
             let mut matrix = matrix.clone();
             matrix.switch_order();
 
-            let mut output = matrix.scalar_operation(&scalar, add);
-            output.switch_order();
+            let output = matrix.scalar_operation(&scalar, add);
             assert_eq!(output, expected);
         }
 
@@ -1026,6 +1056,18 @@ mod tests {
             assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
 
             let output = matrix.scalar_operation(&scalar, |_, y| y);
+            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
+
+            let output = {
+                let scalar = 2;
+                matrix.scalar_operation(&scalar, |x, _| x)
+            };
+            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
+
+            let output = {
+                let matrix = matrix.clone();
+                matrix.scalar_operation(&scalar, |_, y| y)
+            };
             assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
         }
     }
@@ -1053,8 +1095,7 @@ mod tests {
             let mut matrix = matrix.clone();
             matrix.switch_order();
 
-            let mut output = matrix.scalar_operation_consume_self(&scalar, add);
-            output.switch_order();
+            let output = matrix.scalar_operation_consume_self(&scalar, add);
             assert_eq!(output, expected);
         }
 
@@ -1091,8 +1132,15 @@ mod tests {
             matrix.switch_order();
 
             matrix.scalar_operation_assign(&scalar, add_assign);
-            matrix.switch_order();
             assert_eq!(matrix, expected);
+        }
+
+        // misuse but should work
+        {
+            let mut matrix = matrix.map_ref(|x| x);
+
+            matrix.scalar_operation_assign(&scalar, |x, y| *x = y);
+            assert_eq!(matrix, matrix![[&2, &2, &2], [&2, &2, &2]]);
         }
     }
 }
