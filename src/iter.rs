@@ -620,6 +620,110 @@ mod tests {
     }
 
     #[test]
+    fn test_iter_rows_mut() {
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+
+        {
+            let mut matrix = matrix.clone();
+            let mut count = 0;
+
+            for row in matrix.iter_rows_mut() {
+                for element in row {
+                    count += 1;
+                    *element += count;
+                }
+            }
+            assert_eq!(matrix, matrix![[2, 4, 6], [8, 10, 12]]);
+
+            for row in matrix.iter_rows_mut().rev() {
+                for element in row.rev() {
+                    *element -= count;
+                    count -= 1;
+                }
+            }
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+        }
+
+        matrix.switch_order();
+
+        {
+            let mut matrix = matrix.clone();
+            let mut count = 0;
+
+            for row in matrix.iter_rows_mut() {
+                for element in row {
+                    count += 1;
+                    *element += count;
+                }
+            }
+            matrix.switch_order();
+            assert_eq!(matrix, matrix![[2, 4, 6], [8, 10, 12]]);
+
+            matrix.switch_order();
+            for row in matrix.iter_rows_mut().rev() {
+                for element in row.rev() {
+                    *element -= count;
+                    count -= 1;
+                }
+            }
+            matrix.switch_order();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+        }
+    }
+
+    #[test]
+    fn test_iter_cols_mut() {
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+
+        {
+            let mut matrix = matrix.clone();
+            let mut count = 0;
+
+            for col in matrix.iter_cols_mut() {
+                for element in col {
+                    count += 1;
+                    *element += count;
+                }
+            }
+            assert_eq!(matrix, matrix![[2, 5, 8], [6, 9, 12]]);
+
+            for col in matrix.iter_cols_mut().rev() {
+                for element in col.rev() {
+                    *element -= count;
+                    count -= 1;
+                }
+            }
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+        }
+
+        matrix.switch_order();
+
+        {
+            let mut matrix = matrix.clone();
+            let mut count = 0;
+
+            for col in matrix.iter_cols_mut() {
+                for element in col {
+                    count += 1;
+                    *element += count;
+                }
+            }
+            matrix.switch_order();
+            assert_eq!(matrix, matrix![[2, 5, 8], [6, 9, 12]]);
+
+            matrix.switch_order();
+            for col in matrix.iter_cols_mut().rev() {
+                for element in col.rev() {
+                    *element -= count;
+                    count -= 1;
+                }
+            }
+            matrix.switch_order();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+        }
+    }
+
+    #[test]
     fn test_iter_nth_row() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
