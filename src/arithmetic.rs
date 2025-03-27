@@ -49,7 +49,11 @@ impl<L> Matrix<L> {
     /// ```
     #[inline]
     pub fn is_elementwise_operation_conformable<R>(&self, rhs: &Matrix<R>) -> bool {
-        self.shape().eq(&rhs.shape())
+        if self.order == rhs.order {
+            self.shape == rhs.shape
+        } else {
+            self.major() == rhs.minor() && self.minor() == rhs.major()
+        }
     }
 
     /// Returns `true` if two matrices are conformable for multiplication-like
