@@ -7,6 +7,8 @@ use crate::order::Order;
 use std::iter::{Skip, StepBy, Take};
 use std::slice::{Iter, IterMut};
 
+mod iter_mut;
+
 /// An iterator that knows its exact length and can yield elements
 /// from both ends.
 pub trait ExactSizeDoubleEndedIterator: ExactSizeIterator + DoubleEndedIterator {}
