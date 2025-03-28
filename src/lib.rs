@@ -270,9 +270,15 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix[(2, 1)], 6);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
+        if size_of::<T>() == 0 {
+            self.shape.transpose();
+            return self;
+        }
+
         let base = self.data.as_mut_ptr();
         let old_shape = self.shape;
         self.shape.transpose();
+        let new_shape = self.shape;
         let size = self.size();
         let mut visited = vec![false; size];
 
@@ -286,7 +292,7 @@ impl<T> Matrix<T> {
                 *state = true;
                 let next = AxisIndex::from_flattened(current, old_shape)
                     .swap()
-                    .to_flattened(self.shape);
+                    .to_flattened(new_shape);
                 unsafe {
                     let x = base.add(index);
                     let y = base.add(next);
