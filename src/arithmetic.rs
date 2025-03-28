@@ -181,7 +181,8 @@ impl<L> Matrix<L> {
     ///
     /// # Notes
     ///
-    /// The resulting matrix will always have the same order as `self`.
+    /// The order of the resulting matrix will always be the same as that
+    /// of `self`.
     ///
     /// # Examples
     ///
@@ -236,7 +237,8 @@ impl<L> Matrix<L> {
     ///
     /// # Notes
     ///
-    /// The resulting matrix will always have the same order as `self`.
+    /// The order of the resulting matrix will always be the same as that
+    /// of `self`.
     ///
     /// # Examples
     ///
@@ -339,13 +341,16 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
     /// The closure `op` is guaranteed to receive two non-empty, equal-length
     /// slices. It should always return a valid value derived from them.
     ///
-    /// The resulting matrix will always have the same order as `self`.
+    /// The order of the resulting matrix will always be the same as that
+    /// of `self`.
     ///
     /// # Examples
     ///
@@ -380,7 +385,7 @@ impl<L> Matrix<L> {
         let ncols = rhs.ncols();
         let order = self.order;
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        let size = shape.size();
+        let size = Matrix::<U>::check_size(shape.size())?;
         let mut data = Vec::with_capacity(size);
 
         if self.ncols() == 0 {
@@ -1022,6 +1027,30 @@ mod tests {
                 .multiplication_like_operation(rhs, dot_product)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
+        }
+
+        {
+            let lhs = matrix![[0; 0]; isize::MAX as usize + 1];
+            let rhs = matrix![[0; 2]; 0];
+
+            // the size of the resulting matrix would be `2 * isize::MAX + 2`,
+            // which is greater than `usize::MAX`
+            let error = lhs
+                .multiplication_like_operation(rhs, |_, _| 0)
+                .unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+        }
+
+        {
+            let lhs = matrix![[0; 0]; isize::MAX as usize - 1];
+            let rhs = matrix![[0; 2]; 0];
+
+            // the required capacity of the resulting matrix would be
+            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`
+            let error = lhs
+                .multiplication_like_operation(rhs, |_, _| 0u8)
+                .unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
     }
 

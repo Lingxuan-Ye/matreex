@@ -270,9 +270,15 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix[(2, 1)], 6);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
+        if size_of::<T>() == 0 {
+            self.shape.transpose();
+            return self;
+        }
+
         let base = self.data.as_mut_ptr();
         let old_shape = self.shape;
         self.shape.transpose();
+        let new_shape = self.shape;
         let size = self.size();
         let mut visited = vec![false; size];
 
@@ -286,7 +292,7 @@ impl<T> Matrix<T> {
                 *state = true;
                 let next = AxisIndex::from_flattened(current, old_shape)
                     .swap()
-                    .to_flattened(self.shape);
+                    .to_flattened(new_shape);
                 unsafe {
                     let x = base.add(index);
                     let y = base.add(next);
@@ -416,7 +422,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if total bytes stored exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -704,9 +710,9 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix.clear();
-    /// assert!(matrix.is_empty());
     /// assert_eq!(matrix.nrows(), 0);
     /// assert_eq!(matrix.ncols(), 0);
+    /// assert!(matrix.is_empty());
     /// ```
     #[inline]
     pub fn clear(&mut self) -> &mut Self {
@@ -717,6 +723,9 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
     fn check_size(size: usize) -> Result<usize> {
         // see more info at https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.with_capacity
         const MAX: usize = isize::MAX as usize;
@@ -1231,8 +1240,8 @@ mod tests {
     fn test_clear() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         matrix.clear();
-        assert!(matrix.is_empty());
         assert_eq!(matrix.nrows(), 0);
         assert_eq!(matrix.ncols(), 0);
+        assert!(matrix.is_empty());
     }
 }

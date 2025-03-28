@@ -55,13 +55,13 @@ macro_rules! matrix {
 /// let bar = row_vec![0; 3];
 /// assert_eq!(bar, matrix![[0, 0, 0]]);
 ///
-/// let baz = row_vec![0, 1, 2];
-/// assert_eq!(baz, matrix![[0, 1, 2]]);
+/// let baz = row_vec![1, 2, 3];
+/// assert_eq!(baz, matrix![[1, 2, 3]]);
 /// ```
 #[macro_export]
 macro_rules! row_vec {
     [] => {
-        $crate::Matrix::from_row(::std::vec::Vec::new());
+        $crate::Matrix::from_row(::std::vec![]);
     };
 
     [$elem:expr; $n:expr] => {
@@ -87,13 +87,13 @@ macro_rules! row_vec {
 /// let bar = col_vec![0; 3];
 /// assert_eq!(bar, matrix![[0], [0], [0]]);
 ///
-/// let baz = col_vec![0, 1, 2];
-/// assert_eq!(baz, matrix![[0], [1], [2]]);
+/// let baz = col_vec![1, 2, 3];
+/// assert_eq!(baz, matrix![[1], [2], [3]]);
 /// ```
 #[macro_export]
 macro_rules! col_vec {
     [] => {
-        $crate::Matrix::from_col(::std::vec::Vec::new());
+        $crate::Matrix::from_col(::std::vec![]);
     };
 
     [$elem:expr; $n:expr] => {

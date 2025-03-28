@@ -10,13 +10,16 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let row_vec = Matrix::from_row(vec![0, 1, 2]);
-    /// assert_eq!(row_vec, matrix![[0, 1, 2]]);
+    /// let row_vec = Matrix::from_row([1, 2, 3]);
+    /// assert_eq!(row_vec, matrix![[1, 2, 3]]);
     /// ```
-    pub fn from_row(row: Vec<T>) -> Self {
+    pub fn from_row<R>(row: R) -> Self
+    where
+        R: Into<Vec<T>>,
+    {
+        let data = row.into();
         let order = Order::default();
-        let shape = Shape::new(1, row.len()).to_axis_shape_unchecked(order);
-        let data = row;
+        let shape = Shape::new(1, data.len()).to_axis_shape_unchecked(order);
         Self { order, shape, data }
     }
 
@@ -26,20 +29,40 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let col_vec = Matrix::from_col(vec![0, 1, 2]);
-    /// assert_eq!(col_vec, matrix![[0], [1], [2]]);
+    /// let col_vec = Matrix::from_col([1, 2, 3]);
+    /// assert_eq!(col_vec, matrix![[1], [2], [3]]);
     /// ```
-    pub fn from_col(col: Vec<T>) -> Self {
+    pub fn from_col<C>(col: C) -> Self
+    where
+        C: Into<Vec<T>>,
+    {
+        let data = col.into();
         let order = Order::default();
-        let shape = Shape::new(col.len(), 1).to_axis_shape_unchecked(order);
-        let data = col;
+        let shape = Shape::new(data.len(), 1).to_axis_shape_unchecked(order);
         Self { order, shape, data }
     }
 }
 
 impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = [[1, 2, 3], [4, 5, 6]];
+    /// let matrix = Matrix::from(rows);
+    /// // this is actually a circular validation
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from(value: [[T; C]; R]) -> Self {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let shape = Shape::new(R, C).to_axis_shape_unchecked(order);
         let data = value.into_iter().flatten().collect();
         Self { order, shape, data }
@@ -47,8 +70,24 @@ impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
 }
 
 impl<T, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = vec![[1, 2, 3], [4, 5, 6]];
+    /// let matrix = Matrix::from(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from(value: Vec<[T; C]>) -> Self {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let nrows = value.len();
         let shape = Shape::new(nrows, C).to_axis_shape_unchecked(order);
         let data = value.into_iter().flatten().collect();
@@ -57,8 +96,24 @@ impl<T, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
 }
 
 impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = &[[1, 2, 3], [4, 5, 6]][..];
+    /// let matrix = Matrix::from(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from(value: &[[T; C]]) -> Self {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let nrows = value.len();
         let shape = Shape::new(nrows, C).to_axis_shape_unchecked(order);
         let data = value.iter().flatten().cloned().collect();
@@ -69,8 +124,30 @@ impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
 impl<T, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
     type Error = Error;
 
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = [vec![1, 2, 3], vec![4, 5, 6]];
+    /// let matrix = Matrix::try_from(rows);
+    /// assert_eq!(matrix, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     fn try_from(value: [Vec<T>; C]) -> Result<Self> {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let nrows = C;
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
@@ -89,8 +166,30 @@ impl<T, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
 impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
     type Error = Error;
 
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
+    /// let matrix = Matrix::try_from(rows);
+    /// assert_eq!(matrix, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     fn try_from(value: Vec<Vec<T>>) -> Result<Self> {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let nrows = value.len();
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
@@ -109,8 +208,30 @@ impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
 impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
     type Error = Error;
 
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = &[vec![1, 2, 3], vec![4, 5, 6]][..];
+    /// let matrix = Matrix::try_from(rows);
+    /// assert_eq!(matrix, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     fn try_from(value: &[Vec<T>]) -> Result<Self> {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let nrows = value.len();
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
@@ -130,11 +251,26 @@ impl<T, V> FromIterator<V> for Matrix<T>
 where
     V: IntoIterator<Item = T>,
 {
-    /// Creates a new [`Matrix<T>`] from an iterator over rows.
+    /// Converts to [`Matrix<T>`] from an iterator over rows.
     ///
     /// # Panics
     ///
     /// Panics if rows have inconsistent lengths or if memory allocation fails.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let iter = [[1, 2, 3], [4, 5, 6]].into_iter();
+    /// let matrix = Matrix::from_iter(iter);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from_iter<M>(iter: M) -> Self
     where
         M: IntoIterator<Item = V>,
@@ -156,7 +292,7 @@ where
             size = data.len();
         }
         data.shrink_to_fit();
-        let order = Order::default();
+        let order = Order::RowMajor;
         let shape = Shape::new(nrows, ncols).to_axis_shape_unchecked(order);
         Self { order, shape, data }
     }
@@ -165,124 +301,150 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::matrix;
+
+    // tests in this module should avoid direct comparison of `Matrix<T>`
 
     #[test]
     fn test_from_row() {
-        let row_vec: Matrix<i32> = Matrix::from_row(Vec::new());
-        assert_eq!(row_vec, Matrix::with_default((1, 0)).unwrap());
+        let expected_order = Order::default();
+        let expected_shape = Shape::new(1, 3).to_axis_shape_unchecked(expected_order);
+        let expected_data = vec![1, 2, 3];
 
-        let row_vec = Matrix::from_row(vec![1, 2, 3]);
-        assert_eq!(row_vec, matrix![[1, 2, 3]]);
+        let row_vec = Matrix::from_row([1, 2, 3]);
+        assert_eq!(row_vec.order, expected_order);
+        assert_eq!(row_vec.shape, expected_shape);
+        assert_eq!(row_vec.data, expected_data);
     }
 
     #[test]
     fn test_from_col() {
-        let col_vec: Matrix<i32> = Matrix::from_col(Vec::new());
-        assert_eq!(col_vec, Matrix::with_default((0, 1)).unwrap());
+        let expected_order = Order::default();
+        let expected_shape = Shape::new(3, 1).to_axis_shape_unchecked(expected_order);
+        let expected_data = vec![1, 2, 3];
 
-        let col_vec = Matrix::from_col(vec![1, 2, 3]);
-        assert_eq!(col_vec, matrix![[1], [2], [3]]);
+        let col_vec = Matrix::from_col([1, 2, 3]);
+        assert_eq!(col_vec.order, expected_order);
+        assert_eq!(col_vec.shape, expected_shape);
+        assert_eq!(col_vec.data, expected_data);
     }
 
     #[test]
-    fn test_from_arrays() {
-        // avoid using `matrix!` to prevent circular validation
-        let order = Order::default();
-        let shape = Shape::new(2, 3).to_axis_shape_unchecked(order);
-        let data = vec![1, 2, 3, 4, 5, 6];
-        let mut expected = Matrix { order, shape, data };
+    fn test_from() {
+        let expected_order = Order::RowMajor;
+        let expected_shape = Shape::new(2, 3).to_axis_shape_unchecked(expected_order);
+        let expected_data = vec![1, 2, 3, 4, 5, 6];
 
-        let arrays = [[1, 2, 3], [4, 5, 6]];
-        assert_eq!(Matrix::from(arrays), expected);
-        assert_eq!(Matrix::from(arrays.to_vec()), expected);
-        assert_eq!(Matrix::from(&arrays[..]), expected);
-        assert_eq!(matrix![[1, 2, 3], [4, 5, 6]], expected);
+        let rows = [[1, 2, 3], [4, 5, 6]];
 
-        let arrays = [[1, 4], [2, 5], [3, 6]];
-        assert_ne!(Matrix::from(arrays), expected);
-        assert_ne!(Matrix::from(arrays.to_vec()), expected);
-        assert_ne!(Matrix::from(&arrays[..]), expected);
-        assert_ne!(matrix![[1, 4], [2, 5], [3, 6]], expected);
-        expected.transpose();
-        assert_eq!(Matrix::from(arrays), expected);
-        assert_eq!(Matrix::from(arrays.to_vec()), expected);
-        assert_eq!(Matrix::from(&arrays[..]), expected);
-        assert_eq!(matrix![[1, 4], [2, 5], [3, 6]], expected);
+        let matrix = Matrix::from(rows);
+        assert_eq!(matrix.order, expected_order);
+        assert_eq!(matrix.shape, expected_shape);
+        assert_eq!(matrix.data, expected_data);
+
+        let matrix = Matrix::from(rows.to_vec());
+        assert_eq!(matrix.order, expected_order);
+        assert_eq!(matrix.shape, expected_shape);
+        assert_eq!(matrix.data, expected_data);
+
+        let matrix = Matrix::from(&rows[..]);
+        assert_eq!(matrix.order, expected_order);
+        assert_eq!(matrix.shape, expected_shape);
+        assert_eq!(matrix.data, expected_data);
     }
 
     #[test]
-    fn test_try_from_vectors() {
+    fn test_try_from() {
         const MAX: usize = isize::MAX as usize;
 
-        let expected = matrix![[1, 2, 3], [4, 5, 6]];
+        {
+            let expected_order = Order::RowMajor;
+            let expected_shape = Shape::new(2, 3).to_axis_shape_unchecked(expected_order);
+            let expected_data = vec![1, 2, 3, 4, 5, 6];
 
-        let vectors = [vec![1, 2, 3], vec![4, 5, 6]];
-        assert_eq!(Matrix::try_from(vectors.clone()).unwrap(), expected);
-        assert_eq!(Matrix::try_from(vectors.to_vec()).unwrap(), expected);
-        assert_eq!(Matrix::try_from(&vectors[..]).unwrap(), expected);
+            let rows = [vec![1, 2, 3], vec![4, 5, 6]];
 
-        let vectors = [vec![1, 2, 3]];
-        assert_ne!(Matrix::try_from(vectors.clone()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(vectors.to_vec()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(&vectors[..]).unwrap(), expected);
+            let matrix = Matrix::try_from(rows.clone()).unwrap();
+            assert_eq!(matrix.order, expected_order);
+            assert_eq!(matrix.shape, expected_shape);
+            assert_eq!(matrix.data, expected_data);
 
-        let vectors = [vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
-        assert_ne!(Matrix::try_from(vectors.clone()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(vectors.to_vec()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(&vectors[..]).unwrap(), expected);
+            let matrix = Matrix::try_from(rows.to_vec()).unwrap();
+            assert_eq!(matrix.order, expected_order);
+            assert_eq!(matrix.shape, expected_shape);
+            assert_eq!(matrix.data, expected_data);
 
-        let vectors = [vec![1, 2], vec![3, 4], vec![5, 6]];
-        assert_ne!(Matrix::try_from(vectors.clone()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(vectors.to_vec()).unwrap(), expected);
-        assert_ne!(Matrix::try_from(&vectors[..]).unwrap(), expected);
+            let matrix = Matrix::try_from(&rows[..]).unwrap();
+            assert_eq!(matrix.order, expected_order);
+            assert_eq!(matrix.shape, expected_shape);
+            assert_eq!(matrix.data, expected_data);
+        }
 
-        let vectors = [vec![(); MAX], vec![(); MAX]];
-        assert!(Matrix::try_from(vectors.clone()).is_ok());
-        assert!(Matrix::try_from(vectors.to_vec()).is_ok());
-        assert!(Matrix::try_from(&vectors[..]).is_ok());
+        {
+            let rows = [vec![(); MAX], vec![(); MAX]];
 
-        let vectors = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
-        assert_eq!(Matrix::try_from(vectors.clone()), Err(Error::SizeOverflow));
-        assert_eq!(Matrix::try_from(vectors.to_vec()), Err(Error::SizeOverflow));
-        assert_eq!(Matrix::try_from(&vectors[..]), Err(Error::SizeOverflow));
+            assert!(Matrix::try_from(rows.clone()).is_ok());
+            assert!(Matrix::try_from(rows.to_vec()).is_ok());
+            assert!(Matrix::try_from(&rows[..]).is_ok());
+        }
+
+        {
+            let rows = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
+
+            let error = Matrix::try_from(rows.clone()).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let error = Matrix::try_from(rows.to_vec()).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let error = Matrix::try_from(&rows[..]).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+        }
 
         // unable to cover (run out of memory)
-        // let vectors = [vec![0u8; MAX], vec![0u8; MAX]];
-        // assert_eq!(Matrix::try_from(vectors.clone()), Err(Error::CapacityOverflow));
-        // assert_eq!(Matrix::try_from(vectors.to_vec()), Err(Error::CapacityOverflow));
-        // assert_eq!(Matrix::try_from(&vectors[..]), Err(Error::CapacityOverflow));
+        // {
+        //     let rows = [vec![0u8; MAX], vec![0u8; MAX]];
+        //
+        //     let error = Matrix::try_from(rows.clone()).unwrap_err();
+        //     assert_eq!(error, Error::CapacityOverflow);
+        //
+        //     let error = Matrix::try_from(rows.to_vec()).unwrap_err();
+        //     assert_eq!(error, Error::CapacityOverflow);
+        //
+        //     let error = Matrix::try_from(&rows[..]).unwrap_err();
+        //     assert_eq!(error, Error::CapacityOverflow);
+        // }
 
-        let vectors = [vec![1, 2, 3], vec![4, 5]];
-        assert_eq!(
-            Matrix::try_from(vectors.clone()),
-            Err(Error::LengthInconsistent)
-        );
-        assert_eq!(
-            Matrix::try_from(vectors.to_vec()),
-            Err(Error::LengthInconsistent)
-        );
-        assert_eq!(
-            Matrix::try_from(&vectors[..]),
-            Err(Error::LengthInconsistent)
-        );
+        {
+            let rows = [vec![1, 2, 3], vec![4, 5]];
+
+            let error = Matrix::try_from(rows.clone()).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
+            let error = Matrix::try_from(rows.to_vec()).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
+            let error = Matrix::try_from(&rows[..]).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+        }
     }
 
     #[test]
-    fn test_from_iterator() {
-        let expected = matrix![[1, 2, 3], [4, 5, 6]];
+    fn test_from_iter() {
+        let expected_order = Order::RowMajor;
+        let expected_shape = Shape::new(2, 3).to_axis_shape_unchecked(expected_order);
+        let expected_data = vec![1, 2, 3, 4, 5, 6];
 
         let iterable = [[1, 2, 3], [4, 5, 6]];
-        assert_eq!(Matrix::from_iter(iterable), expected);
 
-        let iterable = [[1, 2], [3, 4], [5, 6]];
-        assert_ne!(Matrix::from_iter(iterable), expected);
+        let matrix = Matrix::from_iter(iterable);
+        assert_eq!(matrix.order, expected_order);
+        assert_eq!(matrix.shape, expected_shape);
+        assert_eq!(matrix.data, expected_data);
     }
 
     #[test]
     #[should_panic]
-    fn test_from_iterator_fails() {
-        let iterable = [vec![1, 2, 3], vec![4, 5]];
-        Matrix::from_iter(iterable);
+    fn test_from_iter_fails() {
+        Matrix::from_iter([vec![1, 2, 3], vec![4, 5]]);
     }
 }

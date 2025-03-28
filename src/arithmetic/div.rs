@@ -11,7 +11,8 @@ impl<L> Matrix<L> {
     ///
     /// # Notes
     ///
-    /// The resulting matrix will always have the same order as `self`.
+    /// The order of the resulting matrix will always be the same as that
+    /// of `self`.
     ///
     /// # Examples
     ///
@@ -42,7 +43,8 @@ impl<L> Matrix<L> {
     ///
     /// # Notes
     ///
-    /// The resulting matrix will always have the same order as `self`.
+    /// The order of the resulting matrix will always be the same as that
+    /// of `self`.
     ///
     /// # Examples
     ///

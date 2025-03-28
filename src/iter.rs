@@ -41,6 +41,7 @@ impl<T> Matrix<T> {
     ///
     /// assert!(rows.next().is_none());
     /// ```
+    #[inline]
     pub fn iter_rows(
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &T>>
@@ -78,6 +79,7 @@ impl<T> Matrix<T> {
     ///
     /// assert!(cols.next().is_none());
     /// ```
+    #[inline]
     pub fn iter_cols(
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &T>>
@@ -103,6 +105,7 @@ impl<T> Matrix<T> {
     /// }
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
+    #[inline]
     pub fn iter_rows_mut(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
@@ -128,6 +131,7 @@ impl<T> Matrix<T> {
     /// }
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
+    #[inline]
     pub fn iter_cols_mut(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
@@ -162,6 +166,7 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn iter_nth_row(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match self.order {
             Order::RowMajor => self.iter_nth_major_axis_vector(n),
@@ -191,6 +196,7 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn iter_nth_col(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match self.order {
             Order::RowMajor => self.iter_nth_minor_axis_vector(n),
@@ -221,6 +227,7 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn iter_nth_row_mut(
         &mut self,
         n: usize,
@@ -254,6 +261,7 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn iter_nth_col_mut(
         &mut self,
         n: usize,

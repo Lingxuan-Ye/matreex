@@ -584,18 +584,16 @@ impl AxisIndex {
     }
 
     // `to_wapping_index` is not implemented for two reasons:
-    // - It is a one-to-many mapping.
-    // - It serves no practical purpose.
+    // - it is a one-to-many mapping
+    // - it serves no practical purpose
 
     pub(crate) fn from_flattened(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
-        // let minor = (index % shape.major_stride()) / shape.minor_stride();
         let minor = index % shape.major_stride();
         Self { major, minor }
     }
 
     pub(crate) fn to_flattened(self, shape: AxisShape) -> usize {
-        // self.major * shape.major_stride() + self.minor * shape.minor_stride()
         self.major * shape.major_stride() + self.minor
     }
 }
