@@ -10,13 +10,16 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let row_vec = Matrix::from_row(vec![1, 2, 3]);
+    /// let row_vec = Matrix::from_row([1, 2, 3]);
     /// assert_eq!(row_vec, matrix![[1, 2, 3]]);
     /// ```
-    pub fn from_row(row: Vec<T>) -> Self {
+    pub fn from_row<R>(row: R) -> Self
+    where
+        R: Into<Vec<T>>,
+    {
+        let data = row.into();
         let order = Order::default();
-        let shape = Shape::new(1, row.len()).to_axis_shape_unchecked(order);
-        let data = row;
+        let shape = Shape::new(1, data.len()).to_axis_shape_unchecked(order);
         Self { order, shape, data }
     }
 
@@ -26,13 +29,16 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let col_vec = Matrix::from_col(vec![1, 2, 3]);
+    /// let col_vec = Matrix::from_col([1, 2, 3]);
     /// assert_eq!(col_vec, matrix![[1], [2], [3]]);
     /// ```
-    pub fn from_col(col: Vec<T>) -> Self {
+    pub fn from_col<C>(col: C) -> Self
+    where
+        C: Into<Vec<T>>,
+    {
+        let data = col.into();
         let order = Order::default();
-        let shape = Shape::new(col.len(), 1).to_axis_shape_unchecked(order);
-        let data = col;
+        let shape = Shape::new(data.len(), 1).to_axis_shape_unchecked(order);
         Self { order, shape, data }
     }
 }
