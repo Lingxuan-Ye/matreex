@@ -710,9 +710,9 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// matrix.clear();
-    /// assert!(matrix.is_empty());
     /// assert_eq!(matrix.nrows(), 0);
     /// assert_eq!(matrix.ncols(), 0);
+    /// assert!(matrix.is_empty());
     /// ```
     #[inline]
     pub fn clear(&mut self) -> &mut Self {
@@ -1240,8 +1240,8 @@ mod tests {
     fn test_clear() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         matrix.clear();
-        assert!(matrix.is_empty());
         assert_eq!(matrix.nrows(), 0);
         assert_eq!(matrix.ncols(), 0);
+        assert!(matrix.is_empty());
     }
 }

@@ -35,6 +35,9 @@ mod tests {
 
         // default order & default order
         {
+            assert_eq!(lhs.order, rhs.order);
+            assert_eq!(lhs.shape, rhs.shape);
+            assert_eq!(lhs.data, rhs.data);
             assert_eq!(lhs, rhs);
         }
 
@@ -43,6 +46,9 @@ mod tests {
             let mut rhs = rhs.clone();
             rhs.switch_order();
 
+            assert_ne!(lhs.order, rhs.order);
+            assert_ne!(lhs.shape, rhs.shape);
+            assert_ne!(lhs.data, rhs.data);
             assert_eq!(lhs, rhs);
         }
 
@@ -51,6 +57,9 @@ mod tests {
             let mut lhs = lhs.clone();
             lhs.switch_order();
 
+            assert_ne!(lhs.order, rhs.order);
+            assert_ne!(lhs.shape, rhs.shape);
+            assert_ne!(lhs.data, rhs.data);
             assert_eq!(lhs, rhs);
         }
 
@@ -61,6 +70,9 @@ mod tests {
             lhs.switch_order();
             rhs.switch_order();
 
+            assert_eq!(lhs.order, rhs.order);
+            assert_eq!(lhs.shape, rhs.shape);
+            assert_eq!(lhs.data, rhs.data);
             assert_eq!(lhs, rhs);
         }
 
