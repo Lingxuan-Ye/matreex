@@ -10,8 +10,8 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let row_vec = Matrix::from_row(vec![0, 1, 2]);
-    /// assert_eq!(row_vec, matrix![[0, 1, 2]]);
+    /// let row_vec = Matrix::from_row(vec![1, 2, 3]);
+    /// assert_eq!(row_vec, matrix![[1, 2, 3]]);
     /// ```
     pub fn from_row(row: Vec<T>) -> Self {
         let order = Order::default();
@@ -26,8 +26,8 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let col_vec = Matrix::from_col(vec![0, 1, 2]);
-    /// assert_eq!(col_vec, matrix![[0], [1], [2]]);
+    /// let col_vec = Matrix::from_col(vec![1, 2, 3]);
+    /// assert_eq!(col_vec, matrix![[1], [2], [3]]);
     /// ```
     pub fn from_col(col: Vec<T>) -> Self {
         let order = Order::default();
@@ -38,8 +38,25 @@ impl<T> Matrix<T> {
 }
 
 impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = [[1, 2, 3], [4, 5, 6]];
+    /// let matrix = Matrix::from(rows);
+    /// // this is actually a circular validation
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from(value: [[T; C]; R]) -> Self {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let shape = Shape::new(R, C).to_axis_shape_unchecked(order);
         let data = value.into_iter().flatten().collect();
         Self { order, shape, data }
@@ -47,8 +64,24 @@ impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
 }
 
 impl<T, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = vec![[1, 2, 3], [4, 5, 6]];
+    /// let matrix = Matrix::from(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from(value: Vec<[T; C]>) -> Self {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let nrows = value.len();
         let shape = Shape::new(nrows, C).to_axis_shape_unchecked(order);
         let data = value.into_iter().flatten().collect();
@@ -57,8 +90,24 @@ impl<T, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
 }
 
 impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = &[[1, 2, 3], [4, 5, 6]][..];
+    /// let matrix = Matrix::from(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from(value: &[[T; C]]) -> Self {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let nrows = value.len();
         let shape = Shape::new(nrows, C).to_axis_shape_unchecked(order);
         let data = value.iter().flatten().cloned().collect();
@@ -69,8 +118,30 @@ impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
 impl<T, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
     type Error = Error;
 
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = [vec![1, 2, 3], vec![4, 5, 6]];
+    /// let matrix = Matrix::try_from(rows);
+    /// assert_eq!(matrix, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     fn try_from(value: [Vec<T>; C]) -> Result<Self> {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let nrows = C;
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
@@ -89,8 +160,30 @@ impl<T, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
 impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
     type Error = Error;
 
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
+    /// let matrix = Matrix::try_from(rows);
+    /// assert_eq!(matrix, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     fn try_from(value: Vec<Vec<T>>) -> Result<Self> {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let nrows = value.len();
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
@@ -109,8 +202,30 @@ impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
 impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
     type Error = Error;
 
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = &[vec![1, 2, 3], vec![4, 5, 6]][..];
+    /// let matrix = Matrix::try_from(rows);
+    /// assert_eq!(matrix, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     fn try_from(value: &[Vec<T>]) -> Result<Self> {
-        let order = Order::default();
+        let order = Order::RowMajor;
         let nrows = value.len();
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
@@ -130,11 +245,26 @@ impl<T, V> FromIterator<V> for Matrix<T>
 where
     V: IntoIterator<Item = T>,
 {
-    /// Creates a new [`Matrix<T>`] from an iterator over rows.
+    /// Converts to [`Matrix<T>`] from an iterator over rows.
     ///
     /// # Panics
     ///
     /// Panics if rows have inconsistent lengths or if memory allocation fails.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let iter = [[1, 2, 3], [4, 5, 6]].into_iter();
+    /// let matrix = Matrix::from_iter(iter);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from_iter<M>(iter: M) -> Self
     where
         M: IntoIterator<Item = V>,
@@ -156,7 +286,7 @@ where
             size = data.len();
         }
         data.shrink_to_fit();
-        let order = Order::default();
+        let order = Order::RowMajor;
         let shape = Shape::new(nrows, ncols).to_axis_shape_unchecked(order);
         Self { order, shape, data }
     }

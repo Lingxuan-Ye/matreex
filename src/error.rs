@@ -21,7 +21,8 @@ pub enum Error {
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     SizeMismatch,
 
-    /// Error when the capacity exceeds [`isize::MAX`].
+    /// Error when attempting to allocate more than [`isize::MAX`] bytes of
+    /// capacity.
     ///
     /// Refer to [`vec`] and *[The Rustonomicon]* for more information.
     ///
@@ -29,8 +30,7 @@ pub enum Error {
     /// [The Rustonomicon]: https://doc.rust-lang.org/stable/nomicon/vec/vec-alloc.html#allocating-memory
     CapacityOverflow,
 
-    /// Error when creating a matrix from a sequence of vectors with
-    /// inconsistent lengths.
+    /// Error when converting to a matrix from rows with inconsistent lengths.
     LengthInconsistent,
 
     /// Error for accessing an index out of bounds.
