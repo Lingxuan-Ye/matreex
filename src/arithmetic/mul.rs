@@ -167,6 +167,8 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -185,6 +187,8 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn multiply<R, U>(mut self, mut rhs: Matrix<R>) -> Result<Matrix<U>>
     where
         L: Mul<R, Output = U> + Clone,
@@ -197,7 +201,7 @@ impl<L> Matrix<L> {
         let ncols = rhs.ncols();
         let order = self.order;
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        let size = shape.size();
+        let size = Matrix::<U>::check_size(shape.size())?;
         let mut data = Vec::with_capacity(size);
 
         if self.ncols() == 0 {
@@ -445,6 +449,26 @@ mod tests {
 
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
+        }
+
+        {
+            let lhs = matrix![[0; 0]; isize::MAX as usize + 1];
+            let rhs = matrix![[0; 2]; 0];
+
+            // the size of the resulting matrix would be `2 * isize::MAX + 2`,
+            // which is greater than `usize::MAX`
+            let error = lhs.multiply(rhs).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+        }
+
+        {
+            let lhs = matrix![[0u8; 0]; isize::MAX as usize - 1];
+            let rhs = matrix![[0u8; 2]; 0];
+
+            // the required capacity of the resulting matrix would be
+            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`
+            let error = lhs.multiply(rhs).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
     }
 
