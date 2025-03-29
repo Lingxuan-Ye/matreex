@@ -479,7 +479,7 @@ impl<T> Matrix<T> {
         n: usize,
     ) -> Take<StepBy<Skip<Iter<'_, T>>>> {
         let skip = n * self.major_stride();
-        let step = 1;
+        let step = self.minor_stride();
         let take = self.minor();
         self.data.iter().skip(skip).step_by(step).take(take)
     }
@@ -488,7 +488,7 @@ impl<T> Matrix<T> {
         &self,
         n: usize,
     ) -> Take<StepBy<Skip<Iter<'_, T>>>> {
-        let skip = n;
+        let skip = n * self.minor_stride();
         let step = self.major_stride();
         let take = self.major();
         self.data.iter().skip(skip).step_by(step).take(take)
@@ -499,7 +499,7 @@ impl<T> Matrix<T> {
         n: usize,
     ) -> Take<StepBy<Skip<IterMut<'_, T>>>> {
         let skip = n * self.major_stride();
-        let step = 1;
+        let step = self.minor_stride();
         let take = self.minor();
         self.data.iter_mut().skip(skip).step_by(step).take(take)
     }
@@ -508,7 +508,7 @@ impl<T> Matrix<T> {
         &mut self,
         n: usize,
     ) -> Take<StepBy<Skip<IterMut<'_, T>>>> {
-        let skip = n;
+        let skip = n * self.minor_stride();
         let step = self.major_stride();
         let take = self.major();
         self.data.iter_mut().skip(skip).step_by(step).take(take)

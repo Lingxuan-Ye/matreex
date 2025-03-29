@@ -240,7 +240,8 @@ impl<T> Matrix<T> {
     }
 
     /// Returns the stride of the minor axis.
-    #[allow(dead_code)]
+    ///
+    /// It always returns `1`.
     fn minor_stride(&self) -> usize {
         self.shape.minor_stride()
     }
@@ -599,9 +600,9 @@ impl<T> Matrix<T> {
             let minor = cmp::min(self.minor(), source.minor());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
-                let self_upper = self_lower + minor;
+                let self_upper = self_lower + minor * self.minor_stride();
                 let source_lower = i * source.major_stride();
-                let source_upper = source_lower + minor;
+                let source_upper = source_lower + minor * self.minor_stride();
                 unsafe {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)
@@ -613,7 +614,7 @@ impl<T> Matrix<T> {
             let minor = cmp::min(self.minor(), source.major());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
-                let self_upper = self_lower + minor;
+                let self_upper = self_lower + minor * self.minor_stride();
                 unsafe {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)

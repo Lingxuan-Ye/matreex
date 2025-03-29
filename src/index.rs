@@ -589,12 +589,12 @@ impl AxisIndex {
 
     pub(crate) fn from_flattened(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
-        let minor = index % shape.major_stride();
+        let minor = (index % shape.major_stride()) / shape.minor_stride();
         Self { major, minor }
     }
 
     pub(crate) fn to_flattened(self, shape: AxisShape) -> usize {
-        self.major * shape.major_stride() + self.minor
+        self.major * shape.major_stride() + self.minor * shape.minor_stride()
     }
 }
 
