@@ -2,7 +2,7 @@ use crate::Matrix;
 use crate::error::{Error, Result};
 use std::marker::PhantomData;
 use std::num::NonZero;
-use std::ptr::NonNull;
+use std::ptr::{NonNull, without_provenance_mut};
 
 // To prevent pointers from exceeding their provenance, `upper`
 // must point **to** (not one vector past) the exact vector that
@@ -50,8 +50,9 @@ impl<T> IterVectorsMut<'_, T> {
         let stride = matrix.major_stride();
         let offset = (matrix.major() - 1) * stride;
         let upper = if size_of::<T>() == 0 {
-            let addr = lower.as_ptr() as usize + offset;
-            unsafe { NonNull::new_unchecked(addr as *mut T) }
+            let addr = lower.addr().get() + offset;
+            let ptr = without_provenance_mut(addr);
+            unsafe { NonNull::new_unchecked(ptr) }
         } else {
             unsafe { lower.add(offset) }
         };
@@ -89,8 +90,9 @@ impl<T> IterVectorsMut<'_, T> {
         let stride = 1;
         let offset = (matrix.minor() - 1) * stride;
         let upper = if size_of::<T>() == 0 {
-            let addr = lower.as_ptr() as usize + offset;
-            unsafe { NonNull::new_unchecked(addr as *mut T) }
+            let addr = lower.addr().get() + offset;
+            let ptr = without_provenance_mut(addr);
+            unsafe { NonNull::new_unchecked(ptr) }
         } else {
             unsafe { lower.add(offset) }
         };
@@ -140,8 +142,9 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
         } else {
             let stride = vector_layout.inter_stride.get();
             self.lower = if size_of::<T>() == 0 {
-                let addr = self.lower.as_ptr() as usize + stride;
-                unsafe { NonNull::new_unchecked(addr as *mut T) }
+                let addr = self.lower.addr().get() + stride;
+                let ptr = without_provenance_mut(addr);
+                unsafe { NonNull::new_unchecked(ptr) }
             } else {
                 unsafe { self.lower.add(stride) }
             };
@@ -156,7 +159,7 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
             Some(strides) => {
                 let stride = strides.inter_stride.get();
                 let elem_size = size_of::<T>();
-                1 + (self.upper.as_ptr() as usize - self.lower.as_ptr() as usize)
+                1 + (self.upper.addr().get() - self.lower.addr().get())
                     / (stride * if elem_size == 0 { 1 } else { elem_size })
             }
         };
@@ -187,8 +190,9 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
         } else {
             let stride = vector_layout.inter_stride.get();
             self.upper = if size_of::<T>() == 0 {
-                let addr = self.upper.as_ptr() as usize - stride;
-                unsafe { NonNull::new_unchecked(addr as *mut T) }
+                let addr = self.upper.addr().get() - stride;
+                let ptr = without_provenance_mut(addr);
+                unsafe { NonNull::new_unchecked(ptr) }
             } else {
                 unsafe { self.upper.sub(stride) }
             };
@@ -281,8 +285,9 @@ impl<T> IterNthVectorMut<'_, T> {
     ) -> Self {
         let offset = (length.get() - 1) * stride.get();
         let upper = if size_of::<T>() == 0 {
-            let addr = lower.as_ptr() as usize + offset;
-            unsafe { NonNull::new_unchecked(addr as *mut T) }
+            let addr = lower.addr().get() + offset;
+            let ptr = without_provenance_mut(addr);
+            unsafe { NonNull::new_unchecked(ptr) }
         } else {
             unsafe { lower.add(offset) }
         };
@@ -321,8 +326,9 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
             self.stride = None;
         } else {
             self.lower = if size_of::<T>() == 0 {
-                let addr = self.lower.as_ptr() as usize + stride;
-                unsafe { NonNull::new_unchecked(addr as *mut T) }
+                let addr = self.lower.addr().get() + stride;
+                let ptr = without_provenance_mut(addr);
+                unsafe { NonNull::new_unchecked(ptr) }
             } else {
                 unsafe { self.lower.add(stride) }
             };
@@ -337,7 +343,7 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
             Some(stride) => {
                 let stride = stride.get();
                 let elem_size = size_of::<T>();
-                1 + (self.upper.as_ptr() as usize - self.lower.as_ptr() as usize)
+                1 + (self.upper.addr().get() - self.lower.addr().get())
                     / (stride * if elem_size == 0 { 1 } else { elem_size })
             }
         };
@@ -365,8 +371,9 @@ impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
             self.stride = None;
         } else {
             self.upper = if size_of::<T>() == 0 {
-                let addr = self.upper.as_ptr() as usize - stride;
-                unsafe { NonNull::new_unchecked(addr as *mut T) }
+                let addr = self.upper.addr().get() - stride;
+                let ptr = without_provenance_mut(addr);
+                unsafe { NonNull::new_unchecked(ptr) }
             } else {
                 unsafe { self.upper.sub(stride) }
             };
