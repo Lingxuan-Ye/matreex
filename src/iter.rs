@@ -8,6 +8,7 @@ use crate::order::Order;
 use std::iter::{Skip, StepBy, Take};
 use std::slice::{Iter, IterMut};
 
+mod inner;
 mod iter_mut;
 
 /// An iterator that knows its exact length and can yield elements
@@ -111,8 +112,8 @@ impl<T> Matrix<T> {
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
     {
         match self.order {
-            Order::RowMajor => IterVectorsMut::on_major_axis(self),
-            Order::ColMajor => IterVectorsMut::on_minor_axis(self),
+            Order::RowMajor => IterVectorsMut::over_major_axis(self),
+            Order::ColMajor => IterVectorsMut::over_minor_axis(self),
         }
     }
 
@@ -137,8 +138,8 @@ impl<T> Matrix<T> {
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
     {
         match self.order {
-            Order::RowMajor => IterVectorsMut::on_minor_axis(self),
-            Order::ColMajor => IterVectorsMut::on_major_axis(self),
+            Order::RowMajor => IterVectorsMut::over_minor_axis(self),
+            Order::ColMajor => IterVectorsMut::over_major_axis(self),
         }
     }
 
