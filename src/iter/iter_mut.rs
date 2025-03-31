@@ -62,7 +62,7 @@ unsafe impl<T: Send> Send for IterNthVectorMut<'_, T> {}
 unsafe impl<T: Sync> Sync for IterNthVectorMut<'_, T> {}
 
 impl<T> IterNthVectorMut<'_, T> {
-    /// This is an alternative to [`Matrix::iter_nth_major_axis_vector`],
+    /// This is an alternative to [`Matrix::iter_nth_major_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
     pub(crate) fn over_major_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
@@ -71,7 +71,7 @@ impl<T> IterNthVectorMut<'_, T> {
         Ok(Self { inner, marker })
     }
 
-    /// This is an alternative to [`Matrix::iter_nth_minor_axis_vector`],
+    /// This is an alternative to [`Matrix::iter_nth_minor_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
     pub(crate) fn over_minor_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
