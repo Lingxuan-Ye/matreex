@@ -18,7 +18,7 @@ use std::ptr::{NonNull, without_provenance_mut};
 ///
 /// This does not track the validity of its underlying pointers.
 #[derive(Debug)]
-pub(super) struct IterVectorsInner<T> {
+pub(crate) struct IterVectorsInner<T> {
     lower: NonNull<T>,
     upper: NonNull<T>,
     layout: Option<Layout>,
@@ -222,14 +222,14 @@ impl<T> DoubleEndedIterator for IterVectorsInner<T> {
 ///
 /// This does not track the validity of its underlying pointers.
 #[derive(Debug)]
-pub(super) struct IterNthVectorInner<T> {
+pub(crate) struct IterNthVectorInner<T> {
     lower: NonNull<T>,
     upper: NonNull<T>,
     stride: Option<NonZero<usize>>,
 }
 
 impl<T> IterNthVectorInner<T> {
-    pub(super) fn over_major_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
+    pub(crate) fn over_major_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
         if n >= matrix.major() {
             return Err(Error::IndexOutOfBounds);
         } else if matrix.is_empty() {
@@ -250,7 +250,7 @@ impl<T> IterNthVectorInner<T> {
         unsafe { Ok(Self::assemble(lower, stride, length)) }
     }
 
-    pub(super) fn over_minor_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
+    pub(crate) fn over_minor_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
         if n >= matrix.minor() {
             return Err(Error::IndexOutOfBounds);
         } else if matrix.is_empty() {
