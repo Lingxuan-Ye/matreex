@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 #[derive(Debug)]
 pub(crate) struct IterVectorsMut<'a, T> {
     inner: IterVectorsInner<T>,
-    _marker: PhantomData<&'a mut T>,
+    marker: PhantomData<&'a mut T>,
 }
 
 unsafe impl<T: Send> Send for IterVectorsMut<'_, T> {}
@@ -15,14 +15,14 @@ unsafe impl<T: Sync> Sync for IterVectorsMut<'_, T> {}
 impl<T> IterVectorsMut<'_, T> {
     pub(crate) fn over_major_axis(matrix: &mut Matrix<T>) -> Self {
         let inner = IterVectorsInner::over_major_axis(matrix);
-        let _marker = PhantomData;
-        Self { inner, _marker }
+        let marker = PhantomData;
+        Self { inner, marker }
     }
 
     pub(crate) fn over_minor_axis(matrix: &mut Matrix<T>) -> Self {
         let inner = IterVectorsInner::over_minor_axis(matrix);
-        let _marker = PhantomData;
-        Self { inner, _marker }
+        let marker = PhantomData;
+        Self { inner, marker }
     }
 }
 
@@ -55,7 +55,7 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
 #[derive(Debug)]
 pub(crate) struct IterNthVectorMut<'a, T> {
     inner: IterNthVectorInner<T>,
-    _marker: PhantomData<&'a mut T>,
+    marker: PhantomData<&'a mut T>,
 }
 
 unsafe impl<T: Send> Send for IterNthVectorMut<'_, T> {}
@@ -67,8 +67,8 @@ impl<T> IterNthVectorMut<'_, T> {
     #[allow(dead_code)]
     pub(crate) fn over_major_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
         let inner = IterNthVectorInner::over_major_axis(matrix, n)?;
-        let _marker = PhantomData;
-        Ok(Self { inner, _marker })
+        let marker = PhantomData;
+        Ok(Self { inner, marker })
     }
 
     /// This is an alternative to [`Matrix::iter_nth_minor_axis_vector`],
@@ -76,13 +76,13 @@ impl<T> IterNthVectorMut<'_, T> {
     #[allow(dead_code)]
     pub(crate) fn over_minor_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
         let inner = IterNthVectorInner::over_minor_axis(matrix, n)?;
-        let _marker = PhantomData;
-        Ok(Self { inner, _marker })
+        let marker = PhantomData;
+        Ok(Self { inner, marker })
     }
 
     fn from_inner(inner: IterNthVectorInner<T>) -> Self {
-        let _marker = PhantomData;
-        Self { inner, _marker }
+        let marker = PhantomData;
+        Self { inner, marker }
     }
 }
 
