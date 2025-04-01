@@ -429,7 +429,7 @@ impl<T> Matrix<T> {
     ///
     /// Reducing the size does not automatically shrink the capacity.
     /// This choice is made to avoid potential reallocation. Consider
-    /// explicitly calling [`Matrix::shrink_to_fit`] if needed.
+    /// explicitly calling [`shrink_to_fit`] if needed.
     ///
     /// # Examples
     ///
@@ -448,6 +448,8 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
+    ///
+    /// [`shrink_to_fit`]: Matrix::shrink_to_fit
     pub fn resize<S>(&mut self, shape: S) -> Result<&mut Self>
     where
         T: Default,
