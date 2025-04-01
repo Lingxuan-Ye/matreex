@@ -30,8 +30,9 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
     type Item = IterNthVectorMut<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let iter = self.inner.next()?;
-        Some(IterNthVectorMut::from_inner(iter))
+        let inner = self.inner.next()?;
+        let marker = PhantomData;
+        Some(IterNthVectorMut { inner, marker })
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -47,8 +48,9 @@ impl<T> ExactSizeIterator for IterVectorsMut<'_, T> {
 
 impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        let iter = self.inner.next_back()?;
-        Some(IterNthVectorMut::from_inner(iter))
+        let inner = self.inner.next_back()?;
+        let marker = PhantomData;
+        Some(IterNthVectorMut { inner, marker })
     }
 }
 
@@ -78,11 +80,6 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         let inner = IterNthVectorInner::over_minor_axis(matrix, n)?;
         let marker = PhantomData;
         Ok(Self { inner, marker })
-    }
-
-    fn from_inner(inner: IterNthVectorInner<T>) -> Self {
-        let marker = PhantomData;
-        Self { inner, marker }
     }
 }
 
