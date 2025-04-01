@@ -12,14 +12,14 @@ pub(crate) struct IterVectorsMut<'a, T> {
 unsafe impl<T: Send> Send for IterVectorsMut<'_, T> {}
 unsafe impl<T: Sync> Sync for IterVectorsMut<'_, T> {}
 
-impl<T> IterVectorsMut<'_, T> {
-    pub(crate) fn over_major_axis(matrix: &mut Matrix<T>) -> Self {
+impl<'a, T> IterVectorsMut<'a, T> {
+    pub(crate) fn over_major_axis(matrix: &'a mut Matrix<T>) -> Self {
         let inner = IterVectorsInner::over_major_axis(matrix);
         let marker = PhantomData;
         Self { inner, marker }
     }
 
-    pub(crate) fn over_minor_axis(matrix: &mut Matrix<T>) -> Self {
+    pub(crate) fn over_minor_axis(matrix: &'a mut Matrix<T>) -> Self {
         let inner = IterVectorsInner::over_minor_axis(matrix);
         let marker = PhantomData;
         Self { inner, marker }
@@ -61,11 +61,11 @@ pub(crate) struct IterNthVectorMut<'a, T> {
 unsafe impl<T: Send> Send for IterNthVectorMut<'_, T> {}
 unsafe impl<T: Sync> Sync for IterNthVectorMut<'_, T> {}
 
-impl<T> IterNthVectorMut<'_, T> {
+impl<'a, T> IterNthVectorMut<'a, T> {
     /// This is an alternative to [`Matrix::iter_nth_major_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
-    pub(crate) fn over_major_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
+    pub(crate) fn over_major_axis(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
         let inner = IterNthVectorInner::over_major_axis(matrix, n)?;
         let marker = PhantomData;
         Ok(Self { inner, marker })
@@ -74,7 +74,7 @@ impl<T> IterNthVectorMut<'_, T> {
     /// This is an alternative to [`Matrix::iter_nth_minor_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
-    pub(crate) fn over_minor_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
+    pub(crate) fn over_minor_axis(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
         let inner = IterNthVectorInner::over_minor_axis(matrix, n)?;
         let marker = PhantomData;
         Ok(Self { inner, marker })
