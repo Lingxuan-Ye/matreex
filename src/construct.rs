@@ -160,65 +160,50 @@ impl<T> Default for Matrix<T> {
 mod tests {
     use super::*;
     use crate::error::Error;
-
-    // tests in this module should avoid direct comparison of `Matrix<T>`
+    use crate::matrix;
 
     #[test]
     fn test_new() {
-        let expected_order = Order::default();
-        let expected_shape = AxisShape::default();
-        let expected_data = Vec::new();
-
         let matrix = Matrix::<i32>::new();
-        assert_eq!(matrix.order, expected_order);
-        assert_eq!(matrix.shape, expected_shape);
-        assert_eq!(matrix.data, expected_data);
+        assert_eq!(matrix.order, Order::default());
+        assert_eq!(matrix.nrows(), 0);
+        assert_eq!(matrix.ncols(), 0);
+        assert!(matrix.is_empty());
     }
 
     #[test]
     fn test_with_capacity() {
-        let capacity = 10;
-        let expected_order = Order::default();
-        let expected_shape = AxisShape::default();
-        let expected_data = Vec::with_capacity(capacity);
-
-        let matrix = Matrix::<i32>::with_capacity(capacity);
-        assert_eq!(matrix.order, expected_order);
-        assert_eq!(matrix.shape, expected_shape);
-        assert_eq!(matrix.data, expected_data);
+        let matrix = Matrix::<i32>::with_capacity(10);
+        assert_eq!(matrix.order, Order::default());
+        assert_eq!(matrix.nrows(), 0);
+        assert_eq!(matrix.ncols(), 0);
+        assert!(matrix.is_empty());
+        assert!(matrix.capacity() >= 10);
     }
 
     #[test]
     fn test_with_default() {
         {
             let shape = Shape::new(2, 3);
-            let expected_order = Order::default();
-            let expected_shape = shape.to_axis_shape_unchecked(expected_order);
-            let expected_data = vec![0; 6];
-
             let matrix = Matrix::<i32>::with_default(shape).unwrap();
-            assert_eq!(matrix.order, expected_order);
-            assert_eq!(matrix.shape, expected_shape);
-            assert_eq!(matrix.data, expected_data);
+            assert_eq!(matrix.order, Order::default());
+            assert_eq!(matrix, matrix![[0, 0, 0], [0, 0, 0]]);
         }
 
         {
             let shape = Shape::new(usize::MAX, 2);
-
             let error = Matrix::<i32>::with_default(shape).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
         }
 
         {
             let shape = Shape::new(isize::MAX as usize / 4 + 1, 1);
-
             let error = Matrix::<i32>::with_default(shape).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }
 
         {
             let shape = Shape::new(isize::MAX as usize + 1, 1);
-
             let error = Matrix::<u8>::with_default(shape).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }
@@ -226,7 +211,6 @@ mod tests {
         // unable to cover
         // {
         //     let shape = Shape::new(isize::MAX as usize + 1, 1);
-        //
         //     assert!(Matrix::<()>::with_default(shape).is_ok());
         // }
     }
@@ -235,40 +219,31 @@ mod tests {
     fn test_with_value() {
         {
             let shape = Shape::new(2, 3);
-            let expected_order = Order::default();
-            let expected_shape = shape.to_axis_shape_unchecked(expected_order);
-            let expected_data = vec![0; 6];
-
             let matrix = Matrix::with_value(shape, 0).unwrap();
-            assert_eq!(matrix.order, expected_order);
-            assert_eq!(matrix.shape, expected_shape);
-            assert_eq!(matrix.data, expected_data);
+            assert_eq!(matrix.order, Order::default());
+            assert_eq!(matrix, matrix![[0, 0, 0], [0, 0, 0]]);
         }
 
         {
             let shape = Shape::new(usize::MAX, 2);
-
             let error = Matrix::with_value(shape, 0).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
         }
 
         {
             let shape = Shape::new(isize::MAX as usize / 4 + 1, 1);
-
             let error = Matrix::<i32>::with_value(shape, 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }
 
         {
             let shape = Shape::new(isize::MAX as usize + 1, 1);
-
             let error = Matrix::<u8>::with_value(shape, 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }
 
         {
             let shape = Shape::new(isize::MAX as usize + 1, 1);
-
             assert!(Matrix::<()>::with_value(shape, ()).is_ok());
         }
     }
@@ -277,33 +252,26 @@ mod tests {
     fn test_with_initializer() {
         {
             let shape = Shape::new(2, 3);
-            let expected_order = Order::default();
-            let expected_shape = shape.to_axis_shape_unchecked(expected_order);
-            let expected_data = vec![0, 1, 2, 1, 2, 3];
 
             let matrix = Matrix::with_initializer(shape, |index| index.row + index.col).unwrap();
-            assert_eq!(matrix.order, expected_order);
-            assert_eq!(matrix.shape, expected_shape);
-            assert_eq!(matrix.data, expected_data);
+            assert_eq!(matrix.order, Order::default());
+            assert_eq!(matrix, matrix![[0, 1, 2], [1, 2, 3]]);
         }
 
         {
             let shape = Shape::new(usize::MAX, 2);
-
             let error = Matrix::with_initializer(shape, |_| 0).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
         }
 
         {
             let shape = Shape::new(isize::MAX as usize / 4 + 1, 1);
-
             let error = Matrix::<i32>::with_initializer(shape, |_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }
 
         {
             let shape = Shape::new(isize::MAX as usize + 1, 1);
-
             let error = Matrix::<u8>::with_initializer(shape, |_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }
@@ -311,7 +279,6 @@ mod tests {
         // unable to cover
         // {
         //     let shape = Shape::new(isize::MAX as usize + 1, 1);
-        //
         //     assert!(Matrix::<()>::with_initializer(shape, |_| ()).is_ok());
         // }
     }

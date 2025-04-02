@@ -244,7 +244,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
     }
 }
 
-/// A structure representing the index of an element in a [`Matrix<T>`].
+/// A struct representing the index of an element in a [`Matrix<T>`].
 ///
 /// Refer to [`AsIndex`] for more information.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -419,7 +419,7 @@ impl AsIndex for [usize; 2] {
     }
 }
 
-/// A structure representing the wrapping index of an element in a
+/// A struct representing the wrapping index of an element in a
 /// [`Matrix<T>`].
 ///
 /// [`WrappingIndex`] is the only type that exhibits wrapping indexing
@@ -589,12 +589,12 @@ impl AxisIndex {
 
     pub(crate) fn from_flattened(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
-        let minor = index % shape.major_stride();
+        let minor = (index % shape.major_stride()) / shape.minor_stride();
         Self { major, minor }
     }
 
     pub(crate) fn to_flattened(self, shape: AxisShape) -> usize {
-        self.major * shape.major_stride() + self.minor
+        self.major * shape.major_stride() + self.minor * shape.minor_stride()
     }
 }
 

@@ -125,7 +125,7 @@ impl<T> Matrix<T> {
     /// use matreex::{Order, matrix};
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// assert_eq!(matrix.order(), Order::default());
+    /// assert_eq!(matrix.order(), Order::RowMajor);
     /// ```
     #[inline]
     pub fn order(&self) -> Order {
@@ -240,7 +240,8 @@ impl<T> Matrix<T> {
     }
 
     /// Returns the stride of the minor axis.
-    #[allow(dead_code)]
+    ///
+    /// It always returns `1`.
     fn minor_stride(&self) -> usize {
         self.shape.minor_stride()
     }
@@ -428,7 +429,7 @@ impl<T> Matrix<T> {
     ///
     /// Reducing the size does not automatically shrink the capacity.
     /// This choice is made to avoid potential reallocation. Consider
-    /// explicitly calling [`Matrix::shrink_to_fit`] if needed.
+    /// explicitly calling [`shrink_to_fit`] if needed.
     ///
     /// # Examples
     ///
@@ -447,6 +448,8 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
+    ///
+    /// [`shrink_to_fit`]: Matrix::shrink_to_fit
     pub fn resize<S>(&mut self, shape: S) -> Result<&mut Self>
     where
         T: Default,
@@ -599,9 +602,9 @@ impl<T> Matrix<T> {
             let minor = cmp::min(self.minor(), source.minor());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
-                let self_upper = self_lower + minor;
+                let self_upper = self_lower + minor * self.minor_stride();
                 let source_lower = i * source.major_stride();
-                let source_upper = source_lower + minor;
+                let source_upper = source_lower + minor * self.minor_stride();
                 unsafe {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)
@@ -613,7 +616,7 @@ impl<T> Matrix<T> {
             let minor = cmp::min(self.minor(), source.major());
             for i in 0..major {
                 let self_lower = i * self.major_stride();
-                let self_upper = self_lower + minor;
+                let self_upper = self_lower + minor * self.minor_stride();
                 unsafe {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)

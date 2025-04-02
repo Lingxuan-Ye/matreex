@@ -114,8 +114,8 @@ impl<T> Matrix<T> {
             return Err(Error::IndexOutOfBounds);
         }
         let base = self.data.as_mut_ptr();
-        let mut index = m;
-        let mut jndex = n;
+        let mut index = m * self.minor_stride();
+        let mut jndex = n * self.minor_stride();
         for _ in 0..self.major() {
             unsafe {
                 let x = base.add(index);
