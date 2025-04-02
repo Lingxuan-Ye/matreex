@@ -125,7 +125,7 @@ impl<T> Matrix<T> {
     /// use matreex::{Order, matrix};
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// assert_eq!(matrix.order(), Order::default());
+    /// assert_eq!(matrix.order(), Order::RowMajor);
     /// ```
     #[inline]
     pub fn order(&self) -> Order {
