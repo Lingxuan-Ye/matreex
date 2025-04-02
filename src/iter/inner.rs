@@ -1,22 +1,35 @@
-use crate::Matrix;
 use crate::error::{Error, Result};
+use crate::shape::AxisShape;
 use std::num::NonZero;
 use std::ptr::{NonNull, without_provenance_mut};
 
-// To prevent pointers from exceeding their provenance, `upper`
-// must point **to** (not one vector past) the exact vector that
-// [`DoubleEndedIterator::next_back`] would return. In this case,
-// comparing pointers to determine whether an iterator is empty
-// is unsound, because pointers may offset outside the allocated
-// object in the final iteration. Therefore, an additional state
-// is needed to track whether the iterator is empty. This state
-// can be stored in either `lower`, `upper`, or `layout` as an
-// `Option` discriminant to avoid spatial overhead. Here `layout`
-// is chosen for simplicity.
-
 /// # Safety
 ///
-/// This does not track the validity of its underlying pointers.
+/// This iterator does not track the validity of its underlying
+/// pointers. Iterating over a dangling [`Matrix<T>`] is *[undefined
+/// behavior]* even if the resulting pointer is not used. In other
+/// words, once the matrix goes out of scope, the iterator must not
+/// be used unless it is empty.
+///
+/// Based on the above, all constructors except [`empty`] are marked
+/// as `unsafe`.
+///
+/// # Design Details
+///
+/// To prevent pointers from exceeding their provenance, `upper`
+/// must point **to** (not one vector past) the exact vector that
+/// [`DoubleEndedIterator::next_back`] would return. In this case,
+/// comparing pointers to determine whether an iterator is empty
+/// is unsound, because pointers may offset outside the allocated
+/// object in the final iteration. Therefore, an additional state
+/// is needed to track whether the iterator is empty. This state
+/// can be stored in either `lower`, `upper`, or `layout` as an
+/// `Option` discriminant to avoid spatial overhead. Here `layout`
+/// is chosen for simplicity.
+///
+/// [`Matrix<T>`]: crate::Matrix
+/// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+/// [`empty`]: IterVectorsInner::empty
 #[derive(Debug)]
 pub(crate) struct IterVectorsInner<T> {
     lower: NonNull<T>,
@@ -32,19 +45,25 @@ struct Layout {
 }
 
 impl<T> IterVectorsInner<T> {
-    pub(crate) fn over_major_axis(matrix: &mut Matrix<T>) -> Self {
-        if matrix.is_empty() {
+    /// # Safety
+    ///
+    /// To iterate over the vectors of a matrix, `buffer` must point to the
+    /// underlying buffer of that matrix, and `shape` must be `matrix.shape`.
+    ///
+    /// The returned iterator is valid only if the matrix remains in scope.
+    pub(crate) unsafe fn over_major_axis(buffer: NonNull<T>, shape: AxisShape) -> Self {
+        if shape.size() == 0 {
             return Self::empty();
         }
 
         unsafe {
-            let axis_stride = NonZero::new_unchecked(matrix.major_stride());
-            let axis_length = NonZero::new_unchecked(matrix.major());
-            let vector_stride = NonZero::new_unchecked(matrix.minor_stride());
-            let vector_length = NonZero::new_unchecked(matrix.minor());
+            let axis_stride = NonZero::new_unchecked(shape.major_stride());
+            let axis_length = NonZero::new_unchecked(shape.major());
+            let vector_stride = NonZero::new_unchecked(shape.minor_stride());
+            let vector_length = NonZero::new_unchecked(shape.minor());
 
             Self::assemble(
-                &mut matrix.data,
+                buffer,
                 axis_stride,
                 axis_length,
                 vector_stride,
@@ -53,19 +72,25 @@ impl<T> IterVectorsInner<T> {
         }
     }
 
-    pub(crate) fn over_minor_axis(matrix: &mut Matrix<T>) -> Self {
-        if matrix.is_empty() {
+    /// # Safety
+    ///
+    /// To iterate over the vectors of a matrix, `buffer` must point to the
+    /// underlying buffer of that matrix, and `shape` must be `matrix.shape`.
+    ///
+    /// The returned iterator is valid only if the matrix remains in scope.
+    pub(crate) unsafe fn over_minor_axis(buffer: NonNull<T>, shape: AxisShape) -> Self {
+        if shape.size() == 0 {
             return Self::empty();
         }
 
         unsafe {
-            let axis_stride = NonZero::new_unchecked(matrix.minor_stride());
-            let axis_length = NonZero::new_unchecked(matrix.minor());
-            let vector_stride = NonZero::new_unchecked(matrix.major_stride());
-            let vector_length = NonZero::new_unchecked(matrix.major());
+            let axis_stride = NonZero::new_unchecked(shape.minor_stride());
+            let axis_length = NonZero::new_unchecked(shape.minor());
+            let vector_stride = NonZero::new_unchecked(shape.major_stride());
+            let vector_length = NonZero::new_unchecked(shape.major());
 
             Self::assemble(
-                &mut matrix.data,
+                buffer,
                 axis_stride,
                 axis_length,
                 vector_stride,
@@ -75,15 +100,14 @@ impl<T> IterVectorsInner<T> {
     }
 
     /// This is a helper function that abstracts some repetitive code,
-    /// while breaking the safety boundary and exposing `unsafe` operations
-    /// that were originally well-encapsulated.
+    /// while exposing certain `unsafe` operations that were perviously
+    /// well-encapsulated.
     ///
     /// # Safety
     ///
-    /// To iterate over the vectors of a [`Matrix<T>`] (referred to as
-    /// `matrix`), `data` must be a mutable reference to `matrix.data`,
-    /// and the remaining arguments must be one of the following sets
-    /// of values in their [`NonZero`] form:
+    /// To iterate over the vectors of a matrix, `buffer` must point to the
+    /// underlying buffer of that matrix, and the remaining arguments must
+    /// be one of the following sets of values in their [`NonZero`] form:
     ///
     /// - For iterating over the major axis:
     ///   - `axis_stride`: `matrix.major_stride()`
@@ -96,16 +120,16 @@ impl<T> IterVectorsInner<T> {
     ///   - `axis_length`: `matrix.minor()`
     ///   - `vector_stride`: `matrix.major_stride()`
     ///   - `vector_length`: `matrix.major()`
+    ///
+    /// The returned iterator is valid only if the matrix remains in scope.
     unsafe fn assemble(
-        data: &mut Vec<T>,
+        buffer: NonNull<T>,
         axis_stride: NonZero<usize>,
         axis_length: NonZero<usize>,
         vector_stride: NonZero<usize>,
         vector_length: NonZero<usize>,
     ) -> Self {
-        let base = data.as_mut_ptr();
-        let lower = unsafe { NonNull::new_unchecked(base) };
-
+        let lower = buffer;
         let offset = axis_stride.get() * (axis_length.get() - 1);
         let upper = if size_of::<T>() == 0 {
             let addr = lower.addr().get() + offset;
@@ -114,7 +138,6 @@ impl<T> IterVectorsInner<T> {
         } else {
             unsafe { lower.add(offset) }
         };
-
         let layout = Some(Layout {
             axis_stride,
             vector_stride,
@@ -208,19 +231,32 @@ impl<T> DoubleEndedIterator for IterVectorsInner<T> {
     }
 }
 
-// To prevent pointers from exceeding their provenance, `upper` must
-// point **to** (not `stride` elements past) the exact element that
-// [`DoubleEndedIterator::next_back`] would return. In this case,
-// comparing pointers to determine whether an iterator is empty is
-// unsound, because pointers may offset outside the allocated object
-// in the final iteration. Therefore, an additional state is needed
-// to track whether the iterator is empty. This state can be stored
-// in either `lower`, `upper`, or `stride` as an `Option` discriminant
-// to avoid spatial overhead. Here `stride` is chosen for simplicity.
-
 /// # Safety
 ///
-/// This does not track the validity of its underlying pointers.
+/// This iterator does not track the validity of its underlying
+/// pointers. Iterating over a dangling [`Matrix<T>`] vector is
+/// *[undefined behavior]* even if the resulting pointer is not
+/// used. In other words, once the matrix goes out of scope, the
+/// iterator must not be used unless it is empty.
+///
+/// Based on the above, all constructors except [`empty`] are marked
+/// as `unsafe`.
+///
+/// # Design Details
+///
+/// To prevent pointers from exceeding their provenance, `upper` must
+/// point **to** (not `stride` elements past) the exact element that
+/// [`DoubleEndedIterator::next_back`] would return. In this case,
+/// comparing pointers to determine whether an iterator is empty is
+/// unsound, because pointers may offset outside the allocated object
+/// in the final iteration. Therefore, an additional state is needed
+/// to track whether the iterator is empty. This state can be stored
+/// in either `lower`, `upper`, or `stride` as an `Option` discriminant
+/// to avoid spatial overhead. Here `stride` is chosen for simplicity.
+///
+/// [`Matrix<T>`]: crate::Matrix
+/// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+/// [`empty`]: IterNthVectorInner::empty
 #[derive(Debug)]
 pub(crate) struct IterNthVectorInner<T> {
     lower: NonNull<T>,
@@ -229,66 +265,85 @@ pub(crate) struct IterNthVectorInner<T> {
 }
 
 impl<T> IterNthVectorInner<T> {
-    pub(crate) fn over_major_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
-        if n >= matrix.major() {
+    /// # Safety
+    ///
+    /// To iterate over the nth vector of a matrix, `buffer` must point to the
+    /// underlying buffer of that matrix, and `shape` must be `matrix.shape`.
+    ///
+    /// The returned iterator is valid only if the matrix remains in scope.
+    pub(crate) unsafe fn over_major_axis(
+        buffer: NonNull<T>,
+        shape: AxisShape,
+        n: usize,
+    ) -> Result<Self> {
+        if n >= shape.major() {
             return Err(Error::IndexOutOfBounds);
-        } else if matrix.is_empty() {
+        } else if shape.size() == 0 {
             return Ok(Self::empty());
         }
 
-        let base = matrix.data.as_mut_ptr();
         let lower = if size_of::<T>() == 0 {
             // would work, trust me
-            unsafe { NonNull::new_unchecked(base) }
+            buffer
         } else {
-            let offset = n * matrix.major_stride();
-            unsafe { NonNull::new_unchecked(base.add(offset)) }
+            let offset = n * shape.major_stride();
+            unsafe { buffer.add(offset) }
         };
-        let stride = unsafe { NonZero::new_unchecked(matrix.minor_stride()) };
-        let length = unsafe { NonZero::new_unchecked(matrix.minor()) };
+        let stride = unsafe { NonZero::new_unchecked(shape.minor_stride()) };
+        let length = unsafe { NonZero::new_unchecked(shape.minor()) };
 
         unsafe { Ok(Self::assemble(lower, stride, length)) }
     }
 
-    pub(crate) fn over_minor_axis(matrix: &mut Matrix<T>, n: usize) -> Result<Self> {
-        if n >= matrix.minor() {
+    /// # Safety
+    ///
+    /// To iterate over the nth vector of a matrix, `buffer` must point to the
+    /// underlying buffer of that matrix, and `shape` must be `matrix.shape`.
+    ///
+    /// The returned iterator is valid only if the matrix remains in scope.
+    pub(crate) unsafe fn over_minor_axis(
+        buffer: NonNull<T>,
+        shape: AxisShape,
+        n: usize,
+    ) -> Result<Self> {
+        if n >= shape.minor() {
             return Err(Error::IndexOutOfBounds);
-        } else if matrix.is_empty() {
+        } else if shape.size() == 0 {
             return Ok(Self::empty());
         }
 
-        let base = matrix.data.as_mut_ptr();
         let lower = if size_of::<T>() == 0 {
             // would work, trust me
-            unsafe { NonNull::new_unchecked(base) }
+            buffer
         } else {
-            let offset = n * matrix.minor_stride();
-            unsafe { NonNull::new_unchecked(base.add(offset)) }
+            let offset = n * shape.minor_stride();
+            unsafe { buffer.add(offset) }
         };
-        let stride = unsafe { NonZero::new_unchecked(matrix.major_stride()) };
-        let length = unsafe { NonZero::new_unchecked(matrix.major()) };
+        let stride = unsafe { NonZero::new_unchecked(shape.major_stride()) };
+        let length = unsafe { NonZero::new_unchecked(shape.major()) };
 
         unsafe { Ok(Self::assemble(lower, stride, length)) }
     }
 
     /// This is a helper function that abstracts some repetitive code,
-    /// while breaking the safety boundary and exposing `unsafe` operations
-    /// that were originally well-encapsulated.
+    /// while exposing certain `unsafe` operations that were previously
+    /// well-encapsulated.
     ///
     /// # Safety
     ///
-    /// To iterate over the nth vector of a [`Matrix<T>`] (referred to as
-    /// `matrix`), `lower` must point to the head of that vector, and the
-    /// remaining arguments must be one of the following sets of values in
-    /// their [`NonZero`] form:
+    /// To iterate over the nth vector of a matrix, `lower` must point
+    /// to the head of that vector, and the remaining arguments must be
+    /// one of the following sets of values in their [`NonZero`] form:
     ///
-    /// - For iterating over the major axis vector:
+    /// - For iterating over a major axis vector:
     ///   - `stride`: `matrix.minor_stride()` (i.e., `1`)
     ///   - `length`: `matrix.minor()`
     ///
-    /// - For iterating over the minor axis vector:
+    /// - For iterating over a minor axis vector:
     ///   - `stride`: `matrix.major_stride()`
     ///   - `length`: `matrix.major()`
+    ///
+    /// The returned iterator is valid only if the matrix remains in scope.
     unsafe fn assemble(lower: NonNull<T>, stride: NonZero<usize>, length: NonZero<usize>) -> Self {
         let offset = (length.get() - 1) * stride.get();
         let upper = if size_of::<T>() == 0 {

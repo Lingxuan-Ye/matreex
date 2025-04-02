@@ -2,6 +2,7 @@ use super::inner::{IterNthVectorInner, IterVectorsInner};
 use crate::Matrix;
 use crate::error::Result;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 #[derive(Debug)]
 pub(crate) struct IterVectorsMut<'a, T> {
@@ -14,13 +15,15 @@ unsafe impl<T: Sync> Sync for IterVectorsMut<'_, T> {}
 
 impl<'a, T> IterVectorsMut<'a, T> {
     pub(crate) fn over_major_axis(matrix: &'a mut Matrix<T>) -> Self {
-        let inner = IterVectorsInner::over_major_axis(matrix);
+        let buffer = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let inner = unsafe { IterVectorsInner::over_major_axis(buffer, matrix.shape) };
         let marker = PhantomData;
         Self { inner, marker }
     }
 
     pub(crate) fn over_minor_axis(matrix: &'a mut Matrix<T>) -> Self {
-        let inner = IterVectorsInner::over_minor_axis(matrix);
+        let buffer = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let inner = unsafe { IterVectorsInner::over_minor_axis(buffer, matrix.shape) };
         let marker = PhantomData;
         Self { inner, marker }
     }
@@ -68,7 +71,8 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// but slightly slower.
     #[allow(dead_code)]
     pub(crate) fn over_major_axis(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
-        let inner = IterNthVectorInner::over_major_axis(matrix, n)?;
+        let buffer = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let inner = unsafe { IterNthVectorInner::over_major_axis(buffer, matrix.shape, n)? };
         let marker = PhantomData;
         Ok(Self { inner, marker })
     }
@@ -77,7 +81,8 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// but slightly slower.
     #[allow(dead_code)]
     pub(crate) fn over_minor_axis(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
-        let inner = IterNthVectorInner::over_minor_axis(matrix, n)?;
+        let buffer = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let inner = unsafe { IterNthVectorInner::over_minor_axis(buffer, matrix.shape, n)? };
         let marker = PhantomData;
         Ok(Self { inner, marker })
     }
