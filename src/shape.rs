@@ -3,7 +3,7 @@
 use crate::error::{Error, Result};
 use crate::order::Order;
 
-/// A structure representing the shape of a [`Matrix<T>`].
+/// A struct representing the shape of a [`Matrix<T>`].
 ///
 /// [`Matrix<T>`]: crate::Matrix
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

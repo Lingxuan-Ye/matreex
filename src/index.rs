@@ -244,7 +244,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
     }
 }
 
-/// A structure representing the index of an element in a [`Matrix<T>`].
+/// A struct representing the index of an element in a [`Matrix<T>`].
 ///
 /// Refer to [`AsIndex`] for more information.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -419,7 +419,7 @@ impl AsIndex for [usize; 2] {
     }
 }
 
-/// A structure representing the wrapping index of an element in a
+/// A struct representing the wrapping index of an element in a
 /// [`Matrix<T>`].
 ///
 /// [`WrappingIndex`] is the only type that exhibits wrapping indexing
