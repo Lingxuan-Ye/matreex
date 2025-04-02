@@ -8,7 +8,6 @@ use crate::order::Order;
 use std::iter::{Skip, StepBy, Take};
 use std::slice::{Iter, IterMut};
 
-mod inner;
 mod iter_mut;
 
 /// An iterator that knows its exact length and can yield elements
