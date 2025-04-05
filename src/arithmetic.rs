@@ -903,10 +903,10 @@ mod tests {
 
         // more test cases
 
-        let unchanged = lhs.clone();
-
         {
             let mut lhs = lhs.clone();
+            let unchanged = lhs.clone();
+
             let rhs = matrix![[2, 2], [2, 2]];
 
             let error = lhs
@@ -914,10 +914,7 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
             assert_eq!(lhs, unchanged);
-        }
 
-        {
-            let mut lhs = lhs.clone();
             let rhs = matrix![[2, 2], [2, 2], [2, 2]];
 
             let error = lhs
