@@ -402,6 +402,48 @@ impl<T> Matrix<T> {
         self
     }
 
+    /// Reshapes the matrix to the specified shape.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeMismatch`] if the size of the new shape does not
+    ///   match the current size of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use matreex::Result;
+    /// use matreex::{Order, matrix};
+    ///
+    /// # fn main() -> Result<()> {
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    ///
+    /// let mut row_major = matrix.clone();
+    /// row_major.set_order(Order::RowMajor);
+    /// row_major.reshape((3, 2))?;
+    /// assert_eq!(row_major, matrix![[1, 2], [3, 4], [5, 6]]);
+    ///
+    /// let mut col_major = matrix.clone();
+    /// col_major.set_order(Order::ColMajor);
+    /// col_major.reshape((3, 2))?;
+    /// assert_eq!(col_major, matrix![[1, 5], [4, 3], [2, 6]]);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn reshape<S>(&mut self, shape: S) -> Result<&mut Self>
+    where
+        S: Into<Shape>,
+    {
+        let Ok(shape) = shape.into().try_to_axis_shape(self.order) else {
+            return Err(Error::SizeMismatch);
+        };
+        if self.size() != shape.size() {
+            return Err(Error::SizeMismatch);
+        }
+        self.shape = shape;
+        Ok(self)
+    }
+
     /// Resizes the matrix to the specified shape.
     ///
     /// # Errors
@@ -451,48 +493,6 @@ impl<T> Matrix<T> {
         let size = Self::check_size(shape.size())?;
         self.shape = shape;
         self.data.resize_with(size, T::default);
-        Ok(self)
-    }
-
-    /// Reshapes the matrix to the specified shape.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeMismatch`] if the size of the new shape does not
-    ///   match the current size of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use matreex::Result;
-    /// use matreex::{Order, matrix};
-    ///
-    /// # fn main() -> Result<()> {
-    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    ///
-    /// let mut row_major = matrix.clone();
-    /// row_major.set_order(Order::RowMajor);
-    /// row_major.reshape((3, 2))?;
-    /// assert_eq!(row_major, matrix![[1, 2], [3, 4], [5, 6]]);
-    ///
-    /// let mut col_major = matrix.clone();
-    /// col_major.set_order(Order::ColMajor);
-    /// col_major.reshape((3, 2))?;
-    /// assert_eq!(col_major, matrix![[1, 5], [4, 3], [2, 6]]);
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn reshape<S>(&mut self, shape: S) -> Result<&mut Self>
-    where
-        S: Into<Shape>,
-    {
-        let Ok(shape) = shape.into().try_to_axis_shape(self.order) else {
-            return Err(Error::SizeMismatch);
-        };
-        if self.size() != shape.size() {
-            return Err(Error::SizeMismatch);
-        }
-        self.shape = shape;
         Ok(self)
     }
 
@@ -817,73 +817,6 @@ mod tests {
     }
 
     #[test]
-    fn test_resize() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.resize((2, 2)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2], [3, 4]]);
-
-            matrix.resize((3, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0], [0, 0, 0]]);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0]]);
-
-            matrix.resize((2, 0)).unwrap();
-            assert_eq!(matrix, matrix![[], []]);
-
-            let unchanged = matrix.clone();
-
-            let error = matrix.resize((usize::MAX, 2)).unwrap_err();
-            assert_eq!(error, Error::SizeOverflow);
-            assert_eq!(matrix, unchanged);
-
-            let error = matrix.resize((isize::MAX as usize + 1, 1)).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
-            assert_eq!(matrix, unchanged);
-        }
-
-        // column-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.resize((2, 2)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2], [4, 5]]);
-
-            matrix.resize((3, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 5, 0], [4, 0, 0], [2, 0, 0]]);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 0], [4, 5, 0]]);
-
-            matrix.resize((2, 0)).unwrap();
-            assert_eq!(matrix, matrix![[], []]);
-
-            let unchanged = matrix.clone();
-
-            let error = matrix.resize((usize::MAX, 2)).unwrap_err();
-            assert_eq!(error, Error::SizeOverflow);
-            assert_eq!(matrix, unchanged);
-
-            let error = matrix.resize((isize::MAX as usize + 1, 1)).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
-            assert_eq!(matrix, unchanged);
-        }
-    }
-
-    #[test]
     fn test_reshape() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
@@ -954,6 +887,73 @@ mod tests {
 
             let error = matrix.reshape((isize::MAX as usize + 1, 1)).unwrap_err();
             assert_eq!(error, Error::SizeMismatch);
+            assert_eq!(matrix, unchanged);
+        }
+    }
+
+    #[test]
+    fn test_resize() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+
+        // row-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::RowMajor);
+
+            matrix.resize((2, 3)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+
+            matrix.resize((2, 2)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2], [3, 4]]);
+
+            matrix.resize((3, 3)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0], [0, 0, 0]]);
+
+            matrix.resize((2, 3)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0]]);
+
+            matrix.resize((2, 0)).unwrap();
+            assert_eq!(matrix, matrix![[], []]);
+
+            let unchanged = matrix.clone();
+
+            let error = matrix.resize((usize::MAX, 2)).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+            assert_eq!(matrix, unchanged);
+
+            let error = matrix.resize((isize::MAX as usize + 1, 1)).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
+            assert_eq!(matrix, unchanged);
+        }
+
+        // column-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::ColMajor);
+
+            matrix.resize((2, 3)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+
+            matrix.resize((2, 2)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2], [4, 5]]);
+
+            matrix.resize((3, 3)).unwrap();
+            assert_eq!(matrix, matrix![[1, 5, 0], [4, 0, 0], [2, 0, 0]]);
+
+            matrix.resize((2, 3)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 0], [4, 5, 0]]);
+
+            matrix.resize((2, 0)).unwrap();
+            assert_eq!(matrix, matrix![[], []]);
+
+            let unchanged = matrix.clone();
+
+            let error = matrix.resize((usize::MAX, 2)).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+            assert_eq!(matrix, unchanged);
+
+            let error = matrix.resize((isize::MAX as usize + 1, 1)).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
             assert_eq!(matrix, unchanged);
         }
     }
