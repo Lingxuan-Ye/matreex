@@ -256,19 +256,12 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    ///
     /// matrix.transpose();
+    /// assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
     ///
-    /// // row 0
-    /// assert_eq!(matrix[(0, 0)], 1);
-    /// assert_eq!(matrix[(0, 1)], 4);
-    ///
-    /// // row 1
-    /// assert_eq!(matrix[(1, 0)], 2);
-    /// assert_eq!(matrix[(1, 1)], 5);
-    ///
-    /// // row 2
-    /// assert_eq!(matrix[(2, 0)], 3);
-    /// assert_eq!(matrix[(2, 1)], 6);
+    /// matrix.transpose();
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
         if size_of::<T>() == 0 {
@@ -318,9 +311,11 @@ impl<T> Matrix<T> {
     ///
     /// matrix.switch_order();
     /// assert_ne!(matrix.order(), order);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     ///
     /// matrix.switch_order();
     /// assert_eq!(matrix.order(), order);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     #[inline]
     pub fn switch_order(&mut self) -> &mut Self {
@@ -339,20 +334,14 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let order = matrix.order();
+    ///
     /// matrix.switch_order_without_rearrangement();
     /// assert_ne!(matrix.order(), order);
+    /// assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
     ///
-    /// // row 0
-    /// assert_eq!(matrix[(0, 0)], 1);
-    /// assert_eq!(matrix[(0, 1)], 4);
-    ///
-    /// // row 1
-    /// assert_eq!(matrix[(1, 0)], 2);
-    /// assert_eq!(matrix[(1, 1)], 5);
-    ///
-    /// // row 2
-    /// assert_eq!(matrix[(2, 0)], 3);
-    /// assert_eq!(matrix[(2, 1)], 6);
+    /// matrix.switch_order_without_rearrangement();
+    /// assert_eq!(matrix.order(), order);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     #[inline]
     pub fn switch_order_without_rearrangement(&mut self) -> &mut Self {
@@ -371,9 +360,11 @@ impl<T> Matrix<T> {
     ///
     /// matrix.set_order(Order::RowMajor);
     /// assert_eq!(matrix.order(), Order::RowMajor);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     ///
     /// matrix.set_order(Order::ColMajor);
     /// assert_eq!(matrix.order(), Order::ColMajor);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     #[inline]
     pub fn set_order(&mut self, order: Order) -> &mut Self {
@@ -390,25 +381,18 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
+    /// use matreex::{Order, matrix};
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let mut order = matrix.order();
-    /// order.switch();
-    /// matrix.set_order_without_rearrangement(order);
-    /// assert_eq!(matrix.order(), order);
+    /// matrix.set_order(Order::RowMajor);
     ///
-    /// // row 0
-    /// assert_eq!(matrix[(0, 0)], 1);
-    /// assert_eq!(matrix[(0, 1)], 4);
+    /// matrix.set_order_without_rearrangement(Order::RowMajor);
+    /// assert_eq!(matrix.order(), Order::RowMajor);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     ///
-    /// // row 1
-    /// assert_eq!(matrix[(1, 0)], 2);
-    /// assert_eq!(matrix[(1, 1)], 5);
-    ///
-    /// // row 2
-    /// assert_eq!(matrix[(2, 0)], 3);
-    /// assert_eq!(matrix[(2, 1)], 6);
+    /// matrix.set_order_without_rearrangement(Order::ColMajor);
+    /// assert_eq!(matrix.order(), Order::ColMajor);
+    /// assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
     /// ```
     #[inline]
     pub fn set_order_without_rearrangement(&mut self, order: Order) -> &mut Self {
@@ -435,16 +419,24 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// # use matreex::Result;
-    /// use matreex::matrix;
+    /// use matreex::{Order, matrix};
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
-    /// matrix.resize((2, 2))?;
-    /// assert_eq!(matrix, matrix![[1, 2], [3, 4]]);
+    /// let mut row_major = matrix.clone();
+    /// row_major.set_order(Order::RowMajor);
+    /// row_major.resize((2, 2))?;
+    /// assert_eq!(row_major, matrix![[1, 2], [3, 4]]);
+    /// row_major.resize((2, 3))?;
+    /// assert_eq!(row_major, matrix![[1, 2, 3], [4, 0, 0]]);
     ///
-    /// matrix.resize((2, 3))?;
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0]]);
+    /// let mut col_major = matrix.clone();
+    /// col_major.set_order(Order::ColMajor);
+    /// col_major.resize((2, 2))?;
+    /// assert_eq!(col_major, matrix![[1, 2], [4, 5]]);
+    /// col_major.resize((2, 3))?;
+    /// assert_eq!(col_major, matrix![[1, 2, 0], [4, 5, 0]]);
     /// # Ok(())
     /// # }
     /// ```
@@ -473,16 +465,20 @@ impl<T> Matrix<T> {
     ///
     /// ```
     /// # use matreex::Result;
-    /// use matreex::{Error, matrix};
+    /// use matreex::{Order, matrix};
     ///
     /// # fn main() -> Result<()> {
-    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
-    /// matrix.reshape((3, 2))?;
-    /// assert_eq!(matrix, matrix![[1, 2], [3, 4], [5, 6]]);
+    /// let mut row_major = matrix.clone();
+    /// row_major.set_order(Order::RowMajor);
+    /// row_major.reshape((3, 2))?;
+    /// assert_eq!(row_major, matrix![[1, 2], [3, 4], [5, 6]]);
     ///
-    /// let result = matrix.reshape((2, 2));
-    /// assert_eq!(result, Err(Error::SizeMismatch));
+    /// let mut col_major = matrix.clone();
+    /// col_major.set_order(Order::ColMajor);
+    /// col_major.reshape((3, 2))?;
+    /// assert_eq!(col_major, matrix![[1, 5], [4, 3], [2, 6]]);
     /// # Ok(())
     /// # }
     /// ```
