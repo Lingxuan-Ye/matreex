@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/matreex.svg)](https://crates.io/crates/matreex)
 [![Documentation](https://docs.rs/matreex/badge.svg)](https://docs.rs/matreex)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 A simple matrix implementation.
 
