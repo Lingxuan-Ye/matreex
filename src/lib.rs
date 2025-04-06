@@ -449,7 +449,7 @@ impl<T> Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -724,7 +724,7 @@ impl<T> Matrix<T> {
 impl<T> Matrix<T> {
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     fn check_size(size: usize) -> Result<usize> {
         // see more info at https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.with_capacity
         const MAX: usize = isize::MAX as usize;
