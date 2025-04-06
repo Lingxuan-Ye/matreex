@@ -168,7 +168,7 @@ impl<L> Matrix<L> {
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///

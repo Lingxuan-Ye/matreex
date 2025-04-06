@@ -129,7 +129,7 @@ impl<T, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -171,7 +171,7 @@ impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -213,7 +213,7 @@ impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
     /// # Errors
     ///
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
