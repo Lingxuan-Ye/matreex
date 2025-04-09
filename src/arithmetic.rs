@@ -1091,6 +1091,11 @@ mod tests {
         {
             let output = matrix.scalar_operation(&scalar, add).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1]
+                .scalar_operation(&scalar, |_, _| 0)
+                .unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow)
         }
 
         // alternative order
@@ -1100,6 +1105,11 @@ mod tests {
 
             let output = matrix.scalar_operation(&scalar, add).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1]
+                .scalar_operation(&scalar, |_, _| 0)
+                .unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow)
         }
 
         // misuse but should work
@@ -1140,6 +1150,11 @@ mod tests {
 
             let output = matrix.scalar_operation_consume_self(&scalar, add).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1]
+                .scalar_operation_consume_self(&scalar, |_, _| 0)
+                .unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow)
         }
 
         // alternative order
@@ -1149,6 +1164,11 @@ mod tests {
 
             let output = matrix.scalar_operation_consume_self(&scalar, add).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1]
+                .scalar_operation_consume_self(&scalar, |_, _| 0)
+                .unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow)
         }
 
         // misuse but should work

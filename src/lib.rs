@@ -1134,6 +1134,9 @@ mod tests {
 
             let output = matrix.map(to_f64).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].map(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
 
         // alternative order
@@ -1143,6 +1146,9 @@ mod tests {
 
             let output = matrix.map(to_f64).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].map(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
     }
 
@@ -1159,6 +1165,9 @@ mod tests {
         {
             let output = matrix.map_ref(to_f64).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].map_ref(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
 
         // alternative order
@@ -1168,6 +1177,9 @@ mod tests {
 
             let output = matrix.map_ref(to_f64).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].map_ref(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
 
         // to matrix of references
