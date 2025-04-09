@@ -261,7 +261,10 @@ macro_rules! impl_helper {
 
                 #[inline]
                 fn mul(self, rhs: $s) -> Self::Output {
-                    self.scalar_operation_consume_self(&rhs, |element, scalar| element * *scalar)
+                    match self.scalar_operation_consume_self(&rhs, |element, scalar| element * *scalar) {
+                        Err(error) => panic!("{error}"),
+                        Ok(output) => output,
+                    }
                 }
             }
 
@@ -270,7 +273,10 @@ macro_rules! impl_helper {
 
                 #[inline]
                 fn mul(self, rhs: $s) -> Self::Output {
-                    self.scalar_operation(&rhs, |element, scalar| *element * *scalar)
+                    match self.scalar_operation(&rhs, |element, scalar| *element * *scalar) {
+                        Err(error) => panic!("{error}"),
+                        Ok(output) => output,
+                    }
                 }
             }
 
@@ -279,7 +285,10 @@ macro_rules! impl_helper {
 
                 #[inline]
                 fn mul(self, rhs: Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(&self, |element, scalar| *scalar * element)
+                    match rhs.scalar_operation_consume_self(&self, |element, scalar| *scalar * element) {
+                        Err(error) => panic!("{error}"),
+                        Ok(output) => output,
+                    }
                 }
             }
 
@@ -288,7 +297,10 @@ macro_rules! impl_helper {
 
                 #[inline]
                 fn mul(self, rhs: &Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation(&self, |element, scalar| *scalar * *element)
+                    match rhs.scalar_operation(&self, |element, scalar| *scalar * *element) {
+                        Err(error) => panic!("{error}"),
+                        Ok(output) => output,
+                    }
                 }
             }
         )*
@@ -476,7 +488,7 @@ mod tests {
     #[allow(clippy::op_ref)]
     fn test_primitive_scalar_mul() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let matrix_ref = matrix.map_ref(|x| x);
+        let matrix_ref = matrix.map_ref(|x| x).unwrap();
         let scalar = 2;
         let expected = matrix![[2, 4, 6], [8, 10, 12]];
 

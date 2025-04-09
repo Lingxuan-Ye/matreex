@@ -9,7 +9,10 @@ where
 
     #[inline]
     fn neg(self) -> Self::Output {
-        self.map(|element| element.neg())
+        match self.map(|element| element.neg()) {
+            Err(error) => panic!("{error}"),
+            Ok(output) => output,
+        }
     }
 }
 
@@ -21,7 +24,10 @@ where
 
     #[inline]
     fn neg(self) -> Self::Output {
-        self.map_ref(|element| element.clone().neg())
+        match self.map_ref(|element| element.clone().neg()) {
+            Err(error) => panic!("{error}"),
+            Ok(output) => output,
+        }
     }
 }
 
