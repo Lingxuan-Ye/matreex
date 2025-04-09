@@ -649,24 +649,31 @@ impl<T> Matrix<T> {
     /// Applies a closure to each element of the matrix,
     /// returning a new matrix with the results.
     ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
     /// # Examples
     ///
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let matrix_f64 = matrix_i32.map(|x| x as f64);
-    /// assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let result = matrix.map(|x| x as f64);
+    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
     #[inline]
-    pub fn map<U, F>(self, f: F) -> Matrix<U>
+    pub fn map<U, F>(self, f: F) -> Result<Matrix<U>>
     where
         F: FnMut(T) -> U,
     {
+        Matrix::<U>::check_size(self.size())?;
+
         let order = self.order;
         let shape = self.shape;
         let data = self.data.into_iter().map(f).collect();
-        Matrix { order, shape, data }
+
+        Ok(Matrix { order, shape, data })
     }
 
     /// Applies a closure to each element of the matrix,
@@ -675,26 +682,33 @@ impl<T> Matrix<T> {
     /// This method is similar to [`map`] but passes references to the
     /// elements instead of taking ownership of them.
     ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
     /// # Examples
     ///
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let matrix_f64 = matrix_i32.map_ref(|x| *x as f64);
-    /// assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let result = matrix.map_ref(|x| *x as f64);
+    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
     ///
     /// [`map`]: Matrix::map
     #[inline]
-    pub fn map_ref<'a, U, F>(&'a self, f: F) -> Matrix<U>
+    pub fn map_ref<'a, U, F>(&'a self, f: F) -> Result<Matrix<U>>
     where
         F: FnMut(&'a T) -> U,
     {
+        Matrix::<U>::check_size(self.size())?;
+
         let order = self.order;
         let shape = self.shape;
         let data = self.data.iter().map(f).collect();
-        Matrix { order, shape, data }
+
+        Ok(Matrix { order, shape, data })
     }
 
     /// Clears the matrix, removing all elements.
@@ -726,11 +740,10 @@ impl<T> Matrix<T> {
     ///
     /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     fn check_size(size: usize) -> Result<usize> {
-        // see more info at https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.with_capacity
-        const MAX: usize = isize::MAX as usize;
-        match size_of::<T>().checked_mul(size) {
-            Some(0..=MAX) => Ok(size),
-            _ => Err(Error::CapacityOverflow),
+        if size_of::<T>().saturating_mul(size) > isize::MAX as usize {
+            Err(Error::CapacityOverflow)
+        } else {
+            Ok(size)
         }
     }
 }
@@ -1112,24 +1125,30 @@ mod tests {
             x as f64
         }
 
-        let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
         // default order
         {
-            let matrix_i32 = matrix_i32.clone();
+            let matrix = matrix.clone();
 
-            let matrix_f64 = matrix_i32.map(to_f64);
-            assert_eq!(matrix_f64, expected);
+            let output = matrix.map(to_f64).unwrap();
+            assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].map(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
 
         // alternative order
         {
-            let mut matrix_i32 = matrix_i32.clone();
-            matrix_i32.switch_order();
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
 
-            let matrix_f64 = matrix_i32.map(to_f64);
-            assert_eq!(matrix_f64, expected);
+            let output = matrix.map(to_f64).unwrap();
+            assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].map(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
     }
 
@@ -1139,27 +1158,33 @@ mod tests {
             *x as f64
         }
 
-        let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
         // default order
         {
-            let matrix_f64 = matrix_i32.map_ref(to_f64);
-            assert_eq!(matrix_f64, expected);
+            let output = matrix.map_ref(to_f64).unwrap();
+            assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].map_ref(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
 
         // alternative order
         {
-            let mut matrix_i32 = matrix_i32.clone();
-            matrix_i32.switch_order();
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
 
-            let matrix_f64 = matrix_i32.map_ref(to_f64);
-            assert_eq!(matrix_f64, expected);
+            let output = matrix.map_ref(to_f64).unwrap();
+            assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].map_ref(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
 
         // to matrix of references
         {
-            let matrix_ref = matrix_i32.map_ref(|x| x);
+            let matrix_ref = matrix.map_ref(|x| x).unwrap();
             assert_eq!(matrix_ref, matrix![[&1, &2, &3], [&4, &5, &6]]);
         }
     }

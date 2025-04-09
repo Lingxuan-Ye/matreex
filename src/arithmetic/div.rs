@@ -108,7 +108,10 @@ macro_rules! impl_helper {
 
                 #[inline]
                 fn div(self, rhs: $s) -> Self::Output {
-                    self.scalar_operation_consume_self(&rhs, |element, scalar| element / *scalar)
+                    match self.scalar_operation_consume_self(&rhs, |element, scalar| element / *scalar) {
+                        Err(error) => panic!("{error}"),
+                        Ok(output) => output,
+                    }
                 }
             }
 
@@ -117,7 +120,10 @@ macro_rules! impl_helper {
 
                 #[inline]
                 fn div(self, rhs: $s) -> Self::Output {
-                    self.scalar_operation(&rhs, |element, scalar| *element / *scalar)
+                    match self.scalar_operation(&rhs, |element, scalar| *element / *scalar) {
+                        Err(error) => panic!("{error}"),
+                        Ok(output) => output,
+                    }
                 }
             }
 
@@ -126,7 +132,10 @@ macro_rules! impl_helper {
 
                 #[inline]
                 fn div(self, rhs: Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(&self, |element, scalar| *scalar / element)
+                    match rhs.scalar_operation_consume_self(&self, |element, scalar| *scalar / element) {
+                        Err(error) => panic!("{error}"),
+                        Ok(output) => output,
+                    }
                 }
             }
 
@@ -135,7 +144,10 @@ macro_rules! impl_helper {
 
                 #[inline]
                 fn div(self, rhs: &Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation(&self, |element, scalar| *scalar / *element)
+                    match rhs.scalar_operation(&self, |element, scalar| *scalar / *element) {
+                        Err(error) => panic!("{error}"),
+                        Ok(output) => output,
+                    }
                 }
             }
         )*
@@ -209,7 +221,7 @@ mod tests {
     #[allow(clippy::op_ref)]
     fn test_primitive_scalar_div() {
         let matrix = matrix![[1.0, 2.0, 4.0], [8.0, 16.0, 32.0]];
-        let matrix_ref = matrix.map_ref(|x| x);
+        let matrix_ref = matrix.map_ref(|x| x).unwrap();
         let scalar = 2.0;
         let expected = matrix![[0.5, 1.0, 2.0], [4.0, 8.0, 16.0]];
         let rexpected = matrix![[2.0, 1.0, 0.5], [0.25, 0.125, 0.0625]];

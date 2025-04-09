@@ -6,6 +6,7 @@
 pub use rayon::prelude::*;
 
 use crate::Matrix;
+use crate::error::Result;
 use crate::index::Index;
 
 impl<T> Matrix<T> {
@@ -34,26 +35,35 @@ impl<T> Matrix<T> {
     /// Applies a closure to each element of the matrix in parallel,
     /// returning a new matrix with the results.
     ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
     /// # Examples
     ///
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let matrix_f64 = matrix_i32.par_map(|x| x as f64);
-    /// assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let result = matrix.par_map(|x| x as f64);
+    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
+    ///
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     #[inline]
-    pub fn par_map<U, F>(self, f: F) -> Matrix<U>
+    pub fn par_map<U, F>(self, f: F) -> Result<Matrix<U>>
     where
         T: Send,
         U: Send,
         F: Fn(T) -> U + Sync + Send,
     {
+        Matrix::<U>::check_size(self.size())?;
+
         let order = self.order;
         let shape = self.shape;
         let data = self.data.into_par_iter().map(f).collect();
-        Matrix { order, shape, data }
+
+        Ok(Matrix { order, shape, data })
     }
 
     /// Applies a closure to each element of the matrix in parallel,
@@ -62,28 +72,36 @@ impl<T> Matrix<T> {
     /// This method is similar to [`par_map`] but passes references to the
     /// elements instead of taking ownership of them.
     ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
     /// # Examples
     ///
     /// ```
     /// use matreex::matrix;
     ///
-    /// let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let matrix_f64 = matrix_i32.par_map_ref(|x| *x as f64);
-    /// assert_eq!(matrix_f64, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let result = matrix.par_map_ref(|x| *x as f64);
+    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
     ///
     /// [`par_map`]: Matrix::par_map
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     #[inline]
-    pub fn par_map_ref<'a, U, F>(&'a self, f: F) -> Matrix<U>
+    pub fn par_map_ref<'a, U, F>(&'a self, f: F) -> Result<Matrix<U>>
     where
         T: Sync,
         U: Send,
         F: Fn(&'a T) -> U + Sync + Send,
     {
+        Matrix::<U>::check_size(self.size())?;
+
         let order = self.order;
         let shape = self.shape;
         let data = self.data.par_iter().map(f).collect();
-        Matrix { order, shape, data }
+
+        Ok(Matrix { order, shape, data })
     }
 }
 
@@ -244,6 +262,7 @@ impl<T> Matrix<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::Error;
     use crate::matrix;
 
     #[test]
@@ -279,24 +298,30 @@ mod tests {
             x as f64
         }
 
-        let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
         // default order
         {
-            let matrix_i32 = matrix_i32.clone();
+            let matrix = matrix.clone();
 
-            let matrix_f64 = matrix_i32.par_map(to_f64);
-            assert_eq!(matrix_f64, expected);
+            let output = matrix.par_map(to_f64).unwrap();
+            assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].par_map(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
 
         // alternative order
         {
-            let mut matrix_i32 = matrix_i32.clone();
-            matrix_i32.switch_order();
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
 
-            let matrix_f64 = matrix_i32.par_map(to_f64);
-            assert_eq!(matrix_f64, expected);
+            let output = matrix.par_map(to_f64).unwrap();
+            assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].par_map(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
     }
 
@@ -306,27 +331,33 @@ mod tests {
             *x as f64
         }
 
-        let matrix_i32 = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
         // default order
         {
-            let matrix_f64 = matrix_i32.par_map_ref(to_f64);
-            assert_eq!(matrix_f64, expected);
+            let output = matrix.par_map_ref(to_f64).unwrap();
+            assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].par_map_ref(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
 
         // alternative order
         {
-            let mut matrix_i32 = matrix_i32.clone();
-            matrix_i32.switch_order();
+            let mut matrix = matrix.clone();
+            matrix.switch_order();
 
-            let matrix_f64 = matrix_i32.par_map_ref(to_f64);
-            assert_eq!(matrix_f64, expected);
+            let output = matrix.par_map_ref(to_f64).unwrap();
+            assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1].par_map_ref(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
 
         // to matrix of references
         {
-            let matrix_ref = matrix_i32.par_map_ref(|x| x);
+            let matrix_ref = matrix.par_map_ref(|x| x).unwrap();
             assert_eq!(matrix_ref, matrix![[&1, &2, &3], [&4, &5, &6]]);
         }
     }

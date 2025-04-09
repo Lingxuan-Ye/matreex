@@ -151,8 +151,8 @@ impl<T, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
         let nrows = C;
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        Self::check_size(shape.size())?;
-        let mut data = Vec::with_capacity(shape.size());
+        let size = Self::check_size(shape.size())?;
+        let mut data = Vec::with_capacity(size);
         for row in value {
             if row.len() != ncols {
                 return Err(Error::LengthInconsistent);
@@ -193,8 +193,8 @@ impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
         let nrows = value.len();
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        Self::check_size(shape.size())?;
-        let mut data = Vec::with_capacity(shape.size());
+        let size = Self::check_size(shape.size())?;
+        let mut data = Vec::with_capacity(size);
         for row in value {
             if row.len() != ncols {
                 return Err(Error::LengthInconsistent);
@@ -235,8 +235,8 @@ impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
         let nrows = value.len();
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        Self::check_size(shape.size())?;
-        let mut data = Vec::with_capacity(shape.size());
+        let size = Self::check_size(shape.size())?;
+        let mut data = Vec::with_capacity(size);
         for row in value {
             if row.len() != ncols {
                 return Err(Error::LengthInconsistent);

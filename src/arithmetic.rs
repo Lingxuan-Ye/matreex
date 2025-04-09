@@ -178,6 +178,7 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -203,6 +204,7 @@ impl<L> Matrix<L> {
         F: FnMut(&'a L, &'b R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
+        Matrix::<U>::check_size(self.size())?;
 
         let order = self.order;
         let shape = self.shape;
@@ -234,6 +236,7 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -259,6 +262,7 @@ impl<L> Matrix<L> {
         F: FnMut(L, &'a R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
+        Matrix::<U>::check_size(self.size())?;
 
         let order = self.order;
         let shape = self.shape;
@@ -427,6 +431,10 @@ impl<L> Matrix<L> {
 impl<T> Matrix<T> {
     /// Performs scalar operation on the matrix.
     ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
     /// # Examples
     ///
     /// ```
@@ -434,14 +442,20 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let scalar = 2;
-    /// let output = matrix.scalar_operation(&scalar, |x, y| x + y);
-    /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// let result = matrix.scalar_operation(&scalar, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
     #[inline]
-    pub fn scalar_operation<'a, 'b, S, F, U>(&'a self, scalar: &'b S, mut op: F) -> Matrix<U>
+    pub fn scalar_operation<'a, 'b, S, F, U>(
+        &'a self,
+        scalar: &'b S,
+        mut op: F,
+    ) -> Result<Matrix<U>>
     where
         F: FnMut(&'a T, &'b S) -> U,
     {
+        Matrix::<U>::check_size(self.size())?;
+
         let order = self.order;
         let shape = self.shape;
         let data = self
@@ -449,10 +463,15 @@ impl<T> Matrix<T> {
             .iter()
             .map(|element| op(element, scalar))
             .collect();
-        Matrix { order, shape, data }
+
+        Ok(Matrix { order, shape, data })
     }
 
     /// Performs scalar operation on the matrix, consuming `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -461,14 +480,20 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let scalar = 2;
-    /// let output = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
-    /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// let result = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
     #[inline]
-    pub fn scalar_operation_consume_self<'a, S, F, U>(self, scalar: &'a S, mut op: F) -> Matrix<U>
+    pub fn scalar_operation_consume_self<'a, S, F, U>(
+        self,
+        scalar: &'a S,
+        mut op: F,
+    ) -> Result<Matrix<U>>
     where
         F: FnMut(T, &'a S) -> U,
     {
+        Matrix::<U>::check_size(self.size())?;
+
         let order = self.order;
         let shape = self.shape;
         let data = self
@@ -476,7 +501,8 @@ impl<T> Matrix<T> {
             .into_iter()
             .map(|element| op(element, scalar))
             .collect();
-        Matrix { order, shape, data }
+
+        Ok(Matrix { order, shape, data })
     }
 
     /// Performs scalar operation on the matrix, assigning the result
@@ -926,7 +952,7 @@ mod tests {
 
         // misuse but should work
         {
-            let mut lhs = lhs.map_ref(|x| x);
+            let mut lhs = lhs.map_ref(|x| x).unwrap();
 
             lhs.elementwise_operation_assign(&rhs, |x, y| *x = y)
                 .unwrap();
@@ -1063,8 +1089,13 @@ mod tests {
 
         // default order
         {
-            let output = matrix.scalar_operation(&scalar, add);
+            let output = matrix.scalar_operation(&scalar, add).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1]
+                .scalar_operation(&scalar, |_, _| 0)
+                .unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow)
         }
 
         // alternative order
@@ -1072,27 +1103,32 @@ mod tests {
             let mut matrix = matrix.clone();
             matrix.switch_order();
 
-            let output = matrix.scalar_operation(&scalar, add);
+            let output = matrix.scalar_operation(&scalar, add).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1]
+                .scalar_operation(&scalar, |_, _| 0)
+                .unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow)
         }
 
         // misuse but should work
         {
-            let output = matrix.scalar_operation(&scalar, |x, _| x);
+            let output = matrix.scalar_operation(&scalar, |x, _| x).unwrap();
             assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
 
-            let output = matrix.scalar_operation(&scalar, |_, y| y);
+            let output = matrix.scalar_operation(&scalar, |_, y| y).unwrap();
             assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
 
             let output = {
                 let scalar = 2;
-                matrix.scalar_operation(&scalar, |x, _| x)
+                matrix.scalar_operation(&scalar, |x, _| x).unwrap()
             };
             assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
 
             let output = {
                 let matrix = matrix.clone();
-                matrix.scalar_operation(&scalar, |_, y| y)
+                matrix.scalar_operation(&scalar, |_, y| y).unwrap()
             };
             assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
         }
@@ -1112,8 +1148,13 @@ mod tests {
         {
             let matrix = matrix.clone();
 
-            let output = matrix.scalar_operation_consume_self(&scalar, add);
+            let output = matrix.scalar_operation_consume_self(&scalar, add).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1]
+                .scalar_operation_consume_self(&scalar, |_, _| 0)
+                .unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow)
         }
 
         // alternative order
@@ -1121,15 +1162,22 @@ mod tests {
             let mut matrix = matrix.clone();
             matrix.switch_order();
 
-            let output = matrix.scalar_operation_consume_self(&scalar, add);
+            let output = matrix.scalar_operation_consume_self(&scalar, add).unwrap();
             assert_eq!(output, expected);
+
+            let error = matrix![[(); usize::MAX]; 1]
+                .scalar_operation_consume_self(&scalar, |_, _| 0)
+                .unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow)
         }
 
         // misuse but should work
         {
             let matrix = matrix.clone();
 
-            let output = matrix.scalar_operation_consume_self(&scalar, |_, y| y);
+            let output = matrix
+                .scalar_operation_consume_self(&scalar, |_, y| y)
+                .unwrap();
             assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
         }
     }
@@ -1163,7 +1211,7 @@ mod tests {
 
         // misuse but should work
         {
-            let mut matrix = matrix.map_ref(|x| x);
+            let mut matrix = matrix.map_ref(|x| x).unwrap();
 
             matrix.scalar_operation_assign(&scalar, |x, y| *x = y);
             assert_eq!(matrix, matrix![[&2, &2, &2], [&2, &2, &2]]);
