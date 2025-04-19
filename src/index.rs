@@ -113,7 +113,7 @@ impl<T> Matrix<T> {
     }
 }
 
-impl<T, I> std::ops::Index<I> for Matrix<T>
+impl<T, I> core::ops::Index<I> for Matrix<T>
 where
     I: MatrixIndex<T>,
 {
@@ -125,7 +125,7 @@ where
     }
 }
 
-impl<T, I> std::ops::IndexMut<I> for Matrix<T>
+impl<T, I> core::ops::IndexMut<I> for Matrix<T>
 where
     I: MatrixIndex<T>,
 {

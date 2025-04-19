@@ -1,6 +1,6 @@
 use crate::Matrix;
 use crate::error::Result;
-use std::ops::{Add, AddAssign};
+use core::ops::{Add, AddAssign};
 
 impl<L, R, U> Add<Matrix<R>> for Matrix<L>
 where

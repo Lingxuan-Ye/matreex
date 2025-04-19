@@ -1,6 +1,6 @@
 use crate::Matrix;
 use crate::error::Result;
-use std::ops::{Rem, RemAssign};
+use core::ops::{Rem, RemAssign};
 
 impl<L> Matrix<L> {
     /// Performs elementwise remainder operation on two matrices.

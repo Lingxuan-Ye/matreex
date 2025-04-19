@@ -1,7 +1,10 @@
 use crate::Matrix;
 use crate::index::Index;
-use std::collections::VecDeque;
-use std::fmt;
+use alloc::collections::VecDeque;
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use core::fmt;
 
 const LEFT_DELIMITER: &str = "[";
 const RIGHT_DELIMITER: &str = "]";
@@ -27,7 +30,7 @@ macro_rules! write_index {
         let styled = plain.if_supports_color(Stream::Stdout, |text| {
             Style::new().green().dimmed().style(text)
         });
-        write!($dst, "{}", styled)
+        write!($dst, "{styled}")
     }};
 }
 

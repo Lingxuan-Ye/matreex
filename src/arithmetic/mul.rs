@@ -2,7 +2,8 @@ use crate::Matrix;
 use crate::error::Result;
 use crate::order::Order;
 use crate::shape::Shape;
-use std::ops::{Add, Mul, MulAssign};
+use alloc::vec::Vec;
+use core::ops::{Add, Mul, MulAssign};
 
 impl<L, R, U> Mul<Matrix<R>> for Matrix<L>
 where

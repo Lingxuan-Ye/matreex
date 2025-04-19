@@ -1,8 +1,8 @@
 use crate::Matrix;
 use crate::error::{Error, Result};
-use std::marker::PhantomData;
-use std::num::NonZero;
-use std::ptr::{NonNull, without_provenance_mut};
+use core::marker::PhantomData;
+use core::num::NonZero;
+use core::ptr::{NonNull, without_provenance_mut};
 
 /// # Design Details
 ///

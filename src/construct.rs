@@ -3,6 +3,8 @@ use crate::error::Result;
 use crate::index::Index;
 use crate::order::Order;
 use crate::shape::{AxisShape, Shape};
+use alloc::vec;
+use alloc::vec::Vec;
 
 impl<T> Matrix<T> {
     /// Creates a new, empty [`Matrix<T>`].

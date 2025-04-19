@@ -2,7 +2,7 @@ use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::index::MatrixIndex;
 use crate::order::Order;
-use std::ptr;
+use core::ptr;
 
 impl<T> Matrix<T> {
     /// Swaps the elements at the given indices.

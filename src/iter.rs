@@ -5,8 +5,8 @@ use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::index::Index;
 use crate::order::Order;
-use std::iter::{Skip, StepBy, Take};
-use std::slice::{Iter, IterMut};
+use core::iter::{Skip, StepBy, Take};
+use core::slice::{Iter, IterMut};
 
 mod iter_mut;
 

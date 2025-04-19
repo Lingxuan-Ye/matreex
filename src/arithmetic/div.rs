@@ -1,6 +1,6 @@
 use crate::Matrix;
 use crate::error::Result;
-use std::ops::{Div, DivAssign};
+use core::ops::{Div, DivAssign};
 
 impl<L> Matrix<L> {
     /// Performs elementwise division on two matrices.
