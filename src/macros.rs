@@ -61,7 +61,7 @@ macro_rules! matrix {
 #[macro_export]
 macro_rules! row_vec {
     [] => {
-        $crate::Matrix::from_row(::std::vec![]);
+        $crate::Matrix::from_row(::std::vec![])
     };
 
     [$elem:expr; $n:expr] => {
@@ -93,7 +93,7 @@ macro_rules! row_vec {
 #[macro_export]
 macro_rules! col_vec {
     [] => {
-        $crate::Matrix::from_col(::std::vec![]);
+        $crate::Matrix::from_col(::std::vec![])
     };
 
     [$elem:expr; $n:expr] => {
