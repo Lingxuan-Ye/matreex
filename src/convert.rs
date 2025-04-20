@@ -96,7 +96,10 @@ impl<T, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
     }
 }
 
-impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
+impl<T, const C: usize> From<&[[T; C]]> for Matrix<T>
+where
+    T: Clone,
+{
     /// Converts to [`Matrix<T>`] from a sequence of rows.
     ///
     /// # Notes
@@ -206,7 +209,10 @@ impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
     }
 }
 
-impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
+impl<T> TryFrom<&[Vec<T>]> for Matrix<T>
+where
+    T: Clone,
+{
     type Error = Error;
 
     /// Converts to [`Matrix<T>`] from a sequence of rows.
