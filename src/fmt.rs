@@ -195,6 +195,7 @@ where
     }
 }
 
+#[derive(Debug)]
 struct Lines(VecDeque<String>);
 
 impl Lines {
