@@ -3,7 +3,7 @@
 /// An enum representing the memory layout of a [`Matrix<T>`].
 ///
 /// [`Matrix<T>`]: crate::Matrix
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum Order {
     /// Elements are stored row by row, with consecutive elements of
     /// a row being stored contiguously in memory.

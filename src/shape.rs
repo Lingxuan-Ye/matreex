@@ -6,7 +6,7 @@ use crate::order::Order;
 /// A struct representing the shape of a [`Matrix<T>`].
 ///
 /// [`Matrix<T>`]: crate::Matrix
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Shape {
     nrows: usize,
     ncols: usize,
@@ -130,7 +130,7 @@ impl From<[usize; 2]> for Shape {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub(crate) struct AxisShape {
     major: usize,
     minor: usize,

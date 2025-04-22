@@ -111,6 +111,7 @@ mod construct;
 mod convert;
 mod eq;
 mod fmt;
+mod hash;
 mod macros;
 mod swap;
 
