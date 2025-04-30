@@ -203,14 +203,14 @@ impl Lines {
     where
         T: fmt::Debug,
     {
-        Self(format!("{:?}", element).lines().map(String::from).collect())
+        Self(format!("{element:?}").lines().map(String::from).collect())
     }
 
     fn from_display<T>(element: T) -> Self
     where
         T: fmt::Display,
     {
-        Self(format!("{}", element).lines().map(String::from).collect())
+        Self(format!("{element}").lines().map(String::from).collect())
     }
 
     fn width(&self) -> usize {
