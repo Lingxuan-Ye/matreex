@@ -19,8 +19,6 @@ version = "1.10.0"
 optional = true
 
 [features]
-default = ["parallel", "std"]
-parallel = ["dep:rayon", "std"]
+default = ["parallel"]
+parallel = ["dep:rayon"]
 pretty-debug = ["dep:owo-colors"]
-std = []
-full = ["parallel", "pretty-debug", "std"]
