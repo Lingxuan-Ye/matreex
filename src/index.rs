@@ -5,6 +5,9 @@ use crate::error::{Error, Result};
 use crate::order::Order;
 use crate::shape::AxisShape;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 impl<T> Matrix<T> {
     /// Returns a reference to the [`MatrixIndex::Output`]
     /// at given location.
@@ -247,6 +250,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
 /// A struct representing the index of an element in a [`Matrix<T>`].
 ///
 /// Refer to [`AsIndex`] for more information.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Index {
     /// The row index of the element.
@@ -435,6 +439,7 @@ impl AsIndex for [usize; 2] {
 ///   distinguishable from their `usize` counterparts, which would
 ///   introduce ambiguity and prevent type inference, making type
 ///   annotations necessary.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct WrappingIndex {
     /// The row index of the element.
@@ -527,6 +532,7 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     }
 }
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub(crate) struct AxisIndex {
     pub(crate) major: usize,

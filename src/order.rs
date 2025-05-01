@@ -1,8 +1,12 @@
 //! Describes the memory layout of a matrix.
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// An enum representing the memory layout of a [`Matrix<T>`].
 ///
 /// [`Matrix<T>`]: crate::Matrix
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum Order {
     /// Elements are stored row by row, with consecutive elements of
