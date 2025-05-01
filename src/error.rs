@@ -11,12 +11,12 @@ pub enum Error {
     /// of data.
     SizeOverflow,
 
-    /// Error when the size of the shape does not match the length of the
-    /// underlying data.
+    /// Error when the matrix size does not match the length of its underlying
+    /// data.
     ///
-    /// Ensuring this equality is crucial because if the size exceeds the
-    /// length, indexing into the matrix may result in out-of-bounds memory
-    /// access, leading to *[undefined behavior]*.
+    /// This equality is an invariant that must be maintained. If the matrix
+    /// size exceeds the data length, indexing into the matrix may result in
+    /// out-of-bounds memory access, leading to *[undefined behavior]*.
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     SizeMismatch,
