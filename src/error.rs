@@ -6,9 +6,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 /// An enum for error types.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub enum Error {
-    /// Error when matrix size exceeds [`usize::MAX`], which is, in fact
-    /// pointless, since a matrix can only store up to [`isize::MAX`] bytes
-    /// of data.
+    /// Error when the matrix size exceeds [`usize::MAX`].
     SizeOverflow,
 
     /// Error when the matrix size does not match the length of its underlying
