@@ -3,6 +3,7 @@ use crate::error::{Error, Result};
 use crate::index::AxisIndex;
 use crate::order::Order;
 use crate::shape::Shape;
+use alloc::vec::Vec;
 
 mod add;
 mod div;

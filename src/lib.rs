@@ -81,6 +81,10 @@
 //!
 //! Hmm ... Who knows? Could be a name conflict.
 
+#![no_std]
+
+extern crate alloc;
+
 pub use self::error::{Error, Result};
 pub use self::index::{Index, WrappingIndex};
 pub use self::order::Order;
@@ -88,8 +92,13 @@ pub use self::shape::Shape;
 
 use self::index::AxisIndex;
 use self::shape::AxisShape;
-use std::cmp;
-use std::ptr;
+use alloc::vec;
+use alloc::vec::Vec;
+use core::cmp;
+use core::ptr;
+
+#[cfg(feature = "serde")]
+use serde::Serialize;
 
 pub mod error;
 pub mod index;
@@ -105,10 +114,15 @@ mod construct;
 mod convert;
 mod eq;
 mod fmt;
+mod hash;
 mod macros;
 mod swap;
 
+#[cfg(feature = "serde")]
+mod deserialize;
+
 /// [`Matrix<T>`] means matrix.
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Clone)]
 pub struct Matrix<T> {
     order: Order,

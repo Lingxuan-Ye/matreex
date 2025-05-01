@@ -3,6 +3,8 @@ use crate::error::Result;
 use crate::index::Index;
 use crate::order::Order;
 use crate::shape::{AxisShape, Shape};
+use alloc::vec;
+use alloc::vec::Vec;
 
 impl<T> Matrix<T> {
     /// Creates a new, empty [`Matrix<T>`].
@@ -19,11 +21,10 @@ impl<T> Matrix<T> {
     /// ```
     #[inline]
     pub fn new() -> Self {
-        Self {
-            order: Order::default(),
-            shape: AxisShape::default(),
-            data: Vec::new(),
-        }
+        let order = Order::default();
+        let shape = AxisShape::default();
+        let data = Vec::new();
+        Self { order, shape, data }
     }
 
     /// Creates a new, empty [`Matrix<T>`] with at least the specified
@@ -42,11 +43,10 @@ impl<T> Matrix<T> {
     /// ```
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            order: Order::default(),
-            shape: AxisShape::default(),
-            data: Vec::with_capacity(capacity),
-        }
+        let order = Order::default();
+        let shape = AxisShape::default();
+        let data = Vec::with_capacity(capacity);
+        Self { order, shape, data }
     }
 
     /// Creates a new [`Matrix<T>`] with the specified shape, filled with

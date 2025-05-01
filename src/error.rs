@@ -1,22 +1,20 @@
 //! Error handling for the crate.
 
-/// An alias for [`std::result::Result`].
-pub type Result<T> = std::result::Result<T, Error>;
+/// An alias for [`core::result::Result`].
+pub type Result<T> = core::result::Result<T, Error>;
 
 /// An enum for error types.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub enum Error {
-    /// Error when matrix size exceeds [`usize::MAX`], which is, in fact
-    /// pointless, since a matrix can only store up to [`isize::MAX`] bytes
-    /// of data.
+    /// Error when the matrix size exceeds [`usize::MAX`].
     SizeOverflow,
 
-    /// Error when the size of the shape does not match the length of the
-    /// underlying data.
+    /// Error when the matrix size does not match the length of its underlying
+    /// data.
     ///
-    /// Ensuring this equality is crucial because if the size exceeds the
-    /// length, indexing into the matrix may result in out-of-bounds memory
-    /// access, leading to *[undefined behavior]*.
+    /// This equality is an invariant that must be maintained. If the matrix
+    /// size exceeds the data length, indexing into the matrix may result in
+    /// out-of-bounds memory access, leading to *[undefined behavior]*.
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     SizeMismatch,
@@ -26,7 +24,7 @@ pub enum Error {
     ///
     /// Refer to [`vec`] and *[The Rustonomicon]* for more information.
     ///
-    /// [`vec`]: mod@std::vec
+    /// [`vec`]: mod@alloc::vec
     /// [The Rustonomicon]: https://doc.rust-lang.org/stable/nomicon/vec/vec-alloc.html#allocating-memory
     CapacityOverflow,
 
@@ -45,8 +43,8 @@ pub enum Error {
     ShapeNotConformable,
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let content = match self {
             Self::SizeOverflow => "size overflow",
             Self::SizeMismatch => "size mismatch",
@@ -60,4 +58,4 @@ impl std::fmt::Display for Error {
     }
 }
 
-impl std::error::Error for Error {}
+impl core::error::Error for Error {}

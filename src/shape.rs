@@ -3,10 +3,14 @@
 use crate::error::{Error, Result};
 use crate::order::Order;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// A struct representing the shape of a [`Matrix<T>`].
 ///
 /// [`Matrix<T>`]: crate::Matrix
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Shape {
     nrows: usize,
     ncols: usize,
@@ -130,7 +134,8 @@ impl From<[usize; 2]> for Shape {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub(crate) struct AxisShape {
     major: usize,
     minor: usize,

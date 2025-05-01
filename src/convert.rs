@@ -2,6 +2,7 @@ use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::order::Order;
 use crate::shape::Shape;
+use alloc::vec::Vec;
 
 impl<T> Matrix<T> {
     /// Creates a new single-row [`Matrix<T>`] from a vector.
@@ -95,7 +96,10 @@ impl<T, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
     }
 }
 
-impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
+impl<T, const C: usize> From<&[[T; C]]> for Matrix<T>
+where
+    T: Clone,
+{
     /// Converts to [`Matrix<T>`] from a sequence of rows.
     ///
     /// # Notes
@@ -205,7 +209,10 @@ impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
     }
 }
 
-impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
+impl<T> TryFrom<&[Vec<T>]> for Matrix<T>
+where
+    T: Clone,
+{
     type Error = Error;
 
     /// Converts to [`Matrix<T>`] from a sequence of rows.
@@ -301,6 +308,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec;
 
     // tests in this module should avoid direct comparison of `Matrix<T>`
 

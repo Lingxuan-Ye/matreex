@@ -1,8 +1,8 @@
 use crate::Matrix;
 use crate::error::{Error, Result};
-use std::marker::PhantomData;
-use std::num::NonZero;
-use std::ptr::{NonNull, without_provenance_mut};
+use core::marker::PhantomData;
+use core::num::NonZero;
+use core::ptr::{NonNull, without_provenance_mut};
 
 /// # Design Details
 ///
@@ -31,8 +31,8 @@ struct Layout {
     vector_length: NonZero<usize>,
 }
 
-unsafe impl<T: Send> Send for IterVectorsMut<'_, T> {}
-unsafe impl<T: Sync> Sync for IterVectorsMut<'_, T> {}
+unsafe impl<T> Send for IterVectorsMut<'_, T> where T: Send {}
+unsafe impl<T> Sync for IterVectorsMut<'_, T> where T: Sync {}
 
 impl<'a, T> IterVectorsMut<'a, T> {
     pub(crate) fn over_major_axis(matrix: &'a mut Matrix<T>) -> Self {
@@ -238,8 +238,8 @@ pub(crate) struct IterNthVectorMut<'a, T> {
     marker: PhantomData<&'a mut T>,
 }
 
-unsafe impl<T: Send> Send for IterNthVectorMut<'_, T> {}
-unsafe impl<T: Sync> Sync for IterNthVectorMut<'_, T> {}
+unsafe impl<T> Send for IterNthVectorMut<'_, T> where T: Send {}
+unsafe impl<T> Sync for IterNthVectorMut<'_, T> where T: Sync {}
 
 impl<'a, T> IterNthVectorMut<'a, T> {
     /// This is an alternative to [`Matrix::iter_nth_major_axis_vector_mut`],

@@ -1,6 +1,6 @@
 use crate::Matrix;
 use crate::error::Result;
-use std::ops::{Sub, SubAssign};
+use core::ops::{Sub, SubAssign};
 
 impl<L, R, U> Sub<Matrix<R>> for Matrix<L>
 where

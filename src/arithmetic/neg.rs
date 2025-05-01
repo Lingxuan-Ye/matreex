@@ -1,5 +1,5 @@
 use crate::Matrix;
-use std::ops::Neg;
+use core::ops::Neg;
 
 impl<T, U> Neg for Matrix<T>
 where

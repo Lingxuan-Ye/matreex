@@ -5,6 +5,9 @@ use crate::error::{Error, Result};
 use crate::order::Order;
 use crate::shape::AxisShape;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 impl<T> Matrix<T> {
     /// Returns a reference to the [`MatrixIndex::Output`]
     /// at given location.
@@ -113,7 +116,7 @@ impl<T> Matrix<T> {
     }
 }
 
-impl<T, I> std::ops::Index<I> for Matrix<T>
+impl<T, I> core::ops::Index<I> for Matrix<T>
 where
     I: MatrixIndex<T>,
 {
@@ -125,7 +128,7 @@ where
     }
 }
 
-impl<T, I> std::ops::IndexMut<I> for Matrix<T>
+impl<T, I> core::ops::IndexMut<I> for Matrix<T>
 where
     I: MatrixIndex<T>,
 {
@@ -247,7 +250,8 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
 /// A struct representing the index of an element in a [`Matrix<T>`].
 ///
 /// Refer to [`AsIndex`] for more information.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Index {
     /// The row index of the element.
     pub row: usize,
@@ -435,7 +439,8 @@ impl AsIndex for [usize; 2] {
 ///   distinguishable from their `usize` counterparts, which would
 ///   introduce ambiguity and prevent type inference, making type
 ///   annotations necessary.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct WrappingIndex {
     /// The row index of the element.
     pub row: isize,
@@ -527,7 +532,8 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub(crate) struct AxisIndex {
     pub(crate) major: usize,
     pub(crate) minor: usize,
