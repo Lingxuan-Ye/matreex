@@ -329,7 +329,7 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// any matrix. The returned iterator is valid only if the matrix
     /// remains in scope.
     unsafe fn assemble(lower: NonNull<T>, stride: NonZero<usize>, length: NonZero<usize>) -> Self {
-        let offset = (length.get() - 1) * stride.get();
+        let offset = stride.get() * (length.get() - 1);
         let upper = if size_of::<T>() == 0 {
             let addr = lower.addr().get() + offset;
             let ptr = without_provenance_mut(addr);
