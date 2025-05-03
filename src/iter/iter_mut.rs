@@ -6,7 +6,7 @@ use core::ptr::{NonNull, without_provenance_mut};
 
 /// # Design Details
 ///
-/// To prevent pointers from exceeding their provenance, `upper`
+/// To maintain consistency with [`IterNthVectorMut`], `upper`
 /// must point **to** (not one vector past) the exact vector that
 /// [`DoubleEndedIterator::next_back`] would return. In this case,
 /// comparing pointers to determine whether an iterator is empty
