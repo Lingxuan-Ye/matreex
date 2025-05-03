@@ -175,22 +175,23 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = match self.layout {
-            None => 0,
-            Some(strides) => {
-                let stride = strides.axis_stride.get();
-                let elem_size = size_of::<T>();
-                1 + (self.upper.addr().get() - self.lower.addr().get())
-                    / (stride * if elem_size == 0 { 1 } else { elem_size })
-            }
-        };
+        let len = self.len();
         (len, Some(len))
     }
 }
 
 impl<T> ExactSizeIterator for IterVectorsMut<'_, T> {
     fn len(&self) -> usize {
-        self.size_hint().0
+        match self.layout {
+            None => 0,
+            Some(layout) => {
+                let upper = self.upper.addr().get();
+                let lower = self.lower.addr().get();
+                let stride = layout.axis_stride.get();
+                let elem_size = size_of::<T>();
+                1 + (upper - lower) / (stride * if elem_size == 0 { 1 } else { elem_size })
+            }
+        }
     }
 }
 
@@ -375,22 +376,23 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = match self.stride {
-            None => 0,
-            Some(stride) => {
-                let stride = stride.get();
-                let elem_size = size_of::<T>();
-                1 + (self.upper.addr().get() - self.lower.addr().get())
-                    / (stride * if elem_size == 0 { 1 } else { elem_size })
-            }
-        };
+        let len = self.len();
         (len, Some(len))
     }
 }
 
 impl<T> ExactSizeIterator for IterNthVectorMut<'_, T> {
     fn len(&self) -> usize {
-        self.size_hint().0
+        match self.stride {
+            None => 0,
+            Some(stride) => {
+                let upper = self.upper.addr().get();
+                let lower = self.lower.addr().get();
+                let stride = stride.get();
+                let elem_size = size_of::<T>();
+                1 + (upper - lower) / (stride * if elem_size == 0 { 1 } else { elem_size })
+            }
+        }
     }
 }
 
