@@ -48,8 +48,8 @@
 //! assert_eq!(lhs / rhs, matrix![[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]]);
 //! ```
 //!
-//! Wait, matrix division isn't well-defined, remember? It won't compile. But
-//! don't worry, you might just need to perform elementwise division:
+//! Wait, matrix division isn't well-defined, remember? It won't compile.
+//! But don't worry, you might just need to perform elementwise division:
 //!
 //! ```
 //! # use matreex::matrix;
@@ -74,6 +74,12 @@
 //! Or maybe the inverse of a matrix?
 //!
 //! Nah, we don't have that yet.
+//!
+//! # Compatibility
+//!
+//! This crate is `no_std` compatible if **none** of the following features
+//! are enabled:
+//! - `parallel`
 //!
 //! # FAQs
 //!
