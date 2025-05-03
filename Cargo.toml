@@ -27,7 +27,7 @@ optional = true
 serde_test = "1.0.177"
 
 [features]
-default = ["parallel", "serde"]
+default = ["parallel", "pretty-debug", "serde"]
 parallel = ["dep:rayon"]
 pretty-debug = ["dep:owo-colors"]
 serde = ["dep:serde"]
