@@ -1,12 +1,11 @@
 use crate::Matrix;
-use crate::error::Error::SizeMismatch;
+use crate::error::{Error::SizeMismatch, Result};
 use crate::order::Order;
 use crate::shape::AxisShape;
 use alloc::vec::Vec;
 use core::fmt;
 use core::marker::PhantomData;
-use serde::de::Error;
-use serde::de::{Deserialize, Deserializer, MapAccess, SeqAccess, Visitor};
+use serde::de::{Deserialize, Deserializer, Error, MapAccess, SeqAccess, Visitor};
 
 const FIELDS: &[&str] = &["order", "shape", "data"];
 
