@@ -54,7 +54,7 @@ impl core::fmt::Display for Error {
             Self::SquareMatrixRequired => "square matrix required",
             Self::ShapeNotConformable => "shape not conformable",
         };
-        write!(f, "{content}")
+        f.write_str(content)
     }
 }
 
