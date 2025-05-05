@@ -39,7 +39,7 @@ where
 {
     type Value = Matrix<T>;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str("struct Matrix")
     }
 
@@ -128,7 +128,7 @@ struct FieldVisitor;
 impl Visitor<'_> for FieldVisitor {
     type Value = Field;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str("`order`, `shape` or `data`")
     }
 
