@@ -1,7 +1,7 @@
 //! Error handling for the crate.
 
 /// An alias for [`core::result::Result`].
-pub type Result<T, E = Error> = core::result::Result<T, E>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 /// An enum for error types.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]

@@ -1,5 +1,5 @@
 use crate::Matrix;
-use crate::error::{Error::SizeMismatch, Result};
+use crate::error::Error::SizeMismatch;
 use crate::order::Order;
 use crate::shape::AxisShape;
 use alloc::vec::Vec;
