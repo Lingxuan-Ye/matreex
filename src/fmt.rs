@@ -95,8 +95,9 @@ where
                 write_index!(f, "{index:>index_width$}")?;
                 f.write_str(ELEMENT_INNER)?;
                 match cache[index].next() {
-                    None => write!(f, "{SPACE:element_width$}")?,
+                    None if element_width > 0 => write!(f, "{SPACE:<element_width$}")?,
                     Some(line) => write!(f, "{line:<element_width$}")?,
+                    _ => (),
                 }
             }
             f.write_str(RIGHT_DELIMITER)?;
@@ -116,8 +117,9 @@ where
                     write!(f, "{SPACE:>index_width$}")?;
                     f.write_str(ELEMENT_INNER)?;
                     match cache[index].next() {
-                        None => write!(f, "{SPACE:element_width$}")?,
+                        None if element_width > 0 => write!(f, "{SPACE:<element_width$}")?,
                         Some(line) => write!(f, "{line:<element_width$}")?,
+                        _ => (),
                     }
                 }
                 writeln!(f)?;
@@ -172,8 +174,9 @@ where
                 }
                 let index = Index::new(row, col).to_flattened(self.order, self.shape);
                 match cache[index].next() {
-                    None => write!(f, "{SPACE:element_width$}")?,
+                    None if element_width > 0 => write!(f, "{SPACE:<element_width$}")?,
                     Some(line) => write!(f, "{line:<element_width$}")?,
+                    _ => (),
                 }
             }
             f.write_str(RIGHT_DELIMITER)?;
@@ -189,8 +192,9 @@ where
                     }
                     let index = Index::new(row, col).to_flattened(self.order, self.shape);
                     match cache[index].next() {
-                        None => write!(f, "{SPACE:element_width$}")?,
+                        None if element_width > 0 => write!(f, "{SPACE:<element_width$}")?,
                         Some(line) => write!(f, "{line:<element_width$}")?,
+                        _ => (),
                     }
                 }
                 writeln!(f)?;
