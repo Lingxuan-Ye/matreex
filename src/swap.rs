@@ -106,7 +106,7 @@ impl<T> Matrix<T> {
     fn swap_major_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         if m >= self.major() || n >= self.major() {
             return Err(Error::IndexOutOfBounds);
-} else if m == n {
+        } else if m == n {
             return Ok(self);
         }
 
@@ -162,6 +162,9 @@ mod tests {
         {
             let mut matrix = matrix.clone();
 
+            matrix.swap((0, 0), (0, 0)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+
             matrix.swap((0, 0), (1, 1)).unwrap();
             assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
 
@@ -190,6 +193,9 @@ mod tests {
         {
             let mut matrix = matrix.clone();
             matrix.switch_order();
+
+            matrix.swap((0, 0), (0, 0)).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
             matrix.swap((0, 0), (1, 1)).unwrap();
             assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
@@ -224,6 +230,9 @@ mod tests {
         {
             let mut matrix = matrix.clone();
 
+            matrix.swap_rows(0, 0).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+
             matrix.swap_rows(0, 1).unwrap();
             assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
 
@@ -252,6 +261,9 @@ mod tests {
         {
             let mut matrix = matrix.clone();
             matrix.switch_order();
+
+            matrix.swap_rows(0, 0).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
             matrix.swap_rows(0, 1).unwrap();
             assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
@@ -286,6 +298,9 @@ mod tests {
         {
             let mut matrix = matrix.clone();
 
+            matrix.swap_cols(0, 0).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+
             matrix.swap_cols(0, 1).unwrap();
             assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
 
@@ -314,6 +329,9 @@ mod tests {
         {
             let mut matrix = matrix.clone();
             matrix.switch_order();
+
+            matrix.swap_cols(0, 0).unwrap();
+            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
             matrix.swap_cols(0, 1).unwrap();
             assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
