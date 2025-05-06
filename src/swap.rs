@@ -99,6 +99,8 @@ impl<T> Matrix<T> {
     fn swap_major_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         if m >= self.major() || n >= self.major() {
             return Err(Error::IndexOutOfBounds);
+} else if m == n {
+            return Ok(self);
         }
         let base = self.data.as_mut_ptr();
         let index = m * self.major_stride();
