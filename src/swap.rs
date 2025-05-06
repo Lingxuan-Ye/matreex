@@ -32,11 +32,18 @@ impl<T> Matrix<T> {
         let base = self.data.as_mut_ptr();
         let x = self.get_mut(i)? as *mut T;
         let y = self.get_mut(j)? as *mut T;
+
+        if x == y {
+            return Ok(self);
+        }
+
         let x = base.with_addr(x.addr());
         let y = base.with_addr(y.addr());
+
         unsafe {
-            ptr::swap(x, y);
+            ptr::swap_nonoverlapping(x, y, 1);
         }
+
         Ok(self)
     }
 
@@ -102,34 +109,42 @@ impl<T> Matrix<T> {
 } else if m == n {
             return Ok(self);
         }
+
         let base = self.data.as_mut_ptr();
         let index = m * self.major_stride();
         let jndex = n * self.major_stride();
+
         unsafe {
             let x = base.add(index);
             let y = base.add(jndex);
             let count = self.minor();
             ptr::swap_nonoverlapping(x, y, count);
         }
+
         Ok(self)
     }
 
     fn swap_minor_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         if m >= self.minor() || n >= self.minor() {
             return Err(Error::IndexOutOfBounds);
+        } else if m == n {
+            return Ok(self);
         }
+
         let base = self.data.as_mut_ptr();
         let mut index = m * self.minor_stride();
         let mut jndex = n * self.minor_stride();
+
         for _ in 0..self.major() {
             unsafe {
                 let x = base.add(index);
                 let y = base.add(jndex);
-                ptr::swap(x, y);
+                ptr::swap_nonoverlapping(x, y, 1);
             }
             index += self.major_stride();
             jndex += self.major_stride();
         }
+
         Ok(self)
     }
 }
