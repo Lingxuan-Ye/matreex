@@ -6,28 +6,32 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::fmt;
 
-const LEFT_DELIMITER: &str = "[";
-const RIGHT_DELIMITER: &str = "]";
-const SPACE: &str = " ";
-const INDENT: &str = "    ";
-const ROW_INNER: &str = "  ";
-const ELEMENT_INNER: &str = " ";
-const ELEMENT_OUTER: &str = "  ";
+mod constant {
+    pub(crate) mod whitespace {
+        pub(crate) const SPACE: &str = " ";
+        pub(crate) const INDENT: &str = "    ";
+        pub(crate) const NEWLINE: &str = "\n";
+    }
 
-#[cfg(not(feature = "pretty-debug"))]
-macro_rules! write_index {
-    ($dst:expr, $($arg:tt)*) => {
-        write!($dst, $($arg)*)
-    };
-}
+    pub(crate) mod matrix {
+        pub(crate) const DELIMITER_LEFT: &str = "[";
+        pub(crate) const DELIMITER_RIGHT: &str = "]";
+    }
 
-#[cfg(feature = "pretty-debug")]
-macro_rules! write_index {
-    ($dst:expr, $($arg:tt)*) => {{
-        let plain = format!($($arg)*);
-        let styled = owo_colors::Style::new().green().dimmed().style(plain);
-        write!($dst, "{styled}")
-    }};
+    pub(crate) mod row {
+        pub(crate) const INDEX_GAP: &str = "  ";
+        pub(crate) const DELIMITER_LEFT: &str = "[  ";
+        pub(crate) const DELIMITER_RIGHT: &str = "  ]";
+        pub(crate) const DELIMITER_PADDING: &str = "   ";
+        pub(crate) const SEPARATOR: &str = " ";
+        pub(crate) const SEPARATOR_PADDING: &str = " ";
+    }
+
+    pub(crate) mod element {
+        pub(crate) const INDEX_GAP: &str = " ";
+        pub(crate) const SEPARATOR: &str = "  ";
+        pub(crate) const SEPARATOR_PADDING: &str = "  ";
+    }
 }
 
 impl<T> fmt::Debug for Matrix<T>
@@ -36,8 +40,8 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_empty() {
-            f.write_str(LEFT_DELIMITER)?;
-            f.write_str(RIGHT_DELIMITER)?;
+            f.write_str(constant::matrix::DELIMITER_LEFT)?;
+            f.write_str(constant::matrix::DELIMITER_RIGHT)?;
             return Ok(());
         }
 
@@ -61,72 +65,79 @@ where
             }
             cache.push(lines);
         }
+        let index_padding = constant::whitespace::SPACE.repeat(index_width);
+        let element_padding = constant::whitespace::SPACE.repeat(element_width);
 
-        f.write_str(LEFT_DELIMITER)?;
-        writeln!(f)?;
+        f.write_str(constant::matrix::DELIMITER_LEFT)?;
+        f.write_str(constant::whitespace::NEWLINE)?;
 
-        f.write_str(INDENT)?;
-        write!(f, "{SPACE:>index_width$}")?;
-        f.write_str(ROW_INNER)?;
-        f.write_str(SPACE)?;
+        f.write_str(constant::whitespace::INDENT)?;
+        f.write_str(&index_padding)?;
+        f.write_str(constant::row::INDEX_GAP)?;
+        f.write_str(constant::row::DELIMITER_PADDING)?;
         for col in 0..ncols {
             if col != 0 {
-                f.write_str(ELEMENT_OUTER)?;
+                f.write_str(constant::element::SEPARATOR_PADDING)?;
             }
-            write_index!(f, "{col:>index_width$}")?;
-            f.write_str(ELEMENT_INNER)?;
-            write!(f, "{SPACE:<element_width$}")?;
+            f.write_index(col, index_width)?;
+            f.write_str(constant::element::INDEX_GAP)?;
+            f.write_str(&element_padding)?;
         }
-        writeln!(f)?;
+        f.write_str(constant::row::DELIMITER_PADDING)?;
+        f.write_str(constant::row::SEPARATOR_PADDING)?;
+        f.write_str(constant::whitespace::NEWLINE)?;
 
         for row in 0..nrows {
             // first line of the element representation
-            f.write_str(INDENT)?;
-            write_index!(f, "{row:>index_width$}")?;
-            f.write_str(ROW_INNER)?;
-            f.write_str(LEFT_DELIMITER)?;
+            f.write_str(constant::whitespace::INDENT)?;
+            f.write_index(row, index_width)?;
+            f.write_str(constant::row::INDEX_GAP)?;
+            f.write_str(constant::row::DELIMITER_LEFT)?;
             for col in 0..ncols {
                 if col != 0 {
-                    f.write_str(ELEMENT_OUTER)?;
+                    f.write_str(constant::element::SEPARATOR)?;
                 }
                 // hope loop-invariant code motion applies here,
                 // as well as to similar code
                 let index = Index::new(row, col).to_flattened(self.order, self.shape);
-                write_index!(f, "{index:>index_width$}")?;
-                f.write_str(ELEMENT_INNER)?;
+                f.write_index(index, index_width)?;
+                f.write_str(constant::element::INDEX_GAP)?;
                 match cache[index].next() {
-                    None if element_width > 0 => write!(f, "{SPACE:<element_width$}")?,
-                    Some(line) => write!(f, "{line:<element_width$}")?,
+                    None if element_width > 0 => f.write_str(&element_padding)?,
+                    Some(line) => f.write_element_line(line, element_width)?,
                     _ => (),
                 }
             }
-            f.write_str(RIGHT_DELIMITER)?;
-            writeln!(f)?;
+            f.write_str(constant::row::DELIMITER_RIGHT)?;
+            f.write_str(constant::row::SEPARATOR)?;
+            f.write_str(constant::whitespace::NEWLINE)?;
 
             // remaining lines of the element representation
             for _ in 1..element_hight {
-                f.write_str(INDENT)?;
-                write!(f, "{SPACE:>index_width$}")?;
-                f.write_str(ROW_INNER)?;
-                f.write_str(SPACE)?;
+                f.write_str(constant::whitespace::INDENT)?;
+                f.write_str(&index_padding)?;
+                f.write_str(constant::row::INDEX_GAP)?;
+                f.write_str(constant::row::DELIMITER_PADDING)?;
                 for col in 0..ncols {
                     if col != 0 {
-                        f.write_str(ELEMENT_OUTER)?;
+                        f.write_str(constant::element::SEPARATOR_PADDING)?;
                     }
                     let index = Index::new(row, col).to_flattened(self.order, self.shape);
-                    write!(f, "{SPACE:>index_width$}")?;
-                    f.write_str(ELEMENT_INNER)?;
+                    f.write_str(&index_padding)?;
+                    f.write_str(constant::element::INDEX_GAP)?;
                     match cache[index].next() {
-                        None if element_width > 0 => write!(f, "{SPACE:<element_width$}")?,
-                        Some(line) => write!(f, "{line:<element_width$}")?,
+                        None if element_width > 0 => f.write_str(&element_padding)?,
+                        Some(line) => f.write_element_line(line, element_width)?,
                         _ => (),
                     }
                 }
-                writeln!(f)?;
+                f.write_str(constant::row::DELIMITER_PADDING)?;
+                f.write_str(constant::row::SEPARATOR_PADDING)?;
+                f.write_str(constant::whitespace::NEWLINE)?;
             }
         }
 
-        f.write_str(RIGHT_DELIMITER)
+        f.write_str(constant::matrix::DELIMITER_RIGHT)
     }
 }
 
@@ -136,8 +147,8 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_empty() {
-            f.write_str(LEFT_DELIMITER)?;
-            f.write_str(RIGHT_DELIMITER)?;
+            f.write_str(constant::matrix::DELIMITER_LEFT)?;
+            f.write_str(constant::matrix::DELIMITER_RIGHT)?;
             return Ok(());
         }
 
@@ -160,48 +171,52 @@ where
             }
             cache.push(lines);
         }
+        let element_padding = constant::whitespace::SPACE.repeat(element_width);
 
-        f.write_str(LEFT_DELIMITER)?;
-        writeln!(f)?;
+        f.write_str(constant::matrix::DELIMITER_LEFT)?;
+        f.write_str(constant::whitespace::NEWLINE)?;
 
         for row in 0..nrows {
             // first line of the element representation
-            f.write_str(INDENT)?;
-            f.write_str(LEFT_DELIMITER)?;
+            f.write_str(constant::whitespace::INDENT)?;
+            f.write_str(constant::row::DELIMITER_LEFT)?;
             for col in 0..ncols {
                 if col != 0 {
-                    f.write_str(ELEMENT_OUTER)?;
+                    f.write_str(constant::element::SEPARATOR)?;
                 }
                 let index = Index::new(row, col).to_flattened(self.order, self.shape);
                 match cache[index].next() {
-                    None if element_width > 0 => write!(f, "{SPACE:<element_width$}")?,
-                    Some(line) => write!(f, "{line:<element_width$}")?,
+                    None if element_width > 0 => f.write_str(&element_padding)?,
+                    Some(line) => f.write_element_line(line, element_width)?,
                     _ => (),
                 }
             }
-            f.write_str(RIGHT_DELIMITER)?;
-            writeln!(f)?;
+            f.write_str(constant::row::DELIMITER_RIGHT)?;
+            f.write_str(constant::row::SEPARATOR)?;
+            f.write_str(constant::whitespace::NEWLINE)?;
 
             // remaining lines of the element representation
             for _ in 1..element_hight {
-                f.write_str(INDENT)?;
-                f.write_str(SPACE)?;
+                f.write_str(constant::whitespace::INDENT)?;
+                f.write_str(constant::row::DELIMITER_PADDING)?;
                 for col in 0..ncols {
                     if col != 0 {
-                        f.write_str(ELEMENT_OUTER)?;
+                        f.write_str(constant::element::SEPARATOR_PADDING)?;
                     }
                     let index = Index::new(row, col).to_flattened(self.order, self.shape);
                     match cache[index].next() {
-                        None if element_width > 0 => write!(f, "{SPACE:<element_width$}")?,
-                        Some(line) => write!(f, "{line:<element_width$}")?,
+                        None if element_width > 0 => f.write_str(&element_padding)?,
+                        Some(line) => f.write_element_line(line, element_width)?,
                         _ => (),
                     }
                 }
-                writeln!(f)?;
+                f.write_str(constant::row::DELIMITER_PADDING)?;
+                f.write_str(constant::row::SEPARATOR_PADDING)?;
+                f.write_str(constant::whitespace::NEWLINE)?;
             }
         }
 
-        f.write_str(RIGHT_DELIMITER)
+        f.write_str(constant::matrix::DELIMITER_RIGHT)
     }
 }
 
@@ -252,5 +267,33 @@ impl Iterator for Lines {
 impl ExactSizeIterator for Lines {
     fn len(&self) -> usize {
         self.0.len()
+    }
+}
+
+trait Write {
+    fn write_index(&mut self, index: usize, width: usize) -> fmt::Result;
+
+    fn write_element_line(&mut self, line: String, width: usize) -> fmt::Result;
+}
+
+impl<T> Write for T
+where
+    T: fmt::Write,
+{
+    #[cfg(not(feature = "pretty-debug"))]
+    fn write_index(&mut self, index: usize, width: usize) -> fmt::Result {
+        write!(self, "{index:>width$}")
+    }
+
+    #[cfg(feature = "pretty-debug")]
+    fn write_index(&mut self, index: usize, width: usize) -> fmt::Result {
+        let plain = format!("{index:>width$}");
+        let style = owo_colors::Style::new().green().dimmed();
+        let styled = style.style(plain);
+        write!(self, "{styled}")
+    }
+
+    fn write_element_line(&mut self, line: String, width: usize) -> fmt::Result {
+        write!(self, "{line:<width$}")
     }
 }
