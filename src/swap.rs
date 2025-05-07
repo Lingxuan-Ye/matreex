@@ -29,7 +29,6 @@ impl<T> Matrix<T> {
         I: MatrixIndex<T, Output = T>,
         J: MatrixIndex<T, Output = T>,
     {
-        let base = self.data.as_mut_ptr();
         let x = self.get_mut(i)? as *mut T;
         let y = self.get_mut(j)? as *mut T;
 
@@ -37,6 +36,7 @@ impl<T> Matrix<T> {
             return Ok(self);
         }
 
+        let base = self.data.as_mut_ptr();
         let x = base.with_addr(x.addr());
         let y = base.with_addr(y.addr());
 
