@@ -149,245 +149,265 @@ impl Visitor<'_> for FieldVisitor {
 mod tests {
     use super::*;
     use crate::matrix;
+    use alloc::string::ToString;
     use alloc::vec;
-    use serde_test::{Token, assert_de_tokens, assert_de_tokens_error, assert_tokens};
+    use serde_test::{Token, assert_de_tokens, assert_de_tokens_error};
 
     #[test]
-    fn test_deserialize() {
-        const ERROR: &str = "size mismatch";
-
+    fn test_deserialize_struct() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let error = SizeMismatch.to_string();
 
+        // row-major
         {
-            let mut row_major = matrix.clone();
-            row_major.set_order(Order::RowMajor);
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::RowMajor);
 
-            {
-                let mut tokens = vec![
-                    Token::Struct {
-                        name: "Matrix",
-                        len: 3,
-                    },
-                    Token::Str("order"),
-                    Token::UnitVariant {
-                        name: "Order",
-                        variant: "RowMajor",
-                    },
-                    Token::Str("shape"),
-                    Token::Struct {
-                        name: "AxisShape",
-                        len: 2,
-                    },
-                    Token::Str("major"),
-                    Token::U64(2),
-                    Token::Str("minor"),
-                    Token::U64(3),
-                    Token::StructEnd,
-                    Token::Str("data"),
-                    Token::Seq { len: Some(6) },
-                    Token::I32(1),
-                    Token::I32(2),
-                    Token::I32(3),
-                    Token::I32(4),
-                    Token::I32(5),
-                    Token::I32(6),
-                    Token::SeqEnd,
-                    Token::StructEnd,
-                ];
+            let mut tokens = vec![
+                Token::Struct {
+                    name: "Matrix",
+                    len: 3,
+                },
+                Token::Str("order"),
+                Token::UnitVariant {
+                    name: "Order",
+                    variant: "RowMajor",
+                },
+                Token::Str("shape"),
+                Token::Struct {
+                    name: "AxisShape",
+                    len: 2,
+                },
+                Token::Str("major"),
+                Token::U64(2),
+                Token::Str("minor"),
+                Token::U64(3),
+                Token::StructEnd,
+                Token::Str("data"),
+                Token::Seq { len: Some(6) },
+                Token::I32(1),
+                Token::I32(2),
+                Token::I32(3),
+                Token::I32(4),
+                Token::I32(5),
+                Token::I32(6),
+                Token::SeqEnd,
+                Token::StructEnd,
+            ];
+            assert_de_tokens(&matrix, &tokens);
 
-                assert_tokens(&row_major, &tokens);
-
-                let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-                tokens.remove(index);
-                assert_de_tokens_error::<Matrix<i32>>(&tokens, ERROR);
-            }
-
-            {
-                let mut tokens = vec![
-                    Token::Seq { len: Some(3) },
-                    Token::UnitVariant {
-                        name: "Order",
-                        variant: "RowMajor",
-                    },
-                    Token::Struct {
-                        name: "AxisShape",
-                        len: 2,
-                    },
-                    Token::Str("major"),
-                    Token::U64(2),
-                    Token::Str("minor"),
-                    Token::U64(3),
-                    Token::StructEnd,
-                    Token::Seq { len: Some(6) },
-                    Token::I32(1),
-                    Token::I32(2),
-                    Token::I32(3),
-                    Token::I32(4),
-                    Token::I32(5),
-                    Token::I32(6),
-                    Token::SeqEnd,
-                    Token::SeqEnd,
-                ];
-
-                assert_de_tokens(&row_major, &tokens);
-
-                let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-                tokens.remove(index);
-                assert_de_tokens_error::<Matrix<i32>>(&tokens, ERROR);
-            }
-
-            {
-                let mut tokens = vec![
-                    Token::Map { len: Some(3) },
-                    Token::Str("order"),
-                    Token::UnitVariant {
-                        name: "Order",
-                        variant: "RowMajor",
-                    },
-                    Token::Str("shape"),
-                    Token::Struct {
-                        name: "AxisShape",
-                        len: 2,
-                    },
-                    Token::Str("major"),
-                    Token::U64(2),
-                    Token::Str("minor"),
-                    Token::U64(3),
-                    Token::StructEnd,
-                    Token::Str("data"),
-                    Token::Seq { len: Some(6) },
-                    Token::I32(1),
-                    Token::I32(2),
-                    Token::I32(3),
-                    Token::I32(4),
-                    Token::I32(5),
-                    Token::I32(6),
-                    Token::SeqEnd,
-                    Token::MapEnd,
-                ];
-
-                assert_de_tokens(&row_major, &tokens);
-
-                let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-                tokens.remove(index);
-                assert_de_tokens_error::<Matrix<i32>>(&tokens, ERROR);
-            }
+            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
+            tokens.remove(index);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
         }
 
+        // column-major
         {
-            let mut col_major = matrix.clone();
-            col_major.set_order(Order::ColMajor);
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::ColMajor);
 
-            {
-                let mut tokens = vec![
-                    Token::Struct {
-                        name: "Matrix",
-                        len: 3,
-                    },
-                    Token::Str("order"),
-                    Token::UnitVariant {
-                        name: "Order",
-                        variant: "ColMajor",
-                    },
-                    Token::Str("shape"),
-                    Token::Struct {
-                        name: "AxisShape",
-                        len: 2,
-                    },
-                    Token::Str("major"),
-                    Token::U64(3),
-                    Token::Str("minor"),
-                    Token::U64(2),
-                    Token::StructEnd,
-                    Token::Str("data"),
-                    Token::Seq { len: Some(6) },
-                    Token::I32(1),
-                    Token::I32(4),
-                    Token::I32(2),
-                    Token::I32(5),
-                    Token::I32(3),
-                    Token::I32(6),
-                    Token::SeqEnd,
-                    Token::StructEnd,
-                ];
+            let mut tokens = vec![
+                Token::Struct {
+                    name: "Matrix",
+                    len: 3,
+                },
+                Token::Str("order"),
+                Token::UnitVariant {
+                    name: "Order",
+                    variant: "ColMajor",
+                },
+                Token::Str("shape"),
+                Token::Struct {
+                    name: "AxisShape",
+                    len: 2,
+                },
+                Token::Str("major"),
+                Token::U64(3),
+                Token::Str("minor"),
+                Token::U64(2),
+                Token::StructEnd,
+                Token::Str("data"),
+                Token::Seq { len: Some(6) },
+                Token::I32(1),
+                Token::I32(4),
+                Token::I32(2),
+                Token::I32(5),
+                Token::I32(3),
+                Token::I32(6),
+                Token::SeqEnd,
+                Token::StructEnd,
+            ];
+            assert_de_tokens(&matrix, &tokens);
 
-                assert_tokens(&col_major, &tokens);
+            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
+            tokens.remove(index);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
+        }
+    }
 
-                let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-                tokens.remove(index);
-                assert_de_tokens_error::<Matrix<i32>>(&tokens, ERROR);
-            }
+    #[test]
+    fn test_deserialize_seq() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let error = SizeMismatch.to_string();
 
-            {
-                let mut tokens = vec![
-                    Token::Seq { len: Some(3) },
-                    Token::UnitVariant {
-                        name: "Order",
-                        variant: "ColMajor",
-                    },
-                    Token::Struct {
-                        name: "AxisShape",
-                        len: 2,
-                    },
-                    Token::Str("major"),
-                    Token::U64(3),
-                    Token::Str("minor"),
-                    Token::U64(2),
-                    Token::StructEnd,
-                    Token::Seq { len: Some(6) },
-                    Token::I32(1),
-                    Token::I32(4),
-                    Token::I32(2),
-                    Token::I32(5),
-                    Token::I32(3),
-                    Token::I32(6),
-                    Token::SeqEnd,
-                    Token::SeqEnd,
-                ];
+        // row-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::RowMajor);
 
-                assert_de_tokens(&col_major, &tokens);
+            let mut tokens = vec![
+                Token::Seq { len: Some(3) },
+                Token::UnitVariant {
+                    name: "Order",
+                    variant: "RowMajor",
+                },
+                Token::Struct {
+                    name: "AxisShape",
+                    len: 2,
+                },
+                Token::Str("major"),
+                Token::U64(2),
+                Token::Str("minor"),
+                Token::U64(3),
+                Token::StructEnd,
+                Token::Seq { len: Some(6) },
+                Token::I32(1),
+                Token::I32(2),
+                Token::I32(3),
+                Token::I32(4),
+                Token::I32(5),
+                Token::I32(6),
+                Token::SeqEnd,
+                Token::SeqEnd,
+            ];
+            assert_de_tokens(&matrix, &tokens);
 
-                let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-                tokens.remove(index);
-                assert_de_tokens_error::<Matrix<i32>>(&tokens, ERROR);
-            }
+            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
+            tokens.remove(index);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
+        }
 
-            {
-                let mut tokens = vec![
-                    Token::Map { len: Some(3) },
-                    Token::Str("order"),
-                    Token::UnitVariant {
-                        name: "Order",
-                        variant: "ColMajor",
-                    },
-                    Token::Str("shape"),
-                    Token::Struct {
-                        name: "AxisShape",
-                        len: 2,
-                    },
-                    Token::Str("major"),
-                    Token::U64(3),
-                    Token::Str("minor"),
-                    Token::U64(2),
-                    Token::StructEnd,
-                    Token::Str("data"),
-                    Token::Seq { len: Some(6) },
-                    Token::I32(1),
-                    Token::I32(4),
-                    Token::I32(2),
-                    Token::I32(5),
-                    Token::I32(3),
-                    Token::I32(6),
-                    Token::SeqEnd,
-                    Token::MapEnd,
-                ];
+        // column-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::ColMajor);
 
-                assert_de_tokens(&col_major, &tokens);
+            let mut tokens = vec![
+                Token::Seq { len: Some(3) },
+                Token::UnitVariant {
+                    name: "Order",
+                    variant: "ColMajor",
+                },
+                Token::Struct {
+                    name: "AxisShape",
+                    len: 2,
+                },
+                Token::Str("major"),
+                Token::U64(3),
+                Token::Str("minor"),
+                Token::U64(2),
+                Token::StructEnd,
+                Token::Seq { len: Some(6) },
+                Token::I32(1),
+                Token::I32(4),
+                Token::I32(2),
+                Token::I32(5),
+                Token::I32(3),
+                Token::I32(6),
+                Token::SeqEnd,
+                Token::SeqEnd,
+            ];
+            assert_de_tokens(&matrix, &tokens);
 
-                let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-                tokens.remove(index);
-                assert_de_tokens_error::<Matrix<i32>>(&tokens, ERROR);
-            }
+            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
+            tokens.remove(index);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
+        }
+    }
+
+    #[test]
+    fn test_deserialize_map() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let error = SizeMismatch.to_string();
+
+        // row-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::RowMajor);
+
+            let mut tokens = vec![
+                Token::Map { len: Some(3) },
+                Token::Str("order"),
+                Token::UnitVariant {
+                    name: "Order",
+                    variant: "RowMajor",
+                },
+                Token::Str("shape"),
+                Token::Struct {
+                    name: "AxisShape",
+                    len: 2,
+                },
+                Token::Str("major"),
+                Token::U64(2),
+                Token::Str("minor"),
+                Token::U64(3),
+                Token::StructEnd,
+                Token::Str("data"),
+                Token::Seq { len: Some(6) },
+                Token::I32(1),
+                Token::I32(2),
+                Token::I32(3),
+                Token::I32(4),
+                Token::I32(5),
+                Token::I32(6),
+                Token::SeqEnd,
+                Token::MapEnd,
+            ];
+            assert_de_tokens(&matrix, &tokens);
+
+            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
+            tokens.remove(index);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
+        }
+
+        // column-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::ColMajor);
+
+            let mut tokens = vec![
+                Token::Map { len: Some(3) },
+                Token::Str("order"),
+                Token::UnitVariant {
+                    name: "Order",
+                    variant: "ColMajor",
+                },
+                Token::Str("shape"),
+                Token::Struct {
+                    name: "AxisShape",
+                    len: 2,
+                },
+                Token::Str("major"),
+                Token::U64(3),
+                Token::Str("minor"),
+                Token::U64(2),
+                Token::StructEnd,
+                Token::Str("data"),
+                Token::Seq { len: Some(6) },
+                Token::I32(1),
+                Token::I32(4),
+                Token::I32(2),
+                Token::I32(5),
+                Token::I32(3),
+                Token::I32(6),
+                Token::SeqEnd,
+                Token::MapEnd,
+            ];
+            assert_de_tokens(&matrix, &tokens);
+
+            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
+            tokens.remove(index);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
         }
     }
 }
