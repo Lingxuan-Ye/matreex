@@ -101,9 +101,6 @@ use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
 
-#[cfg(feature = "serde")]
-use serde::Serialize;
-
 pub mod error;
 pub mod index;
 pub mod iter;
@@ -126,7 +123,7 @@ mod swap;
 mod deserialize;
 
 /// [`Matrix<T>`] means matrix.
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Clone)]
 pub struct Matrix<T> {
     order: Order,
