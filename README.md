@@ -46,8 +46,7 @@ let rhs = matrix![[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]];
 assert_eq!(lhs / rhs, matrix![[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]]);
 ```
 
-Wait, matrix division isn't well-defined, remember? It won't compile. But
-don't worry, you might just need to perform elementwise division:
+Wait, matrix division isn't well-defined, remember? It won't compile. But don't worry, you might just need to perform elementwise division:
 
 ```rust
 let lhs = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
@@ -69,13 +68,12 @@ Or maybe the inverse of a matrix?
 
 Nah, we don't have that yet.
 
-## Compatibility
-
-This crate is `no_std` compatible if **none** of the following features are enabled:
-- `parallel`
-
 ## FAQs
 
 ### Why named `matreex`?
 
 Hmm ... Who knows? Could be a name conflict.
+
+### Is it `no_std` compatible?
+
+This crate is `no_std` compatible if the `parallel` feature is not enabled.

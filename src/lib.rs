@@ -75,17 +75,15 @@
 //!
 //! Nah, we don't have that yet.
 //!
-//! # Compatibility
-//!
-//! This crate is `no_std` compatible if **none** of the following features
-//! are enabled:
-//! - `parallel`
-//!
 //! # FAQs
 //!
 //! ## Why named `matreex`?
 //!
 //! Hmm ... Who knows? Could be a name conflict.
+//!
+//! ## Is it `no_std` compatible?
+//!
+//! This crate is `no_std` compatible if the `parallel` feature is not enabled.
 
 #![no_std]
 
@@ -102,9 +100,6 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
-
-#[cfg(feature = "serde")]
-use serde::Serialize;
 
 pub mod error;
 pub mod index;
@@ -128,7 +123,7 @@ mod swap;
 mod deserialize;
 
 /// [`Matrix<T>`] means matrix.
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Clone)]
 pub struct Matrix<T> {
     order: Order,
