@@ -69,13 +69,12 @@ Or maybe the inverse of a matrix?
 
 Nah, we don't have that yet.
 
-## Compatibility
-
-This crate is `no_std` compatible if **none** of the following features are enabled:
-- `parallel`
-
 ## FAQs
 
 ### Why named `matreex`?
 
 Hmm ... Who knows? Could be a name conflict.
+
+### Is it `no_std` compatible?
+
+This crate is `no_std` compatible if the `parallel` feature is not enabled.
