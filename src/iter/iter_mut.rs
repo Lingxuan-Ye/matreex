@@ -93,7 +93,7 @@ impl<'a, T> IterVectorsMut<'a, T> {
     }
 
     /// This is a helper function that abstracts some repetitive code,
-    /// while exposing certain `unsafe` operations that were perviously
+    /// while exposing certain `unsafe` operations that were previously
     /// well-encapsulated.
     ///
     /// # Safety
