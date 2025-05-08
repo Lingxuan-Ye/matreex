@@ -94,7 +94,8 @@ impl<'a, T> IterVectorsMut<'a, T> {
 
     /// This is a helper function that abstracts some repetitive code,
     /// while exposing certain `unsafe` operations that were previously
-    /// well-encapsulated.
+    /// well-encapsulated. As its signature implies, this function only
+    /// accepts non-empty matrices.
     ///
     /// # Safety
     ///
@@ -310,7 +311,8 @@ impl<'a, T> IterNthVectorMut<'a, T> {
 
     /// This is a helper function that abstracts some repetitive code,
     /// while exposing certain `unsafe` operations that were previously
-    /// well-encapsulated.
+    /// well-encapsulated. As its signature implies, this function only
+    /// accepts non-empty vectors.
     ///
     /// # Safety
     ///
