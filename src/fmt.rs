@@ -23,8 +23,8 @@ mod constant {
         pub(crate) const DELIMITER_LEFT: &str = "[  ";
         pub(crate) const DELIMITER_RIGHT: &str = "  ]";
         pub(crate) const DELIMITER_PADDING: &str = "   ";
-        pub(crate) const SEPARATOR: &str = " ";
-        pub(crate) const SEPARATOR_PADDING: &str = " ";
+        pub(crate) const SEPARATOR: &str = "";
+        pub(crate) const SEPARATOR_PADDING: &str = "";
     }
 
     pub(crate) mod element {
