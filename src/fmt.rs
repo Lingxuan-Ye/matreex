@@ -34,6 +34,9 @@ mod constant {
     }
 }
 
+// refactoring the `Debug` and `Display` implementations will NOT
+// be considered a breaking change
+
 impl<T> fmt::Debug for Matrix<T>
 where
     T: fmt::Debug,
