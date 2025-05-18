@@ -201,7 +201,7 @@ mod tests {
             assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
         }
 
-        // column-major
+        // col-major
         {
             let mut matrix = matrix.clone();
             matrix.set_order(Order::ColMajor);
@@ -287,7 +287,7 @@ mod tests {
             assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
         }
 
-        // column-major
+        // col-major
         {
             let mut matrix = matrix.clone();
             matrix.set_order(Order::ColMajor);
@@ -370,7 +370,7 @@ mod tests {
             assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
         }
 
-        // column-major
+        // col-major
         {
             let mut matrix = matrix.clone();
             matrix.set_order(Order::ColMajor);

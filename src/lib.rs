@@ -769,24 +769,16 @@ mod tests {
 
     #[test]
     fn test_transpose() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        // default order
-        {
-            let mut matrix = matrix.clone();
+        matrix.transpose();
+        assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
 
-            matrix.transpose();
-            assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
-        }
+        matrix.transpose();
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        // alternative order
-        {
-            let mut matrix = matrix.clone();
-            matrix.switch_order();
-
-            matrix.transpose();
-            assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
-        }
+        // testing `Matrix::transpose` in a different order is pointless
+        // since `Matrix::switch_order` depends on this method
     }
 
     #[test]
@@ -867,23 +859,9 @@ mod tests {
 
             matrix.reshape((2, 3)).unwrap();
             assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            let unchanged = matrix.clone();
-
-            let error = matrix.reshape((2, 2)).unwrap_err();
-            assert_eq!(error, Error::SizeMismatch);
-            assert_eq!(matrix, unchanged);
-
-            let error = matrix.reshape((usize::MAX, 2)).unwrap_err();
-            assert_eq!(error, Error::SizeMismatch);
-            assert_eq!(matrix, unchanged);
-
-            let error = matrix.reshape((isize::MAX as usize + 1, 1)).unwrap_err();
-            assert_eq!(error, Error::SizeMismatch);
-            assert_eq!(matrix, unchanged);
         }
 
-        // column-major
+        // col-major
         {
             let mut matrix = matrix.clone();
             matrix.set_order(Order::ColMajor);
@@ -902,7 +880,11 @@ mod tests {
 
             matrix.reshape((2, 3)).unwrap();
             assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+        }
 
+        // errors
+        {
+            let mut matrix = matrix.clone();
             let unchanged = matrix.clone();
 
             let error = matrix.reshape((2, 2)).unwrap_err();
@@ -942,19 +924,9 @@ mod tests {
 
             matrix.resize((2, 0)).unwrap();
             assert_eq!(matrix, matrix![[], []]);
-
-            let unchanged = matrix.clone();
-
-            let error = matrix.resize((usize::MAX, 2)).unwrap_err();
-            assert_eq!(error, Error::SizeOverflow);
-            assert_eq!(matrix, unchanged);
-
-            let error = matrix.resize((isize::MAX as usize + 1, 1)).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
-            assert_eq!(matrix, unchanged);
         }
 
-        // column-major
+        // col-major
         {
             let mut matrix = matrix.clone();
             matrix.set_order(Order::ColMajor);
@@ -973,7 +945,11 @@ mod tests {
 
             matrix.resize((2, 0)).unwrap();
             assert_eq!(matrix, matrix![[], []]);
+        }
 
+        // errors
+        {
+            let mut matrix = matrix.clone();
             let unchanged = matrix.clone();
 
             let error = matrix.resize((usize::MAX, 2)).unwrap_err();
@@ -1028,41 +1004,45 @@ mod tests {
     #[test]
     fn test_overwrite() {
         fn test_helper(destination: Matrix<i32>, source: Matrix<i32>, expected: Matrix<i32>) {
-            // assume all inputs are of default order
-
-            // default order & default order
-            {
-                let mut destination = destination.clone();
-
-                destination.overwrite(&source);
-                assert_eq!(destination, expected);
-            }
-
-            // default order & alternative order
+            // row-major & row-major
             {
                 let mut destination = destination.clone();
                 let mut source = source.clone();
-                source.switch_order();
+                destination.set_order(Order::RowMajor);
+                source.set_order(Order::RowMajor);
 
                 destination.overwrite(&source);
                 assert_eq!(destination, expected);
             }
 
-            // alternative order & default order
-            {
-                let mut destination = destination.clone();
-                destination.switch_order();
-
-                destination.overwrite(&source);
-                assert_eq!(destination, expected);
-            }
-
-            // alternative order & alternative order
+            // row-major & col-major
             {
                 let mut destination = destination.clone();
                 let mut source = source.clone();
-                destination.switch_order();
-                source.switch_order();
+                destination.set_order(Order::RowMajor);
+                source.set_order(Order::ColMajor);
+
+                destination.overwrite(&source);
+                assert_eq!(destination, expected);
+            }
+
+            // col-major & row-major
+            {
+                let mut destination = destination.clone();
+                let mut source = source.clone();
+                destination.set_order(Order::ColMajor);
+                source.set_order(Order::RowMajor);
+
+                destination.overwrite(&source);
+                assert_eq!(destination, expected);
+            }
+
+            // col-major & col-major
+            {
+                let mut destination = destination.clone();
+                let mut source = source.clone();
+                destination.set_order(Order::ColMajor);
+                source.set_order(Order::ColMajor);
 
                 destination.overwrite(&source);
                 assert_eq!(destination, expected);
@@ -1109,98 +1089,95 @@ mod tests {
 
     #[test]
     fn test_apply() {
-        fn add_two(x: &mut i32) {
-            *x += 2;
-        }
-
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
-        // default order
+        // row-major
         {
             let mut matrix = matrix.clone();
+            matrix.set_order(Order::RowMajor);
 
-            matrix.apply(add_two);
+            matrix.apply(|element| *element += 2);
             assert_eq!(matrix, expected);
         }
 
-        // alternative order
+        // col-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::ColMajor);
 
-            matrix.apply(add_two);
+            matrix.apply(|element| *element += 2);
             assert_eq!(matrix, expected);
         }
     }
 
     #[test]
     fn test_map() {
-        fn to_f64(x: i32) -> f64 {
-            x as f64
-        }
-
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
-        // default order
-        {
-            let matrix = matrix.clone();
-
-            let output = matrix.map(to_f64).unwrap();
-            assert_eq!(output, expected);
-
-            let error = matrix![[(); usize::MAX]; 1].map(|_| 0).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
-        }
-
-        // alternative order
+        // row-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::RowMajor);
 
-            let output = matrix.map(to_f64).unwrap();
+            let output = matrix.map(|element| element as f64).unwrap();
             assert_eq!(output, expected);
+        }
 
-            let error = matrix![[(); usize::MAX]; 1].map(|_| 0).unwrap_err();
+        // col-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::ColMajor);
+
+            let output = matrix.map(|element| element as f64).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // errors
+        {
+            let matrix = matrix![[(); usize::MAX]; 1];
+
+            let error = matrix.map(|_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }
     }
 
     #[test]
     fn test_map_ref() {
-        fn to_f64(x: &i32) -> f64 {
-            *x as f64
-        }
-
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
-        // default order
-        {
-            let output = matrix.map_ref(to_f64).unwrap();
-            assert_eq!(output, expected);
-
-            let error = matrix![[(); usize::MAX]; 1].map_ref(|_| 0).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
-        }
-
-        // alternative order
+        // row-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::RowMajor);
 
-            let output = matrix.map_ref(to_f64).unwrap();
+            let output = matrix.map_ref(|element| *element as f64).unwrap();
             assert_eq!(output, expected);
+        }
 
-            let error = matrix![[(); usize::MAX]; 1].map_ref(|_| 0).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
+        // col-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::ColMajor);
+
+            let output = matrix.map_ref(|element| *element as f64).unwrap();
+            assert_eq!(output, expected);
         }
 
         // to matrix of references
         {
-            let matrix_ref = matrix.map_ref(|x| x).unwrap();
-            assert_eq!(matrix_ref, matrix![[&1, &2, &3], [&4, &5, &6]]);
+            let output = matrix.map_ref(|element| element).unwrap();
+            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
+        }
+
+        // errors
+        {
+            let matrix = matrix![[(); usize::MAX]; 1];
+
+            let error = matrix.map_ref(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
     }
 

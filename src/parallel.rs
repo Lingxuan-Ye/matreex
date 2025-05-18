@@ -264,101 +264,99 @@ mod tests {
     use super::*;
     use crate::error::Error;
     use crate::matrix;
+    use crate::order::Order;
 
     #[test]
     fn test_par_apply() {
-        fn add_two(x: &mut i32) {
-            *x += 2;
-        }
-
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
-        // default order
+        // row-major
         {
             let mut matrix = matrix.clone();
+            matrix.set_order(Order::RowMajor);
 
-            matrix.par_apply(add_two);
+            matrix.par_apply(|element| *element += 2);
             assert_eq!(matrix, expected);
         }
 
-        // alternative order
+        // col-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::ColMajor);
 
-            matrix.par_apply(add_two);
+            matrix.par_apply(|element| *element += 2);
             assert_eq!(matrix, expected);
         }
     }
 
     #[test]
     fn test_par_map() {
-        fn to_f64(x: i32) -> f64 {
-            x as f64
-        }
-
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
-        // default order
-        {
-            let matrix = matrix.clone();
-
-            let output = matrix.par_map(to_f64).unwrap();
-            assert_eq!(output, expected);
-
-            let error = matrix![[(); usize::MAX]; 1].par_map(|_| 0).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
-        }
-
-        // alternative order
+        // row-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::RowMajor);
 
-            let output = matrix.par_map(to_f64).unwrap();
+            let output = matrix.par_map(|element| element as f64).unwrap();
             assert_eq!(output, expected);
+        }
 
-            let error = matrix![[(); usize::MAX]; 1].par_map(|_| 0).unwrap_err();
+        // col-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::ColMajor);
+
+            let output = matrix.par_map(|element| element as f64).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // errors
+        {
+            let matrix = matrix![[(); usize::MAX]; 1];
+
+            let error = matrix.par_map(|_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }
     }
 
     #[test]
     fn test_par_map_ref() {
-        fn to_f64(x: &i32) -> f64 {
-            *x as f64
-        }
-
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
-        // default order
-        {
-            let output = matrix.par_map_ref(to_f64).unwrap();
-            assert_eq!(output, expected);
-
-            let error = matrix![[(); usize::MAX]; 1].par_map_ref(|_| 0).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
-        }
-
-        // alternative order
+        // row-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::RowMajor);
 
-            let output = matrix.par_map_ref(to_f64).unwrap();
+            let output = matrix.par_map_ref(|element| *element as f64).unwrap();
             assert_eq!(output, expected);
+        }
 
-            let error = matrix![[(); usize::MAX]; 1].par_map_ref(|_| 0).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
+        // col-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::ColMajor);
+
+            let output = matrix.par_map_ref(|element| *element as f64).unwrap();
+            assert_eq!(output, expected);
         }
 
         // to matrix of references
         {
-            let matrix_ref = matrix.par_map_ref(|x| x).unwrap();
-            assert_eq!(matrix_ref, matrix![[&1, &2, &3], [&4, &5, &6]]);
+            let output = matrix.par_map_ref(|element| element).unwrap();
+            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
+        }
+
+        // errors
+        {
+            let matrix = matrix![[(); usize::MAX]; 1];
+
+            let error = matrix.par_map_ref(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
         }
     }
 
@@ -367,16 +365,19 @@ mod tests {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = 21;
 
-        // default order
+        // row-major
         {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::RowMajor);
+
             let sum = matrix.par_iter_elements().sum::<i32>();
             assert_eq!(sum, expected);
         }
 
-        // alternative order
+        // col-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::ColMajor);
 
             let sum = matrix.par_iter_elements().sum::<i32>();
             assert_eq!(sum, expected);
@@ -385,27 +386,28 @@ mod tests {
 
     #[test]
     fn test_par_iter_elements_mut() {
-        fn add_two(x: &mut i32) {
-            *x += 2;
-        }
-
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[3, 4, 5], [6, 7, 8]];
 
-        // default order
+        // row-major
         {
             let mut matrix = matrix.clone();
+            matrix.set_order(Order::RowMajor);
 
-            matrix.par_iter_elements_mut().for_each(add_two);
+            matrix
+                .par_iter_elements_mut()
+                .for_each(|element| *element += 2);
             assert_eq!(matrix, expected);
         }
 
-        // alternative order
+        // col-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::ColMajor);
 
-            matrix.par_iter_elements_mut().for_each(add_two);
+            matrix
+                .par_iter_elements_mut()
+                .for_each(|element| *element += 2);
             assert_eq!(matrix, expected);
         }
     }
@@ -415,18 +417,19 @@ mod tests {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = 21;
 
-        // default order
+        // row-major
         {
-            let matrix = matrix.clone();
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::RowMajor);
 
             let sum = matrix.into_par_iter_elements().sum::<i32>();
             assert_eq!(sum, expected);
         }
 
-        // alternative order
+        // col-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::ColMajor);
 
             let sum = matrix.into_par_iter_elements().sum::<i32>();
             assert_eq!(sum, expected);
@@ -436,51 +439,60 @@ mod tests {
     #[test]
     fn test_par_iter_elements_with_index() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let test_index = |(index, element)| {
-            assert_eq!(element, &matrix[index]);
-        };
 
-        // default order
-        {
-            matrix.par_iter_elements_with_index().for_each(test_index);
-        }
-
-        // alternative order
+        // row-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::RowMajor);
 
-            matrix.par_iter_elements_with_index().for_each(test_index);
+            matrix
+                .par_iter_elements_with_index()
+                .for_each(|(index, element)| {
+                    assert_eq!(element, &matrix[index]);
+                });
+        }
+
+        // col-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::ColMajor);
+
+            matrix
+                .par_iter_elements_with_index()
+                .for_each(|(index, element)| {
+                    assert_eq!(element, &matrix[index]);
+                });
         }
     }
 
     #[test]
     fn test_par_iter_elements_mut_with_index() {
-        fn add_index((index, element): (Index, &mut i32)) {
-            *element += index.row as i32 + index.col as i32;
-        }
-
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let expected = matrix![[1, 3, 5], [5, 7, 9]];
 
-        // default order
+        // row-major
         {
             let mut matrix = matrix.clone();
+            matrix.set_order(Order::RowMajor);
 
             matrix
                 .par_iter_elements_mut_with_index()
-                .for_each(add_index);
+                .for_each(|(index, element)| {
+                    *element += index.row as i32 + index.col as i32;
+                });
             assert_eq!(matrix, expected);
         }
 
-        // alternative order
+        // col-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::ColMajor);
 
             matrix
                 .par_iter_elements_mut_with_index()
-                .for_each(add_index);
+                .for_each(|(index, element)| {
+                    *element += index.row as i32 + index.col as i32;
+                });
             assert_eq!(matrix, expected);
         }
     }
@@ -488,27 +500,31 @@ mod tests {
     #[test]
     fn test_into_par_iter_elements_with_index() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let test_index = |(index, element)| {
-            assert_eq!(element, matrix[index]);
-        };
 
-        // default order
-        {
-            let matrix = matrix.clone();
-
-            matrix
-                .into_par_iter_elements_with_index()
-                .for_each(test_index);
-        }
-
-        // alternative order
+        // row-major
         {
             let mut matrix = matrix.clone();
-            matrix.switch_order();
+            matrix.set_order(Order::RowMajor);
 
             matrix
+                .clone()
                 .into_par_iter_elements_with_index()
-                .for_each(test_index);
+                .for_each(|(index, element)| {
+                    assert_eq!(element, matrix[index]);
+                });
+        }
+
+        // col-major
+        {
+            let mut matrix = matrix.clone();
+            matrix.set_order(Order::ColMajor);
+
+            matrix
+                .clone()
+                .into_par_iter_elements_with_index()
+                .for_each(|(index, element)| {
+                    assert_eq!(element, matrix[index]);
+                });
         }
     }
 }
