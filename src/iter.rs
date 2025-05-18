@@ -305,9 +305,7 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// matrix.iter_elements_mut().for_each(|element| {
-    ///     *element += 2;
-    /// });
+    /// matrix.iter_elements_mut().for_each(|element| *element += 2);
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]

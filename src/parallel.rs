@@ -19,7 +19,7 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// matrix.par_apply(|x| *x += 2);
+    /// matrix.par_apply(|element| *element += 2);
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
     #[inline]
@@ -45,7 +45,7 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let result = matrix.par_map(|x| x as f64);
+    /// let result = matrix.par_map(|element| element as f64);
     /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
     ///
@@ -82,7 +82,7 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let result = matrix.par_map_ref(|x| *x as f64);
+    /// let result = matrix.par_map_ref(|element| *element as f64);
     /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
     ///
