@@ -339,6 +339,7 @@ impl_primitive_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize 
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::error::Error;
     use crate::matrix;
 
@@ -390,41 +391,45 @@ mod tests {
         let rhs = matrix![[1, 2], [3, 4], [5, 6]];
         let expected = matrix![[22, 28], [49, 64]];
 
-        // default order & default order
-        {
-            let lhs = lhs.clone();
-            let rhs = rhs.clone();
-
-            let output = lhs.multiply(rhs).unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // default order &  alternative order
-        {
-            let lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            rhs.switch_order();
-
-            let output = lhs.multiply(rhs).unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // alternative order & default order
-        {
-            let mut lhs = lhs.clone();
-            let rhs = rhs.clone();
-            lhs.switch_order();
-
-            let output = lhs.multiply(rhs).unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // alternative order & alternative order
+        // row-major & row-major
         {
             let mut lhs = lhs.clone();
             let mut rhs = rhs.clone();
-            lhs.switch_order();
-            rhs.switch_order();
+            lhs.set_order(Order::RowMajor);
+            rhs.set_order(Order::RowMajor);
+
+            let output = lhs.multiply(rhs).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // row-major & col-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::RowMajor);
+            rhs.set_order(Order::ColMajor);
+
+            let output = lhs.multiply(rhs).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // col-major & row-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::ColMajor);
+            rhs.set_order(Order::RowMajor);
+
+            let output = lhs.multiply(rhs).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // col-major & col-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::ColMajor);
+            rhs.set_order(Order::ColMajor);
 
             let output = lhs.multiply(rhs).unwrap();
             assert_eq!(output, expected);

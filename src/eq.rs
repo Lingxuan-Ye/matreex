@@ -27,24 +27,32 @@ impl<T> Eq for Matrix<T> where T: Eq {}
 #[cfg(test)]
 mod tests {
     use crate::matrix;
+    use crate::order::Order;
 
     #[test]
     fn test_eq() {
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[1, 2, 3], [4, 5, 6]];
 
-        // default order & default order
+        // row-major & row-major
         {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::RowMajor);
+            rhs.set_order(Order::RowMajor);
+
             assert_eq!(lhs.order, rhs.order);
             assert_eq!(lhs.shape, rhs.shape);
             assert_eq!(lhs.data, rhs.data);
             assert_eq!(lhs, rhs);
         }
 
-        // default order & alternative order
+        // row-major & col-major
         {
+            let mut lhs = lhs.clone();
             let mut rhs = rhs.clone();
-            rhs.switch_order();
+            lhs.set_order(Order::RowMajor);
+            rhs.set_order(Order::ColMajor);
 
             assert_ne!(lhs.order, rhs.order);
             assert_ne!(lhs.shape, rhs.shape);
@@ -52,10 +60,12 @@ mod tests {
             assert_eq!(lhs, rhs);
         }
 
-        // alternative order & default order
+        // col-major & row-major
         {
             let mut lhs = lhs.clone();
-            lhs.switch_order();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::ColMajor);
+            rhs.set_order(Order::RowMajor);
 
             assert_ne!(lhs.order, rhs.order);
             assert_ne!(lhs.shape, rhs.shape);
@@ -63,12 +73,12 @@ mod tests {
             assert_eq!(lhs, rhs);
         }
 
-        // alternative order & alternative order
+        // col-major & col-major
         {
             let mut lhs = lhs.clone();
             let mut rhs = rhs.clone();
-            lhs.switch_order();
-            rhs.switch_order();
+            lhs.set_order(Order::ColMajor);
+            rhs.set_order(Order::ColMajor);
 
             assert_eq!(lhs.order, rhs.order);
             assert_eq!(lhs.shape, rhs.shape);
