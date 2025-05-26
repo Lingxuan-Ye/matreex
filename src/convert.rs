@@ -125,7 +125,7 @@ where
     }
 }
 
-impl<T, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
+impl<T, const R: usize> TryFrom<[Vec<T>; R]> for Matrix<T> {
     type Error = Error;
 
     /// Converts to [`Matrix<T>`] from a sequence of rows.
@@ -150,9 +150,9 @@ impl<T, const C: usize> TryFrom<[Vec<T>; C]> for Matrix<T> {
     /// let matrix = Matrix::try_from(rows);
     /// assert_eq!(matrix, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
     /// ```
-    fn try_from(value: [Vec<T>; C]) -> Result<Self> {
+    fn try_from(value: [Vec<T>; R]) -> Result<Self> {
         let order = Order::RowMajor;
-        let nrows = C;
+        let nrows = R;
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
         let size = Self::check_size(shape.size())?;
