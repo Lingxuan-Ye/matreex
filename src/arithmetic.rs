@@ -28,8 +28,7 @@ impl<L> Matrix<L> {
     /// ```
     #[inline]
     pub fn is_square(&self) -> bool {
-        let shape = self.shape();
-        shape.nrows() == shape.ncols()
+        self.major() == self.minor()
     }
 
     /// Returns `true` if two matrices are conformable for elementwise
