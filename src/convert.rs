@@ -280,7 +280,7 @@ where
     ///
     /// # Panics
     ///
-    /// Panics if rows have inconsistent lengths or if memory allocation fails.
+    /// Panics if rows have inconsistent lengths or capacity overflows.
     ///
     /// # Notes
     ///
@@ -304,12 +304,14 @@ where
         let Some(row) = iter.next() else {
             return Self::new();
         };
-        let mut data: Vec<T> = row.into_iter().collect(); // could panic for running out of memory
+        // could panic if capacity overflows
+        let mut data: Vec<T> = row.into_iter().collect();
         let mut nrows = 1;
         let ncols = data.len();
         let mut size = ncols;
         for row in iter {
-            data.extend(row); // could panic for running out of memory
+            // could panic if capacity overflows
+            data.extend(row);
             if data.len() - size != ncols {
                 panic!("{}", Error::LengthInconsistent);
             }

@@ -20,7 +20,7 @@ pub enum Error {
     SizeMismatch,
 
     /// Error when attempting to allocate more than [`isize::MAX`] bytes of
-    /// capacity.
+    /// memory.
     ///
     /// Refer to [`vec`] and *[The Rustonomicon]* for more information.
     ///
