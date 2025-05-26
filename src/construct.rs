@@ -74,8 +74,8 @@ impl<T> Matrix<T> {
         S: Into<Shape>,
     {
         let order = Order::default();
-        let shape = shape.into().try_to_axis_shape(order)?;
-        let size = Self::check_size(shape.size())?;
+        let shape = AxisShape::from_shape(shape.into(), order);
+        let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         data.resize_with(size, T::default);
         Ok(Self { order, shape, data })
@@ -106,8 +106,8 @@ impl<T> Matrix<T> {
         S: Into<Shape>,
     {
         let order = Order::default();
-        let shape = shape.into().try_to_axis_shape(order)?;
-        let size = Self::check_size(shape.size())?;
+        let shape = AxisShape::from_shape(shape.into(), order);
+        let size = shape.size::<T>()?;
         let data = vec![value; size];
         Ok(Self { order, shape, data })
     }
@@ -137,8 +137,8 @@ impl<T> Matrix<T> {
         F: FnMut(Index) -> T,
     {
         let order = Order::default();
-        let shape = shape.into().try_to_axis_shape(order)?;
-        let size = Self::check_size(shape.size())?;
+        let shape = AxisShape::from_shape(shape.into(), order);
+        let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         for index in 0..size {
             let index = Index::from_flattened(index, order, shape);

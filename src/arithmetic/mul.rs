@@ -1,7 +1,7 @@
 use crate::Matrix;
 use crate::error::Result;
 use crate::order::Order;
-use crate::shape::Shape;
+use crate::shape::{AxisShape, Shape};
 use alloc::vec::Vec;
 use core::ops::{Add, Mul, MulAssign};
 
@@ -198,11 +198,12 @@ impl<L> Matrix<L> {
     {
         self.ensure_multiplication_like_operation_conformable(&rhs)?;
 
+        let order = self.order;
         let nrows = self.nrows();
         let ncols = rhs.ncols();
-        let order = self.order;
-        let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        let size = Matrix::<U>::check_size(shape.size())?;
+        let shape = Shape::new(nrows, ncols);
+        let shape = AxisShape::from_shape(shape, order);
+        let size = shape.size::<U>()?;
         let mut data = Vec::with_capacity(size);
 
         if self.ncols() == 0 {

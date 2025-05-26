@@ -2,7 +2,7 @@ use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::index::AxisIndex;
 use crate::order::Order;
-use crate::shape::Shape;
+use crate::shape::{AxisShape, Shape};
 use alloc::vec::Vec;
 
 mod add;
@@ -204,10 +204,10 @@ impl<L> Matrix<L> {
         F: FnMut(&'a L, &'b R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
-        Matrix::<U>::check_size(self.size())?;
 
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = if self.order == rhs.order {
             self.data
                 .iter()
@@ -262,10 +262,10 @@ impl<L> Matrix<L> {
         F: FnMut(L, &'a R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
-        Matrix::<U>::check_size(self.size())?;
 
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = if self.order == rhs.order {
             self.data
                 .into_iter()
@@ -385,11 +385,12 @@ impl<L> Matrix<L> {
     {
         self.ensure_multiplication_like_operation_conformable(&rhs)?;
 
+        let order = self.order;
         let nrows = self.nrows();
         let ncols = rhs.ncols();
-        let order = self.order;
-        let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        let size = Matrix::<U>::check_size(shape.size())?;
+        let shape = Shape::new(nrows, ncols);
+        let shape = AxisShape::from_shape(shape, order);
+        let size = shape.size::<U>()?;
         let mut data = Vec::with_capacity(size);
 
         if self.ncols() == 0 {
@@ -453,10 +454,9 @@ impl<T> Matrix<T> {
     where
         F: FnMut(&'a T, &'b S) -> U,
     {
-        Matrix::<U>::check_size(self.size())?;
-
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = self
             .data
             .iter()
@@ -490,10 +490,9 @@ impl<T> Matrix<T> {
     where
         F: FnMut(T, &'a S) -> U,
     {
-        Matrix::<U>::check_size(self.size())?;
-
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = self
             .data
             .into_iter()

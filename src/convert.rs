@@ -1,7 +1,7 @@
 use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::order::Order;
-use crate::shape::Shape;
+use crate::shape::{AxisShape, Shape};
 use alloc::vec::Vec;
 
 impl<T> Matrix<T> {
@@ -18,9 +18,11 @@ impl<T> Matrix<T> {
     where
         R: Into<Vec<T>>,
     {
-        let data = row.into();
         let order = Order::default();
-        let shape = Shape::new(1, data.len()).to_axis_shape_unchecked(order);
+        let data = row.into();
+        let ncols = data.len();
+        let shape = Shape::new(1, ncols);
+        let shape = AxisShape::from_shape(shape, order);
         Self { order, shape, data }
     }
 
@@ -37,9 +39,11 @@ impl<T> Matrix<T> {
     where
         C: Into<Vec<T>>,
     {
-        let data = col.into();
         let order = Order::default();
-        let shape = Shape::new(data.len(), 1).to_axis_shape_unchecked(order);
+        let data = col.into();
+        let nrows = data.len();
+        let shape = Shape::new(nrows, 1);
+        let shape = AxisShape::from_shape(shape, order);
         Self { order, shape, data }
     }
 }
@@ -64,7 +68,8 @@ impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     /// ```
     fn from(value: [[T; C]; R]) -> Self {
         let order = Order::RowMajor;
-        let shape = Shape::new(R, C).to_axis_shape_unchecked(order);
+        let shape = Shape::new(R, C);
+        let shape = AxisShape::from_shape(shape, order);
         let data = value.into_iter().flatten().collect();
         Self { order, shape, data }
     }
@@ -90,7 +95,8 @@ impl<T, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
     fn from(value: Vec<[T; C]>) -> Self {
         let order = Order::RowMajor;
         let nrows = value.len();
-        let shape = Shape::new(nrows, C).to_axis_shape_unchecked(order);
+        let shape = Shape::new(nrows, C);
+        let shape = AxisShape::from_shape(shape, order);
         let data = value.into_iter().flatten().collect();
         Self { order, shape, data }
     }
@@ -119,7 +125,8 @@ where
     fn from(value: &[[T; C]]) -> Self {
         let order = Order::RowMajor;
         let nrows = value.len();
-        let shape = Shape::new(nrows, C).to_axis_shape_unchecked(order);
+        let shape = Shape::new(nrows, C);
+        let shape = AxisShape::from_shape(shape, order);
         let data = value.iter().flatten().cloned().collect();
         Self { order, shape, data }
     }
@@ -152,10 +159,13 @@ impl<T, const R: usize> TryFrom<[Vec<T>; R]> for Matrix<T> {
     /// ```
     fn try_from(value: [Vec<T>; R]) -> Result<Self> {
         let order = Order::RowMajor;
-        let nrows = R;
-        let ncols = value.first().map_or(0, |row| row.len());
-        let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        let size = Self::check_size(shape.size())?;
+        let ncols = match value.first() {
+            Some(row) => row.len(),
+            None => 0,
+        };
+        let shape = Shape::new(R, ncols);
+        let shape = AxisShape::from_shape(shape, order);
+        let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         for row in value {
             if row.len() != ncols {
@@ -195,9 +205,13 @@ impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
     fn try_from(value: Vec<Vec<T>>) -> Result<Self> {
         let order = Order::RowMajor;
         let nrows = value.len();
-        let ncols = value.first().map_or(0, |row| row.len());
-        let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        let size = Self::check_size(shape.size())?;
+        let ncols = match value.first() {
+            Some(row) => row.len(),
+            None => 0,
+        };
+        let shape = Shape::new(nrows, ncols);
+        let shape = AxisShape::from_shape(shape, order);
+        let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         for row in value {
             if row.len() != ncols {
@@ -240,9 +254,13 @@ where
     fn try_from(value: &[Vec<T>]) -> Result<Self> {
         let order = Order::RowMajor;
         let nrows = value.len();
-        let ncols = value.first().map_or(0, |row| row.len());
-        let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        let size = Self::check_size(shape.size())?;
+        let ncols = match value.first() {
+            Some(row) => row.len(),
+            None => 0,
+        };
+        let shape = Shape::new(nrows, ncols);
+        let shape = AxisShape::from_shape(shape, order);
+        let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         for row in value {
             if row.len() != ncols {
@@ -300,7 +318,8 @@ where
         }
         data.shrink_to_fit();
         let order = Order::RowMajor;
-        let shape = Shape::new(nrows, ncols).to_axis_shape_unchecked(order);
+        let shape = Shape::new(nrows, ncols);
+        let shape = AxisShape::from_shape(shape, order);
         Self { order, shape, data }
     }
 }
@@ -315,7 +334,8 @@ mod tests {
     #[test]
     fn test_from_row() {
         let expected_order = Order::default();
-        let expected_shape = Shape::new(1, 3).to_axis_shape_unchecked(expected_order);
+        let expected_shape = Shape::new(1, 3);
+        let expected_shape = AxisShape::from_shape(expected_shape, expected_order);
         let expected_data = vec![1, 2, 3];
 
         let row_vec = Matrix::from_row([1, 2, 3]);
@@ -327,7 +347,8 @@ mod tests {
     #[test]
     fn test_from_col() {
         let expected_order = Order::default();
-        let expected_shape = Shape::new(3, 1).to_axis_shape_unchecked(expected_order);
+        let expected_shape = Shape::new(3, 1);
+        let expected_shape = AxisShape::from_shape(expected_shape, expected_order);
         let expected_data = vec![1, 2, 3];
 
         let col_vec = Matrix::from_col([1, 2, 3]);
@@ -339,7 +360,8 @@ mod tests {
     #[test]
     fn test_from() {
         let expected_order = Order::RowMajor;
-        let expected_shape = Shape::new(2, 3).to_axis_shape_unchecked(expected_order);
+        let expected_shape = Shape::new(2, 3);
+        let expected_shape = AxisShape::from_shape(expected_shape, expected_order);
         let expected_data = vec![1, 2, 3, 4, 5, 6];
 
         let rows = [[1, 2, 3], [4, 5, 6]];
@@ -366,7 +388,8 @@ mod tests {
 
         {
             let expected_order = Order::RowMajor;
-            let expected_shape = Shape::new(2, 3).to_axis_shape_unchecked(expected_order);
+            let expected_shape = Shape::new(2, 3);
+            let expected_shape = AxisShape::from_shape(expected_shape, expected_order);
             let expected_data = vec![1, 2, 3, 4, 5, 6];
 
             let rows = [vec![1, 2, 3], vec![4, 5, 6]];
@@ -439,7 +462,8 @@ mod tests {
     #[test]
     fn test_from_iter() {
         let expected_order = Order::RowMajor;
-        let expected_shape = Shape::new(2, 3).to_axis_shape_unchecked(expected_order);
+        let expected_shape = Shape::new(2, 3);
+        let expected_shape = AxisShape::from_shape(expected_shape, expected_order);
         let expected_data = vec![1, 2, 3, 4, 5, 6];
 
         let iterable = [[1, 2, 3], [4, 5, 6]];

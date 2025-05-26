@@ -56,10 +56,9 @@ impl<T> Matrix<T> {
         U: Send,
         F: Fn(T) -> U + Sync + Send,
     {
-        Matrix::<U>::check_size(self.size())?;
-
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = self.data.into_par_iter().map(f).collect();
 
         Ok(Matrix { order, shape, data })
@@ -93,10 +92,9 @@ impl<T> Matrix<T> {
         U: Send,
         F: Fn(&'a T) -> U + Sync + Send,
     {
-        Matrix::<U>::check_size(self.size())?;
-
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = self.data.par_iter().map(f).collect();
 
         Ok(Matrix { order, shape, data })

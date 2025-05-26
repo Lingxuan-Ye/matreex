@@ -449,14 +449,14 @@ impl<T> Matrix<T> {
     where
         S: Into<Shape>,
     {
-        let Ok(shape) = shape.into().try_to_axis_shape(self.order) else {
-            return Err(Error::SizeMismatch);
-        };
-        if self.size() != shape.size() {
-            return Err(Error::SizeMismatch);
+        let shape = shape.into();
+        match shape.size() {
+            Ok(size) if self.size() == size => {
+                self.shape = AxisShape::from_shape(shape, self.order);
+                Ok(self)
+            }
+            _ => Err(Error::SizeMismatch),
         }
-        self.shape = shape;
-        Ok(self)
     }
 
     /// Resizes the matrix to the specified shape.
@@ -504,8 +504,8 @@ impl<T> Matrix<T> {
         T: Default,
         S: Into<Shape>,
     {
-        let shape = shape.into().try_to_axis_shape(self.order)?;
-        let size = Self::check_size(shape.size())?;
+        let shape = AxisShape::from_shape(shape.into(), self.order);
+        let size = shape.size::<T>()?;
         self.shape = shape;
         self.data.resize_with(size, T::default);
         Ok(self)
@@ -681,10 +681,9 @@ impl<T> Matrix<T> {
     where
         F: FnMut(T) -> U,
     {
-        Matrix::<U>::check_size(self.size())?;
-
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = self.data.into_iter().map(f).collect();
 
         Ok(Matrix { order, shape, data })
@@ -715,10 +714,9 @@ impl<T> Matrix<T> {
     where
         F: FnMut(&'a T) -> U,
     {
-        Matrix::<U>::check_size(self.size())?;
-
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = self.data.iter().map(f).collect();
 
         Ok(Matrix { order, shape, data })
@@ -745,19 +743,6 @@ impl<T> Matrix<T> {
         self.shape = AxisShape::default();
         self.data.clear();
         self
-    }
-}
-
-impl<T> Matrix<T> {
-    /// # Errors
-    ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
-    fn check_size(size: usize) -> Result<usize> {
-        if size_of::<T>().saturating_mul(size) > isize::MAX as usize {
-            Err(Error::CapacityOverflow)
-        } else {
-            Ok(size)
-        }
     }
 }
 
