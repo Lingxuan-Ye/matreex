@@ -31,6 +31,7 @@ impl Order {
     /// order.switch();
     /// assert_eq!(order, Order::ColMajor);
     /// ```
+    #[inline]
     pub fn switch(&mut self) -> &mut Self {
         *self = match self {
             Self::RowMajor => Self::ColMajor,

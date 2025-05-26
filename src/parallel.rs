@@ -50,17 +50,15 @@ impl<T> Matrix<T> {
     /// ```
     ///
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    #[inline]
     pub fn par_map<U, F>(self, f: F) -> Result<Matrix<U>>
     where
         T: Send,
         U: Send,
         F: Fn(T) -> U + Sync + Send,
     {
-        Matrix::<U>::check_size(self.size())?;
-
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = self.data.into_par_iter().map(f).collect();
 
         Ok(Matrix { order, shape, data })
@@ -88,17 +86,15 @@ impl<T> Matrix<T> {
     ///
     /// [`par_map`]: Matrix::par_map
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    #[inline]
     pub fn par_map_ref<'a, U, F>(&'a self, f: F) -> Result<Matrix<U>>
     where
         T: Sync,
         U: Send,
         F: Fn(&'a T) -> U + Sync + Send,
     {
-        Matrix::<U>::check_size(self.size())?;
-
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = self.data.par_iter().map(f).collect();
 
         Ok(Matrix { order, shape, data })

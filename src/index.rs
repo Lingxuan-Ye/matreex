@@ -299,7 +299,7 @@ impl Index {
     }
 
     pub(crate) fn to_flattened(self, order: Order, shape: AxisShape) -> usize {
-        AxisIndex::from_index(&self, order).to_flattened(shape)
+        AxisIndex::from_index(self, order).to_flattened(shape)
     }
 }
 
@@ -358,31 +358,31 @@ where
 
     #[inline]
     fn is_out_of_bounds(&self, matrix: &Matrix<T>) -> bool {
-        let index = AxisIndex::from_index(self, matrix.order);
-        index.is_out_of_bounds(matrix)
+        let shape = matrix.shape();
+        self.row() >= shape.nrows() || self.col() >= shape.ncols()
     }
 
     #[inline]
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        let index = AxisIndex::from_index(&self, matrix.order);
+        let index = AxisIndex::from_index(self, matrix.order);
         index.get(matrix)
     }
 
     #[inline]
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        let index = AxisIndex::from_index(&self, matrix.order);
+        let index = AxisIndex::from_index(self, matrix.order);
         index.get_mut(matrix)
     }
 
     #[inline]
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        let index = AxisIndex::from_index(&self, matrix.order);
+        let index = AxisIndex::from_index(self, matrix.order);
         unsafe { index.get_unchecked(matrix) }
     }
 
     #[inline]
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        let index = AxisIndex::from_index(&self, matrix.order);
+        let index = AxisIndex::from_index(self, matrix.order);
         unsafe { index.get_unchecked_mut(matrix) }
     }
 }
@@ -545,7 +545,7 @@ impl AxisIndex {
         self
     }
 
-    pub(crate) fn from_index<I>(index: &I, order: Order) -> Self
+    pub(crate) fn from_index<I>(index: I, order: Order) -> Self
     where
         I: AsIndex,
     {

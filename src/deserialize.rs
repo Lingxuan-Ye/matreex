@@ -13,6 +13,7 @@ impl<'de, T> Deserialize<'de> for Matrix<T>
 where
     T: Deserialize<'de>,
 {
+    #[inline]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -56,10 +57,11 @@ where
         let data: Vec<T> = seq
             .next_element()?
             .ok_or_else(|| Error::invalid_length(2, &self))?;
-        if shape.size() != data.len() {
-            Err(Error::custom(SizeMismatch))
-        } else {
-            Ok(Matrix { order, shape, data })
+
+        match shape.size::<T>() {
+            Err(error) => Err(Error::custom(error)),
+            Ok(size) if data.len() != size => Err(Error::custom(SizeMismatch)),
+            _ => Ok(Matrix { order, shape, data }),
         }
     }
 
@@ -98,10 +100,10 @@ where
         let shape = shape.ok_or_else(|| Error::missing_field("shape"))?;
         let data = data.ok_or_else(|| Error::missing_field("data"))?;
 
-        if shape.size() != data.len() {
-            Err(Error::custom(SizeMismatch))
-        } else {
-            Ok(Matrix { order, shape, data })
+        match shape.size::<T>() {
+            Err(error) => Err(Error::custom(error)),
+            Ok(size) if data.len() != size => Err(Error::custom(SizeMismatch)),
+            _ => Ok(Matrix { order, shape, data }),
         }
     }
 }

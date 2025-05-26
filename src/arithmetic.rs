@@ -2,7 +2,7 @@ use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::index::AxisIndex;
 use crate::order::Order;
-use crate::shape::Shape;
+use crate::shape::{AxisShape, Shape};
 use alloc::vec::Vec;
 
 mod add;
@@ -28,8 +28,7 @@ impl<L> Matrix<L> {
     /// ```
     #[inline]
     pub fn is_square(&self) -> bool {
-        let shape = self.shape();
-        shape.nrows() == shape.ncols()
+        self.major() == self.minor()
     }
 
     /// Returns `true` if two matrices are conformable for elementwise
@@ -205,10 +204,10 @@ impl<L> Matrix<L> {
         F: FnMut(&'a L, &'b R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
-        Matrix::<U>::check_size(self.size())?;
 
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = if self.order == rhs.order {
             self.data
                 .iter()
@@ -263,10 +262,10 @@ impl<L> Matrix<L> {
         F: FnMut(L, &'a R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
-        Matrix::<U>::check_size(self.size())?;
 
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = if self.order == rhs.order {
             self.data
                 .into_iter()
@@ -386,11 +385,12 @@ impl<L> Matrix<L> {
     {
         self.ensure_multiplication_like_operation_conformable(&rhs)?;
 
+        let order = self.order;
         let nrows = self.nrows();
         let ncols = rhs.ncols();
-        let order = self.order;
-        let shape = Shape::new(nrows, ncols).try_to_axis_shape(order)?;
-        let size = Matrix::<U>::check_size(shape.size())?;
+        let shape = Shape::new(nrows, ncols);
+        let shape = AxisShape::from_shape(shape, order);
+        let size = shape.size::<U>()?;
         let mut data = Vec::with_capacity(size);
 
         if self.ncols() == 0 {
@@ -405,8 +405,8 @@ impl<L> Matrix<L> {
             Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let lhs = unsafe { self.get_nth_major_axis_vector_unchecked(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
                         let element = op(lhs, rhs);
                         data.push(element);
                     }
@@ -416,8 +416,8 @@ impl<L> Matrix<L> {
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let lhs = unsafe { self.get_nth_major_axis_vector_unchecked(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
                         let element = op(lhs, rhs);
                         data.push(element);
                     }
@@ -446,7 +446,6 @@ impl<T> Matrix<T> {
     /// let result = matrix.scalar_operation(&scalar, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
-    #[inline]
     pub fn scalar_operation<'a, 'b, S, F, U>(
         &'a self,
         scalar: &'b S,
@@ -455,10 +454,9 @@ impl<T> Matrix<T> {
     where
         F: FnMut(&'a T, &'b S) -> U,
     {
-        Matrix::<U>::check_size(self.size())?;
-
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = self
             .data
             .iter()
@@ -484,7 +482,6 @@ impl<T> Matrix<T> {
     /// let result = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
-    #[inline]
     pub fn scalar_operation_consume_self<'a, S, F, U>(
         self,
         scalar: &'a S,
@@ -493,10 +490,9 @@ impl<T> Matrix<T> {
     where
         F: FnMut(T, &'a S) -> U,
     {
-        Matrix::<U>::check_size(self.size())?;
-
         let order = self.order;
         let shape = self.shape;
+        shape.size::<U>()?;
         let data = self
             .data
             .into_iter()
@@ -536,7 +532,7 @@ impl<T> Matrix<T> {
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline(always)]
-    unsafe fn get_nth_major_axis_vector(&self, n: usize) -> &[T] {
+    unsafe fn get_nth_major_axis_vector_unchecked(&self, n: usize) -> &[T] {
         let lower = n * self.major_stride();
         let upper = lower + self.major_stride();
         unsafe { self.data.get_unchecked(lower..upper) }

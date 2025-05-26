@@ -103,19 +103,6 @@ impl Shape {
         (self.nrows, self.ncols) = (self.ncols, self.nrows);
         self
     }
-
-    pub(crate) fn try_to_axis_shape(self, order: Order) -> Result<AxisShape> {
-        self.size()?;
-        Ok(self.to_axis_shape_unchecked(order))
-    }
-
-    pub(crate) fn to_axis_shape_unchecked(self, order: Order) -> AxisShape {
-        let (major, minor) = match order {
-            Order::RowMajor => (self.nrows, self.ncols),
-            Order::ColMajor => (self.ncols, self.nrows),
-        };
-        AxisShape { major, minor }
-    }
 }
 
 impl From<(usize, usize)> for Shape {
@@ -158,8 +145,20 @@ impl AxisShape {
         1
     }
 
-    pub(crate) fn size(&self) -> usize {
-        self.major * self.minor
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    pub(crate) fn size<T>(&self) -> Result<usize> {
+        let size = self
+            .major
+            .checked_mul(self.minor)
+            .ok_or(Error::SizeOverflow)?;
+        if size_of::<T>().saturating_mul(size) > isize::MAX as usize {
+            Err(Error::CapacityOverflow)
+        } else {
+            Ok(size)
+        }
     }
 
     pub(crate) fn transpose(&mut self) -> &mut Self {
@@ -179,6 +178,14 @@ impl AxisShape {
             Order::RowMajor => self.minor,
             Order::ColMajor => self.major,
         }
+    }
+
+    pub(crate) fn from_shape(shape: Shape, order: Order) -> Self {
+        let (major, minor) = match order {
+            Order::RowMajor => (shape.nrows, shape.ncols),
+            Order::ColMajor => (shape.ncols, shape.nrows),
+        };
+        Self { major, minor }
     }
 
     pub(crate) fn to_shape(self, order: Order) -> Shape {
