@@ -217,8 +217,8 @@ impl<L> Matrix<L> {
             Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let lhs = unsafe { self.get_nth_major_axis_vector_unchecked(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
                         let element = unsafe { dot_product(lhs, rhs).unwrap_unchecked() };
                         data.push(element);
                     }
@@ -228,8 +228,8 @@ impl<L> Matrix<L> {
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let lhs = unsafe { self.get_nth_major_axis_vector_unchecked(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
                         let element = unsafe { dot_product(lhs, rhs).unwrap_unchecked() };
                         data.push(element);
                     }

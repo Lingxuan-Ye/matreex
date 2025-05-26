@@ -404,8 +404,8 @@ impl<L> Matrix<L> {
             Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let lhs = unsafe { self.get_nth_major_axis_vector_unchecked(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
                         let element = op(lhs, rhs);
                         data.push(element);
                     }
@@ -415,8 +415,8 @@ impl<L> Matrix<L> {
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        let lhs = unsafe { self.get_nth_major_axis_vector(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector(col) };
+                        let lhs = unsafe { self.get_nth_major_axis_vector_unchecked(row) };
+                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
                         let element = op(lhs, rhs);
                         data.push(element);
                     }
@@ -535,7 +535,7 @@ impl<T> Matrix<T> {
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline(always)]
-    unsafe fn get_nth_major_axis_vector(&self, n: usize) -> &[T] {
+    unsafe fn get_nth_major_axis_vector_unchecked(&self, n: usize) -> &[T] {
         let lower = n * self.major_stride();
         let upper = lower + self.major_stride();
         unsafe { self.data.get_unchecked(lower..upper) }
