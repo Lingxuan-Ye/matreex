@@ -50,7 +50,6 @@ impl<T> Matrix<T> {
     /// ```
     ///
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    #[inline]
     pub fn par_map<U, F>(self, f: F) -> Result<Matrix<U>>
     where
         T: Send,
@@ -88,7 +87,6 @@ impl<T> Matrix<T> {
     ///
     /// [`par_map`]: Matrix::par_map
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    #[inline]
     pub fn par_map_ref<'a, U, F>(&'a self, f: F) -> Result<Matrix<U>>
     where
         T: Sync,

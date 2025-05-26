@@ -445,7 +445,6 @@ impl<T> Matrix<T> {
     /// let result = matrix.scalar_operation(&scalar, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
-    #[inline]
     pub fn scalar_operation<'a, 'b, S, F, U>(
         &'a self,
         scalar: &'b S,
@@ -483,7 +482,6 @@ impl<T> Matrix<T> {
     /// let result = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
     /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
     /// ```
-    #[inline]
     pub fn scalar_operation_consume_self<'a, S, F, U>(
         self,
         scalar: &'a S,

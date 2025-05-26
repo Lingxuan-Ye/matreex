@@ -677,7 +677,6 @@ impl<T> Matrix<T> {
     /// let result = matrix.map(|element| element as f64);
     /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
-    #[inline]
     pub fn map<U, F>(self, f: F) -> Result<Matrix<U>>
     where
         F: FnMut(T) -> U,
@@ -712,7 +711,6 @@ impl<T> Matrix<T> {
     /// ```
     ///
     /// [`map`]: Matrix::map
-    #[inline]
     pub fn map_ref<'a, U, F>(&'a self, f: F) -> Result<Matrix<U>>
     where
         F: FnMut(&'a T) -> U,

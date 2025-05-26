@@ -5,6 +5,7 @@ impl<T> Hash for Matrix<T>
 where
     T: Hash,
 {
+    #[inline]
     fn hash<H>(&self, state: &mut H)
     where
         H: Hasher,
