@@ -4,50 +4,6 @@ use crate::order::Order;
 use crate::shape::{AxisShape, Shape};
 use alloc::vec::Vec;
 
-impl<T> Matrix<T> {
-    /// Creates a new single-row [`Matrix<T>`] from a vector.
-    ///
-    /// # Examples
-    /// ```
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let row_vec = Matrix::from_row([1, 2, 3]);
-    /// assert_eq!(row_vec, matrix![[1, 2, 3]]);
-    /// ```
-    pub fn from_row<R>(row: R) -> Self
-    where
-        R: Into<Vec<T>>,
-    {
-        let order = Order::default();
-        let data = row.into();
-        let ncols = data.len();
-        let shape = Shape::new(1, ncols);
-        let shape = AxisShape::from_shape(shape, order);
-        Self { order, shape, data }
-    }
-
-    /// Creates a new single-column [`Matrix<T>`] from a vector.
-    ///
-    /// # Examples
-    /// ```
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let col_vec = Matrix::from_col([1, 2, 3]);
-    /// assert_eq!(col_vec, matrix![[1], [2], [3]]);
-    /// ```
-    pub fn from_col<C>(col: C) -> Self
-    where
-        C: Into<Vec<T>>,
-    {
-        let order = Order::default();
-        let data = col.into();
-        let nrows = data.len();
-        let shape = Shape::new(nrows, 1);
-        let shape = AxisShape::from_shape(shape, order);
-        Self { order, shape, data }
-    }
-}
-
 impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     /// Converts to [`Matrix<T>`] from a sequence of rows.
     ///
@@ -332,32 +288,6 @@ mod tests {
     use alloc::vec;
 
     // tests in this module should avoid direct comparison of `Matrix<T>`
-
-    #[test]
-    fn test_from_row() {
-        let expected_order = Order::default();
-        let expected_shape = Shape::new(1, 3);
-        let expected_shape = AxisShape::from_shape(expected_shape, expected_order);
-        let expected_data = vec![1, 2, 3];
-
-        let row_vec = Matrix::from_row([1, 2, 3]);
-        assert_eq!(row_vec.order, expected_order);
-        assert_eq!(row_vec.shape, expected_shape);
-        assert_eq!(row_vec.data, expected_data);
-    }
-
-    #[test]
-    fn test_from_col() {
-        let expected_order = Order::default();
-        let expected_shape = Shape::new(3, 1);
-        let expected_shape = AxisShape::from_shape(expected_shape, expected_order);
-        let expected_data = vec![1, 2, 3];
-
-        let col_vec = Matrix::from_col([1, 2, 3]);
-        assert_eq!(col_vec.order, expected_order);
-        assert_eq!(col_vec.shape, expected_shape);
-        assert_eq!(col_vec.data, expected_data);
-    }
 
     #[test]
     fn test_from() {
