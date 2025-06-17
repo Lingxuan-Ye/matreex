@@ -4,6 +4,7 @@ use crate::index::AxisIndex;
 use crate::order::Order;
 use crate::shape::{AxisShape, Shape};
 use alloc::vec::Vec;
+use core::ptr;
 
 mod add;
 mod div;
@@ -289,6 +290,88 @@ impl<L> Matrix<L> {
         Ok(Matrix { order, shape, data })
     }
 
+    pub fn elementwise_operation_consume_rhs<'a, R, F, U>(
+        &'a self,
+        rhs: Matrix<R>,
+        mut op: F,
+    ) -> Result<Matrix<U>>
+    where
+        F: FnMut(&'a L, R) -> U,
+    {
+        self.ensure_elementwise_operation_conformable(&rhs)?;
+
+        let order = self.order;
+        let shape = self.shape;
+        shape.size::<U>()?;
+        let data = if self.order == rhs.order {
+            self.data
+                .iter()
+                .zip(rhs.data)
+                .map(|(left, right)| op(left, right))
+                .collect()
+        } else {
+            let mut rhs_data = rhs.data;
+            unsafe {
+                rhs_data.set_len(0); // avoid double free
+            }
+            let rhs_base = rhs_data.as_ptr();
+            self.data
+                .iter()
+                .enumerate()
+                .map(|(index, left)| {
+                    let index = AxisIndex::from_flattened(index, self.shape)
+                        .swap()
+                        .to_flattened(rhs.shape);
+                    let right = unsafe { ptr::read(rhs_base.add(index)) };
+                    op(left, right)
+                })
+                .collect()
+        };
+
+        Ok(Matrix { order, shape, data })
+    }
+
+    pub fn elementwise_operation_consume_both<R, F, U>(
+        self,
+        rhs: Matrix<R>,
+        mut op: F,
+    ) -> Result<Matrix<U>>
+    where
+        F: FnMut(L, R) -> U,
+    {
+        self.ensure_elementwise_operation_conformable(&rhs)?;
+
+        let order = self.order;
+        let shape = self.shape;
+        shape.size::<U>()?;
+        let data = if self.order == rhs.order {
+            self.data
+                .into_iter()
+                .zip(rhs.data)
+                .map(|(left, right)| op(left, right))
+                .collect()
+        } else {
+            let mut rhs_data = rhs.data;
+            unsafe {
+                rhs_data.set_len(0); // avoid double free
+            }
+            let rhs_base = rhs_data.as_ptr();
+            self.data
+                .into_iter()
+                .enumerate()
+                .map(|(index, left)| {
+                    let index = AxisIndex::from_flattened(index, self.shape)
+                        .swap()
+                        .to_flattened(rhs.shape);
+                    let right = unsafe { ptr::read(rhs_base.add(index)) };
+                    op(left, right)
+                })
+                .collect()
+        };
+
+        Ok(Matrix { order, shape, data })
+    }
+
     /// Performs elementwise operation on two matrices, assigning the result
     /// to `self`.
     ///
@@ -331,6 +414,39 @@ impl<L> Matrix<L> {
                     .swap()
                     .to_flattened(rhs.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) };
+                op(left, right)
+            });
+        }
+
+        Ok(self)
+    }
+
+    pub fn elementwise_operation_assign_consume_rhs<R, F>(
+        &mut self,
+        rhs: Matrix<R>,
+        mut op: F,
+    ) -> Result<&mut Self>
+    where
+        F: FnMut(&mut L, R),
+    {
+        self.ensure_elementwise_operation_conformable(&rhs)?;
+
+        if self.order == rhs.order {
+            self.data
+                .iter_mut()
+                .zip(rhs.data)
+                .for_each(|(left, right)| op(left, right));
+        } else {
+            let mut rhs_data = rhs.data;
+            unsafe {
+                rhs_data.set_len(0); // avoid double free
+            }
+            let rhs_base = rhs_data.as_ptr();
+            self.data.iter_mut().enumerate().for_each(|(index, left)| {
+                let index = AxisIndex::from_flattened(index, self.shape)
+                    .swap()
+                    .to_flattened(rhs.shape);
+                let right = unsafe { ptr::read(rhs_base.add(index)) };
                 op(left, right)
             });
         }
