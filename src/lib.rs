@@ -56,7 +56,10 @@
 //! #
 //! let lhs = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 //! let rhs = matrix![[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]];
-//! assert_eq!(lhs.elementwise_div(&rhs), Ok(matrix![[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]]));
+//! assert_eq!(
+//!     lhs.elementwise_operation(&rhs, |left, right| left / right),
+//!     Ok(matrix![[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]])
+//! );
 //! ```
 //!
 //! Or scalar division:
