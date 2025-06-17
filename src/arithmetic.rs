@@ -1043,6 +1043,166 @@ mod tests {
     }
 
     #[test]
+    fn test_elementwise_operation_consume_rhs() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+
+        // row-major & row-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::RowMajor);
+            rhs.set_order(Order::RowMajor);
+
+            let output = lhs
+                .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
+                .unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // row-major & col-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::RowMajor);
+            rhs.set_order(Order::ColMajor);
+
+            let output = lhs
+                .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
+                .unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // col-major & row-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::ColMajor);
+            rhs.set_order(Order::RowMajor);
+
+            let output = lhs
+                .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
+                .unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // col-major & col-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::ColMajor);
+            rhs.set_order(Order::ColMajor);
+
+            let output = lhs
+                .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
+                .unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // more test cases
+
+        {
+            let rhs = matrix![[2, 2], [2, 2]];
+
+            let error = lhs
+                .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+        }
+
+        {
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+
+            let error = lhs
+                .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+        }
+    }
+
+    #[test]
+    fn test_elementwise_operation_consume_both() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+
+        // row-major & row-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::RowMajor);
+            rhs.set_order(Order::RowMajor);
+
+            let output = lhs
+                .elementwise_operation_consume_both(rhs, |x, y| x + y)
+                .unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // row-major & col-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::RowMajor);
+            rhs.set_order(Order::ColMajor);
+
+            let output = lhs
+                .elementwise_operation_consume_both(rhs, |x, y| x + y)
+                .unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // col-major & row-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::ColMajor);
+            rhs.set_order(Order::RowMajor);
+
+            let output = lhs
+                .elementwise_operation_consume_both(rhs, |x, y| x + y)
+                .unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // col-major & col-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::ColMajor);
+            rhs.set_order(Order::ColMajor);
+
+            let output = lhs
+                .elementwise_operation_consume_both(rhs, |x, y| x + y)
+                .unwrap();
+            assert_eq!(output, expected);
+        }
+
+        // more test cases
+
+        {
+            let lhs = lhs.clone();
+            let rhs = matrix![[2, 2], [2, 2]];
+
+            let error = lhs
+                .elementwise_operation_consume_both(rhs, |x, y| x + y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+        }
+
+        {
+            let lhs = lhs.clone();
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+
+            let error = lhs
+                .elementwise_operation_consume_both(rhs, |x, y| x + y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+        }
+    }
+
+    #[test]
     fn test_elementwise_operation_assign() {
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
@@ -1126,6 +1286,87 @@ mod tests {
 
             let error = lhs
                 .elementwise_operation_assign(&rhs, |x, y| *x += y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+            assert_eq!(lhs, unchanged);
+        }
+    }
+
+    #[test]
+    fn test_elementwise_operation_assign_consume_rhs() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+
+        // row-major & row-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::RowMajor);
+            rhs.set_order(Order::RowMajor);
+
+            lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
+                .unwrap();
+            assert_eq!(lhs, expected);
+        }
+
+        // row-major & col-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::RowMajor);
+            rhs.set_order(Order::ColMajor);
+
+            lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
+                .unwrap();
+            assert_eq!(lhs, expected);
+        }
+
+        // col-major & row-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::ColMajor);
+            rhs.set_order(Order::RowMajor);
+
+            lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
+                .unwrap();
+            assert_eq!(lhs, expected);
+        }
+
+        // col-major & col-major
+        {
+            let mut lhs = lhs.clone();
+            let mut rhs = rhs.clone();
+            lhs.set_order(Order::ColMajor);
+            rhs.set_order(Order::ColMajor);
+
+            lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
+                .unwrap();
+            assert_eq!(lhs, expected);
+        }
+
+        // more test cases
+
+        {
+            let mut lhs = lhs.clone();
+            let rhs = matrix![[2, 2], [2, 2]];
+            let unchanged = lhs.clone();
+
+            let error = lhs
+                .elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+            assert_eq!(lhs, unchanged);
+        }
+
+        {
+            let mut lhs = lhs.clone();
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+            let unchanged = lhs.clone();
+
+            let error = lhs
+                .elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
             assert_eq!(lhs, unchanged);
