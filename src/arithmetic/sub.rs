@@ -5,13 +5,15 @@ use core::ops::{Sub, SubAssign};
 impl<L, R, U> Sub<Matrix<R>> for Matrix<L>
 where
     L: Sub<R, Output = U>,
-    R: Clone,
 {
     type Output = Matrix<U>;
 
     #[inline]
     fn sub(self, rhs: Matrix<R>) -> Self::Output {
-        self - &rhs
+        match self.elementwise_operation_consume_both(rhs, |left, right| left - right) {
+            Err(error) => panic!("{error}"),
+            Ok(output) => output,
+        }
     }
 }
 
@@ -34,13 +36,15 @@ where
 impl<L, R, U> Sub<Matrix<R>> for &Matrix<L>
 where
     L: Sub<R, Output = U> + Clone,
-    R: Clone,
 {
     type Output = Matrix<U>;
 
     #[inline]
     fn sub(self, rhs: Matrix<R>) -> Self::Output {
-        self - &rhs
+        match self.elementwise_operation_consume_rhs(rhs, |left, right| left.clone() - right) {
+            Err(error) => panic!("{error}"),
+            Ok(output) => output,
+        }
     }
 }
 
@@ -63,11 +67,14 @@ where
 impl<L, R> SubAssign<Matrix<R>> for Matrix<L>
 where
     L: SubAssign<R>,
-    R: Clone,
 {
     #[inline]
     fn sub_assign(&mut self, rhs: Matrix<R>) {
-        *self -= &rhs;
+        if let Err(error) =
+            self.elementwise_operation_assign_consume_rhs(rhs, |left, right| *left -= right)
+        {
+            panic!("{error}");
+        }
     }
 }
 
