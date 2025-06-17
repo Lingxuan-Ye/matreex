@@ -290,6 +290,28 @@ impl<L> Matrix<L> {
         Ok(Matrix { order, shape, data })
     }
 
+    /// Performs elementwise operation on two matrices, consuming `rhs`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be the same as that
+    /// of `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let result = lhs.elementwise_operation_consume_rhs(rhs, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// ```
     pub fn elementwise_operation_consume_rhs<'a, R, F, U>(
         &'a self,
         rhs: Matrix<R>,
@@ -331,6 +353,29 @@ impl<L> Matrix<L> {
         Ok(Matrix { order, shape, data })
     }
 
+    /// Performs elementwise operation on two matrices, consuming both `self`
+    /// and `rhs`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be the same as that
+    /// of `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let result = lhs.elementwise_operation_consume_both(rhs, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// ```
     pub fn elementwise_operation_consume_both<R, F, U>(
         self,
         rhs: Matrix<R>,
@@ -421,6 +466,27 @@ impl<L> Matrix<L> {
         Ok(self)
     }
 
+    /// Performs elementwise operation on two matrices, consuming `rhs`
+    /// and assigning the result to `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use matreex::Result;
+    /// use matreex::matrix;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)?;
+    /// assert_eq!(lhs, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn elementwise_operation_assign_consume_rhs<R, F>(
         &mut self,
         rhs: Matrix<R>,
