@@ -8,6 +8,7 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -26,6 +27,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     #[inline]
     pub fn elementwise_div<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
@@ -40,6 +42,7 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -58,6 +61,7 @@ impl<L> Matrix<L> {
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     #[inline]
     pub fn elementwise_div_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
