@@ -125,6 +125,9 @@ mod swap;
 #[cfg(feature = "serde")]
 mod deserialize;
 
+#[cfg(test)]
+mod testkit;
+
 /// [`Matrix<T>`] means matrix.
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Clone)]
