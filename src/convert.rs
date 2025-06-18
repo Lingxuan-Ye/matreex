@@ -248,8 +248,8 @@ where
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let iter = [[1, 2, 3], [4, 5, 6]].into_iter();
-    /// let matrix = Matrix::from_iter(iter);
+    /// let rows = [[1, 2, 3], [4, 5, 6]];
+    /// let matrix = Matrix::from_iter(rows);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     fn from_iter<M>(iter: M) -> Self
@@ -285,33 +285,28 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::testkit;
     use alloc::vec;
-
-    // tests in this module should avoid direct comparison of `Matrix<T>`
 
     #[test]
     fn test_from() {
-        let expected_order = Order::RowMajor;
-        let expected_shape = Shape::new(2, 3);
-        let expected_shape = AxisShape::from_shape(expected_shape, expected_order);
-        let expected_data = vec![1, 2, 3, 4, 5, 6];
-
         let rows = [[1, 2, 3], [4, 5, 6]];
+        let expected = {
+            let order = Order::RowMajor;
+            let shape = Shape::new(2, 3);
+            let shape = AxisShape::from_shape(shape, order);
+            let data = vec![1, 2, 3, 4, 5, 6];
+            Matrix { order, shape, data }
+        };
 
         let matrix = Matrix::from(rows);
-        assert_eq!(matrix.order, expected_order);
-        assert_eq!(matrix.shape, expected_shape);
-        assert_eq!(matrix.data, expected_data);
+        testkit::assert_strict_eq(&matrix, &expected);
 
         let matrix = Matrix::from(rows.to_vec());
-        assert_eq!(matrix.order, expected_order);
-        assert_eq!(matrix.shape, expected_shape);
-        assert_eq!(matrix.data, expected_data);
+        testkit::assert_strict_eq(&matrix, &expected);
 
         let matrix = Matrix::from(&rows[..]);
-        assert_eq!(matrix.order, expected_order);
-        assert_eq!(matrix.shape, expected_shape);
-        assert_eq!(matrix.data, expected_data);
+        testkit::assert_strict_eq(&matrix, &expected);
     }
 
     #[test]
@@ -319,27 +314,23 @@ mod tests {
         const MAX: usize = isize::MAX as usize;
 
         {
-            let expected_order = Order::RowMajor;
-            let expected_shape = Shape::new(2, 3);
-            let expected_shape = AxisShape::from_shape(expected_shape, expected_order);
-            let expected_data = vec![1, 2, 3, 4, 5, 6];
-
             let rows = [vec![1, 2, 3], vec![4, 5, 6]];
+            let expected = {
+                let order = Order::RowMajor;
+                let shape = Shape::new(2, 3);
+                let shape = AxisShape::from_shape(shape, order);
+                let data = vec![1, 2, 3, 4, 5, 6];
+                Matrix { order, shape, data }
+            };
 
             let matrix = Matrix::try_from(rows.clone()).unwrap();
-            assert_eq!(matrix.order, expected_order);
-            assert_eq!(matrix.shape, expected_shape);
-            assert_eq!(matrix.data, expected_data);
+            testkit::assert_strict_eq(&matrix, &expected);
 
             let matrix = Matrix::try_from(rows.to_vec()).unwrap();
-            assert_eq!(matrix.order, expected_order);
-            assert_eq!(matrix.shape, expected_shape);
-            assert_eq!(matrix.data, expected_data);
+            testkit::assert_strict_eq(&matrix, &expected);
 
             let matrix = Matrix::try_from(&rows[..]).unwrap();
-            assert_eq!(matrix.order, expected_order);
-            assert_eq!(matrix.shape, expected_shape);
-            assert_eq!(matrix.data, expected_data);
+            testkit::assert_strict_eq(&matrix, &expected);
         }
 
         {
@@ -393,17 +384,17 @@ mod tests {
 
     #[test]
     fn test_from_iter() {
-        let expected_order = Order::RowMajor;
-        let expected_shape = Shape::new(2, 3);
-        let expected_shape = AxisShape::from_shape(expected_shape, expected_order);
-        let expected_data = vec![1, 2, 3, 4, 5, 6];
+        let rows = [[1, 2, 3], [4, 5, 6]];
+        let expected = {
+            let order = Order::RowMajor;
+            let shape = Shape::new(2, 3);
+            let shape = AxisShape::from_shape(shape, order);
+            let data = vec![1, 2, 3, 4, 5, 6];
+            Matrix { order, shape, data }
+        };
 
-        let iterable = [[1, 2, 3], [4, 5, 6]];
-
-        let matrix = Matrix::from_iter(iterable);
-        assert_eq!(matrix.order, expected_order);
-        assert_eq!(matrix.shape, expected_shape);
-        assert_eq!(matrix.data, expected_data);
+        let matrix = Matrix::from_iter(rows);
+        testkit::assert_strict_eq(&matrix, &expected);
     }
 
     #[test]

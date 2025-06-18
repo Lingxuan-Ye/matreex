@@ -634,182 +634,84 @@ mod internal {
 mod tests {
     use super::*;
     use crate::matrix;
+    use crate::testkit;
+    use crate::testkit::mock::MockIndex;
 
     #[test]
     fn test_matrix_get() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             assert_eq!(matrix.get((0, 0)), Ok(&1));
             assert_eq!(matrix.get((0, 1)), Ok(&2));
             assert_eq!(matrix.get((0, 2)), Ok(&3));
             assert_eq!(matrix.get((1, 0)), Ok(&4));
             assert_eq!(matrix.get((1, 1)), Ok(&5));
             assert_eq!(matrix.get((1, 2)), Ok(&6));
-        }
 
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert_eq!(matrix.get((0, 0)), Ok(&1));
-            assert_eq!(matrix.get((0, 1)), Ok(&2));
-            assert_eq!(matrix.get((0, 2)), Ok(&3));
-            assert_eq!(matrix.get((1, 0)), Ok(&4));
-            assert_eq!(matrix.get((1, 1)), Ok(&5));
-            assert_eq!(matrix.get((1, 2)), Ok(&6));
-        }
-
-        // errors
-        {
             assert_eq!(matrix.get((2, 0)), Err(Error::IndexOutOfBounds));
             assert_eq!(matrix.get((0, 3)), Err(Error::IndexOutOfBounds));
             assert_eq!(matrix.get((2, 3)), Err(Error::IndexOutOfBounds));
-        }
+        });
     }
 
     #[test]
     fn test_matrix_get_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[0, 0, 0], [0, 0, 0]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             *matrix.get_mut((0, 0)).unwrap() -= 1;
             *matrix.get_mut((0, 1)).unwrap() -= 2;
             *matrix.get_mut((0, 2)).unwrap() -= 3;
             *matrix.get_mut((1, 0)).unwrap() -= 4;
             *matrix.get_mut((1, 1)).unwrap() -= 5;
             *matrix.get_mut((1, 2)).unwrap() -= 6;
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            *matrix.get_mut((0, 0)).unwrap() -= 1;
-            *matrix.get_mut((0, 1)).unwrap() -= 2;
-            *matrix.get_mut((0, 2)).unwrap() -= 3;
-            *matrix.get_mut((1, 0)).unwrap() -= 4;
-            *matrix.get_mut((1, 1)).unwrap() -= 5;
-            *matrix.get_mut((1, 2)).unwrap() -= 6;
-            assert_eq!(matrix, expected);
-        }
-
-        // errors
-        {
-            let mut matrix = matrix.clone();
+            let expected = matrix![[0, 0, 0], [0, 0, 0]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             assert_eq!(matrix.get_mut((2, 0)), Err(Error::IndexOutOfBounds));
             assert_eq!(matrix.get_mut((0, 3)), Err(Error::IndexOutOfBounds));
             assert_eq!(matrix.get_mut((2, 3)), Err(Error::IndexOutOfBounds));
-        }
+        });
     }
 
     #[test]
     fn test_matrix_get_unchecked() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| unsafe {
             assert_eq!(matrix.get_unchecked((0, 0)), &1);
             assert_eq!(matrix.get_unchecked((0, 1)), &2);
             assert_eq!(matrix.get_unchecked((0, 2)), &3);
             assert_eq!(matrix.get_unchecked((1, 0)), &4);
             assert_eq!(matrix.get_unchecked((1, 1)), &5);
             assert_eq!(matrix.get_unchecked((1, 2)), &6);
-        }
-
-        // col-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert_eq!(matrix.get_unchecked((0, 0)), &1);
-            assert_eq!(matrix.get_unchecked((0, 1)), &2);
-            assert_eq!(matrix.get_unchecked((0, 2)), &3);
-            assert_eq!(matrix.get_unchecked((1, 0)), &4);
-            assert_eq!(matrix.get_unchecked((1, 1)), &5);
-            assert_eq!(matrix.get_unchecked((1, 2)), &6);
-        }
+        });
     }
 
     #[test]
     fn test_matrix_get_unchecked_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[0, 0, 0], [0, 0, 0]];
-
-        // row-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| unsafe {
             *matrix.get_unchecked_mut((0, 0)) -= 1;
             *matrix.get_unchecked_mut((0, 1)) -= 2;
             *matrix.get_unchecked_mut((0, 2)) -= 3;
             *matrix.get_unchecked_mut((1, 0)) -= 4;
             *matrix.get_unchecked_mut((1, 1)) -= 5;
             *matrix.get_unchecked_mut((1, 2)) -= 6;
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            *matrix.get_unchecked_mut((0, 0)) -= 1;
-            *matrix.get_unchecked_mut((0, 1)) -= 2;
-            *matrix.get_unchecked_mut((0, 2)) -= 3;
-            *matrix.get_unchecked_mut((1, 0)) -= 4;
-            *matrix.get_unchecked_mut((1, 1)) -= 5;
-            *matrix.get_unchecked_mut((1, 2)) -= 6;
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[0, 0, 0], [0, 0, 0]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
     fn test_matrix_index() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             assert_eq!(matrix[(0, 0)], 1);
             assert_eq!(matrix[(0, 1)], 2);
             assert_eq!(matrix[(0, 2)], 3);
             assert_eq!(matrix[(1, 0)], 4);
             assert_eq!(matrix[(1, 1)], 5);
             assert_eq!(matrix[(1, 2)], 6);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert_eq!(matrix[(0, 0)], 1);
-            assert_eq!(matrix[(0, 1)], 2);
-            assert_eq!(matrix[(0, 2)], 3);
-            assert_eq!(matrix[(1, 0)], 4);
-            assert_eq!(matrix[(1, 1)], 5);
-            assert_eq!(matrix[(1, 2)], 6);
-        }
+        });
     }
 
     #[test]
@@ -822,35 +724,16 @@ mod tests {
     #[test]
     fn test_matrix_index_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[0, 0, 0], [0, 0, 0]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix[(0, 0)] -= 1;
             matrix[(0, 1)] -= 2;
             matrix[(0, 2)] -= 3;
             matrix[(1, 0)] -= 4;
             matrix[(1, 1)] -= 5;
             matrix[(1, 2)] -= 6;
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix[(0, 0)] -= 1;
-            matrix[(0, 1)] -= 2;
-            matrix[(0, 2)] -= 3;
-            matrix[(1, 0)] -= 4;
-            matrix[(1, 1)] -= 5;
-            matrix[(1, 2)] -= 6;
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[0, 0, 0], [0, 0, 0]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
@@ -874,334 +757,180 @@ mod tests {
         assert_eq!(index, Index::new(3, 2));
     }
 
-    #[derive(Clone, Copy, Debug, PartialEq)]
-    struct I(usize, usize);
-
-    impl AsIndex for I {
-        fn row(&self) -> usize {
-            self.0
-        }
-
-        fn col(&self) -> usize {
-            self.1
-        }
-    }
-
-    #[test]
-    fn test_as_index() {
-        let index = I(2, 3);
-        assert_eq!(index.row(), 2);
-        assert_eq!(index.col(), 3);
-    }
-
     #[test]
     fn test_as_index_is_out_of_bounds() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            assert!(!MockIndex(0, 0).is_out_of_bounds(&matrix));
+            assert!(!MockIndex(0, 1).is_out_of_bounds(&matrix));
+            assert!(!MockIndex(0, 2).is_out_of_bounds(&matrix));
+            assert!(!MockIndex(1, 0).is_out_of_bounds(&matrix));
+            assert!(!MockIndex(1, 1).is_out_of_bounds(&matrix));
+            assert!(!MockIndex(1, 2).is_out_of_bounds(&matrix));
 
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
-            assert!(!I(0, 0).is_out_of_bounds(&matrix));
-            assert!(!I(0, 1).is_out_of_bounds(&matrix));
-            assert!(!I(0, 2).is_out_of_bounds(&matrix));
-            assert!(!I(1, 0).is_out_of_bounds(&matrix));
-            assert!(!I(1, 1).is_out_of_bounds(&matrix));
-            assert!(!I(1, 2).is_out_of_bounds(&matrix));
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert!(!I(0, 0).is_out_of_bounds(&matrix));
-            assert!(!I(0, 1).is_out_of_bounds(&matrix));
-            assert!(!I(0, 2).is_out_of_bounds(&matrix));
-            assert!(!I(1, 0).is_out_of_bounds(&matrix));
-            assert!(!I(1, 1).is_out_of_bounds(&matrix));
-            assert!(!I(1, 2).is_out_of_bounds(&matrix));
-        }
-
-        // out of bounds
-        {
-            assert!(I(2, 0).is_out_of_bounds(&matrix));
-            assert!(I(0, 3).is_out_of_bounds(&matrix));
-            assert!(I(2, 3).is_out_of_bounds(&matrix));
-        }
+            assert!(MockIndex(2, 0).is_out_of_bounds(&matrix));
+            assert!(MockIndex(0, 3).is_out_of_bounds(&matrix));
+            assert!(MockIndex(2, 3).is_out_of_bounds(&matrix));
+        });
     }
 
     #[test]
     fn test_as_index_ensure_in_bounds() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
-            assert_eq!(I(0, 0).ensure_in_bounds(&matrix), Ok(&I(0, 0)));
-            assert_eq!(I(0, 1).ensure_in_bounds(&matrix), Ok(&I(0, 1)));
-            assert_eq!(I(0, 2).ensure_in_bounds(&matrix), Ok(&I(0, 2)));
-            assert_eq!(I(1, 0).ensure_in_bounds(&matrix), Ok(&I(1, 0)));
-            assert_eq!(I(1, 1).ensure_in_bounds(&matrix), Ok(&I(1, 1)));
-            assert_eq!(I(1, 2).ensure_in_bounds(&matrix), Ok(&I(1, 2)));
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert_eq!(I(0, 0).ensure_in_bounds(&matrix), Ok(&I(0, 0)));
-            assert_eq!(I(0, 1).ensure_in_bounds(&matrix), Ok(&I(0, 1)));
-            assert_eq!(I(0, 2).ensure_in_bounds(&matrix), Ok(&I(0, 2)));
-            assert_eq!(I(1, 0).ensure_in_bounds(&matrix), Ok(&I(1, 0)));
-            assert_eq!(I(1, 1).ensure_in_bounds(&matrix), Ok(&I(1, 1)));
-            assert_eq!(I(1, 2).ensure_in_bounds(&matrix), Ok(&I(1, 2)));
-        }
-
-        // errors
-        {
+        testkit::for_each_order_unary(matrix, |matrix| {
             assert_eq!(
-                I(2, 0).ensure_in_bounds(&matrix),
+                MockIndex(0, 0).ensure_in_bounds(&matrix),
+                Ok(&MockIndex(0, 0))
+            );
+            assert_eq!(
+                MockIndex(0, 1).ensure_in_bounds(&matrix),
+                Ok(&MockIndex(0, 1))
+            );
+            assert_eq!(
+                MockIndex(0, 2).ensure_in_bounds(&matrix),
+                Ok(&MockIndex(0, 2))
+            );
+            assert_eq!(
+                MockIndex(1, 0).ensure_in_bounds(&matrix),
+                Ok(&MockIndex(1, 0))
+            );
+            assert_eq!(
+                MockIndex(1, 1).ensure_in_bounds(&matrix),
+                Ok(&MockIndex(1, 1))
+            );
+            assert_eq!(
+                MockIndex(1, 2).ensure_in_bounds(&matrix),
+                Ok(&MockIndex(1, 2))
+            );
+
+            assert_eq!(
+                MockIndex(2, 0).ensure_in_bounds(&matrix),
                 Err(Error::IndexOutOfBounds)
             );
             assert_eq!(
-                I(0, 3).ensure_in_bounds(&matrix),
+                MockIndex(0, 3).ensure_in_bounds(&matrix),
                 Err(Error::IndexOutOfBounds)
             );
             assert_eq!(
-                I(2, 3).ensure_in_bounds(&matrix),
+                MockIndex(2, 3).ensure_in_bounds(&matrix),
                 Err(Error::IndexOutOfBounds)
             );
-        }
+        });
     }
 
     #[test]
     fn test_as_index_get() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            assert_eq!(MockIndex(0, 0).get(&matrix), Ok(&1));
+            assert_eq!(MockIndex(0, 1).get(&matrix), Ok(&2));
+            assert_eq!(MockIndex(0, 2).get(&matrix), Ok(&3));
+            assert_eq!(MockIndex(1, 0).get(&matrix), Ok(&4));
+            assert_eq!(MockIndex(1, 1).get(&matrix), Ok(&5));
+            assert_eq!(MockIndex(1, 2).get(&matrix), Ok(&6));
 
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
-            assert_eq!(I(0, 0).get(&matrix), Ok(&1));
-            assert_eq!(I(0, 1).get(&matrix), Ok(&2));
-            assert_eq!(I(0, 2).get(&matrix), Ok(&3));
-            assert_eq!(I(1, 0).get(&matrix), Ok(&4));
-            assert_eq!(I(1, 1).get(&matrix), Ok(&5));
-            assert_eq!(I(1, 2).get(&matrix), Ok(&6));
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert_eq!(I(0, 0).get(&matrix), Ok(&1));
-            assert_eq!(I(0, 1).get(&matrix), Ok(&2));
-            assert_eq!(I(0, 2).get(&matrix), Ok(&3));
-            assert_eq!(I(1, 0).get(&matrix), Ok(&4));
-            assert_eq!(I(1, 1).get(&matrix), Ok(&5));
-            assert_eq!(I(1, 2).get(&matrix), Ok(&6));
-        }
-
-        // errors
-        {
-            assert_eq!(I(2, 0).get(&matrix), Err(Error::IndexOutOfBounds));
-            assert_eq!(I(0, 3).get(&matrix), Err(Error::IndexOutOfBounds));
-            assert_eq!(I(2, 3).get(&matrix), Err(Error::IndexOutOfBounds));
-        }
+            assert_eq!(MockIndex(2, 0).get(&matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!(MockIndex(0, 3).get(&matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!(MockIndex(2, 3).get(&matrix), Err(Error::IndexOutOfBounds));
+        });
     }
 
     #[test]
     fn test_as_index_get_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[0, 0, 0], [0, 0, 0]];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            *MockIndex(0, 0).get_mut(&mut matrix).unwrap() -= 1;
+            *MockIndex(0, 1).get_mut(&mut matrix).unwrap() -= 2;
+            *MockIndex(0, 2).get_mut(&mut matrix).unwrap() -= 3;
+            *MockIndex(1, 0).get_mut(&mut matrix).unwrap() -= 4;
+            *MockIndex(1, 1).get_mut(&mut matrix).unwrap() -= 5;
+            *MockIndex(1, 2).get_mut(&mut matrix).unwrap() -= 6;
+            let expected = matrix![[0, 0, 0], [0, 0, 0]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
-            *I(0, 0).get_mut(&mut matrix).unwrap() -= 1;
-            *I(0, 1).get_mut(&mut matrix).unwrap() -= 2;
-            *I(0, 2).get_mut(&mut matrix).unwrap() -= 3;
-            *I(1, 0).get_mut(&mut matrix).unwrap() -= 4;
-            *I(1, 1).get_mut(&mut matrix).unwrap() -= 5;
-            *I(1, 2).get_mut(&mut matrix).unwrap() -= 6;
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            *I(0, 0).get_mut(&mut matrix).unwrap() -= 1;
-            *I(0, 1).get_mut(&mut matrix).unwrap() -= 2;
-            *I(0, 2).get_mut(&mut matrix).unwrap() -= 3;
-            *I(1, 0).get_mut(&mut matrix).unwrap() -= 4;
-            *I(1, 1).get_mut(&mut matrix).unwrap() -= 5;
-            *I(1, 2).get_mut(&mut matrix).unwrap() -= 6;
-            assert_eq!(matrix, expected);
-        }
-
-        // errors
-        {
-            let mut matrix = matrix.clone();
-
-            assert_eq!(I(2, 0).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
-            assert_eq!(I(0, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
-            assert_eq!(I(2, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
-        }
+            assert_eq!(
+                MockIndex(2, 0).get_mut(&mut matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                MockIndex(0, 3).get_mut(&mut matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                MockIndex(2, 3).get_mut(&mut matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+        });
     }
 
     #[test]
     fn test_as_index_get_unchecked() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
-            assert_eq!(I(0, 0).get_unchecked(&matrix), &1);
-            assert_eq!(I(0, 1).get_unchecked(&matrix), &2);
-            assert_eq!(I(0, 2).get_unchecked(&matrix), &3);
-            assert_eq!(I(1, 0).get_unchecked(&matrix), &4);
-            assert_eq!(I(1, 1).get_unchecked(&matrix), &5);
-            assert_eq!(I(1, 2).get_unchecked(&matrix), &6);
-        }
-
-        // col-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert_eq!(I(0, 0).get_unchecked(&matrix), &1);
-            assert_eq!(I(0, 1).get_unchecked(&matrix), &2);
-            assert_eq!(I(0, 2).get_unchecked(&matrix), &3);
-            assert_eq!(I(1, 0).get_unchecked(&matrix), &4);
-            assert_eq!(I(1, 1).get_unchecked(&matrix), &5);
-            assert_eq!(I(1, 2).get_unchecked(&matrix), &6);
-        }
+        testkit::for_each_order_unary(matrix, |matrix| unsafe {
+            assert_eq!(MockIndex(0, 0).get_unchecked(&matrix), &1);
+            assert_eq!(MockIndex(0, 1).get_unchecked(&matrix), &2);
+            assert_eq!(MockIndex(0, 2).get_unchecked(&matrix), &3);
+            assert_eq!(MockIndex(1, 0).get_unchecked(&matrix), &4);
+            assert_eq!(MockIndex(1, 1).get_unchecked(&matrix), &5);
+            assert_eq!(MockIndex(1, 2).get_unchecked(&matrix), &6);
+        });
     }
 
     #[test]
     fn test_as_index_get_unchecked_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[0, 0, 0], [0, 0, 0]];
-
-        // row-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
-            *I(0, 0).get_unchecked_mut(&mut matrix) -= 1;
-            *I(0, 1).get_unchecked_mut(&mut matrix) -= 2;
-            *I(0, 2).get_unchecked_mut(&mut matrix) -= 3;
-            *I(1, 0).get_unchecked_mut(&mut matrix) -= 4;
-            *I(1, 1).get_unchecked_mut(&mut matrix) -= 5;
-            *I(1, 2).get_unchecked_mut(&mut matrix) -= 6;
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            *I(0, 0).get_unchecked_mut(&mut matrix) -= 1;
-            *I(0, 1).get_unchecked_mut(&mut matrix) -= 2;
-            *I(0, 2).get_unchecked_mut(&mut matrix) -= 3;
-            *I(1, 0).get_unchecked_mut(&mut matrix) -= 4;
-            *I(1, 1).get_unchecked_mut(&mut matrix) -= 5;
-            *I(1, 2).get_unchecked_mut(&mut matrix) -= 6;
-            assert_eq!(matrix, expected);
-        }
+        testkit::for_each_order_unary(matrix, |mut matrix| unsafe {
+            *MockIndex(0, 0).get_unchecked_mut(&mut matrix) -= 1;
+            *MockIndex(0, 1).get_unchecked_mut(&mut matrix) -= 2;
+            *MockIndex(0, 2).get_unchecked_mut(&mut matrix) -= 3;
+            *MockIndex(1, 0).get_unchecked_mut(&mut matrix) -= 4;
+            *MockIndex(1, 1).get_unchecked_mut(&mut matrix) -= 5;
+            *MockIndex(1, 2).get_unchecked_mut(&mut matrix) -= 6;
+            let expected = matrix![[0, 0, 0], [0, 0, 0]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
     fn test_as_index_index() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
-            assert_eq!(I(0, 0).index(&matrix), &1);
-            assert_eq!(I(0, 1).index(&matrix), &2);
-            assert_eq!(I(0, 2).index(&matrix), &3);
-            assert_eq!(I(1, 0).index(&matrix), &4);
-            assert_eq!(I(1, 1).index(&matrix), &5);
-            assert_eq!(I(1, 2).index(&matrix), &6);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert_eq!(I(0, 0).index(&matrix), &1);
-            assert_eq!(I(0, 1).index(&matrix), &2);
-            assert_eq!(I(0, 2).index(&matrix), &3);
-            assert_eq!(I(1, 0).index(&matrix), &4);
-            assert_eq!(I(1, 1).index(&matrix), &5);
-            assert_eq!(I(1, 2).index(&matrix), &6);
-        }
+        testkit::for_each_order_unary(matrix, |matrix| {
+            assert_eq!(MockIndex(0, 0).index(&matrix), &1);
+            assert_eq!(MockIndex(0, 1).index(&matrix), &2);
+            assert_eq!(MockIndex(0, 2).index(&matrix), &3);
+            assert_eq!(MockIndex(1, 0).index(&matrix), &4);
+            assert_eq!(MockIndex(1, 1).index(&matrix), &5);
+            assert_eq!(MockIndex(1, 2).index(&matrix), &6);
+        });
     }
 
     #[test]
     #[should_panic]
     fn test_as_index_index_out_of_bounds() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        I(2, 3).index(&matrix);
+        MockIndex(2, 3).index(&matrix);
     }
 
     #[test]
     fn test_as_index_index_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[0, 0, 0], [0, 0, 0]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
-            *I(0, 0).index_mut(&mut matrix) -= 1;
-            *I(0, 1).index_mut(&mut matrix) -= 2;
-            *I(0, 2).index_mut(&mut matrix) -= 3;
-            *I(1, 0).index_mut(&mut matrix) -= 4;
-            *I(1, 1).index_mut(&mut matrix) -= 5;
-            *I(1, 2).index_mut(&mut matrix) -= 6;
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            *I(0, 0).index_mut(&mut matrix) -= 1;
-            *I(0, 1).index_mut(&mut matrix) -= 2;
-            *I(0, 2).index_mut(&mut matrix) -= 3;
-            *I(1, 0).index_mut(&mut matrix) -= 4;
-            *I(1, 1).index_mut(&mut matrix) -= 5;
-            *I(1, 2).index_mut(&mut matrix) -= 6;
-            assert_eq!(matrix, expected);
-        }
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            *MockIndex(0, 0).index_mut(&mut matrix) -= 1;
+            *MockIndex(0, 1).index_mut(&mut matrix) -= 2;
+            *MockIndex(0, 2).index_mut(&mut matrix) -= 3;
+            *MockIndex(1, 0).index_mut(&mut matrix) -= 4;
+            *MockIndex(1, 1).index_mut(&mut matrix) -= 5;
+            *MockIndex(1, 2).index_mut(&mut matrix) -= 6;
+            let expected = matrix![[0, 0, 0], [0, 0, 0]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
     #[should_panic]
     fn test_as_index_index_mut_out_of_bounds() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        *I(2, 3).index_mut(&mut matrix) += 2;
+        *MockIndex(2, 3).index_mut(&mut matrix) += 2;
     }
 
     #[test]
@@ -1221,77 +950,38 @@ mod tests {
     #[test]
     fn test_wrapping_index_is_out_of_bounds() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
                     assert!(!WrappingIndex::new(row, col).is_out_of_bounds(&matrix));
                 }
             }
-        }
+        });
 
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            for row in (-6..=6).step_by(2) {
-                for col in (-6..=6).step_by(3) {
-                    assert!(!WrappingIndex::new(row, col).is_out_of_bounds(&matrix));
-                }
-            }
-        }
-
-        // out of bounds
-        {
-            let matrix = Matrix::<i32>::new();
-
+        let matrix = Matrix::<i32>::new();
+        testkit::for_each_order_unary(matrix, |matrix| {
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
                     assert!(WrappingIndex::new(row, col).is_out_of_bounds(&matrix));
                 }
             }
-        }
+        });
     }
 
     #[test]
     fn test_wrapping_index_ensure_in_bounds() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
                     let index = WrappingIndex::new(row, col);
                     assert_eq!(index.ensure_in_bounds(&matrix), Ok(&index));
                 }
             }
-        }
+        });
 
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            for row in (-6..=6).step_by(2) {
-                for col in (-6..=6).step_by(3) {
-                    let index = WrappingIndex::new(row, col);
-                    assert_eq!(index.ensure_in_bounds(&matrix), Ok(&index));
-                }
-            }
-        }
-
-        // errors
-        {
-            let matrix = Matrix::<i32>::new();
-
+        let matrix = Matrix::<i32>::new();
+        testkit::for_each_order_unary(matrix, |matrix| {
             for row in (-6..=6).step_by(2) {
                 for col in (-6..=6).step_by(3) {
                     assert_eq!(
@@ -1300,18 +990,13 @@ mod tests {
                     );
                 }
             }
-        }
+        });
     }
 
     #[test]
     fn test_wrapping_index_get() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             assert_eq!(WrappingIndex::new(0, 0).get(&matrix), Ok(&1));
             assert_eq!(WrappingIndex::new(0, 1).get(&matrix), Ok(&2));
             assert_eq!(WrappingIndex::new(0, 2).get(&matrix), Ok(&3));
@@ -1323,30 +1008,10 @@ mod tests {
                     assert_eq!(WrappingIndex::new(row, col).get(&matrix), Ok(&1));
                 }
             }
-        }
+        });
 
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert_eq!(WrappingIndex::new(0, 0).get(&matrix), Ok(&1));
-            assert_eq!(WrappingIndex::new(0, 1).get(&matrix), Ok(&2));
-            assert_eq!(WrappingIndex::new(0, 2).get(&matrix), Ok(&3));
-            assert_eq!(WrappingIndex::new(1, 0).get(&matrix), Ok(&4));
-            assert_eq!(WrappingIndex::new(1, 1).get(&matrix), Ok(&5));
-            assert_eq!(WrappingIndex::new(1, 2).get(&matrix), Ok(&6));
-            for row in (-6..=6).step_by(2) {
-                for col in (-6..=6).step_by(3) {
-                    assert_eq!(WrappingIndex::new(row, col).get(&matrix), Ok(&1));
-                }
-            }
-        }
-
-        // errors
-        {
-            let matrix = Matrix::<i32>::new();
-
+        let matrix = Matrix::<i32>::new();
+        testkit::for_each_order_unary(matrix, |matrix| {
             assert_eq!(
                 WrappingIndex::new(0, 0).get(&matrix),
                 Err(Error::IndexOutOfBounds)
@@ -1379,19 +1044,13 @@ mod tests {
                     );
                 }
             }
-        }
+        });
     }
 
     #[test]
     fn test_wrapping_index_get_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[-35, 0, 0], [0, 0, 0]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             *WrappingIndex::new(0, 0).get_mut(&mut matrix).unwrap() -= 1;
             *WrappingIndex::new(0, 1).get_mut(&mut matrix).unwrap() -= 2;
             *WrappingIndex::new(0, 2).get_mut(&mut matrix).unwrap() -= 3;
@@ -1403,32 +1062,12 @@ mod tests {
                     *WrappingIndex::new(row, col).get_mut(&mut matrix).unwrap() -= 1;
                 }
             }
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[-35, 0, 0], [0, 0, 0]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
 
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            *WrappingIndex::new(0, 0).get_mut(&mut matrix).unwrap() -= 1;
-            *WrappingIndex::new(0, 1).get_mut(&mut matrix).unwrap() -= 2;
-            *WrappingIndex::new(0, 2).get_mut(&mut matrix).unwrap() -= 3;
-            *WrappingIndex::new(1, 0).get_mut(&mut matrix).unwrap() -= 4;
-            *WrappingIndex::new(1, 1).get_mut(&mut matrix).unwrap() -= 5;
-            *WrappingIndex::new(1, 2).get_mut(&mut matrix).unwrap() -= 6;
-            for row in (-6..=6).step_by(2) {
-                for col in (-6..=6).step_by(3) {
-                    *WrappingIndex::new(row, col).get_mut(&mut matrix).unwrap() -= 1;
-                }
-            }
-            assert_eq!(matrix, expected);
-        }
-
-        // errors
-        {
-            let mut matrix = Matrix::<i32>::new();
-
+        let matrix = Matrix::<i32>::new();
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             assert_eq!(
                 WrappingIndex::new(0, 0).get_mut(&mut matrix),
                 Err(Error::IndexOutOfBounds)
@@ -1461,18 +1100,13 @@ mod tests {
                     );
                 }
             }
-        }
+        });
     }
 
     #[test]
     fn test_wrapping_index_get_unchecked() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| unsafe {
             assert_eq!(WrappingIndex::new(0, 0).get_unchecked(&matrix), &1);
             assert_eq!(WrappingIndex::new(0, 1).get_unchecked(&matrix), &2);
             assert_eq!(WrappingIndex::new(0, 2).get_unchecked(&matrix), &3);
@@ -1484,25 +1118,7 @@ mod tests {
                     assert_eq!(WrappingIndex::new(row, col).get_unchecked(&matrix), &1);
                 }
             }
-        }
-
-        // col-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert_eq!(WrappingIndex::new(0, 0).get_unchecked(&matrix), &1);
-            assert_eq!(WrappingIndex::new(0, 1).get_unchecked(&matrix), &2);
-            assert_eq!(WrappingIndex::new(0, 2).get_unchecked(&matrix), &3);
-            assert_eq!(WrappingIndex::new(1, 0).get_unchecked(&matrix), &4);
-            assert_eq!(WrappingIndex::new(1, 1).get_unchecked(&matrix), &5);
-            assert_eq!(WrappingIndex::new(1, 2).get_unchecked(&matrix), &6);
-            for row in (-6..=6).step_by(2) {
-                for col in (-6..=6).step_by(3) {
-                    assert_eq!(WrappingIndex::new(row, col).get_unchecked(&matrix), &1);
-                }
-            }
-        }
+        });
     }
 
     #[test]
@@ -1517,13 +1133,7 @@ mod tests {
     #[test]
     fn test_wrapping_index_get_unchecked_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[-35, 0, 0], [0, 0, 0]];
-
-        // row-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| unsafe {
             *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) -= 1;
             *WrappingIndex::new(0, 1).get_unchecked_mut(&mut matrix) -= 2;
             *WrappingIndex::new(0, 2).get_unchecked_mut(&mut matrix) -= 3;
@@ -1535,27 +1145,9 @@ mod tests {
                     *WrappingIndex::new(row, col).get_unchecked_mut(&mut matrix) -= 1;
                 }
             }
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        unsafe {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) -= 1;
-            *WrappingIndex::new(0, 1).get_unchecked_mut(&mut matrix) -= 2;
-            *WrappingIndex::new(0, 2).get_unchecked_mut(&mut matrix) -= 3;
-            *WrappingIndex::new(1, 0).get_unchecked_mut(&mut matrix) -= 4;
-            *WrappingIndex::new(1, 1).get_unchecked_mut(&mut matrix) -= 5;
-            *WrappingIndex::new(1, 2).get_unchecked_mut(&mut matrix) -= 6;
-            for row in (-6..=6).step_by(2) {
-                for col in (-6..=6).step_by(3) {
-                    *WrappingIndex::new(row, col).get_unchecked_mut(&mut matrix) -= 1;
-                }
-            }
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[-35, 0, 0], [0, 0, 0]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
@@ -1570,12 +1162,7 @@ mod tests {
     #[test]
     fn test_wrapping_index_index() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             assert_eq!(WrappingIndex::new(0, 0).index(&matrix), &1);
             assert_eq!(WrappingIndex::new(0, 1).index(&matrix), &2);
             assert_eq!(WrappingIndex::new(0, 2).index(&matrix), &3);
@@ -1587,25 +1174,7 @@ mod tests {
                     assert_eq!(WrappingIndex::new(row, col).index(&matrix), &1);
                 }
             }
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            assert_eq!(WrappingIndex::new(0, 0).index(&matrix), &1);
-            assert_eq!(WrappingIndex::new(0, 1).index(&matrix), &2);
-            assert_eq!(WrappingIndex::new(0, 2).index(&matrix), &3);
-            assert_eq!(WrappingIndex::new(1, 0).index(&matrix), &4);
-            assert_eq!(WrappingIndex::new(1, 1).index(&matrix), &5);
-            assert_eq!(WrappingIndex::new(1, 2).index(&matrix), &6);
-            for row in (-6..=6).step_by(2) {
-                for col in (-6..=6).step_by(3) {
-                    assert_eq!(WrappingIndex::new(row, col).index(&matrix), &1);
-                }
-            }
-        }
+        });
     }
 
     #[test]
@@ -1618,13 +1187,7 @@ mod tests {
     #[test]
     fn test_wrapping_index_index_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[-35, 0, 0], [0, 0, 0]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             *WrappingIndex::new(0, 0).index_mut(&mut matrix) -= 1;
             *WrappingIndex::new(0, 1).index_mut(&mut matrix) -= 2;
             *WrappingIndex::new(0, 2).index_mut(&mut matrix) -= 3;
@@ -1636,27 +1199,9 @@ mod tests {
                     *WrappingIndex::new(row, col).index_mut(&mut matrix) -= 1;
                 }
             }
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            *WrappingIndex::new(0, 0).index_mut(&mut matrix) -= 1;
-            *WrappingIndex::new(0, 1).index_mut(&mut matrix) -= 2;
-            *WrappingIndex::new(0, 2).index_mut(&mut matrix) -= 3;
-            *WrappingIndex::new(1, 0).index_mut(&mut matrix) -= 4;
-            *WrappingIndex::new(1, 1).index_mut(&mut matrix) -= 5;
-            *WrappingIndex::new(1, 2).index_mut(&mut matrix) -= 6;
-            for row in (-6..=6).step_by(2) {
-                for col in (-6..=6).step_by(3) {
-                    *WrappingIndex::new(row, col).index_mut(&mut matrix) -= 1;
-                }
-            }
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[-35, 0, 0], [0, 0, 0]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]

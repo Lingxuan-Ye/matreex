@@ -34,13 +34,35 @@ where
 #[cfg(test)]
 mod tests {
     use crate::matrix;
+    use crate::testkit;
+    use crate::testkit::mock::{MockT, MockU};
 
     #[test]
     fn neg() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[-1, -2, -3], [-4, -5, -6]];
+        let matrix = matrix![
+            [MockT(1), MockT(2), MockT(3)],
+            [MockT(4), MockT(5), MockT(6)],
+        ];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let output = -matrix;
+            let expected = matrix![
+                [MockU(-1), MockU(-2), MockU(-3)],
+                [MockU(-4), MockU(-5), MockU(-6)],
+            ];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        assert_eq!(-matrix.clone(), expected);
-        assert_eq!(-&matrix, expected);
+        let matrix = matrix![
+            [MockT(1), MockT(2), MockT(3)],
+            [MockT(4), MockT(5), MockT(6)],
+        ];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let output = -&matrix;
+            let expected = matrix![
+                [MockU(-1), MockU(-2), MockU(-3)],
+                [MockU(-4), MockU(-5), MockU(-6)],
+            ];
+            testkit::assert_loose_eq(&output, &expected);
+        });
     }
 }

@@ -153,190 +153,128 @@ impl<T> Matrix<T> {
 mod tests {
     use super::*;
     use crate::matrix;
+    use crate::testkit;
 
     #[test]
     fn test_swap() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix.swap((0, 0), (0, 0)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap((0, 0), (1, 1)).unwrap();
-            assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
+            let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap((0, 0), (1, 1)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap((1, 1), (0, 0)).unwrap();
-            assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
+            let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap((1, 1), (0, 0)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-        }
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix.swap((0, 0), (0, 0)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.swap((0, 0), (1, 1)).unwrap();
-            assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
-
-            matrix.swap((0, 0), (1, 1)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.swap((1, 1), (0, 0)).unwrap();
-            assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
-
-            matrix.swap((1, 1), (0, 0)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-        }
-
-        // errors
-        {
-            let mut matrix = matrix.clone();
             let unchanged = matrix.clone();
 
-            assert_eq!(matrix.swap((0, 0), (2, 2)), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix, unchanged);
+            let error = matrix.swap((0, 0), (2, 2)).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            testkit::assert_loose_eq(&matrix, &unchanged);
 
-            assert_eq!(matrix.swap((2, 2), (0, 0)), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix, unchanged);
+            let error = matrix.swap((2, 2), (0, 0)).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            testkit::assert_loose_eq(&matrix, &unchanged);
 
-            assert_eq!(matrix.swap((2, 2), (3, 3)), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix, unchanged);
-        }
+            let error = matrix.swap((2, 2), (3, 3)).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            testkit::assert_loose_eq(&matrix, &unchanged);
+        });
     }
 
     #[test]
     fn test_swap_rows() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix.swap_rows(0, 0).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap_rows(0, 1).unwrap();
-            assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
+            let expected = matrix![[4, 5, 6], [1, 2, 3]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap_rows(0, 1).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap_rows(1, 0).unwrap();
-            assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
+            let expected = matrix![[4, 5, 6], [1, 2, 3]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap_rows(1, 0).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-        }
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix.swap_rows(0, 0).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.swap_rows(0, 1).unwrap();
-            assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
-
-            matrix.swap_rows(0, 1).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.swap_rows(1, 0).unwrap();
-            assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
-
-            matrix.swap_rows(1, 0).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-        }
-
-        // errors
-        {
-            let mut matrix = matrix.clone();
             let unchanged = matrix.clone();
 
-            assert_eq!(matrix.swap_rows(0, 2), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix, unchanged);
+            let error = matrix.swap_rows(0, 2).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            testkit::assert_loose_eq(&matrix, &unchanged);
 
-            assert_eq!(matrix.swap_rows(2, 0), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix, unchanged);
+            let error = matrix.swap_rows(2, 0).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            testkit::assert_loose_eq(&matrix, &unchanged);
 
-            assert_eq!(matrix.swap_rows(2, 3), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix, unchanged);
-        }
+            let error = matrix.swap_rows(2, 3).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            testkit::assert_loose_eq(&matrix, &unchanged);
+        });
     }
 
     #[test]
     fn test_swap_cols() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
 
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix.swap_cols(0, 0).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap_cols(0, 1).unwrap();
-            assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
+            let expected = matrix![[2, 1, 3], [5, 4, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap_cols(0, 1).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap_cols(1, 0).unwrap();
-            assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
+            let expected = matrix![[2, 1, 3], [5, 4, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
             matrix.swap_cols(1, 0).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-        }
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix.swap_cols(0, 0).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.swap_cols(0, 1).unwrap();
-            assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
-
-            matrix.swap_cols(0, 1).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.swap_cols(1, 0).unwrap();
-            assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
-
-            matrix.swap_cols(1, 0).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-        }
-
-        // errors
-        {
-            let mut matrix = matrix.clone();
             let unchanged = matrix.clone();
 
-            assert_eq!(matrix.swap_cols(0, 3), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix, unchanged);
+            let error = matrix.swap_cols(0, 3).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            testkit::assert_loose_eq(&matrix, &unchanged);
 
-            assert_eq!(matrix.swap_cols(3, 0), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix, unchanged);
+            let error = matrix.swap_cols(3, 0).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            testkit::assert_loose_eq(&matrix, &unchanged);
 
-            assert_eq!(matrix.swap_cols(3, 4), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix, unchanged);
-        }
+            let error = matrix.swap_cols(3, 4).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            testkit::assert_loose_eq(&matrix, &unchanged);
+        });
     }
 }
