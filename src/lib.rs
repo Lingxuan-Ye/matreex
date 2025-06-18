@@ -104,6 +104,7 @@ use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
 
+pub mod convert;
 pub mod error;
 pub mod index;
 pub mod iter;
@@ -115,7 +116,6 @@ pub mod parallel;
 
 mod arithmetic;
 mod construct;
-mod convert;
 mod eq;
 mod fmt;
 mod hash;

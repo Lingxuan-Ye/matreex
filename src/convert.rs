@@ -1,8 +1,13 @@
+pub use self::from_cols::{FromColIterator, FromCols, TryFromCols};
+pub use self::from_rows::{FromRowIterator, FromRows, TryFromRows};
+
 use crate::Matrix;
 use crate::error::{Error, Result};
-use crate::order::Order;
-use crate::shape::{AxisShape, Shape};
+use alloc::boxed::Box;
 use alloc::vec::Vec;
+
+mod from_cols;
+mod from_rows;
 
 impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     /// Converts to [`Matrix<T>`] from a sequence of rows.
@@ -22,12 +27,44 @@ impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     /// // this is actually a circular validation
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[inline]
     fn from(value: [[T; C]; R]) -> Self {
-        let order = Order::RowMajor;
-        let shape = Shape::new(R, C);
-        let shape = AxisShape::from_shape(shape, order);
-        let data = value.into_iter().flatten().collect();
-        Self { order, shape, data }
+        Self::from_rows(value)
+    }
+}
+
+impl<T, const R: usize, const C: usize> From<[Box<[T; C]>; R]> for Matrix<T> {
+    #[inline]
+    fn from(value: [Box<[T; C]>; R]) -> Self {
+        Self::from_rows(value)
+    }
+}
+
+impl<T, const R: usize, const C: usize> From<Box<[[T; C]; R]>> for Matrix<T> {
+    #[inline]
+    fn from(value: Box<[[T; C]; R]>) -> Self {
+        Self::from_rows(value)
+    }
+}
+
+impl<T, const R: usize, const C: usize> From<Box<[Box<[T; C]>; R]>> for Matrix<T> {
+    #[inline]
+    fn from(value: Box<[Box<[T; C]>; R]>) -> Self {
+        Self::from_rows(value)
+    }
+}
+
+impl<T, const C: usize> From<Box<[[T; C]]>> for Matrix<T> {
+    #[inline]
+    fn from(value: Box<[[T; C]]>) -> Self {
+        Self::from_rows(value)
+    }
+}
+
+impl<T, const C: usize> From<Box<[Box<[T; C]>]>> for Matrix<T> {
+    #[inline]
+    fn from(value: Box<[Box<[T; C]>]>) -> Self {
+        Self::from_rows(value)
     }
 }
 
@@ -48,13 +85,25 @@ impl<T, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
     /// let matrix = Matrix::from(rows);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[inline]
     fn from(value: Vec<[T; C]>) -> Self {
-        let order = Order::RowMajor;
-        let nrows = value.len();
-        let shape = Shape::new(nrows, C);
-        let shape = AxisShape::from_shape(shape, order);
-        let data = value.into_iter().flatten().collect();
-        Self { order, shape, data }
+        Self::from_rows(value)
+    }
+}
+
+impl<T, const C: usize> From<Vec<Box<[T; C]>>> for Matrix<T> {
+    #[inline]
+    fn from(value: Vec<Box<[T; C]>>) -> Self {
+        Self::from_rows(value)
+    }
+}
+
+impl<T, const R: usize> TryFrom<[Box<[T]>; R]> for Matrix<T> {
+    type Error = Error;
+
+    #[inline]
+    fn try_from(value: [Box<[T]>; R]) -> Result<Self> {
+        Self::try_from_rows(value)
     }
 }
 
@@ -83,23 +132,54 @@ impl<T, const R: usize> TryFrom<[Vec<T>; R]> for Matrix<T> {
     /// let matrix = Matrix::try_from(rows);
     /// assert_eq!(matrix, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
     /// ```
+    #[inline]
     fn try_from(value: [Vec<T>; R]) -> Result<Self> {
-        let order = Order::RowMajor;
-        let ncols = match value.first() {
-            Some(row) => row.len(),
-            None => 0,
-        };
-        let shape = Shape::new(R, ncols);
-        let shape = AxisShape::from_shape(shape, order);
-        let size = shape.size::<T>()?;
-        let mut data = Vec::with_capacity(size);
-        for row in value {
-            if row.len() != ncols {
-                return Err(Error::LengthInconsistent);
-            }
-            data.extend(row);
-        }
-        Ok(Self { order, shape, data })
+        Self::try_from_rows(value)
+    }
+}
+
+impl<T, const R: usize> TryFrom<Box<[Box<[T]>; R]>> for Matrix<T> {
+    type Error = Error;
+
+    #[inline]
+    fn try_from(value: Box<[Box<[T]>; R]>) -> Result<Self> {
+        Self::try_from_rows(value)
+    }
+}
+
+impl<T, const R: usize> TryFrom<Box<[Vec<T>; R]>> for Matrix<T> {
+    type Error = Error;
+
+    #[inline]
+    fn try_from(value: Box<[Vec<T>; R]>) -> Result<Self> {
+        Self::try_from_rows(value)
+    }
+}
+
+impl<T> TryFrom<Box<[Box<[T]>]>> for Matrix<T> {
+    type Error = Error;
+
+    #[inline]
+    fn try_from(value: Box<[Box<[T]>]>) -> Result<Self> {
+        Self::try_from_rows(value)
+    }
+}
+
+impl<T> TryFrom<Box<[Vec<T>]>> for Matrix<T> {
+    type Error = Error;
+
+    #[inline]
+    fn try_from(value: Box<[Vec<T>]>) -> Result<Self> {
+        Self::try_from_rows(value)
+    }
+}
+
+impl<T> TryFrom<Vec<Box<[T]>>> for Matrix<T> {
+    type Error = Error;
+
+    #[inline]
+    fn try_from(value: Vec<Box<[T]>>) -> Result<Self> {
+        Self::try_from_rows(value)
     }
 }
 
@@ -128,24 +208,9 @@ impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
     /// let matrix = Matrix::try_from(rows);
     /// assert_eq!(matrix, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
     /// ```
+    #[inline]
     fn try_from(value: Vec<Vec<T>>) -> Result<Self> {
-        let order = Order::RowMajor;
-        let nrows = value.len();
-        let ncols = match value.first() {
-            Some(row) => row.len(),
-            None => 0,
-        };
-        let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
-        let size = shape.size::<T>()?;
-        let mut data = Vec::with_capacity(size);
-        for row in value {
-            if row.len() != ncols {
-                return Err(Error::LengthInconsistent);
-            }
-            data.extend(row);
-        }
-        Ok(Self { order, shape, data })
+        Self::try_from_rows(value)
     }
 }
 
@@ -173,39 +238,20 @@ where
     /// let matrix = Matrix::from_iter(rows);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[inline]
     fn from_iter<M>(iter: M) -> Self
     where
         M: IntoIterator<Item = V>,
     {
-        let mut iter = iter.into_iter();
-        let Some(row) = iter.next() else {
-            return Self::new();
-        };
-        // could panic if capacity overflows
-        let mut data: Vec<T> = row.into_iter().collect();
-        let mut nrows = 1;
-        let ncols = data.len();
-        let mut size = ncols;
-        for row in iter {
-            // could panic if capacity overflows
-            data.extend(row);
-            if data.len() - size != ncols {
-                panic!("{}", Error::LengthInconsistent);
-            }
-            nrows += 1;
-            size = data.len();
-        }
-        data.shrink_to_fit();
-        let order = Order::RowMajor;
-        let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
-        Self { order, shape, data }
+        Self::from_row_iter(iter)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::order::Order;
+    use crate::shape::{AxisShape, Shape};
     use crate::testkit;
     use alloc::vec;
 
