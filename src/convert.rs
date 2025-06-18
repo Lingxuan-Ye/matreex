@@ -58,36 +58,6 @@ impl<T, const C: usize> From<Vec<[T; C]>> for Matrix<T> {
     }
 }
 
-impl<T, const C: usize> From<&[[T; C]]> for Matrix<T>
-where
-    T: Clone,
-{
-    /// Converts to [`Matrix<T>`] from a sequence of rows.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be [`Order::RowMajor`],
-    /// regardless of the default.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let rows = &[[1, 2, 3], [4, 5, 6]][..];
-    /// let matrix = Matrix::from(rows);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    fn from(value: &[[T; C]]) -> Self {
-        let order = Order::RowMajor;
-        let nrows = value.len();
-        let shape = Shape::new(nrows, C);
-        let shape = AxisShape::from_shape(shape, order);
-        let data = value.iter().flatten().cloned().collect();
-        Self { order, shape, data }
-    }
-}
-
 impl<T, const R: usize> TryFrom<[Vec<T>; R]> for Matrix<T> {
     type Error = Error;
 
@@ -179,55 +149,6 @@ impl<T> TryFrom<Vec<Vec<T>>> for Matrix<T> {
     }
 }
 
-impl<T> TryFrom<&[Vec<T>]> for Matrix<T>
-where
-    T: Clone,
-{
-    type Error = Error;
-
-    /// Converts to [`Matrix<T>`] from a sequence of rows.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
-    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be [`Order::RowMajor`],
-    /// regardless of the default.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let rows = &[vec![1, 2, 3], vec![4, 5, 6]][..];
-    /// let matrix = Matrix::try_from(rows);
-    /// assert_eq!(matrix, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
-    /// ```
-    fn try_from(value: &[Vec<T>]) -> Result<Self> {
-        let order = Order::RowMajor;
-        let nrows = value.len();
-        let ncols = match value.first() {
-            Some(row) => row.len(),
-            None => 0,
-        };
-        let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
-        let size = shape.size::<T>()?;
-        let mut data = Vec::with_capacity(size);
-        for row in value {
-            if row.len() != ncols {
-                return Err(Error::LengthInconsistent);
-            }
-            data.extend_from_slice(row);
-        }
-        Ok(Self { order, shape, data })
-    }
-}
-
 impl<T, V> FromIterator<V> for Matrix<T>
 where
     V: IntoIterator<Item = T>,
@@ -304,9 +225,6 @@ mod tests {
 
         let matrix = Matrix::from(rows.to_vec());
         testkit::assert_strict_eq(&matrix, &expected);
-
-        let matrix = Matrix::from(&rows[..]);
-        testkit::assert_strict_eq(&matrix, &expected);
     }
 
     #[test]
@@ -328,9 +246,6 @@ mod tests {
 
             let matrix = Matrix::try_from(rows.to_vec()).unwrap();
             testkit::assert_strict_eq(&matrix, &expected);
-
-            let matrix = Matrix::try_from(&rows[..]).unwrap();
-            testkit::assert_strict_eq(&matrix, &expected);
         }
 
         {
@@ -338,7 +253,6 @@ mod tests {
 
             assert!(Matrix::try_from(rows.clone()).is_ok());
             assert!(Matrix::try_from(rows.to_vec()).is_ok());
-            assert!(Matrix::try_from(&rows[..]).is_ok());
         }
 
         {
@@ -348,9 +262,6 @@ mod tests {
             assert_eq!(error, Error::SizeOverflow);
 
             let error = Matrix::try_from(rows.to_vec()).unwrap_err();
-            assert_eq!(error, Error::SizeOverflow);
-
-            let error = Matrix::try_from(&rows[..]).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
         }
 
@@ -363,9 +274,6 @@ mod tests {
         //
         //     let error = Matrix::try_from(rows.to_vec()).unwrap_err();
         //     assert_eq!(error, Error::CapacityOverflow);
-        //
-        //     let error = Matrix::try_from(&rows[..]).unwrap_err();
-        //     assert_eq!(error, Error::CapacityOverflow);
         // }
 
         {
@@ -375,9 +283,6 @@ mod tests {
             assert_eq!(error, Error::LengthInconsistent);
 
             let error = Matrix::try_from(rows.to_vec()).unwrap_err();
-            assert_eq!(error, Error::LengthInconsistent);
-
-            let error = Matrix::try_from(&rows[..]).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
         }
     }
