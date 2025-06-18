@@ -157,12 +157,8 @@ mod tests {
 
     #[test]
     fn test_deserialize_struct() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let error = SizeMismatch.to_string();
-
-        // row-major
         {
-            let mut matrix = matrix.clone();
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
             matrix.set_order(Order::RowMajor);
 
             let mut tokens = vec![
@@ -200,12 +196,11 @@ mod tests {
 
             let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
             tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
 
-        // col-major
         {
-            let mut matrix = matrix.clone();
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
             matrix.set_order(Order::ColMajor);
 
             let mut tokens = vec![
@@ -243,18 +238,14 @@ mod tests {
 
             let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
             tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
     }
 
     #[test]
     fn test_deserialize_seq() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let error = SizeMismatch.to_string();
-
-        // row-major
         {
-            let mut matrix = matrix.clone();
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
             matrix.set_order(Order::RowMajor);
 
             let mut tokens = vec![
@@ -286,12 +277,11 @@ mod tests {
 
             let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
             tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
 
-        // col-major
         {
-            let mut matrix = matrix.clone();
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
             matrix.set_order(Order::ColMajor);
 
             let mut tokens = vec![
@@ -323,18 +313,14 @@ mod tests {
 
             let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
             tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
     }
 
     #[test]
     fn test_deserialize_map() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let error = SizeMismatch.to_string();
-
-        // row-major
         {
-            let mut matrix = matrix.clone();
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
             matrix.set_order(Order::RowMajor);
 
             let mut tokens = vec![
@@ -369,12 +355,11 @@ mod tests {
 
             let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
             tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
 
-        // col-major
         {
-            let mut matrix = matrix.clone();
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
             matrix.set_order(Order::ColMajor);
 
             let mut tokens = vec![
@@ -409,7 +394,7 @@ mod tests {
 
             let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
             tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &error);
+            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
     }
 }

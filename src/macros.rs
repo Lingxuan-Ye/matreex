@@ -34,80 +34,11 @@ macro_rules! matrix {
 
     [[$($elem:expr),+ $(,)?]; $nrows:expr] => {{
         extern crate alloc;
-        $crate::Matrix::from(alloc::vec![[$($elem),+]; $nrows])
+
+        <$crate::Matrix<_> as $crate::convert::FromRows<_>>::from_rows(alloc::vec![[$($elem),+]; $nrows])
     }};
 
     [$($row:expr),+ $(,)?] => {
-        $crate::Matrix::from([$($row),+])
+        <$crate::Matrix<_> as $crate::convert::FromRows<_>>::from_rows([$($row),+])
     };
-}
-
-/// Creates a new row vector from literal.
-///
-/// # Examples
-///
-/// ```
-/// use matreex::{Matrix, matrix, row_vec};
-///
-/// let foo: Matrix<i32> = row_vec![];
-/// assert_eq!(foo.nrows(), 1);
-/// assert_eq!(foo.ncols(), 0);
-///
-/// let bar = row_vec![0; 3];
-/// assert_eq!(bar, matrix![[0, 0, 0]]);
-///
-/// let baz = row_vec![1, 2, 3];
-/// assert_eq!(baz, matrix![[1, 2, 3]]);
-/// ```
-#[macro_export]
-macro_rules! row_vec {
-    [] => {{
-        extern crate alloc;
-        $crate::Matrix::from_row(alloc::vec![])
-    }};
-
-    [$elem:expr; $n:expr] => {{
-        extern crate alloc;
-        $crate::Matrix::from_row(alloc::vec![$elem; $n])
-    }};
-
-    [$($elem:expr),+ $(,)?] => {{
-        extern crate alloc;
-        $crate::Matrix::from_row(alloc::vec![$($elem),+])
-    }};
-}
-
-/// Creates a new column vector from literal.
-///
-/// # Examples
-///
-/// ```
-/// use matreex::{Matrix, matrix, col_vec};
-///
-/// let foo: Matrix<i32> = col_vec![];
-/// assert_eq!(foo.nrows(), 0);
-/// assert_eq!(foo.ncols(), 1);
-///
-/// let bar = col_vec![0; 3];
-/// assert_eq!(bar, matrix![[0], [0], [0]]);
-///
-/// let baz = col_vec![1, 2, 3];
-/// assert_eq!(baz, matrix![[1], [2], [3]]);
-/// ```
-#[macro_export]
-macro_rules! col_vec {
-    [] => {{
-        extern crate alloc;
-        $crate::Matrix::from_col(alloc::vec![])
-    }};
-
-    [$elem:expr; $n:expr] => {{
-        extern crate alloc;
-        $crate::Matrix::from_col(alloc::vec![$elem; $n])
-    }};
-
-    [$($elem:expr),+ $(,)?] => {{
-        extern crate alloc;
-        $crate::Matrix::from_col(alloc::vec![$($elem),+])
-    }};
 }

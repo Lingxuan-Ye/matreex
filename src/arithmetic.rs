@@ -4,6 +4,7 @@ use crate::index::AxisIndex;
 use crate::order::Order;
 use crate::shape::{AxisShape, Shape};
 use alloc::vec::Vec;
+use core::ptr;
 
 mod add;
 mod div;
@@ -289,6 +290,133 @@ impl<L> Matrix<L> {
         Ok(Matrix { order, shape, data })
     }
 
+    /// Performs elementwise operation on two matrices, consuming `rhs`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be the same as that
+    /// of `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let result = lhs.elementwise_operation_consume_rhs(rhs, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// ```
+    pub fn elementwise_operation_consume_rhs<'a, R, F, U>(
+        &'a self,
+        rhs: Matrix<R>,
+        mut op: F,
+    ) -> Result<Matrix<U>>
+    where
+        F: FnMut(&'a L, R) -> U,
+    {
+        self.ensure_elementwise_operation_conformable(&rhs)?;
+
+        let order = self.order;
+        let shape = self.shape;
+        shape.size::<U>()?;
+        let data = if self.order == rhs.order {
+            self.data
+                .iter()
+                .zip(rhs.data)
+                .map(|(left, right)| op(left, right))
+                .collect()
+        } else {
+            let mut rhs_data = rhs.data;
+            unsafe {
+                rhs_data.set_len(0); // avoid double free
+            }
+            let rhs_base = rhs_data.as_ptr();
+            self.data
+                .iter()
+                .enumerate()
+                .map(|(index, left)| {
+                    let index = AxisIndex::from_flattened(index, self.shape)
+                        .swap()
+                        .to_flattened(rhs.shape);
+                    let right = unsafe { ptr::read(rhs_base.add(index)) };
+                    op(left, right)
+                })
+                .collect()
+        };
+
+        Ok(Matrix { order, shape, data })
+    }
+
+    /// Performs elementwise operation on two matrices, consuming both `self`
+    /// and `rhs`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be the same as that
+    /// of `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let result = lhs.elementwise_operation_consume_both(rhs, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// ```
+    pub fn elementwise_operation_consume_both<R, F, U>(
+        self,
+        rhs: Matrix<R>,
+        mut op: F,
+    ) -> Result<Matrix<U>>
+    where
+        F: FnMut(L, R) -> U,
+    {
+        self.ensure_elementwise_operation_conformable(&rhs)?;
+
+        let order = self.order;
+        let shape = self.shape;
+        shape.size::<U>()?;
+        let data = if self.order == rhs.order {
+            self.data
+                .into_iter()
+                .zip(rhs.data)
+                .map(|(left, right)| op(left, right))
+                .collect()
+        } else {
+            let mut rhs_data = rhs.data;
+            unsafe {
+                rhs_data.set_len(0); // avoid double free
+            }
+            let rhs_base = rhs_data.as_ptr();
+            self.data
+                .into_iter()
+                .enumerate()
+                .map(|(index, left)| {
+                    let index = AxisIndex::from_flattened(index, self.shape)
+                        .swap()
+                        .to_flattened(rhs.shape);
+                    let right = unsafe { ptr::read(rhs_base.add(index)) };
+                    op(left, right)
+                })
+                .collect()
+        };
+
+        Ok(Matrix { order, shape, data })
+    }
+
     /// Performs elementwise operation on two matrices, assigning the result
     /// to `self`.
     ///
@@ -337,6 +465,60 @@ impl<L> Matrix<L> {
 
         Ok(self)
     }
+
+    /// Performs elementwise operation on two matrices, consuming `rhs`
+    /// and assigning the result to `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use matreex::Result;
+    /// use matreex::matrix;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)?;
+    /// assert_eq!(lhs, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn elementwise_operation_assign_consume_rhs<R, F>(
+        &mut self,
+        rhs: Matrix<R>,
+        mut op: F,
+    ) -> Result<&mut Self>
+    where
+        F: FnMut(&mut L, R),
+    {
+        self.ensure_elementwise_operation_conformable(&rhs)?;
+
+        if self.order == rhs.order {
+            self.data
+                .iter_mut()
+                .zip(rhs.data)
+                .for_each(|(left, right)| op(left, right));
+        } else {
+            let mut rhs_data = rhs.data;
+            unsafe {
+                rhs_data.set_len(0); // avoid double free
+            }
+            let rhs_base = rhs_data.as_ptr();
+            self.data.iter_mut().enumerate().for_each(|(index, left)| {
+                let index = AxisIndex::from_flattened(index, self.shape)
+                    .swap()
+                    .to_flattened(rhs.shape);
+                let right = unsafe { ptr::read(rhs_base.add(index)) };
+                op(left, right)
+            });
+        }
+
+        Ok(self)
+    }
 }
 
 impl<L> Matrix<L> {
@@ -370,9 +552,9 @@ impl<L> Matrix<L> {
     /// }
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let rhs = matrix![[1, 2], [3, 4], [5, 6]];
+    /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
     /// let result = lhs.multiplication_like_operation(rhs, dot_product);
-    /// assert_eq!(result, Ok(matrix![[22, 28], [49, 64]]));
+    /// assert_eq!(result, Ok(matrix![[12, 12], [30, 30]]));
     /// ```
     pub fn multiplication_like_operation<R, F, U>(
         mut self,
@@ -543,477 +725,375 @@ impl<T> Matrix<T> {
 mod tests {
     use super::*;
     use crate::matrix;
+    use crate::testkit;
 
     #[test]
     fn test_is_square() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             assert!(matrix.is_square());
-        }
+        });
 
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
+        let matrix = matrix![[1, 2], [3, 4]];
+        testkit::for_each_order_unary(matrix, |matrix| {
             assert!(matrix.is_square());
-        }
+        });
 
-        // more test cases
-
-        {
-            let matrix = matrix![[1, 2], [3, 4]];
-            assert!(matrix.is_square());
-        }
-
-        {
-            let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
             assert!(!matrix.is_square());
-        }
+        });
     }
 
     #[test]
     fn test_is_elementwise_operation_conformable() {
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        // row-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::RowMajor);
-
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             assert!(lhs.is_elementwise_operation_conformable(&rhs));
             assert!(rhs.is_elementwise_operation_conformable(&lhs));
-        }
+        });
 
-        // row-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::ColMajor);
-
-            assert!(lhs.is_elementwise_operation_conformable(&rhs));
-            assert!(rhs.is_elementwise_operation_conformable(&lhs));
-        }
-
-        // col-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::RowMajor);
-
-            assert!(lhs.is_elementwise_operation_conformable(&rhs));
-            assert!(rhs.is_elementwise_operation_conformable(&lhs));
-        }
-
-        // col-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::ColMajor);
-
-            assert!(lhs.is_elementwise_operation_conformable(&rhs));
-            assert!(rhs.is_elementwise_operation_conformable(&lhs));
-        }
-
-        // more test cases
-
-        {
-            let rhs = matrix![[2, 2], [2, 2]];
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             assert!(!lhs.is_elementwise_operation_conformable(&rhs));
             assert!(!rhs.is_elementwise_operation_conformable(&lhs));
-        }
+        });
 
-        {
-            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             assert!(!lhs.is_elementwise_operation_conformable(&rhs));
             assert!(!rhs.is_elementwise_operation_conformable(&lhs));
-        }
+        });
 
-        {
-            let rhs = matrix![[2, 2, 2], [2, 2, 2], [2, 2, 2]];
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             assert!(!lhs.is_elementwise_operation_conformable(&rhs));
             assert!(!rhs.is_elementwise_operation_conformable(&lhs));
-        }
+        });
     }
 
     #[test]
     fn test_is_multiplication_like_operation_conformable() {
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-
-        // row-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::RowMajor);
-
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
-        }
+        });
 
-        // row-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::ColMajor);
-
-            assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
-        }
-
-        // col-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::RowMajor);
-
-            assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
-        }
-
-        // col-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::ColMajor);
-
-            assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
-        }
-
-        // more test cases
-
-        {
-            let rhs = matrix![[2, 2], [2, 2]];
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             assert!(!lhs.is_multiplication_like_operation_conformable(&rhs));
-        }
+        });
 
-        {
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             assert!(!lhs.is_multiplication_like_operation_conformable(&rhs));
-        }
+        });
 
-        {
-            let rhs = matrix![[2, 2, 2], [2, 2, 2], [2, 2, 2]];
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             assert!(lhs.is_multiplication_like_operation_conformable(&rhs));
-        }
+        });
     }
 
     #[test]
     fn test_ensure_square() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
-        let result = matrix.ensure_square();
-        assert!(result.is_ok());
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let result = matrix.ensure_square();
+            assert!(result.is_ok());
+        });
 
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let result = matrix.ensure_square();
-        assert_eq!(result, Err(Error::SquareMatrixRequired));
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let result = matrix.ensure_square();
+            assert_eq!(result, Err(Error::SquareMatrixRequired));
+        });
     }
 
     #[test]
     fn test_ensure_elementwise_operation_conformable() {
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert!(result.is_ok());
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let result = lhs.ensure_elementwise_operation_conformable(&rhs);
+            assert!(result.is_ok());
+        });
 
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::ShapeNotConformable));
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let result = lhs.ensure_elementwise_operation_conformable(&rhs);
+            assert_eq!(result, Err(Error::ShapeNotConformable));
+        });
     }
 
     #[test]
     fn test_ensure_multiplication_like_operation_conformable() {
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-
         let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert!(result.is_ok());
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+            assert!(result.is_ok());
+        });
 
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
-        assert_eq!(result, Err(Error::ShapeNotConformable));
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+            assert_eq!(result, Err(Error::ShapeNotConformable));
+        });
     }
 
     #[test]
     fn test_elementwise_operation() {
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        // row-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::RowMajor);
-
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let output = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // row-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::ColMajor);
-
-            let output = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // col-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::RowMajor);
-
-            let output = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // col-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::ColMajor);
-
-            let output = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap();
-            assert_eq!(output, expected);
-        }
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
         // misuse but should work
-        {
-            let output = lhs.elementwise_operation(&rhs, |x, _| x).unwrap();
-            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
-
-            let output = lhs.elementwise_operation(&rhs, |_, y| y).unwrap();
-            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
-
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let output = {
                 let rhs = rhs.clone();
                 lhs.elementwise_operation(&rhs, |x, _| x).unwrap()
             };
-            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
+            let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
+        // misuse but should work
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let output = {
                 let lhs = lhs.clone();
                 lhs.elementwise_operation(&rhs, |_, y| y).unwrap()
             };
-            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
-        }
+            let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        // more test cases
-
-        {
-            let rhs = matrix![[2, 2], [2, 2]];
-
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let error = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
-        }
+        });
 
-        {
-            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let error = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
-        }
+        });
     }
 
     #[test]
     fn test_elementwise_operation_consume_self() {
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        // row-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::RowMajor);
-
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let output = lhs
+                .clone()
                 .elementwise_operation_consume_self(&rhs, |x, y| x + y)
                 .unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // row-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::ColMajor);
-
-            let output = lhs
-                .elementwise_operation_consume_self(&rhs, |x, y| x + y)
-                .unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // col-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::RowMajor);
-
-            let output = lhs
-                .elementwise_operation_consume_self(&rhs, |x, y| x + y)
-                .unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // col-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::ColMajor);
-
-            let output = lhs
-                .elementwise_operation_consume_self(&rhs, |x, y| x + y)
-                .unwrap();
-            assert_eq!(output, expected);
-        }
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
         // misuse but should work
-        {
-            let lhs = lhs.clone();
-
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let output = lhs
                 .elementwise_operation_consume_self(&rhs, |_, y| y)
                 .unwrap();
-            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
-        }
+            let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        // more test cases
-
-        {
-            let lhs = lhs.clone();
-            let rhs = matrix![[2, 2], [2, 2]];
-
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let error = lhs
                 .elementwise_operation_consume_self(&rhs, |x, y| x + y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
-        }
+        });
 
-        {
-            let lhs = lhs.clone();
-            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let error = lhs
                 .elementwise_operation_consume_self(&rhs, |x, y| x + y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
-        }
+        });
+    }
+
+    #[test]
+    fn test_elementwise_operation_consume_rhs() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let output = lhs
+                .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
+                .unwrap();
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        // misuse but should work
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let output = lhs
+                .elementwise_operation_consume_rhs(rhs, |x, _| x)
+                .unwrap();
+            let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let error = lhs
+                .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+        });
+
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let error = lhs
+                .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+        });
+    }
+
+    #[test]
+    fn test_elementwise_operation_consume_both() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let output = lhs
+                .elementwise_operation_consume_both(rhs, |x, y| x + y)
+                .unwrap();
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let error = lhs
+                .elementwise_operation_consume_both(rhs, |x, y| x + y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+        });
+
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let error = lhs
+                .elementwise_operation_consume_both(rhs, |x, y| x + y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+        });
     }
 
     #[test]
     fn test_elementwise_operation_assign() {
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        // row-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::RowMajor);
-
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
             lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)
                 .unwrap();
-            assert_eq!(lhs, expected);
-        }
-
-        // row-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::ColMajor);
-
-            lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)
-                .unwrap();
-            assert_eq!(lhs, expected);
-        }
-
-        // col-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::RowMajor);
-
-            lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)
-                .unwrap();
-            assert_eq!(lhs, expected);
-        }
-
-        // col-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::ColMajor);
-
-            lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)
-                .unwrap();
-            assert_eq!(lhs, expected);
-        }
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&lhs, &expected);
+        });
 
         // misuse but should work
-        {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let mut lhs = lhs.map_ref(|x| x).unwrap();
-
             lhs.elementwise_operation_assign(&rhs, |x, y| *x = y)
                 .unwrap();
-            assert_eq!(lhs, matrix![[&2, &2, &2], [&2, &2, &2]]);
-        }
+            let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
+            testkit::assert_loose_eq(&lhs, &expected);
+        });
 
-        // more test cases
-
-        {
-            let mut lhs = lhs.clone();
-            let rhs = matrix![[2, 2], [2, 2]];
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
             let unchanged = lhs.clone();
-
             let error = lhs
                 .elementwise_operation_assign(&rhs, |x, y| *x += y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
-            assert_eq!(lhs, unchanged);
-        }
+            testkit::assert_loose_eq(&lhs, &unchanged);
+        });
 
-        {
-            let mut lhs = lhs.clone();
-            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
             let unchanged = lhs.clone();
-
             let error = lhs
                 .elementwise_operation_assign(&rhs, |x, y| *x += y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
-            assert_eq!(lhs, unchanged);
-        }
+            testkit::assert_loose_eq(&lhs, &unchanged);
+        });
+    }
+
+    #[test]
+    fn test_elementwise_operation_assign_consume_rhs() {
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
+                .unwrap();
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&lhs, &expected);
+        });
+
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            let unchanged = lhs.clone();
+            let error = lhs
+                .elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+            testkit::assert_loose_eq(&lhs, &unchanged);
+        });
+
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            let unchanged = lhs.clone();
+            let error = lhs
+                .elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
+                .unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+            testkit::assert_loose_eq(&lhs, &unchanged);
+        });
     }
 
     #[test]
@@ -1028,248 +1108,161 @@ mod tests {
 
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[1, 2], [3, 4], [5, 6]];
-        let expected = matrix![[22, 28], [49, 64]];
-
-        // row-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::RowMajor);
-
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            assert_eq!(output, expected);
-        }
+            let expected = matrix![[22, 28], [49, 64]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        // row-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::RowMajor);
-            rhs.set_order(Order::ColMajor);
-
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[1], [2], [3]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            assert_eq!(output, expected);
-        }
+            let expected = matrix![[14], [32]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        // col-major & row-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::RowMajor);
-
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            assert_eq!(output, expected);
-        }
+            let expected = matrix![[30, 36, 42], [66, 81, 96]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        // col-major & col-major
-        {
-            let mut lhs = lhs.clone();
-            let mut rhs = rhs.clone();
-            lhs.set_order(Order::ColMajor);
-            rhs.set_order(Order::ColMajor);
-
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // more test cases
-
-        {
-            let lhs = lhs.clone();
-            let rhs = matrix![[1], [2], [3]];
-
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            assert_eq!(output, matrix![[14], [32]]);
-        }
-
-        {
-            let lhs = lhs.clone();
-            let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
-
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            assert_eq!(output, matrix![[30, 36, 42], [66, 81, 96]]);
-        }
-
-        {
-            let lhs = lhs.clone();
-            let rhs = matrix![[1, 2], [3, 4]];
-
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[1, 2], [3, 4]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let error = lhs
                 .multiplication_like_operation(rhs, dot_product)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
-        }
+        });
 
-        {
-            let lhs = lhs.clone();
-            let rhs = matrix![[1, 2, 3], [4, 5, 6]];
-
+        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let rhs = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let error = lhs
                 .multiplication_like_operation(rhs, dot_product)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
-        }
+        });
 
-        {
-            let lhs = matrix![[0; 0]; isize::MAX as usize + 1];
-            let rhs = matrix![[0; 2]; 0];
-
+        let lhs = matrix![[0; 0]; isize::MAX as usize + 1];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             // the size of the resulting matrix would be `2 * isize::MAX + 2`,
             // which is greater than `usize::MAX`
             let error = lhs
                 .multiplication_like_operation(rhs, |_, _| 0)
                 .unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
-        }
+        });
 
-        {
-            let lhs = matrix![[0; 0]; isize::MAX as usize - 1];
-            let rhs = matrix![[0; 2]; 0];
-
+        let lhs = matrix![[0; 0]; isize::MAX as usize - 1];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             // the required capacity of the resulting matrix would be
             // `2 * isize::MAX - 2`, which is greater than `isize::MAX`
             let error = lhs
                 .multiplication_like_operation(rhs, |_, _| 0u8)
                 .unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
-        }
+        });
     }
 
     #[test]
     fn test_scalar_operation() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let scalar = 2;
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
             let output = matrix.scalar_operation(&scalar, |x, y| x + y).unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            let output = matrix.scalar_operation(&scalar, |x, y| x + y).unwrap();
-            assert_eq!(output, expected);
-        }
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
         // misuse but should work
-        {
-            let output = matrix.scalar_operation(&scalar, |x, _| x).unwrap();
-            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
-
-            let output = matrix.scalar_operation(&scalar, |_, y| y).unwrap();
-            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
-
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
             let output = {
                 let scalar = 2;
                 matrix.scalar_operation(&scalar, |x, _| x).unwrap()
             };
-            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
+            let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
+        // misuse but should work
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
             let output = {
                 let matrix = matrix.clone();
                 matrix.scalar_operation(&scalar, |_, y| y).unwrap()
             };
-            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
-        }
+            let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        // errors
-        {
-            let matrix = matrix![[(); usize::MAX]; 1];
-
+        let matrix = matrix![[(); usize::MAX]; 1];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
             let error = matrix.scalar_operation(&scalar, |_, _| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow)
-        }
+        });
     }
 
     #[test]
     fn test_scalar_operation_consume_self() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let scalar = 2;
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
             let output = matrix
                 .scalar_operation_consume_self(&scalar, |x, y| x + y)
                 .unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            let output = matrix
-                .scalar_operation_consume_self(&scalar, |x, y| x + y)
-                .unwrap();
-            assert_eq!(output, expected);
-        }
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
         // misuse but should work
-        {
-            let matrix = matrix.clone();
-
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
             let output = matrix
                 .scalar_operation_consume_self(&scalar, |_, y| y)
                 .unwrap();
-            assert_eq!(output, matrix![[&2, &2, &2], [&2, &2, &2]]);
-        }
+            let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        // errors
-        {
-            let matrix = matrix![[(); usize::MAX]; 1];
-
+        let matrix = matrix![[(); usize::MAX]; 1];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
             let error = matrix
                 .scalar_operation_consume_self(&scalar, |_, _| 0)
                 .unwrap_err();
             assert_eq!(error, Error::CapacityOverflow)
-        }
+        });
     }
 
     #[test]
     fn test_scalar_operation_assign() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let scalar = 2;
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            let scalar = 2;
             matrix.scalar_operation_assign(&scalar, |x, y| *x += y);
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix.scalar_operation_assign(&scalar, |x, y| *x += y);
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
 
         // misuse but should work
-        {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
             let mut matrix = matrix.map_ref(|x| x).unwrap();
-
+            let scalar = 2;
             matrix.scalar_operation_assign(&scalar, |x, y| *x = y);
-            assert_eq!(matrix, matrix![[&2, &2, &2], [&2, &2, &2]]);
-        }
+            let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 }

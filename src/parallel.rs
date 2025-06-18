@@ -260,267 +260,126 @@ mod tests {
     use super::*;
     use crate::error::Error;
     use crate::matrix;
-    use crate::order::Order;
+    use crate::testkit;
 
     #[test]
     fn test_par_apply() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix.par_apply(|element| *element += 2);
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix.par_apply(|element| *element += 2);
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
     fn test_par_map() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             let output = matrix.par_map(|element| element as f64).unwrap();
-            assert_eq!(output, expected);
-        }
+            let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            let output = matrix.par_map(|element| element as f64).unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // errors
-        {
-            let matrix = matrix![[(); usize::MAX]; 1];
-
+        let matrix = matrix![[(); usize::MAX]; 1];
+        testkit::for_each_order_unary(matrix, |matrix| {
             let error = matrix.par_map(|_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
-        }
+        });
     }
 
     #[test]
     fn test_par_map_ref() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             let output = matrix.par_map_ref(|element| *element as f64).unwrap();
-            assert_eq!(output, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            let output = matrix.par_map_ref(|element| *element as f64).unwrap();
-            assert_eq!(output, expected);
-        }
+            let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
         // to matrix of references
-        {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
             let output = matrix.par_map_ref(|element| element).unwrap();
-            assert_eq!(output, matrix![[&1, &2, &3], [&4, &5, &6]]);
-        }
+            let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        // errors
-        {
-            let matrix = matrix![[(); usize::MAX]; 1];
-
+        let matrix = matrix![[(); usize::MAX]; 1];
+        testkit::for_each_order_unary(matrix, |matrix| {
             let error = matrix.par_map_ref(|_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
-        }
+        });
     }
 
     #[test]
     fn test_par_iter_elements() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = 21;
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             let sum = matrix.par_iter_elements().sum::<i32>();
+            let expected = 21;
             assert_eq!(sum, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            let sum = matrix.par_iter_elements().sum::<i32>();
-            assert_eq!(sum, expected);
-        }
+        });
     }
 
     #[test]
     fn test_par_iter_elements_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix
                 .par_iter_elements_mut()
                 .for_each(|element| *element += 2);
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix
-                .par_iter_elements_mut()
-                .for_each(|element| *element += 2);
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
     fn test_into_par_iter_elements() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = 21;
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             let sum = matrix.into_par_iter_elements().sum::<i32>();
+            let expected = 21;
             assert_eq!(sum, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            let sum = matrix.into_par_iter_elements().sum::<i32>();
-            assert_eq!(sum, expected);
-        }
+        });
     }
 
     #[test]
     fn test_par_iter_elements_with_index() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             matrix
                 .par_iter_elements_with_index()
                 .for_each(|(index, element)| {
                     assert_eq!(element, &matrix[index]);
                 });
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix
-                .par_iter_elements_with_index()
-                .for_each(|(index, element)| {
-                    assert_eq!(element, &matrix[index]);
-                });
-        }
+        });
     }
 
     #[test]
     fn test_par_iter_elements_mut_with_index() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let expected = matrix![[1, 3, 5], [5, 7, 9]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix
                 .par_iter_elements_mut_with_index()
                 .for_each(|(index, element)| {
                     *element += index.row as i32 + index.col as i32;
                 });
-            assert_eq!(matrix, expected);
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix
-                .par_iter_elements_mut_with_index()
-                .for_each(|(index, element)| {
-                    *element += index.row as i32 + index.col as i32;
-                });
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[1, 3, 5], [5, 7, 9]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
     fn test_into_par_iter_elements_with_index() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
-        // row-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::RowMajor);
-
+        testkit::for_each_order_unary(matrix, |matrix| {
             matrix
                 .clone()
                 .into_par_iter_elements_with_index()
                 .for_each(|(index, element)| {
                     assert_eq!(element, matrix[index]);
                 });
-        }
-
-        // col-major
-        {
-            let mut matrix = matrix.clone();
-            matrix.set_order(Order::ColMajor);
-
-            matrix
-                .clone()
-                .into_par_iter_elements_with_index()
-                .for_each(|(index, element)| {
-                    assert_eq!(element, matrix[index]);
-                });
-        }
+        });
     }
 }

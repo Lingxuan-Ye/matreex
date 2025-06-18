@@ -1,17 +1,18 @@
 use crate::Matrix;
-use crate::error::Result;
 use core::ops::{Add, AddAssign};
 
 impl<L, R, U> Add<Matrix<R>> for Matrix<L>
 where
     L: Add<R, Output = U>,
-    R: Clone,
 {
     type Output = Matrix<U>;
 
     #[inline]
     fn add(self, rhs: Matrix<R>) -> Self::Output {
-        self + &rhs
+        match self.elementwise_operation_consume_both(rhs, |left, right| left + right) {
+            Err(error) => panic!("{error}"),
+            Ok(output) => output,
+        }
     }
 }
 
@@ -24,7 +25,7 @@ where
 
     #[inline]
     fn add(self, rhs: &Matrix<R>) -> Self::Output {
-        match self.elementwise_add_consume_self(rhs) {
+        match self.elementwise_operation_consume_self(rhs, |left, right| left + right.clone()) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -34,13 +35,15 @@ where
 impl<L, R, U> Add<Matrix<R>> for &Matrix<L>
 where
     L: Add<R, Output = U> + Clone,
-    R: Clone,
 {
     type Output = Matrix<U>;
 
     #[inline]
     fn add(self, rhs: Matrix<R>) -> Self::Output {
-        self + &rhs
+        match self.elementwise_operation_consume_rhs(rhs, |left, right| left.clone() + right) {
+            Err(error) => panic!("{error}"),
+            Ok(output) => output,
+        }
     }
 }
 
@@ -53,7 +56,7 @@ where
 
     #[inline]
     fn add(self, rhs: &Matrix<R>) -> Self::Output {
-        match self.elementwise_add(rhs) {
+        match self.elementwise_operation(rhs, |left, right| left.clone() + right.clone()) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -63,11 +66,14 @@ where
 impl<L, R> AddAssign<Matrix<R>> for Matrix<L>
 where
     L: AddAssign<R>,
-    R: Clone,
 {
     #[inline]
     fn add_assign(&mut self, rhs: Matrix<R>) {
-        *self += &rhs
+        if let Err(error) =
+            self.elementwise_operation_assign_consume_rhs(rhs, |left, right| *left += right)
+        {
+            panic!("{error}");
+        }
     }
 }
 
@@ -78,107 +84,11 @@ where
 {
     #[inline]
     fn add_assign(&mut self, rhs: &Matrix<R>) {
-        if let Err(error) = self.elementwise_add_assign(rhs) {
+        if let Err(error) =
+            self.elementwise_operation_assign(rhs, |left, right| *left += right.clone())
+        {
             panic!("{error}");
         }
-    }
-}
-
-impl<L> Matrix<L> {
-    /// Performs elementwise addition on two matrices.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be the same as that
-    /// of `self`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    ///
-    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_add(&rhs);
-    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
-    /// ```
-    ///
-    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
-    #[inline]
-    pub fn elementwise_add<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
-    where
-        L: Add<R, Output = U> + Clone,
-        R: Clone,
-    {
-        self.elementwise_operation(rhs, |left, right| left.clone() + right.clone())
-    }
-
-    /// Performs elementwise addition on two matrices, consuming `self`.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be the same as that
-    /// of `self`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    ///
-    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_add_consume_self(&rhs);
-    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
-    /// ```
-    ///
-    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
-    #[inline]
-    pub fn elementwise_add_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
-    where
-        L: Add<R, Output = U>,
-        R: Clone,
-    {
-        self.elementwise_operation_consume_self(rhs, |left, right| left + right.clone())
-    }
-
-    /// Performs elementwise addition on two matrices, assigning the result
-    /// to `self`.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use matreex::Result;
-    /// use matreex::matrix;
-    ///
-    /// # fn main() -> Result<()> {
-    /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// lhs.elementwise_add_assign(&rhs)?;
-    /// assert_eq!(lhs, matrix![[3, 4, 5], [6, 7, 8]]);
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
-    /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
-    #[inline]
-    pub fn elementwise_add_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
-    where
-        L: AddAssign<R>,
-        R: Clone,
-    {
-        self.elementwise_operation_assign(rhs, |left, right| *left += right.clone())
     }
 }
 
@@ -268,108 +178,267 @@ impl_primitive_scalar_add! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize 
 #[cfg(test)]
 mod tests {
     use crate::matrix;
+    use crate::testkit;
+    use crate::testkit::mock::{MockL, MockR, MockU};
 
     #[test]
     fn test_add() {
-        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+        let lhs = matrix![
+            [MockL(1), MockL(2), MockL(3)],
+            [MockL(4), MockL(5), MockL(6)],
+        ];
+        let rhs = matrix![
+            [MockR(2), MockR(2), MockR(2)],
+            [MockR(2), MockR(2), MockR(2)],
+        ];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let output = lhs + rhs;
+            let expected = matrix![
+                [MockU(3), MockU(4), MockU(5)],
+                [MockU(6), MockU(7), MockU(8)],
+            ];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        assert_eq!(lhs.clone() + rhs.clone(), expected);
-        assert_eq!(lhs.clone() + &rhs, expected);
-        assert_eq!(&lhs + rhs.clone(), expected);
-        assert_eq!(&lhs + &rhs, expected);
-    }
+        let lhs = matrix![
+            [MockL(1), MockL(2), MockL(3)],
+            [MockL(4), MockL(5), MockL(6)],
+        ];
+        let rhs = matrix![
+            [MockR(2), MockR(2), MockR(2)],
+            [MockR(2), MockR(2), MockR(2)],
+        ];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let output = lhs + &rhs;
+            let expected = matrix![
+                [MockU(3), MockU(4), MockU(5)],
+                [MockU(6), MockU(7), MockU(8)],
+            ];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-    #[test]
-    fn test_add_assign() {
-        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+        let lhs = matrix![
+            [MockL(1), MockL(2), MockL(3)],
+            [MockL(4), MockL(5), MockL(6)],
+        ];
+        let rhs = matrix![
+            [MockR(2), MockR(2), MockR(2)],
+            [MockR(2), MockR(2), MockR(2)],
+        ];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let output = &lhs + rhs;
+            let expected = matrix![
+                [MockU(3), MockU(4), MockU(5)],
+                [MockU(6), MockU(7), MockU(8)],
+            ];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        {
-            let mut lhs = lhs.clone();
+        let lhs = matrix![
+            [MockL(1), MockL(2), MockL(3)],
+            [MockL(4), MockL(5), MockL(6)],
+        ];
+        let rhs = matrix![
+            [MockR(2), MockR(2), MockR(2)],
+            [MockR(2), MockR(2), MockR(2)],
+        ];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let output = &lhs + &rhs;
+            let expected = matrix![
+                [MockU(3), MockU(4), MockU(5)],
+                [MockU(6), MockU(7), MockU(8)],
+            ];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-            lhs += rhs.clone();
-            assert_eq!(lhs, expected);
-        }
+        let lhs = matrix![
+            [MockL(1), MockL(2), MockL(3)],
+            [MockL(4), MockL(5), MockL(6)],
+        ];
+        let rhs = matrix![
+            [MockR(2), MockR(2), MockR(2)],
+            [MockR(2), MockR(2), MockR(2)],
+        ];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            lhs += rhs;
+            let expected = matrix![
+                [MockL(3), MockL(4), MockL(5)],
+                [MockL(6), MockL(7), MockL(8)],
+            ];
+            testkit::assert_loose_eq(&lhs, &expected);
+        });
 
-        {
-            let mut lhs = lhs.clone();
-
+        let lhs = matrix![
+            [MockL(1), MockL(2), MockL(3)],
+            [MockL(4), MockL(5), MockL(6)],
+        ];
+        let rhs = matrix![
+            [MockR(2), MockR(2), MockR(2)],
+            [MockR(2), MockR(2), MockR(2)],
+        ];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
             lhs += &rhs;
-            assert_eq!(lhs, expected);
-        }
-    }
-
-    #[test]
-    fn test_elementwise_add() {
-        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        let output = lhs.elementwise_add(&rhs).unwrap();
-        assert_eq!(output, expected);
-    }
-
-    #[test]
-    fn test_elementwise_add_consume_self() {
-        let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        let output = lhs.elementwise_add_consume_self(&rhs).unwrap();
-        assert_eq!(output, expected);
-    }
-
-    #[test]
-    fn test_elementwise_add_assign() {
-        let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
-
-        lhs.elementwise_add_assign(&rhs).unwrap();
-        assert_eq!(lhs, expected);
+            let expected = matrix![
+                [MockL(3), MockL(4), MockL(5)],
+                [MockL(6), MockL(7), MockL(8)],
+            ];
+            testkit::assert_loose_eq(&lhs, &expected);
+        });
     }
 
     #[test]
     #[allow(clippy::op_ref)]
     fn test_primitive_scalar_add() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let matrix_ref = matrix.map_ref(|x| x).unwrap();
-        let scalar = 2;
-        let expected = matrix![[3, 4, 5], [6, 7, 8]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
+            let output = matrix + scalar;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        assert_eq!(matrix.clone() + scalar, expected);
-        assert_eq!(matrix.clone() + &scalar, expected);
-        assert_eq!(&matrix + scalar, expected);
-        assert_eq!(&matrix + &scalar, expected);
-        assert_eq!(scalar + matrix.clone(), expected);
-        assert_eq!(&scalar + matrix.clone(), expected);
-        assert_eq!(scalar + &matrix, expected);
-        assert_eq!(&scalar + &matrix, expected);
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
+            let output = matrix + &scalar;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        assert_eq!(matrix_ref.clone() + scalar, expected);
-        assert_eq!(matrix_ref.clone() + &scalar, expected);
-        assert_eq!(&matrix_ref + scalar, expected);
-        assert_eq!(&matrix_ref + &scalar, expected);
-        assert_eq!(scalar + matrix_ref.clone(), expected);
-        assert_eq!(&scalar + matrix_ref.clone(), expected);
-        assert_eq!(scalar + &matrix_ref, expected);
-        assert_eq!(&scalar + &matrix_ref, expected);
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
+            let output = &matrix + scalar;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
-        {
-            let mut matrix = matrix.clone();
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
+            let output = &matrix + &scalar;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
 
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
+            let output = scalar + matrix;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
+            let output = &scalar + matrix;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
+            let output = scalar + &matrix;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let scalar = 2;
+            let output = &scalar + &matrix;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let matrix = matrix.map_ref(|x| x).unwrap();
+            let scalar = 2;
+            let output = matrix + scalar;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let matrix = matrix.map_ref(|x| x).unwrap();
+            let scalar = 2;
+            let output = matrix + &scalar;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let matrix = matrix.map_ref(|x| x).unwrap();
+            let scalar = 2;
+            let output = &matrix + scalar;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let matrix = matrix.map_ref(|x| x).unwrap();
+            let scalar = 2;
+            let output = &matrix + &scalar;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let matrix = matrix.map_ref(|x| x).unwrap();
+            let scalar = 2;
+            let output = scalar + matrix;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let matrix = matrix.map_ref(|x| x).unwrap();
+            let scalar = 2;
+            let output = &scalar + matrix;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let matrix = matrix.map_ref(|x| x).unwrap();
+            let scalar = 2;
+            let output = scalar + &matrix;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            let matrix = matrix.map_ref(|x| x).unwrap();
+            let scalar = 2;
+            let output = &scalar + &matrix;
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&output, &expected);
+        });
+
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            let scalar = 2;
             matrix += scalar;
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
 
-        {
-            let mut matrix = matrix.clone();
-
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            let scalar = 2;
             matrix += &scalar;
-            assert_eq!(matrix, expected);
-        }
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 }
