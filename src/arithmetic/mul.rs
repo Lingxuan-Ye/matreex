@@ -84,9 +84,9 @@ impl<L> Matrix<L> {
     /// use matreex::matrix;
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let rhs = matrix![[1, 2], [3, 4], [5, 6]];
+    /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
     /// let result = lhs.multiply(rhs);
-    /// assert_eq!(result, Ok(matrix![[22, 28], [49, 64]]));
+    /// assert_eq!(result, Ok(matrix![[12, 12], [30, 30]]));
     /// ```
     ///
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable

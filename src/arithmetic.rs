@@ -552,9 +552,9 @@ impl<L> Matrix<L> {
     /// }
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let rhs = matrix![[1, 2], [3, 4], [5, 6]];
+    /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
     /// let result = lhs.multiplication_like_operation(rhs, dot_product);
-    /// assert_eq!(result, Ok(matrix![[22, 28], [49, 64]]));
+    /// assert_eq!(result, Ok(matrix![[12, 12], [30, 30]]));
     /// ```
     pub fn multiplication_like_operation<R, F, U>(
         mut self,
