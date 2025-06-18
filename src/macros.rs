@@ -34,10 +34,11 @@ macro_rules! matrix {
 
     [[$($elem:expr),+ $(,)?]; $nrows:expr] => {{
         extern crate alloc;
-        $crate::Matrix::from(alloc::vec![[$($elem),+]; $nrows])
+
+        <$crate::Matrix<_> as $crate::convert::FromRows<_>>::from_rows(alloc::vec![[$($elem),+]; $nrows])
     }};
 
     [$($row:expr),+ $(,)?] => {
-        $crate::Matrix::from([$($row),+])
+        <$crate::Matrix<_> as $crate::convert::FromRows<_>>::from_rows([$($row),+])
     };
 }
