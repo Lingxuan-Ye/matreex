@@ -1,4 +1,4 @@
-//! Provides helper functions for tests.
+//! Provides helper functions and mock types for tests.
 //!
 //! # Principles for Writing Tests
 //!
@@ -35,6 +35,8 @@ where
 }
 
 /// Calls `testcase` with the input matrix for each order.
+///
+/// This method relies on the correctness of [`Matrix::set_order`].
 pub(crate) fn for_each_order_unary<T, F>(input: Matrix<T>, testcase: F)
 where
     T: Clone,
@@ -56,6 +58,8 @@ where
 }
 
 /// Calls `testcase` with the input matrices for each combination of orders.
+///
+/// This method relies on the correctness of [`Matrix::set_order`].
 pub(crate) fn for_each_order_binary<T, U, F>(input_0: Matrix<T>, input_1: Matrix<U>, testcase: F)
 where
     T: Clone,
