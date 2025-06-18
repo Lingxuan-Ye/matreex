@@ -100,23 +100,12 @@ where
 }
 
 pub(crate) mod mock {
-    use crate::index::AsIndex;
-    use core::ops::{
-        Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
-    };
-
-    #[derive(Clone, Copy, Debug, Default, PartialEq)]
-    pub(crate) struct MockIndex(pub(crate) usize, pub(crate) usize);
-
-    impl AsIndex for MockIndex {
-        fn row(&self) -> usize {
-            self.0
-        }
-
-        fn col(&self) -> usize {
-            self.1
-        }
-    }
+    use core::ops::Neg;
+    use core::ops::{Add, AddAssign};
+    use core::ops::{Div, DivAssign};
+    use core::ops::{Mul, MulAssign};
+    use core::ops::{Rem, RemAssign};
+    use core::ops::{Sub, SubAssign};
 
     #[derive(Clone, Copy, Debug, Default, PartialEq)]
     pub(crate) struct MockL(pub(crate) i32);
