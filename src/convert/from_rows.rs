@@ -5,24 +5,48 @@ use crate::shape::{AxisShape, Shape};
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
+/// A trait used for conversion from a sequence of rows.
 pub trait FromRows<T>: Sized {
+    /// Converts from a sequence of rows.
     fn from_rows(value: T) -> Self;
 }
 
+/// A trait used for fallible conversion from a sequence of rows.
 pub trait TryFromRows<T>: Sized {
+    /// Attempts to convert from a sequence of rows.
     fn try_from_rows(value: T) -> Result<Self>;
 }
 
+/// A trait used for conversion from an iterator over rows.
 pub trait FromRowIterator<T, V>: Sized
 where
     V: IntoIterator<Item = T>,
 {
+    /// Converts from an iterator over rows.
     fn from_row_iter<M>(iter: M) -> Self
     where
         M: IntoIterator<Item = V>;
 }
 
 impl<T, const R: usize, const C: usize> FromRows<[[T; C]; R]> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::FromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: [[i32; 3]; 2] = [[1, 2, 3], [4, 5, 6]];
+    /// let matrix = Matrix::from_rows(rows);
+    /// // this is actually a circular validation
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from_rows(value: [[T; C]; R]) -> Self {
         let order = Order::RowMajor;
         let nrows = R;
@@ -35,6 +59,23 @@ impl<T, const R: usize, const C: usize> FromRows<[[T; C]; R]> for Matrix<T> {
 }
 
 impl<T, const R: usize, const C: usize> FromRows<[Box<[T; C]>; R]> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::FromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: [Box<[i32; 3]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+    /// let matrix = Matrix::from_rows(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from_rows(value: [Box<[T; C]>; R]) -> Self {
         let order = Order::RowMajor;
         let nrows = R;
@@ -47,6 +88,23 @@ impl<T, const R: usize, const C: usize> FromRows<[Box<[T; C]>; R]> for Matrix<T>
 }
 
 impl<T, const R: usize, const C: usize> FromRows<Box<[[T; C]; R]>> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::FromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[[i32; 3]; 2]> = Box::new([[1, 2, 3], [4, 5, 6]]);
+    /// let matrix = Matrix::from_rows(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     #[inline]
     fn from_rows(value: Box<[[T; C]; R]>) -> Self {
         Self::from_rows(*value)
@@ -54,6 +112,23 @@ impl<T, const R: usize, const C: usize> FromRows<Box<[[T; C]; R]>> for Matrix<T>
 }
 
 impl<T, const R: usize, const C: usize> FromRows<Box<[Box<[T; C]>; R]>> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::FromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[Box<[i32; 3]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+    /// let matrix = Matrix::from_rows(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     #[inline]
     fn from_rows(value: Box<[Box<[T; C]>; R]>) -> Self {
         Self::from_rows(*value)
@@ -61,6 +136,23 @@ impl<T, const R: usize, const C: usize> FromRows<Box<[Box<[T; C]>; R]>> for Matr
 }
 
 impl<T, const C: usize> FromRows<Box<[[T; C]]>> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::FromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[[i32; 3]]> = Box::new([[1, 2, 3], [4, 5, 6]]);
+    /// let matrix = Matrix::from_rows(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from_rows(value: Box<[[T; C]]>) -> Self {
         let order = Order::RowMajor;
         let nrows = value.len();
@@ -73,6 +165,23 @@ impl<T, const C: usize> FromRows<Box<[[T; C]]>> for Matrix<T> {
 }
 
 impl<T, const C: usize> FromRows<Box<[Box<[T; C]>]>> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::FromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[Box<[i32; 3]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+    /// let matrix = Matrix::from_rows(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from_rows(value: Box<[Box<[T; C]>]>) -> Self {
         let order = Order::RowMajor;
         let nrows = value.len();
@@ -85,6 +194,23 @@ impl<T, const C: usize> FromRows<Box<[Box<[T; C]>]>> for Matrix<T> {
 }
 
 impl<T, const C: usize> FromRows<Vec<[T; C]>> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::FromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Vec<[i32; 3]> = vec![[1, 2, 3], [4, 5, 6]];
+    /// let matrix = Matrix::from_rows(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     #[inline]
     fn from_rows(value: Vec<[T; C]>) -> Self {
         Self::from_rows(value.into_boxed_slice())
@@ -92,6 +218,23 @@ impl<T, const C: usize> FromRows<Vec<[T; C]>> for Matrix<T> {
 }
 
 impl<T, const C: usize> FromRows<Vec<Box<[T; C]>>> for Matrix<T> {
+    /// Converts to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::FromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Vec<Box<[i32; 3]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+    /// let matrix = Matrix::from_rows(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     #[inline]
     fn from_rows(value: Vec<Box<[T; C]>>) -> Self {
         Self::from_rows(value.into_boxed_slice())
@@ -109,6 +252,29 @@ where
 }
 
 impl<T, const R: usize> TryFromRows<[Box<[T]>; R]> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: [Box<[i32]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     fn try_from_rows(value: [Box<[T]>; R]) -> Result<Self> {
         let order = Order::RowMajor;
         if R == 0 {
@@ -136,6 +302,29 @@ impl<T, const R: usize> TryFromRows<[Box<[T]>; R]> for Matrix<T> {
 }
 
 impl<T, const R: usize> TryFromRows<[Vec<T>; R]> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: [Vec<i32>; 2] = [vec![1, 2, 3], vec![4, 5, 6]];
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     fn try_from_rows(value: [Vec<T>; R]) -> Result<Self> {
         let order = Order::RowMajor;
         if R == 0 {
@@ -163,6 +352,29 @@ impl<T, const R: usize> TryFromRows<[Vec<T>; R]> for Matrix<T> {
 }
 
 impl<T, const R: usize> TryFromRows<Box<[Box<[T]>; R]>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[Box<[i32]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     #[inline]
     fn try_from_rows(value: Box<[Box<[T]>; R]>) -> Result<Self> {
         Self::try_from_rows(*value)
@@ -170,6 +382,29 @@ impl<T, const R: usize> TryFromRows<Box<[Box<[T]>; R]>> for Matrix<T> {
 }
 
 impl<T, const R: usize> TryFromRows<Box<[Vec<T>; R]>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[Vec<i32>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     #[inline]
     fn try_from_rows(value: Box<[Vec<T>; R]>) -> Result<Self> {
         Self::try_from_rows(*value)
@@ -177,6 +412,29 @@ impl<T, const R: usize> TryFromRows<Box<[Vec<T>; R]>> for Matrix<T> {
 }
 
 impl<T> TryFromRows<Box<[Box<[T]>]>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[Box<[i32]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     fn try_from_rows(value: Box<[Box<[T]>]>) -> Result<Self> {
         let order = Order::RowMajor;
         let nrows = value.len();
@@ -204,6 +462,29 @@ impl<T> TryFromRows<Box<[Box<[T]>]>> for Matrix<T> {
 }
 
 impl<T> TryFromRows<Box<[Vec<T>]>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     fn try_from_rows(value: Box<[Vec<T>]>) -> Result<Self> {
         let order = Order::RowMajor;
         let nrows = value.len();
@@ -231,6 +512,29 @@ impl<T> TryFromRows<Box<[Vec<T>]>> for Matrix<T> {
 }
 
 impl<T> TryFromRows<Vec<Box<[T]>>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     #[inline]
     fn try_from_rows(value: Vec<Box<[T]>>) -> Result<Self> {
         Self::try_from_rows(value.into_boxed_slice())
@@ -238,6 +542,29 @@ impl<T> TryFromRows<Vec<Box<[T]>>> for Matrix<T> {
 }
 
 impl<T> TryFromRows<Vec<Vec<T>>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Vec<Vec<i32>> = vec![vec![1, 2, 3], vec![4, 5, 6]];
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
     #[inline]
     fn try_from_rows(value: Vec<Vec<T>>) -> Result<Self> {
         Self::try_from_rows(value.into_boxed_slice())
@@ -248,6 +575,27 @@ impl<T, V> FromRowIterator<T, V> for Matrix<T>
 where
     V: IntoIterator<Item = T>,
 {
+    /// Converts to [`Matrix<T>`] from an iterator over rows.
+    ///
+    /// # Panics
+    ///
+    /// Panics if rows have inconsistent lengths or capacity overflows.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::FromRowIterator;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows = [[1, 2, 3], [4, 5, 6]];
+    /// let matrix = Matrix::from_row_iter(rows);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     fn from_row_iter<M>(iter: M) -> Self
     where
         M: IntoIterator<Item = V>,
