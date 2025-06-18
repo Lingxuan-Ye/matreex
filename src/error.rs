@@ -9,18 +9,19 @@ pub enum Error {
     /// Error when the matrix size exceeds [`usize::MAX`].
     SizeOverflow,
 
-    /// Error when the matrix size does not match the length of its underlying
-    /// data.
+    /// Error when the matrix size does not match the length of its
+    /// underlying data.
     ///
-    /// This equality is an invariant that must be maintained. If the matrix
-    /// size exceeds the data length, indexing into the matrix may result in
-    /// out-of-bounds memory access, leading to *[undefined behavior]*.
+    /// This equality is an invariant that must be maintained. If the
+    /// matrix size exceeds the data length, indexing into the matrix
+    /// may result in out-of-bounds memory access, leading to *[undefined
+    /// behavior]*.
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     SizeMismatch,
 
-    /// Error when attempting to allocate more than [`isize::MAX`] bytes of
-    /// memory.
+    /// Error when attempting to allocate more than [`isize::MAX`] bytes
+    /// of memory.
     ///
     /// Refer to [`vec`] and *[The Rustonomicon]* for more information.
     ///
@@ -28,18 +29,19 @@ pub enum Error {
     /// [The Rustonomicon]: https://doc.rust-lang.org/stable/nomicon/vec/vec-alloc.html#allocating-memory
     CapacityOverflow,
 
-    /// Error when converting to a matrix from rows with inconsistent lengths.
+    /// Error when converting to a matrix from rows or columns with
+    /// inconsistent lengths.
     LengthInconsistent,
 
     /// Error for accessing an index out of bounds.
     IndexOutOfBounds,
 
-    /// Error when a square matrix is required but the current one does not
-    /// satisfy this requirement.
+    /// Error when a square matrix is required but the current one does
+    /// not satisfy this requirement.
     SquareMatrixRequired,
 
-    /// Error when the shapes of two matrices are not conformable for the
-    /// intended operation.
+    /// Error when the shapes of two matrices are not conformable for
+    /// the intended operation.
     ShapeNotConformable,
 }
 
