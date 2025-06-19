@@ -334,7 +334,8 @@ impl<L> Matrix<L> {
         } else {
             let mut rhs_data = rhs.data;
             unsafe {
-                rhs_data.set_len(0); // avoid double free
+                // avoid double free
+                rhs_data.set_len(0);
             }
             let rhs_base = rhs_data.as_ptr();
             self.data
@@ -398,7 +399,8 @@ impl<L> Matrix<L> {
         } else {
             let mut rhs_data = rhs.data;
             unsafe {
-                rhs_data.set_len(0); // avoid double free
+                // avoid double free
+                rhs_data.set_len(0);
             }
             let rhs_base = rhs_data.as_ptr();
             self.data
@@ -505,7 +507,8 @@ impl<L> Matrix<L> {
         } else {
             let mut rhs_data = rhs.data;
             unsafe {
-                rhs_data.set_len(0); // avoid double free
+                // avoid double free
+                rhs_data.set_len(0);
             }
             let rhs_base = rhs_data.as_ptr();
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
