@@ -99,7 +99,6 @@ pub use self::shape::Shape;
 
 use self::index::AxisIndex;
 use self::shape::AxisShape;
-use alloc::vec;
 use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
@@ -290,31 +289,31 @@ impl<T> Matrix<T> {
             return self;
         }
 
-        let base = self.data.as_mut_ptr();
-        let old_shape = self.shape;
-        self.shape.transpose();
-        let new_shape = self.shape;
         let size = self.size();
-        let mut visited = vec![false; size];
+        let src_shape = self.shape;
+        self.shape.transpose();
+        let dst_shape = self.shape;
+        unsafe {
+            self.data.set_len(0);
+        }
+        let src_base = self.data.as_ptr();
+        let mut dst_data = Vec::<T>::with_capacity(size);
+        let dst_base = dst_data.as_mut_ptr();
 
-        for index in 0..size {
-            let mut current = index;
-            loop {
-                let state = unsafe { visited.get_unchecked_mut(current) };
-                if *state {
-                    break;
-                }
-                *state = true;
-                let next = AxisIndex::from_flattened(current, old_shape)
+        for src_index in 0..size {
+            unsafe {
+                let src = src_base.add(src_index);
+                let dst_index = AxisIndex::from_flattened(src_index, src_shape)
                     .swap()
-                    .to_flattened(new_shape);
-                unsafe {
-                    let x = base.add(index);
-                    let y = base.add(next);
-                    ptr::swap(x, y);
-                }
-                current = next;
+                    .to_flattened(dst_shape);
+                let dst = dst_base.add(dst_index);
+                ptr::copy_nonoverlapping(src, dst, 1);
             }
+        }
+
+        self.data = dst_data;
+        unsafe {
+            self.data.set_len(size);
         }
 
         self
