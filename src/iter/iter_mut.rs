@@ -43,19 +43,13 @@ impl<'a, T> IterVectorsMut<'a, T> {
         let matrix_stride = matrix.stride();
 
         unsafe {
-            let buffer = NonNull::new_unchecked(matrix.data.as_mut_ptr());
+            let base = NonNull::new_unchecked(matrix.data.as_mut_ptr());
             let axis_stride = NonZero::new_unchecked(matrix_stride.major());
             let axis_length = NonZero::new_unchecked(matrix.major());
             let vector_stride = NonZero::new_unchecked(matrix_stride.minor());
             let vector_length = NonZero::new_unchecked(matrix.minor());
 
-            Self::assemble(
-                buffer,
-                axis_stride,
-                axis_length,
-                vector_stride,
-                vector_length,
-            )
+            Self::assemble(base, axis_stride, axis_length, vector_stride, vector_length)
         }
     }
 
@@ -67,19 +61,13 @@ impl<'a, T> IterVectorsMut<'a, T> {
         let matrix_stride = matrix.stride();
 
         unsafe {
-            let buffer = NonNull::new_unchecked(matrix.data.as_mut_ptr());
+            let base = NonNull::new_unchecked(matrix.data.as_mut_ptr());
             let axis_stride = NonZero::new_unchecked(matrix_stride.minor());
             let axis_length = NonZero::new_unchecked(matrix.minor());
             let vector_stride = NonZero::new_unchecked(matrix_stride.major());
             let vector_length = NonZero::new_unchecked(matrix.major());
 
-            Self::assemble(
-                buffer,
-                axis_stride,
-                axis_length,
-                vector_stride,
-                vector_length,
-            )
+            Self::assemble(base, axis_stride, axis_length, vector_stride, vector_length)
         }
     }
 
@@ -103,7 +91,7 @@ impl<'a, T> IterVectorsMut<'a, T> {
     ///
     /// # Safety
     ///
-    /// To iterate over the vectors of a matrix, `buffer` must point to the
+    /// To iterate over the vectors of a matrix, `base` must point to the
     /// underlying buffer of that matrix, and the remaining arguments must
     /// be one of the following sets of values in their [`NonZero`] form:
     ///
@@ -123,13 +111,13 @@ impl<'a, T> IterVectorsMut<'a, T> {
     /// any matrix. The returned iterator is valid only if the matrix
     /// remains in scope.
     unsafe fn assemble(
-        buffer: NonNull<T>,
+        base: NonNull<T>,
         axis_stride: NonZero<usize>,
         axis_length: NonZero<usize>,
         vector_stride: NonZero<usize>,
         vector_length: NonZero<usize>,
     ) -> Self {
-        let lower = buffer;
+        let lower = base;
         let offset = axis_stride.get() * (axis_length.get() - 1);
         let upper = if size_of::<T>() == 0 {
             let addr = lower.addr().get() + offset;
@@ -260,14 +248,14 @@ impl<'a, T> IterNthVectorMut<'a, T> {
             return Ok(Self::empty());
         }
 
-        let buffer = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let base = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
         let matrix_stride = matrix.stride();
         let lower = if size_of::<T>() == 0 {
             // would work, trust me
-            buffer
+            base
         } else {
             let offset = n * matrix_stride.major();
-            unsafe { buffer.add(offset) }
+            unsafe { base.add(offset) }
         };
         let stride = unsafe { NonZero::new_unchecked(matrix_stride.minor()) };
         let length = unsafe { NonZero::new_unchecked(matrix.minor()) };
@@ -287,14 +275,14 @@ impl<'a, T> IterNthVectorMut<'a, T> {
             return Ok(Self::empty());
         }
 
-        let buffer = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let base = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
         let matrix_stride = matrix.stride();
         let lower = if size_of::<T>() == 0 {
             // would work, trust me
-            buffer
+            base
         } else {
             let offset = n * matrix_stride.minor();
-            unsafe { buffer.add(offset) }
+            unsafe { base.add(offset) }
         };
         let stride = unsafe { NonZero::new_unchecked(matrix_stride.major()) };
         let length = unsafe { NonZero::new_unchecked(matrix.major()) };
@@ -322,9 +310,9 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     ///
     /// # Safety
     ///
-    /// To iterate over the nth vector of a matrix, `lower` must point
-    /// to the head of that vector, and the remaining arguments must be
-    /// one of the following sets of values in their [`NonZero`] form:
+    /// To iterate over the nth vector of a matrix, `lower` must point to
+    /// the start of that vector, and the remaining arguments must be one
+    /// of the following sets of values in their [`NonZero`] form:
     ///
     /// - For iterating over a major axis vector:
     ///   - `stride`: `matrix.stride().minor()` (i.e., `1`)
