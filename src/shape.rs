@@ -141,14 +141,6 @@ impl AxisShape {
         Stride(self.minor)
     }
 
-    pub(crate) fn major_stride(&self) -> usize {
-        self.minor
-    }
-
-    pub(crate) fn minor_stride(&self) -> usize {
-        1
-    }
-
     /// # Errors
     ///
     /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].

@@ -111,8 +111,9 @@ impl<T> Matrix<T> {
         }
 
         let base = self.data.as_mut_ptr();
-        let index = m * self.major_stride();
-        let jndex = n * self.major_stride();
+        let stride = self.stride();
+        let index = m * stride.major();
+        let jndex = n * stride.major();
 
         unsafe {
             let x = base.add(index);
@@ -132,8 +133,9 @@ impl<T> Matrix<T> {
         }
 
         let base = self.data.as_mut_ptr();
-        let mut index = m * self.minor_stride();
-        let mut jndex = n * self.minor_stride();
+        let stride = self.stride();
+        let mut index = m * stride.minor();
+        let mut jndex = n * stride.minor();
 
         for _ in 0..self.major() {
             unsafe {
@@ -141,8 +143,8 @@ impl<T> Matrix<T> {
                 let y = base.add(jndex);
                 ptr::swap_nonoverlapping(x, y, 1);
             }
-            index += self.major_stride();
-            jndex += self.major_stride();
+            index += stride.major();
+            jndex += stride.major();
         }
 
         Ok(self)

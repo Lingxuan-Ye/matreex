@@ -258,18 +258,6 @@ impl<T> Matrix<T> {
     fn stride(&self) -> Stride {
         self.shape.stride()
     }
-
-    /// Returns the stride of the major axis.
-    fn major_stride(&self) -> usize {
-        self.shape.major_stride()
-    }
-
-    /// Returns the stride of the minor axis.
-    ///
-    /// It always returns `1`.
-    fn minor_stride(&self) -> usize {
-        self.shape.minor_stride()
-    }
 }
 
 impl<T> Matrix<T> {
@@ -619,14 +607,16 @@ impl<T> Matrix<T> {
     where
         T: Clone,
     {
+        let self_stride = self.stride();
+        let source_stride = source.stride();
         if self.order == source.order {
             let major = cmp::min(self.major(), source.major());
             let minor = cmp::min(self.minor(), source.minor());
             for i in 0..major {
-                let self_lower = i * self.major_stride();
-                let self_upper = self_lower + minor * self.minor_stride();
-                let source_lower = i * source.major_stride();
-                let source_upper = source_lower + minor * self.minor_stride();
+                let self_lower = i * self_stride.major();
+                let self_upper = self_lower + minor * self_stride.minor();
+                let source_lower = i * source_stride.major();
+                let source_upper = source_lower + minor * source_stride.minor();
                 unsafe {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)
@@ -637,13 +627,13 @@ impl<T> Matrix<T> {
             let major = cmp::min(self.major(), source.minor());
             let minor = cmp::min(self.minor(), source.major());
             for i in 0..major {
-                let self_lower = i * self.major_stride();
-                let self_upper = self_lower + minor * self.minor_stride();
+                let self_lower = i * self_stride.major();
+                let self_upper = self_lower + minor * self_stride.minor();
                 unsafe {
                     self.data
                         .get_unchecked_mut(self_lower..self_upper)
                         .iter_mut()
-                        .zip(source.data.iter().skip(i).step_by(source.major_stride()))
+                        .zip(source.data.iter().skip(i).step_by(source_stride.major()))
                         .for_each(|(x, y)| *x = y.clone());
                 }
             }

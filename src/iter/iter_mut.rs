@@ -40,11 +40,13 @@ impl<'a, T> IterVectorsMut<'a, T> {
             return Self::empty();
         }
 
+        let matrix_stride = matrix.stride();
+
         unsafe {
             let buffer = NonNull::new_unchecked(matrix.data.as_mut_ptr());
-            let axis_stride = NonZero::new_unchecked(matrix.major_stride());
+            let axis_stride = NonZero::new_unchecked(matrix_stride.major());
             let axis_length = NonZero::new_unchecked(matrix.major());
-            let vector_stride = NonZero::new_unchecked(matrix.minor_stride());
+            let vector_stride = NonZero::new_unchecked(matrix_stride.minor());
             let vector_length = NonZero::new_unchecked(matrix.minor());
 
             Self::assemble(
@@ -62,11 +64,13 @@ impl<'a, T> IterVectorsMut<'a, T> {
             return Self::empty();
         }
 
+        let matrix_stride = matrix.stride();
+
         unsafe {
             let buffer = NonNull::new_unchecked(matrix.data.as_mut_ptr());
-            let axis_stride = NonZero::new_unchecked(matrix.minor_stride());
+            let axis_stride = NonZero::new_unchecked(matrix_stride.minor());
             let axis_length = NonZero::new_unchecked(matrix.minor());
-            let vector_stride = NonZero::new_unchecked(matrix.major_stride());
+            let vector_stride = NonZero::new_unchecked(matrix_stride.major());
             let vector_length = NonZero::new_unchecked(matrix.major());
 
             Self::assemble(
@@ -104,15 +108,15 @@ impl<'a, T> IterVectorsMut<'a, T> {
     /// be one of the following sets of values in their [`NonZero`] form:
     ///
     /// - For iterating over the major axis:
-    ///   - `axis_stride`: `matrix.major_stride()`
+    ///   - `axis_stride`: `matrix.stride().major()`
     ///   - `axis_length`: `matrix.major()`
-    ///   - `vector_stride`: `matrix.minor_stride()` (i.e., `1`)
+    ///   - `vector_stride`: `matrix.stride().minor()` (i.e., `1`)
     ///   - `vector_length`: `matrix.minor()`
     ///
     /// - For iterating over the minor axis:
-    ///   - `axis_stride`: `matrix.minor_stride()` (i.e., `1`)
+    ///   - `axis_stride`: `matrix.stride().minor()` (i.e., `1`)
     ///   - `axis_length`: `matrix.minor()`
-    ///   - `vector_stride`: `matrix.major_stride()`
+    ///   - `vector_stride`: `matrix.stride().major()`
     ///   - `vector_length`: `matrix.major()`
     ///
     /// This returns a detached iterator whose lifetime is not bound to
@@ -257,14 +261,15 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         }
 
         let buffer = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let matrix_stride = matrix.stride();
         let lower = if size_of::<T>() == 0 {
             // would work, trust me
             buffer
         } else {
-            let offset = n * matrix.major_stride();
+            let offset = n * matrix_stride.major();
             unsafe { buffer.add(offset) }
         };
-        let stride = unsafe { NonZero::new_unchecked(matrix.minor_stride()) };
+        let stride = unsafe { NonZero::new_unchecked(matrix_stride.minor()) };
         let length = unsafe { NonZero::new_unchecked(matrix.minor()) };
 
         unsafe { Ok(Self::assemble(lower, stride, length)) }
@@ -283,14 +288,15 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         }
 
         let buffer = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let matrix_stride = matrix.stride();
         let lower = if size_of::<T>() == 0 {
             // would work, trust me
             buffer
         } else {
-            let offset = n * matrix.minor_stride();
+            let offset = n * matrix_stride.minor();
             unsafe { buffer.add(offset) }
         };
-        let stride = unsafe { NonZero::new_unchecked(matrix.major_stride()) };
+        let stride = unsafe { NonZero::new_unchecked(matrix_stride.major()) };
         let length = unsafe { NonZero::new_unchecked(matrix.major()) };
 
         unsafe { Ok(Self::assemble(lower, stride, length)) }
@@ -321,11 +327,11 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// one of the following sets of values in their [`NonZero`] form:
     ///
     /// - For iterating over a major axis vector:
-    ///   - `stride`: `matrix.minor_stride()` (i.e., `1`)
+    ///   - `stride`: `matrix.stride().minor()` (i.e., `1`)
     ///   - `length`: `matrix.minor()`
     ///
     /// - For iterating over a minor axis vector:
-    ///   - `stride`: `matrix.major_stride()`
+    ///   - `stride`: `matrix.stride().major()`
     ///   - `length`: `matrix.major()`
     ///
     /// This returns a detached iterator whose lifetime is not bound to
