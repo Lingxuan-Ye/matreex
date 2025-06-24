@@ -590,7 +590,7 @@ impl<T> Matrix<T> {
         self.data.contains(value)
     }
 
-    /// Overwrites the overlapping part of this matrix with `source`,
+    /// Overwrites the overlapping part of this matrix with `src`,
     /// leaving the non-overlapping part unchanged.
     ///
     /// # Examples
@@ -598,43 +598,43 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
-    /// let source = matrix![[1, 1], [1, 1], [1, 1]];
-    /// matrix.overwrite(&source);
-    /// assert_eq!(matrix, matrix![[1, 1, 0], [1, 1, 0]]);
+    /// let mut dst = matrix![[0, 0, 0], [0, 0, 0]];
+    /// let src = matrix![[1, 1], [1, 1], [1, 1]];
+    /// dst.overwrite(&src);
+    /// assert_eq!(dst, matrix![[1, 1, 0], [1, 1, 0]]);
     /// ```
-    pub fn overwrite(&mut self, source: &Self) -> &mut Self
+    pub fn overwrite(&mut self, src: &Self) -> &mut Self
     where
         T: Clone,
     {
-        let self_stride = self.stride();
-        let source_stride = source.stride();
-        if self.order == source.order {
-            let major = cmp::min(self.major(), source.major());
-            let minor = cmp::min(self.minor(), source.minor());
+        let dst_stride = self.stride();
+        let src_stride = src.stride();
+        if self.order == src.order {
+            let major = cmp::min(self.major(), src.major());
+            let minor = cmp::min(self.minor(), src.minor());
             for i in 0..major {
-                let self_lower = i * self_stride.major();
-                let self_upper = self_lower + minor * self_stride.minor();
-                let source_lower = i * source_stride.major();
-                let source_upper = source_lower + minor * source_stride.minor();
+                let dst_lower = i * dst_stride.major();
+                let dst_upper = dst_lower + minor * dst_stride.minor();
+                let src_lower = i * src_stride.major();
+                let src_upper = src_lower + minor * src_stride.minor();
                 unsafe {
                     self.data
-                        .get_unchecked_mut(self_lower..self_upper)
-                        .clone_from_slice(source.data.get_unchecked(source_lower..source_upper));
+                        .get_unchecked_mut(dst_lower..dst_upper)
+                        .clone_from_slice(src.data.get_unchecked(src_lower..src_upper));
                 }
             }
         } else {
-            let major = cmp::min(self.major(), source.minor());
-            let minor = cmp::min(self.minor(), source.major());
+            let major = cmp::min(self.major(), src.minor());
+            let minor = cmp::min(self.minor(), src.major());
             for i in 0..major {
-                let self_lower = i * self_stride.major();
-                let self_upper = self_lower + minor * self_stride.minor();
+                let dst_lower = i * dst_stride.major();
+                let dst_upper = dst_lower + minor * dst_stride.minor();
                 unsafe {
                     self.data
-                        .get_unchecked_mut(self_lower..self_upper)
+                        .get_unchecked_mut(dst_lower..dst_upper)
                         .iter_mut()
-                        .zip(source.data.iter().skip(i).step_by(source_stride.major()))
-                        .for_each(|(x, y)| *x = y.clone());
+                        .zip(src.data.iter().skip(i).step_by(src_stride.major()))
+                        .for_each(|(d, s)| *d = s.clone());
                 }
             }
         }
@@ -1011,44 +1011,44 @@ mod tests {
 
     #[test]
     fn test_overwrite() {
-        let destination = matrix![[0, 0, 0], [0, 0, 0]];
-        let source = matrix![[1, 2]];
-        testkit::for_each_order_binary(destination, source, |mut destination, source| {
-            destination.overwrite(&source);
+        let dst = matrix![[0, 0, 0], [0, 0, 0]];
+        let src = matrix![[1, 2]];
+        testkit::for_each_order_binary(dst, src, |mut dst, src| {
+            dst.overwrite(&src);
             let expected = matrix![[1, 2, 0], [0, 0, 0]];
-            testkit::assert_loose_eq(&destination, &expected);
+            testkit::assert_loose_eq(&dst, &expected);
         });
 
-        let destination = matrix![[0, 0, 0], [0, 0, 0]];
-        let source = matrix![[1, 2], [3, 4]];
-        testkit::for_each_order_binary(destination, source, |mut destination, source| {
-            destination.overwrite(&source);
+        let dst = matrix![[0, 0, 0], [0, 0, 0]];
+        let src = matrix![[1, 2], [3, 4]];
+        testkit::for_each_order_binary(dst, src, |mut dst, src| {
+            dst.overwrite(&src);
             let expected = matrix![[1, 2, 0], [3, 4, 0]];
-            testkit::assert_loose_eq(&destination, &expected);
+            testkit::assert_loose_eq(&dst, &expected);
         });
 
-        let destination = matrix![[0, 0, 0], [0, 0, 0]];
-        let source = matrix![[1, 2], [3, 4], [5, 6]];
-        testkit::for_each_order_binary(destination, source, |mut destination, source| {
-            destination.overwrite(&source);
+        let dst = matrix![[0, 0, 0], [0, 0, 0]];
+        let src = matrix![[1, 2], [3, 4], [5, 6]];
+        testkit::for_each_order_binary(dst, src, |mut dst, src| {
+            dst.overwrite(&src);
             let expected = matrix![[1, 2, 0], [3, 4, 0]];
-            testkit::assert_loose_eq(&destination, &expected);
+            testkit::assert_loose_eq(&dst, &expected);
         });
 
-        let destination = matrix![[0, 0, 0], [0, 0, 0]];
-        let source = matrix![[1, 2, 3]];
-        testkit::for_each_order_binary(destination, source, |mut destination, source| {
-            destination.overwrite(&source);
+        let dst = matrix![[0, 0, 0], [0, 0, 0]];
+        let src = matrix![[1, 2, 3]];
+        testkit::for_each_order_binary(dst, src, |mut dst, src| {
+            dst.overwrite(&src);
             let expected = matrix![[1, 2, 3], [0, 0, 0]];
-            testkit::assert_loose_eq(&destination, &expected);
+            testkit::assert_loose_eq(&dst, &expected);
         });
 
-        let destination = matrix![[0, 0, 0], [0, 0, 0]];
-        let source = matrix![[1, 2, 3, 4]];
-        testkit::for_each_order_binary(destination, source, |mut destination, source| {
-            destination.overwrite(&source);
+        let dst = matrix![[0, 0, 0], [0, 0, 0]];
+        let src = matrix![[1, 2, 3, 4]];
+        testkit::for_each_order_binary(dst, src, |mut dst, src| {
+            dst.overwrite(&src);
             let expected = matrix![[1, 2, 3], [0, 0, 0]];
-            testkit::assert_loose_eq(&destination, &expected);
+            testkit::assert_loose_eq(&dst, &expected);
         });
     }
 
