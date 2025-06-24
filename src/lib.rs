@@ -98,7 +98,7 @@ pub use self::order::Order;
 pub use self::shape::Shape;
 
 use self::index::AxisIndex;
-use self::shape::AxisShape;
+use self::shape::{AxisShape, Stride};
 use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
@@ -252,6 +252,11 @@ impl<T> Matrix<T> {
     /// Returns the length of the minor axis.
     fn minor(&self) -> usize {
         self.shape.minor()
+    }
+
+    /// Returns the stride of the matrix.
+    fn stride(&self) -> Stride {
+        self.shape.stride()
     }
 
     /// Returns the stride of the major axis.

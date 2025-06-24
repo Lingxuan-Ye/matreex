@@ -137,6 +137,10 @@ impl AxisShape {
         self.minor
     }
 
+    pub(crate) fn stride(&self) -> Stride {
+        Stride(self.minor)
+    }
+
     pub(crate) fn major_stride(&self) -> usize {
         self.minor
     }
@@ -194,6 +198,20 @@ impl AxisShape {
             Order::ColMajor => (self.minor, self.major),
         };
         Shape { nrows, ncols }
+    }
+}
+
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+pub(crate) struct Stride(usize);
+
+impl Stride {
+    pub(crate) fn major(&self) -> usize {
+        self.0
+    }
+
+    pub(crate) fn minor(&self) -> usize {
+        1
     }
 }
 
