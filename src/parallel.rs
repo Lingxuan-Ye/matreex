@@ -186,10 +186,15 @@ impl<T> Matrix<T> {
     where
         T: Sync,
     {
-        self.data.par_iter().enumerate().map(|(index, element)| {
-            let index = Index::from_flattened(index, self.order, self.shape);
-            (index, element)
-        })
+        let order = self.order;
+        let stride = self.stride();
+        self.data
+            .par_iter()
+            .enumerate()
+            .map(move |(index, element)| {
+                let index = Index::from_flattened(index, order, stride);
+                (index, element)
+            })
     }
 
     /// Returns a parallel iterator that allows modifying each element
@@ -215,11 +220,13 @@ impl<T> Matrix<T> {
     where
         T: Send,
     {
+        let order = self.order;
+        let stride = self.stride();
         self.data
             .par_iter_mut()
             .enumerate()
-            .map(|(index, element)| {
-                let index = Index::from_flattened(index, self.order, self.shape);
+            .map(move |(index, element)| {
+                let index = Index::from_flattened(index, order, stride);
                 (index, element)
             })
     }
@@ -245,11 +252,13 @@ impl<T> Matrix<T> {
     where
         T: Send,
     {
+        let order = self.order;
+        let stride = self.stride();
         self.data
             .into_par_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Index::from_flattened(index, self.order, self.shape);
+                let index = Index::from_flattened(index, order, stride);
                 (index, element)
             })
     }

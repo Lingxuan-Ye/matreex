@@ -3,7 +3,7 @@
 use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::order::Order;
-use crate::shape::AxisShape;
+use crate::shape::{AxisShape, Stride};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -294,12 +294,12 @@ impl Index {
         self
     }
 
-    pub(crate) fn from_flattened(index: usize, order: Order, shape: AxisShape) -> Self {
-        AxisIndex::from_flattened(index, shape).to_index(order)
+    pub(crate) fn from_flattened(index: usize, order: Order, stride: Stride) -> Self {
+        AxisIndex::from_flattened(index, stride).to_index(order)
     }
 
-    pub(crate) fn to_flattened(self, order: Order, shape: AxisShape) -> usize {
-        AxisIndex::from_index(self, order).to_flattened(shape)
+    pub(crate) fn to_flattened(self, order: Order, stride: Stride) -> usize {
+        AxisIndex::from_index(self, order).to_flattened(stride)
     }
 }
 
@@ -593,14 +593,14 @@ impl AxisIndex {
     // - it is a one-to-many mapping
     // - it serves no practical purpose
 
-    pub(crate) fn from_flattened(index: usize, shape: AxisShape) -> Self {
-        let major = index / shape.major_stride();
-        let minor = (index % shape.major_stride()) / shape.minor_stride();
+    pub(crate) fn from_flattened(index: usize, stride: Stride) -> Self {
+        let major = index / stride.major();
+        let minor = (index % stride.major()) / stride.minor();
         Self { major, minor }
     }
 
-    pub(crate) fn to_flattened(self, shape: AxisShape) -> usize {
-        self.major * shape.major_stride() + self.minor * shape.minor_stride()
+    pub(crate) fn to_flattened(self, stride: Stride) -> usize {
+        self.major * stride.major() + self.minor * stride.minor()
     }
 }
 
@@ -612,12 +612,12 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     }
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        let index = self.to_flattened(matrix.shape);
+        let index = self.to_flattened(matrix.stride());
         unsafe { matrix.data.get_unchecked(index) }
     }
 
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        let index = self.to_flattened(matrix.shape);
+        let index = self.to_flattened(matrix.stride());
         unsafe { matrix.data.get_unchecked_mut(index) }
     }
 }

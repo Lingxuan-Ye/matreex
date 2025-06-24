@@ -138,10 +138,11 @@ impl<T> Matrix<T> {
     {
         let order = Order::default();
         let shape = AxisShape::from_shape(shape.into(), order);
+        let stride = shape.stride();
         let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         for index in 0..size {
-            let index = Index::from_flattened(index, order, shape);
+            let index = Index::from_flattened(index, order, stride);
             let element = initializer(index);
             data.push(element);
         }

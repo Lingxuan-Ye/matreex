@@ -375,10 +375,12 @@ impl<T> Matrix<T> {
     pub fn iter_elements_with_index(
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &T)> {
-        self.data.iter().enumerate().map(|(index, element)| {
+        let order = self.order;
+        let stride = self.stride();
+        self.data.iter().enumerate().map(move |(index, element)| {
             // hope loop-invariant code motion applies here,
             // as well as to similar code
-            let index = Index::from_flattened(index, self.order, self.shape);
+            let index = Index::from_flattened(index, order, stride);
             (index, element)
         })
     }
@@ -406,10 +408,15 @@ impl<T> Matrix<T> {
     pub fn iter_elements_mut_with_index(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &mut T)> {
-        self.data.iter_mut().enumerate().map(|(index, element)| {
-            let index = Index::from_flattened(index, self.order, self.shape);
-            (index, element)
-        })
+        let order = self.order;
+        let stride = self.stride();
+        self.data
+            .iter_mut()
+            .enumerate()
+            .map(move |(index, element)| {
+                let index = Index::from_flattened(index, order, stride);
+                (index, element)
+            })
     }
 
     /// Creates a consuming iterator, that is, one that moves each
@@ -435,11 +442,13 @@ impl<T> Matrix<T> {
     pub fn into_iter_elements_with_index(
         self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, T)> {
+        let order = self.order;
+        let stride = self.stride();
         self.data
             .into_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Index::from_flattened(index, self.order, self.shape);
+                let index = Index::from_flattened(index, order, stride);
                 (index, element)
             })
     }

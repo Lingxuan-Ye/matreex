@@ -295,10 +295,11 @@ impl<T> Matrix<T> {
         }
 
         let size = self.size();
-        let src_shape = self.shape;
+        let src_stride = self.stride();
         self.shape.transpose();
-        let dst_shape = self.shape;
+        let dst_stride = self.stride();
         unsafe {
+            // avoid double free
             self.data.set_len(0);
         }
         let src_base = self.data.as_ptr();
@@ -308,9 +309,9 @@ impl<T> Matrix<T> {
         for src_index in 0..size {
             unsafe {
                 let src = src_base.add(src_index);
-                let dst_index = AxisIndex::from_flattened(src_index, src_shape)
+                let dst_index = AxisIndex::from_flattened(src_index, src_stride)
                     .swap()
-                    .to_flattened(dst_shape);
+                    .to_flattened(dst_stride);
                 let dst = dst_base.add(dst_index);
                 ptr::copy_nonoverlapping(src, dst, 1);
             }

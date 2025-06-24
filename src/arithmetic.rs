@@ -216,13 +216,15 @@ impl<L> Matrix<L> {
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, self.shape)
+                    let index = AxisIndex::from_flattened(index, lhs_stride)
                         .swap()
-                        .to_flattened(rhs.shape);
+                        .to_flattened(rhs_stride);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -274,13 +276,15 @@ impl<L> Matrix<L> {
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, self.shape)
+                    let index = AxisIndex::from_flattened(index, lhs_stride)
                         .swap()
-                        .to_flattened(rhs.shape);
+                        .to_flattened(rhs_stride);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -332,6 +336,8 @@ impl<L> Matrix<L> {
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             let mut rhs_data = rhs.data;
             unsafe {
                 // avoid double free
@@ -342,9 +348,9 @@ impl<L> Matrix<L> {
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, self.shape)
+                    let index = AxisIndex::from_flattened(index, lhs_stride)
                         .swap()
-                        .to_flattened(rhs.shape);
+                        .to_flattened(rhs_stride);
                     let right = unsafe { ptr::read(rhs_base.add(index)) };
                     op(left, right)
                 })
@@ -397,6 +403,8 @@ impl<L> Matrix<L> {
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             let mut rhs_data = rhs.data;
             unsafe {
                 // avoid double free
@@ -407,9 +415,9 @@ impl<L> Matrix<L> {
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, self.shape)
+                    let index = AxisIndex::from_flattened(index, lhs_stride)
                         .swap()
-                        .to_flattened(rhs.shape);
+                        .to_flattened(rhs_stride);
                     let right = unsafe { ptr::read(rhs_base.add(index)) };
                     op(left, right)
                 })
@@ -456,10 +464,12 @@ impl<L> Matrix<L> {
                 .zip(&rhs.data)
                 .for_each(|(left, right)| op(left, right));
         } else {
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = AxisIndex::from_flattened(index, self.shape)
+                let index = AxisIndex::from_flattened(index, lhs_stride)
                     .swap()
-                    .to_flattened(rhs.shape);
+                    .to_flattened(rhs_stride);
                 let right = unsafe { rhs.data.get_unchecked(index) };
                 op(left, right)
             });
@@ -505,6 +515,8 @@ impl<L> Matrix<L> {
                 .zip(rhs.data)
                 .for_each(|(left, right)| op(left, right));
         } else {
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             let mut rhs_data = rhs.data;
             unsafe {
                 // avoid double free
@@ -512,9 +524,9 @@ impl<L> Matrix<L> {
             }
             let rhs_base = rhs_data.as_ptr();
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = AxisIndex::from_flattened(index, self.shape)
+                let index = AxisIndex::from_flattened(index, lhs_stride)
                     .swap()
-                    .to_flattened(rhs.shape);
+                    .to_flattened(rhs_stride);
                 let right = unsafe { ptr::read(rhs_base.add(index)) };
                 op(left, right)
             });

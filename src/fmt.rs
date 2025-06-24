@@ -48,6 +48,8 @@ where
             return Ok(());
         }
 
+        let order = self.order;
+        let stride = self.stride();
         let shape = self.shape();
         let nrows = shape.nrows();
         let ncols = shape.ncols();
@@ -102,7 +104,7 @@ where
                 }
                 // hope loop-invariant code motion applies here,
                 // as well as to similar code
-                let index = Index::new(row, col).to_flattened(self.order, self.shape);
+                let index = Index::new(row, col).to_flattened(order, stride);
                 f.write_index(index, index_width)?;
                 f.write_str(constant::element::INDEX_GAP)?;
                 match cache[index].next() {
@@ -125,7 +127,7 @@ where
                     if col != 0 {
                         f.write_str(constant::element::SEPARATOR_PADDING)?;
                     }
-                    let index = Index::new(row, col).to_flattened(self.order, self.shape);
+                    let index = Index::new(row, col).to_flattened(order, stride);
                     f.write_str(&index_padding)?;
                     f.write_str(constant::element::INDEX_GAP)?;
                     match cache[index].next() {
@@ -155,6 +157,8 @@ where
             return Ok(());
         }
 
+        let order = self.order;
+        let stride = self.stride();
         let shape = self.shape();
         let nrows = shape.nrows();
         let ncols = shape.ncols();
@@ -187,7 +191,7 @@ where
                 if col != 0 {
                     f.write_str(constant::element::SEPARATOR)?;
                 }
-                let index = Index::new(row, col).to_flattened(self.order, self.shape);
+                let index = Index::new(row, col).to_flattened(order, stride);
                 match cache[index].next() {
                     None if element_width > 0 => f.write_str(&element_padding)?,
                     Some(line) => f.write_element_line(line, element_width)?,
@@ -206,7 +210,7 @@ where
                     if col != 0 {
                         f.write_str(constant::element::SEPARATOR_PADDING)?;
                     }
-                    let index = Index::new(row, col).to_flattened(self.order, self.shape);
+                    let index = Index::new(row, col).to_flattened(order, stride);
                     match cache[index].next() {
                         None if element_width > 0 => f.write_str(&element_padding)?,
                         Some(line) => f.write_element_line(line, element_width)?,

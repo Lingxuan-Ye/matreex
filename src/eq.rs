@@ -10,9 +10,9 @@ where
             self.shape == other.shape && self.data == other.data
         } else if self.major() == other.minor() && self.minor() == other.major() {
             self.data.iter().enumerate().all(|(index, left)| {
-                let index = AxisIndex::from_flattened(index, self.shape)
+                let index = AxisIndex::from_flattened(index, self.stride())
                     .swap()
-                    .to_flattened(other.shape);
+                    .to_flattened(other.stride());
                 let right = unsafe { other.data.get_unchecked(index) };
                 left == right
             })
