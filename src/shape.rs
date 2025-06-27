@@ -121,6 +121,28 @@ impl From<[usize; 2]> for Shape {
 
 /// A trait for specifying the shape of a [`Matrix<T>`].
 ///
+/// # Examples
+///
+/// ```
+/// use matreex::{Matrix, matrix};
+/// use matreex::shape::AsShape;
+///
+/// struct S(usize, usize);
+///
+/// impl AsShape for S {
+///     fn nrows(&self) -> usize {
+///         self.0
+///     }
+///
+///     fn ncols(&self) -> usize {
+///         self.1
+///     }
+/// }
+///
+/// let matrix = Matrix::with_value(S(2, 3), 0);
+/// assert_eq!(matrix, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
+/// ```
+///
 /// [`Matrix<T>`]: crate::Matrix
 pub trait AsShape {
     /// Returns the number of rows.
