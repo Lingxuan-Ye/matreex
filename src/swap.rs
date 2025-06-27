@@ -106,7 +106,7 @@ impl<T> Matrix<T> {
     fn swap_major_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         if m >= self.major() || n >= self.major() {
             return Err(Error::IndexOutOfBounds);
-        } else if m == n {
+        } else if m == n || self.minor() == 0 {
             return Ok(self);
         }
 
@@ -118,7 +118,7 @@ impl<T> Matrix<T> {
         unsafe {
             let x = base.add(index);
             let y = base.add(jndex);
-            let count = self.minor();
+            let count = self.minor() * stride.minor();
             ptr::swap_nonoverlapping(x, y, count);
         }
 
@@ -128,23 +128,24 @@ impl<T> Matrix<T> {
     fn swap_minor_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         if m >= self.minor() || n >= self.minor() {
             return Err(Error::IndexOutOfBounds);
-        } else if m == n {
+        } else if m == n || self.major() == 0 {
             return Ok(self);
         }
 
         let base = self.data.as_mut_ptr();
         let stride = self.stride();
-        let mut index = m * stride.minor();
-        let mut jndex = n * stride.minor();
+        let index = m * stride.minor();
+        let jndex = n * stride.minor();
 
-        for _ in 0..self.major() {
-            unsafe {
-                let x = base.add(index);
-                let y = base.add(jndex);
-                ptr::swap_nonoverlapping(x, y, 1);
+        unsafe {
+            let mut x = base.add(index);
+            let mut y = base.add(jndex);
+            ptr::swap_nonoverlapping(x, y, stride.minor());
+            for _ in 1..self.major() {
+                x = x.add(stride.major());
+                y = y.add(stride.major());
+                ptr::swap_nonoverlapping(x, y, stride.minor());
             }
-            index += stride.major();
-            jndex += stride.major();
         }
 
         Ok(self)
@@ -160,7 +161,6 @@ mod tests {
     #[test]
     fn test_swap() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
         testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix.swap((0, 0), (0, 0)).unwrap();
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
@@ -201,7 +201,6 @@ mod tests {
     #[test]
     fn test_swap_rows() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
         testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix.swap_rows(0, 0).unwrap();
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
@@ -237,12 +236,18 @@ mod tests {
             assert_eq!(error, Error::IndexOutOfBounds);
             testkit::assert_loose_eq(&matrix, &unchanged);
         });
+
+        let matrix = matrix![[0; 0]; 2];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            matrix.swap_rows(0, 1).unwrap();
+            let expected = matrix![[0; 0]; 2];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
     fn test_swap_cols() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-
         testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix.swap_cols(0, 0).unwrap();
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
@@ -277,6 +282,13 @@ mod tests {
             let error = matrix.swap_cols(3, 4).unwrap_err();
             assert_eq!(error, Error::IndexOutOfBounds);
             testkit::assert_loose_eq(&matrix, &unchanged);
+        });
+
+        let matrix = matrix![[0; 2]; 0];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            matrix.swap_cols(0, 1).unwrap();
+            let expected = matrix![[0; 2]; 0];
+            testkit::assert_loose_eq(&matrix, &expected);
         });
     }
 }
