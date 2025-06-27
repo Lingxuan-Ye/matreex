@@ -82,9 +82,7 @@ impl Shape {
     /// ```
     #[inline]
     pub fn size(&self) -> Result<usize> {
-        self.nrows
-            .checked_mul(self.ncols)
-            .ok_or(Error::SizeOverflow)
+        AsShape::size(self)
     }
 
     /// Transposes the shape.
@@ -121,6 +119,70 @@ impl From<[usize; 2]> for Shape {
     }
 }
 
+/// A trait for specifying the shape of a [`Matrix<T>`].
+///
+/// [`Matrix<T>`]: crate::Matrix
+pub trait AsShape {
+    /// Returns the number of rows.
+    fn nrows(&self) -> usize;
+
+    /// Returns the number of columns.
+    fn ncols(&self) -> usize;
+
+    /// Returns the size.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// This method has a default implementation, overriding it is not
+    /// recommended.
+    #[inline]
+    fn size(&self) -> Result<usize> {
+        self.nrows()
+            .checked_mul(self.ncols())
+            .ok_or(Error::SizeOverflow)
+    }
+}
+
+impl AsShape for Shape {
+    #[inline]
+    fn nrows(&self) -> usize {
+        self.nrows
+    }
+
+    #[inline]
+    fn ncols(&self) -> usize {
+        self.ncols
+    }
+}
+
+impl AsShape for (usize, usize) {
+    #[inline]
+    fn nrows(&self) -> usize {
+        self.0
+    }
+
+    #[inline]
+    fn ncols(&self) -> usize {
+        self.1
+    }
+}
+
+impl AsShape for [usize; 2] {
+    #[inline]
+    fn nrows(&self) -> usize {
+        self[0]
+    }
+
+    #[inline]
+    fn ncols(&self) -> usize {
+        self[1]
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub(crate) struct AxisShape {
@@ -135,6 +197,20 @@ impl AxisShape {
 
     pub(crate) fn minor(&self) -> usize {
         self.minor
+    }
+
+    pub(crate) fn nrows(&self, order: Order) -> usize {
+        match order {
+            Order::RowMajor => self.major,
+            Order::ColMajor => self.minor,
+        }
+    }
+
+    pub(crate) fn ncols(&self, order: Order) -> usize {
+        match order {
+            Order::RowMajor => self.minor,
+            Order::ColMajor => self.major,
+        }
     }
 
     pub(crate) fn stride(&self) -> Stride {
@@ -160,20 +236,6 @@ impl AxisShape {
     pub(crate) fn transpose(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
-    }
-
-    pub(crate) fn nrows(&self, order: Order) -> usize {
-        match order {
-            Order::RowMajor => self.major,
-            Order::ColMajor => self.minor,
-        }
-    }
-
-    pub(crate) fn ncols(&self, order: Order) -> usize {
-        match order {
-            Order::RowMajor => self.minor,
-            Order::ColMajor => self.major,
-        }
     }
 
     pub(crate) fn from_shape(shape: Shape, order: Order) -> Self {
@@ -240,5 +302,14 @@ mod tests {
         let mut shape = Shape::new(3, 2);
         shape.transpose();
         assert_eq!(shape, Shape::new(2, 3));
+    }
+
+    #[test]
+    fn test_as_shape_size() {
+        let shape = (2, 3);
+        assert_eq!(shape.size(), Ok(6));
+
+        let shape = (2, usize::MAX);
+        assert_eq!(shape.size(), Err(Error::SizeOverflow));
     }
 }
