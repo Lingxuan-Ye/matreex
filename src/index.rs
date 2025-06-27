@@ -638,16 +638,16 @@ mod tests {
     fn test_matrix_get() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
-            assert_eq!(matrix.get((0, 0)), Ok(&1));
-            assert_eq!(matrix.get((0, 1)), Ok(&2));
-            assert_eq!(matrix.get((0, 2)), Ok(&3));
-            assert_eq!(matrix.get((1, 0)), Ok(&4));
-            assert_eq!(matrix.get((1, 1)), Ok(&5));
-            assert_eq!(matrix.get((1, 2)), Ok(&6));
+            assert_eq!(matrix.get(Index::new(0, 0)), Ok(&1));
+            assert_eq!(matrix.get(Index::new(0, 1)), Ok(&2));
+            assert_eq!(matrix.get(Index::new(0, 2)), Ok(&3));
+            assert_eq!(matrix.get(Index::new(1, 0)), Ok(&4));
+            assert_eq!(matrix.get(Index::new(1, 1)), Ok(&5));
+            assert_eq!(matrix.get(Index::new(1, 2)), Ok(&6));
 
-            assert_eq!(matrix.get((2, 0)), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix.get((0, 3)), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix.get((2, 3)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix.get(Index::new(2, 0)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix.get(Index::new(0, 3)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix.get(Index::new(2, 3)), Err(Error::IndexOutOfBounds));
         });
     }
 
@@ -655,18 +655,27 @@ mod tests {
     fn test_matrix_get_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |mut matrix| {
-            *matrix.get_mut((0, 0)).unwrap() -= 1;
-            *matrix.get_mut((0, 1)).unwrap() -= 2;
-            *matrix.get_mut((0, 2)).unwrap() -= 3;
-            *matrix.get_mut((1, 0)).unwrap() -= 4;
-            *matrix.get_mut((1, 1)).unwrap() -= 5;
-            *matrix.get_mut((1, 2)).unwrap() -= 6;
+            *matrix.get_mut(Index::new(0, 0)).unwrap() -= 1;
+            *matrix.get_mut(Index::new(0, 1)).unwrap() -= 2;
+            *matrix.get_mut(Index::new(0, 2)).unwrap() -= 3;
+            *matrix.get_mut(Index::new(1, 0)).unwrap() -= 4;
+            *matrix.get_mut(Index::new(1, 1)).unwrap() -= 5;
+            *matrix.get_mut(Index::new(1, 2)).unwrap() -= 6;
             let expected = matrix![[0, 0, 0], [0, 0, 0]];
             testkit::assert_loose_eq(&matrix, &expected);
 
-            assert_eq!(matrix.get_mut((2, 0)), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix.get_mut((0, 3)), Err(Error::IndexOutOfBounds));
-            assert_eq!(matrix.get_mut((2, 3)), Err(Error::IndexOutOfBounds));
+            assert_eq!(
+                matrix.get_mut(Index::new(2, 0)),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                matrix.get_mut(Index::new(0, 3)),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                matrix.get_mut(Index::new(2, 3)),
+                Err(Error::IndexOutOfBounds)
+            );
         });
     }
 
@@ -674,12 +683,12 @@ mod tests {
     fn test_matrix_get_unchecked() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| unsafe {
-            assert_eq!(matrix.get_unchecked((0, 0)), &1);
-            assert_eq!(matrix.get_unchecked((0, 1)), &2);
-            assert_eq!(matrix.get_unchecked((0, 2)), &3);
-            assert_eq!(matrix.get_unchecked((1, 0)), &4);
-            assert_eq!(matrix.get_unchecked((1, 1)), &5);
-            assert_eq!(matrix.get_unchecked((1, 2)), &6);
+            assert_eq!(matrix.get_unchecked(Index::new(0, 0)), &1);
+            assert_eq!(matrix.get_unchecked(Index::new(0, 1)), &2);
+            assert_eq!(matrix.get_unchecked(Index::new(0, 2)), &3);
+            assert_eq!(matrix.get_unchecked(Index::new(1, 0)), &4);
+            assert_eq!(matrix.get_unchecked(Index::new(1, 1)), &5);
+            assert_eq!(matrix.get_unchecked(Index::new(1, 2)), &6);
         });
     }
 
@@ -687,12 +696,12 @@ mod tests {
     fn test_matrix_get_unchecked_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |mut matrix| unsafe {
-            *matrix.get_unchecked_mut((0, 0)) -= 1;
-            *matrix.get_unchecked_mut((0, 1)) -= 2;
-            *matrix.get_unchecked_mut((0, 2)) -= 3;
-            *matrix.get_unchecked_mut((1, 0)) -= 4;
-            *matrix.get_unchecked_mut((1, 1)) -= 5;
-            *matrix.get_unchecked_mut((1, 2)) -= 6;
+            *matrix.get_unchecked_mut(Index::new(0, 0)) -= 1;
+            *matrix.get_unchecked_mut(Index::new(0, 1)) -= 2;
+            *matrix.get_unchecked_mut(Index::new(0, 2)) -= 3;
+            *matrix.get_unchecked_mut(Index::new(1, 0)) -= 4;
+            *matrix.get_unchecked_mut(Index::new(1, 1)) -= 5;
+            *matrix.get_unchecked_mut(Index::new(1, 2)) -= 6;
             let expected = matrix![[0, 0, 0], [0, 0, 0]];
             testkit::assert_loose_eq(&matrix, &expected);
         });
@@ -702,12 +711,12 @@ mod tests {
     fn test_matrix_index() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
-            assert_eq!(matrix[(0, 0)], 1);
-            assert_eq!(matrix[(0, 1)], 2);
-            assert_eq!(matrix[(0, 2)], 3);
-            assert_eq!(matrix[(1, 0)], 4);
-            assert_eq!(matrix[(1, 1)], 5);
-            assert_eq!(matrix[(1, 2)], 6);
+            assert_eq!(matrix[Index::new(0, 0)], 1);
+            assert_eq!(matrix[Index::new(0, 1)], 2);
+            assert_eq!(matrix[Index::new(0, 2)], 3);
+            assert_eq!(matrix[Index::new(1, 0)], 4);
+            assert_eq!(matrix[Index::new(1, 1)], 5);
+            assert_eq!(matrix[Index::new(1, 2)], 6);
         });
     }
 
@@ -715,19 +724,19 @@ mod tests {
     #[should_panic]
     fn test_matrix_index_out_of_bounds() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let _ = matrix[(2, 3)];
+        let _ = matrix[Index::new(2, 3)];
     }
 
     #[test]
     fn test_matrix_index_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |mut matrix| {
-            matrix[(0, 0)] -= 1;
-            matrix[(0, 1)] -= 2;
-            matrix[(0, 2)] -= 3;
-            matrix[(1, 0)] -= 4;
-            matrix[(1, 1)] -= 5;
-            matrix[(1, 2)] -= 6;
+            matrix[Index::new(0, 0)] -= 1;
+            matrix[Index::new(0, 1)] -= 2;
+            matrix[Index::new(0, 2)] -= 3;
+            matrix[Index::new(1, 0)] -= 4;
+            matrix[Index::new(1, 1)] -= 5;
+            matrix[Index::new(1, 2)] -= 6;
             let expected = matrix![[0, 0, 0], [0, 0, 0]];
             testkit::assert_loose_eq(&matrix, &expected);
         });
@@ -737,7 +746,7 @@ mod tests {
     #[should_panic]
     fn test_matrix_index_mut_out_of_bounds() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        matrix[(2, 3)] += 2;
+        matrix[Index::new(2, 3)] += 2;
     }
 
     #[test]
@@ -758,16 +767,16 @@ mod tests {
     fn test_as_index_is_out_of_bounds() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
-            assert!(!Index::new(0, 0).is_out_of_bounds(&matrix));
-            assert!(!Index::new(0, 1).is_out_of_bounds(&matrix));
-            assert!(!Index::new(0, 2).is_out_of_bounds(&matrix));
-            assert!(!Index::new(1, 0).is_out_of_bounds(&matrix));
-            assert!(!Index::new(1, 1).is_out_of_bounds(&matrix));
-            assert!(!Index::new(1, 2).is_out_of_bounds(&matrix));
+            assert!(!(0, 0).is_out_of_bounds(&matrix));
+            assert!(!(0, 1).is_out_of_bounds(&matrix));
+            assert!(!(0, 2).is_out_of_bounds(&matrix));
+            assert!(!(1, 0).is_out_of_bounds(&matrix));
+            assert!(!(1, 1).is_out_of_bounds(&matrix));
+            assert!(!(1, 2).is_out_of_bounds(&matrix));
 
-            assert!(Index::new(2, 0).is_out_of_bounds(&matrix));
-            assert!(Index::new(0, 3).is_out_of_bounds(&matrix));
-            assert!(Index::new(2, 3).is_out_of_bounds(&matrix));
+            assert!((2, 0).is_out_of_bounds(&matrix));
+            assert!((0, 3).is_out_of_bounds(&matrix));
+            assert!((2, 3).is_out_of_bounds(&matrix));
         });
     }
 
@@ -775,23 +784,23 @@ mod tests {
     fn test_as_index_ensure_in_bounds() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
-            assert!(Index::new(0, 0).ensure_in_bounds(&matrix).is_ok());
-            assert!(Index::new(0, 1).ensure_in_bounds(&matrix).is_ok());
-            assert!(Index::new(0, 2).ensure_in_bounds(&matrix).is_ok());
-            assert!(Index::new(1, 0).ensure_in_bounds(&matrix).is_ok());
-            assert!(Index::new(1, 1).ensure_in_bounds(&matrix).is_ok());
-            assert!(Index::new(1, 2).ensure_in_bounds(&matrix).is_ok());
+            assert!((0, 0).ensure_in_bounds(&matrix).is_ok());
+            assert!((0, 1).ensure_in_bounds(&matrix).is_ok());
+            assert!((0, 2).ensure_in_bounds(&matrix).is_ok());
+            assert!((1, 0).ensure_in_bounds(&matrix).is_ok());
+            assert!((1, 1).ensure_in_bounds(&matrix).is_ok());
+            assert!((1, 2).ensure_in_bounds(&matrix).is_ok());
 
             assert_eq!(
-                Index::new(2, 0).ensure_in_bounds(&matrix),
+                (2, 0).ensure_in_bounds(&matrix),
                 Err(Error::IndexOutOfBounds)
             );
             assert_eq!(
-                Index::new(0, 3).ensure_in_bounds(&matrix),
+                (0, 3).ensure_in_bounds(&matrix),
                 Err(Error::IndexOutOfBounds)
             );
             assert_eq!(
-                Index::new(2, 3).ensure_in_bounds(&matrix),
+                (2, 3).ensure_in_bounds(&matrix),
                 Err(Error::IndexOutOfBounds)
             );
         });
@@ -801,16 +810,16 @@ mod tests {
     fn test_as_index_get() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
-            assert_eq!(Index::new(0, 0).get(&matrix), Ok(&1));
-            assert_eq!(Index::new(0, 1).get(&matrix), Ok(&2));
-            assert_eq!(Index::new(0, 2).get(&matrix), Ok(&3));
-            assert_eq!(Index::new(1, 0).get(&matrix), Ok(&4));
-            assert_eq!(Index::new(1, 1).get(&matrix), Ok(&5));
-            assert_eq!(Index::new(1, 2).get(&matrix), Ok(&6));
+            assert_eq!((0, 0).get(&matrix), Ok(&1));
+            assert_eq!((0, 1).get(&matrix), Ok(&2));
+            assert_eq!((0, 2).get(&matrix), Ok(&3));
+            assert_eq!((1, 0).get(&matrix), Ok(&4));
+            assert_eq!((1, 1).get(&matrix), Ok(&5));
+            assert_eq!((1, 2).get(&matrix), Ok(&6));
 
-            assert_eq!(Index::new(2, 0).get(&matrix), Err(Error::IndexOutOfBounds));
-            assert_eq!(Index::new(0, 3).get(&matrix), Err(Error::IndexOutOfBounds));
-            assert_eq!(Index::new(2, 3).get(&matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!((2, 0).get(&matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!((0, 3).get(&matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!((2, 3).get(&matrix), Err(Error::IndexOutOfBounds));
         });
     }
 
@@ -818,27 +827,18 @@ mod tests {
     fn test_as_index_get_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |mut matrix| {
-            *Index::new(0, 0).get_mut(&mut matrix).unwrap() -= 1;
-            *Index::new(0, 1).get_mut(&mut matrix).unwrap() -= 2;
-            *Index::new(0, 2).get_mut(&mut matrix).unwrap() -= 3;
-            *Index::new(1, 0).get_mut(&mut matrix).unwrap() -= 4;
-            *Index::new(1, 1).get_mut(&mut matrix).unwrap() -= 5;
-            *Index::new(1, 2).get_mut(&mut matrix).unwrap() -= 6;
+            *(0, 0).get_mut(&mut matrix).unwrap() -= 1;
+            *(0, 1).get_mut(&mut matrix).unwrap() -= 2;
+            *(0, 2).get_mut(&mut matrix).unwrap() -= 3;
+            *(1, 0).get_mut(&mut matrix).unwrap() -= 4;
+            *(1, 1).get_mut(&mut matrix).unwrap() -= 5;
+            *(1, 2).get_mut(&mut matrix).unwrap() -= 6;
             let expected = matrix![[0, 0, 0], [0, 0, 0]];
             testkit::assert_loose_eq(&matrix, &expected);
 
-            assert_eq!(
-                Index::new(2, 0).get_mut(&mut matrix),
-                Err(Error::IndexOutOfBounds)
-            );
-            assert_eq!(
-                Index::new(0, 3).get_mut(&mut matrix),
-                Err(Error::IndexOutOfBounds)
-            );
-            assert_eq!(
-                Index::new(2, 3).get_mut(&mut matrix),
-                Err(Error::IndexOutOfBounds)
-            );
+            assert_eq!((2, 0).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!((0, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!((2, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
         });
     }
 
@@ -846,12 +846,12 @@ mod tests {
     fn test_as_index_get_unchecked() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| unsafe {
-            assert_eq!(Index::new(0, 0).get_unchecked(&matrix), &1);
-            assert_eq!(Index::new(0, 1).get_unchecked(&matrix), &2);
-            assert_eq!(Index::new(0, 2).get_unchecked(&matrix), &3);
-            assert_eq!(Index::new(1, 0).get_unchecked(&matrix), &4);
-            assert_eq!(Index::new(1, 1).get_unchecked(&matrix), &5);
-            assert_eq!(Index::new(1, 2).get_unchecked(&matrix), &6);
+            assert_eq!((0, 0).get_unchecked(&matrix), &1);
+            assert_eq!((0, 1).get_unchecked(&matrix), &2);
+            assert_eq!((0, 2).get_unchecked(&matrix), &3);
+            assert_eq!((1, 0).get_unchecked(&matrix), &4);
+            assert_eq!((1, 1).get_unchecked(&matrix), &5);
+            assert_eq!((1, 2).get_unchecked(&matrix), &6);
         });
     }
 
@@ -859,12 +859,12 @@ mod tests {
     fn test_as_index_get_unchecked_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |mut matrix| unsafe {
-            *Index::new(0, 0).get_unchecked_mut(&mut matrix) -= 1;
-            *Index::new(0, 1).get_unchecked_mut(&mut matrix) -= 2;
-            *Index::new(0, 2).get_unchecked_mut(&mut matrix) -= 3;
-            *Index::new(1, 0).get_unchecked_mut(&mut matrix) -= 4;
-            *Index::new(1, 1).get_unchecked_mut(&mut matrix) -= 5;
-            *Index::new(1, 2).get_unchecked_mut(&mut matrix) -= 6;
+            *(0, 0).get_unchecked_mut(&mut matrix) -= 1;
+            *(0, 1).get_unchecked_mut(&mut matrix) -= 2;
+            *(0, 2).get_unchecked_mut(&mut matrix) -= 3;
+            *(1, 0).get_unchecked_mut(&mut matrix) -= 4;
+            *(1, 1).get_unchecked_mut(&mut matrix) -= 5;
+            *(1, 2).get_unchecked_mut(&mut matrix) -= 6;
             let expected = matrix![[0, 0, 0], [0, 0, 0]];
             testkit::assert_loose_eq(&matrix, &expected);
         });
@@ -874,12 +874,12 @@ mod tests {
     fn test_as_index_index() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
-            assert_eq!(Index::new(0, 0).index(&matrix), &1);
-            assert_eq!(Index::new(0, 1).index(&matrix), &2);
-            assert_eq!(Index::new(0, 2).index(&matrix), &3);
-            assert_eq!(Index::new(1, 0).index(&matrix), &4);
-            assert_eq!(Index::new(1, 1).index(&matrix), &5);
-            assert_eq!(Index::new(1, 2).index(&matrix), &6);
+            assert_eq!((0, 0).index(&matrix), &1);
+            assert_eq!((0, 1).index(&matrix), &2);
+            assert_eq!((0, 2).index(&matrix), &3);
+            assert_eq!((1, 0).index(&matrix), &4);
+            assert_eq!((1, 1).index(&matrix), &5);
+            assert_eq!((1, 2).index(&matrix), &6);
         });
     }
 
@@ -887,19 +887,19 @@ mod tests {
     #[should_panic]
     fn test_as_index_index_out_of_bounds() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        Index::new(2, 3).index(&matrix);
+        (2, 3).index(&matrix);
     }
 
     #[test]
     fn test_as_index_index_mut() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |mut matrix| {
-            *Index::new(0, 0).index_mut(&mut matrix) -= 1;
-            *Index::new(0, 1).index_mut(&mut matrix) -= 2;
-            *Index::new(0, 2).index_mut(&mut matrix) -= 3;
-            *Index::new(1, 0).index_mut(&mut matrix) -= 4;
-            *Index::new(1, 1).index_mut(&mut matrix) -= 5;
-            *Index::new(1, 2).index_mut(&mut matrix) -= 6;
+            *(0, 0).index_mut(&mut matrix) -= 1;
+            *(0, 1).index_mut(&mut matrix) -= 2;
+            *(0, 2).index_mut(&mut matrix) -= 3;
+            *(1, 0).index_mut(&mut matrix) -= 4;
+            *(1, 1).index_mut(&mut matrix) -= 5;
+            *(1, 2).index_mut(&mut matrix) -= 6;
             let expected = matrix![[0, 0, 0], [0, 0, 0]];
             testkit::assert_loose_eq(&matrix, &expected);
         });
@@ -909,7 +909,7 @@ mod tests {
     #[should_panic]
     fn test_as_index_index_mut_out_of_bounds() {
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        *Index::new(2, 3).index_mut(&mut matrix) += 2;
+        *(2, 3).index_mut(&mut matrix) += 2;
     }
 
     #[test]
