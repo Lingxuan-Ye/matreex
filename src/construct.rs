@@ -2,7 +2,7 @@ use crate::Matrix;
 use crate::error::Result;
 use crate::index::Index;
 use crate::order::Order;
-use crate::shape::{AxisShape, Shape};
+use crate::shape::{AsShape, AxisShape};
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -71,10 +71,10 @@ impl<T> Matrix<T> {
     pub fn with_default<S>(shape: S) -> Result<Self>
     where
         T: Default,
-        S: Into<Shape>,
+        S: AsShape,
     {
         let order = Order::default();
-        let shape = AxisShape::from_shape(shape.into(), order);
+        let shape = AxisShape::from_shape(shape, order);
         let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         data.resize_with(size, T::default);
@@ -103,10 +103,10 @@ impl<T> Matrix<T> {
     pub fn with_value<S>(shape: S, value: T) -> Result<Self>
     where
         T: Clone,
-        S: Into<Shape>,
+        S: AsShape,
     {
         let order = Order::default();
-        let shape = AxisShape::from_shape(shape.into(), order);
+        let shape = AxisShape::from_shape(shape, order);
         let size = shape.size::<T>()?;
         let data = vec![value; size];
         Ok(Self { order, shape, data })
@@ -133,11 +133,11 @@ impl<T> Matrix<T> {
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_initializer<S, F>(shape: S, mut initializer: F) -> Result<Self>
     where
-        S: Into<Shape>,
+        S: AsShape,
         F: FnMut(Index) -> T,
     {
         let order = Order::default();
-        let shape = AxisShape::from_shape(shape.into(), order);
+        let shape = AxisShape::from_shape(shape, order);
         let stride = shape.stride();
         let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
@@ -162,6 +162,7 @@ mod tests {
     use super::*;
     use crate::error::Error;
     use crate::matrix;
+    use crate::shape::Shape;
     use crate::testkit;
 
     #[test]

@@ -98,7 +98,7 @@ pub use self::order::Order;
 pub use self::shape::Shape;
 
 use self::index::AxisIndex;
-use self::shape::{AxisShape, Stride};
+use self::shape::{AsShape, AxisShape, Stride};
 use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
@@ -446,9 +446,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn reshape<S>(&mut self, shape: S) -> Result<&mut Self>
     where
-        S: Into<Shape>,
+        S: AsShape,
     {
-        let shape = shape.into();
         match shape.size() {
             Ok(size) if self.size() == size => {
                 self.shape = AxisShape::from_shape(shape, self.order);
@@ -501,9 +500,9 @@ impl<T> Matrix<T> {
     pub fn resize<S>(&mut self, shape: S) -> Result<&mut Self>
     where
         T: Default,
-        S: Into<Shape>,
+        S: AsShape,
     {
-        let shape = AxisShape::from_shape(shape.into(), self.order);
+        let shape = AxisShape::from_shape(shape, self.order);
         let size = shape.size::<T>()?;
         self.shape = shape;
         self.data.resize_with(size, T::default);

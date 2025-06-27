@@ -238,10 +238,13 @@ impl AxisShape {
         self
     }
 
-    pub(crate) fn from_shape(shape: Shape, order: Order) -> Self {
+    pub(crate) fn from_shape<S>(shape: S, order: Order) -> Self
+    where
+        S: AsShape,
+    {
         let (major, minor) = match order {
-            Order::RowMajor => (shape.nrows, shape.ncols),
-            Order::ColMajor => (shape.ncols, shape.nrows),
+            Order::RowMajor => (shape.nrows(), shape.ncols()),
+            Order::ColMajor => (shape.ncols(), shape.nrows()),
         };
         Self { major, minor }
     }
