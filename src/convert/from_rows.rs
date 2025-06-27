@@ -5,19 +5,19 @@ use crate::shape::{AxisShape, Shape};
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
-/// A trait used for conversion from a sequence of rows.
+/// A trait for conversion from a sequence of rows.
 pub trait FromRows<T>: Sized {
     /// Converts from a sequence of rows.
     fn from_rows(value: T) -> Self;
 }
 
-/// A trait used for fallible conversion from a sequence of rows.
+/// A trait for fallible conversion from a sequence of rows.
 pub trait TryFromRows<T>: Sized {
     /// Attempts to convert from a sequence of rows.
     fn try_from_rows(value: T) -> Result<Self>;
 }
 
-/// A trait used for conversion from an iterator over rows.
+/// A trait for conversion from an iterator over rows.
 pub trait FromRowIterator<T, V>: Sized
 where
     V: IntoIterator<Item = T>,

@@ -33,7 +33,7 @@ impl Shape {
         Self { nrows, ncols }
     }
 
-    /// Returns the number of rows of the shape.
+    /// Returns the number of rows.
     ///
     /// # Examples
     ///
@@ -48,7 +48,7 @@ impl Shape {
         self.nrows
     }
 
-    /// Returns the number of columns of the shape.
+    /// Returns the number of columns.
     ///
     /// # Examples
     ///
@@ -63,7 +63,7 @@ impl Shape {
         self.ncols
     }
 
-    /// Returns the size of the shape.
+    /// Returns the size.
     ///
     /// # Errors
     ///

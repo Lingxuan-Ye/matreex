@@ -138,7 +138,7 @@ where
     }
 }
 
-/// A helper trait used for indexing operations in a [`Matrix<T>`].
+/// A helper trait for indexing operations on a [`Matrix<T>`].
 ///
 /// This trait is a poor imitation of [`SliceIndex`].
 ///
@@ -248,15 +248,13 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
 }
 
 /// A struct representing the index of an element in a [`Matrix<T>`].
-///
-/// Refer to [`AsIndex`] for more information.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Index {
-    /// The row index of the element.
+    /// The row index.
     pub row: usize,
 
-    /// The column index of the element.
+    /// The column index.
     pub col: usize,
 }
 
@@ -319,7 +317,7 @@ impl From<[usize; 2]> for Index {
     }
 }
 
-/// A trait used for single-element indexing operations in a [`Matrix<T>`].
+/// A trait for single-element indexing operations on a [`Matrix<T>`].
 ///
 /// # Examples
 ///
@@ -343,10 +341,10 @@ impl From<[usize; 2]> for Index {
 /// assert_eq!(matrix.get(I(1, 1)), Ok(&5));
 /// ```
 pub trait AsIndex {
-    /// The row index of the element.
+    /// Returns the row index.
     fn row(&self) -> usize;
 
-    /// The column index of the element.
+    /// Returns the column index.
     fn col(&self) -> usize;
 }
 
@@ -442,10 +440,10 @@ impl AsIndex for [usize; 2] {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct WrappingIndex {
-    /// The row index of the element.
+    /// The row index.
     pub row: isize,
 
-    /// The column index of the element.
+    /// The column index.
     pub col: isize,
 }
 
