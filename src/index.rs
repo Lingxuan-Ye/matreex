@@ -170,6 +170,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    #[inline]
     fn ensure_in_bounds(&self, matrix: &Matrix<T>) -> Result<&Self> {
         if self.is_out_of_bounds(matrix) {
             Err(Error::IndexOutOfBounds)
@@ -184,6 +185,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    #[inline]
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
         self.ensure_in_bounds(matrix)?;
         unsafe { Ok(self.get_unchecked(matrix)) }
@@ -195,6 +197,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    #[inline]
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
         self.ensure_in_bounds(matrix)?;
         unsafe { Ok(self.get_unchecked_mut(matrix)) }
@@ -227,6 +230,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
     /// # Panics
     ///
     /// Panics if out of bounds.
+    #[inline]
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
         match self.get(matrix) {
             Err(error) => panic!("{error}"),
@@ -239,6 +243,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
     /// # Panics
     ///
     /// Panics if out of bounds.
+    #[inline]
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
         match self.get_mut(matrix) {
             Err(error) => panic!("{error}"),
