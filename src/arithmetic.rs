@@ -336,14 +336,14 @@ impl<L> Matrix<L> {
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
-            let lhs_stride = self.stride();
-            let rhs_stride = rhs.stride();
-            let mut rhs_data = rhs.data;
+            let mut rhs = rhs;
             unsafe {
                 // avoid double free
-                rhs_data.set_len(0);
+                rhs.data.set_len(0);
             }
-            let rhs_base = rhs_data.as_ptr();
+            let rhs_base = rhs.data.as_ptr();
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data
                 .iter()
                 .enumerate()
@@ -403,14 +403,14 @@ impl<L> Matrix<L> {
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
-            let lhs_stride = self.stride();
-            let rhs_stride = rhs.stride();
-            let mut rhs_data = rhs.data;
+            let mut rhs = rhs;
             unsafe {
                 // avoid double free
-                rhs_data.set_len(0);
+                rhs.data.set_len(0);
             }
-            let rhs_base = rhs_data.as_ptr();
+            let rhs_base = rhs.data.as_ptr();
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data
                 .into_iter()
                 .enumerate()
@@ -515,14 +515,14 @@ impl<L> Matrix<L> {
                 .zip(rhs.data)
                 .for_each(|(left, right)| op(left, right));
         } else {
-            let lhs_stride = self.stride();
-            let rhs_stride = rhs.stride();
-            let mut rhs_data = rhs.data;
+            let mut rhs = rhs;
             unsafe {
                 // avoid double free
-                rhs_data.set_len(0);
+                rhs.data.set_len(0);
             }
-            let rhs_base = rhs_data.as_ptr();
+            let rhs_base = rhs.data.as_ptr();
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
                 let index = AxisIndex::from_flattened(index, lhs_stride)
                     .swap()

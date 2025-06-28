@@ -283,32 +283,30 @@ impl<T> Matrix<T> {
         }
 
         let size = self.size();
-        let src_stride = self.stride();
-        self.shape.transpose();
-        let dst_stride = self.stride();
         unsafe {
             // avoid double free
             self.data.set_len(0);
         }
-        let src_base = self.data.as_ptr();
-        let mut dst_data = Vec::<T>::with_capacity(size);
-        let dst_base = dst_data.as_mut_ptr();
-
-        for src_index in 0..size {
+        let old_base = self.data.as_ptr();
+        let mut new_data = Vec::<T>::with_capacity(size);
+        let new_base = new_data.as_mut_ptr();
+        let old_stride = self.stride();
+        self.shape.transpose();
+        let new_stride = self.stride();
+        for old_index in 0..size {
             unsafe {
-                let src = src_base.add(src_index);
-                let dst_index = AxisIndex::from_flattened(src_index, src_stride)
+                let src = old_base.add(old_index);
+                let new_index = AxisIndex::from_flattened(old_index, old_stride)
                     .swap()
-                    .to_flattened(dst_stride);
-                let dst = dst_base.add(dst_index);
+                    .to_flattened(new_stride);
+                let dst = new_base.add(new_index);
                 ptr::copy_nonoverlapping(src, dst, 1);
             }
         }
-
-        self.data = dst_data;
         unsafe {
-            self.data.set_len(size);
+            new_data.set_len(size);
         }
+        self.data = new_data;
 
         self
     }
