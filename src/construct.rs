@@ -241,6 +241,20 @@ mod tests {
         let expected = matrix![[0, 1, 2], [1, 2, 3]];
         testkit::assert_loose_eq(&matrix, &expected);
 
+        // assert no panic from unflattening indices occurs
+        let shape = Shape::new(2, 0);
+        let matrix = Matrix::with_initializer(shape, |index| index.row + index.col).unwrap();
+        assert_eq!(matrix.order, Order::default());
+        let expected = matrix![[0; 0]; 2];
+        testkit::assert_loose_eq(&matrix, &expected);
+
+        // assert no panic from unflattening indices occurs
+        let shape = Shape::new(0, 3);
+        let matrix = Matrix::with_initializer(shape, |index| index.row + index.col).unwrap();
+        assert_eq!(matrix.order, Order::default());
+        let expected = matrix![[0; 3]; 0];
+        testkit::assert_loose_eq(&matrix, &expected);
+
         let shape = Shape::new(usize::MAX, 2);
         let error = Matrix::with_initializer(shape, |_| 0).unwrap_err();
         assert_eq!(error, Error::SizeOverflow);

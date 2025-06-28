@@ -363,6 +363,18 @@ mod tests {
                     assert_eq!(element, &matrix[index]);
                 });
         });
+
+        // assert no panic from unflattening indices occurs
+        let matrix = matrix![[0; 0]; 2];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.par_iter_elements_with_index().for_each(|_| ());
+        });
+
+        // assert no panic from unflattening indices occurs
+        let matrix = matrix![[0; 3]; 0];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.par_iter_elements_with_index().for_each(|_| ());
+        });
     }
 
     #[test]
@@ -377,6 +389,18 @@ mod tests {
             let expected = matrix![[1, 3, 5], [5, 7, 9]];
             testkit::assert_loose_eq(&matrix, &expected);
         });
+
+        // assert no panic from unflattening indices occurs
+        let matrix = matrix![[0; 0]; 2];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            matrix.par_iter_elements_mut_with_index().for_each(|_| ());
+        });
+
+        // assert no panic from unflattening indices occurs
+        let matrix = matrix![[0; 3]; 0];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            matrix.par_iter_elements_mut_with_index().for_each(|_| ());
+        });
     }
 
     #[test]
@@ -389,6 +413,18 @@ mod tests {
                 .for_each(|(index, element)| {
                     assert_eq!(element, matrix[index]);
                 });
+        });
+
+        // assert no panic from unflattening indices occurs
+        let matrix = matrix![[0; 0]; 2];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.into_par_iter_elements_with_index().for_each(|_| ());
+        });
+
+        // assert no panic from unflattening indices occurs
+        let matrix = matrix![[0; 3]; 0];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.into_par_iter_elements_with_index().for_each(|_| ());
         });
     }
 }

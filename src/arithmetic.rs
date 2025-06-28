@@ -915,6 +915,20 @@ mod tests {
             let error = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation(&rhs, |_, _| ());
+        });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation(&rhs, |_, _| ());
+        });
     }
 
     #[test]
@@ -958,6 +972,20 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_self(&rhs, |_, _| ());
+        });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_self(&rhs, |_, _| ());
+        });
     }
 
     #[test]
@@ -1000,6 +1028,20 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_rhs(rhs, |_, _| ());
+        });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_rhs(rhs, |_, _| ());
+        });
     }
 
     #[test]
@@ -1030,6 +1072,20 @@ mod tests {
                 .elementwise_operation_consume_both(rhs, |x, y| x + y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
+        });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_both(rhs, |_, _| ());
+        });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_both(rhs, |_, _| ());
         });
     }
 
@@ -1076,6 +1132,20 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
             testkit::assert_loose_eq(&lhs, &unchanged);
         });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            let _ = lhs.elementwise_operation_assign(&rhs, |_, _| ());
+        });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            let _ = lhs.elementwise_operation_assign(&rhs, |_, _| ());
+        });
     }
 
     #[test]
@@ -1109,6 +1179,20 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
             testkit::assert_loose_eq(&lhs, &unchanged);
+        });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());
+        });
+
+        // assert no panic from unflattening indices occurs
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());
         });
     }
 
