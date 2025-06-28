@@ -297,6 +297,9 @@ impl Index {
         self
     }
 
+    /// # Panics
+    ///
+    /// Panics if `stride.major()` is zero.
     pub(crate) fn from_flattened(index: usize, order: Order, stride: Stride) -> Self {
         AxisIndex::from_flattened(index, stride).to_index(order)
     }
@@ -596,6 +599,9 @@ impl AxisIndex {
     // - it is a one-to-many mapping
     // - it serves no practical purpose
 
+    /// # Panics
+    ///
+    /// Panics if `stride.major()` is zero.
     pub(crate) fn from_flattened(index: usize, stride: Stride) -> Self {
         let major = index / stride.major();
         let minor = (index % stride.major()) / stride.minor();
