@@ -139,8 +139,8 @@ impl From<[usize; 2]> for Shape {
 ///     }
 /// }
 ///
-/// let matrix = Matrix::with_value(S(2, 3), 0);
-/// assert_eq!(matrix, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
+/// let result = Matrix::with_value(S(2, 3), 0);
+/// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
 /// ```
 ///
 /// [`Matrix<T>`]: crate::Matrix
