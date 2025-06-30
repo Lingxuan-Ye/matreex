@@ -256,8 +256,8 @@ impl<T, const R: usize> TryFromRows<[Box<[T]>; R]> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -306,8 +306,8 @@ impl<T, const R: usize> TryFromRows<[Vec<T>; R]> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -356,8 +356,8 @@ impl<T, const R: usize> TryFromRows<Box<[Box<[T]>; R]>> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -386,8 +386,8 @@ impl<T, const R: usize> TryFromRows<Box<[Vec<T>; R]>> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -416,8 +416,8 @@ impl<T> TryFromRows<Box<[Box<[T]>]>> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -466,8 +466,8 @@ impl<T> TryFromRows<Box<[Vec<T>]>> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -516,8 +516,8 @@ impl<T> TryFromRows<Vec<Box<[T]>>> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -546,8 +546,8 @@ impl<T> TryFromRows<Vec<Vec<T>>> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes

@@ -67,7 +67,7 @@ impl Shape {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size exceeds [`usize::MAX`].
     ///
     /// # Examples
     ///
@@ -155,7 +155,7 @@ pub trait AsShape {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size exceeds [`usize::MAX`].
     ///
     /// # Notes
     ///
@@ -241,8 +241,8 @@ impl AxisShape {
 
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     pub(crate) fn size<T>(&self) -> Result<usize> {
         let size = self
             .major

@@ -37,7 +37,7 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -72,7 +72,7 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///

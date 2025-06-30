@@ -54,8 +54,8 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size of the shape exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -86,8 +86,8 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size of the shape exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -117,8 +117,8 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size of the shape exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///

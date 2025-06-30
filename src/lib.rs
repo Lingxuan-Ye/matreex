@@ -127,6 +127,10 @@ mod deserialize;
 #[cfg(test)]
 mod testkit;
 
+// In a matrix, the size of its shape must equal the size of its
+// underlying data. Violating this invariant may lead to undefined
+// behavior.
+
 /// [`Matrix<T>`] means matrix.
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Clone)]
@@ -418,8 +422,8 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeMismatch`] if the size of the new shape does not
-    ///   match the current size of the matrix.
+    /// - [`Error::SizeMismatch`] if the size of the shape does not match
+    ///   the size of the underlying data.
     ///
     /// # Examples
     ///
@@ -459,8 +463,8 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size of the shape exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -664,7 +668,7 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -695,7 +699,7 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
