@@ -78,7 +78,7 @@ impl<T, const R: usize, const C: usize> FromRows<Box<[[T; C]; R]>> for Matrix<T>
     /// ```
     #[inline]
     fn from_rows(value: Box<[[T; C]; R]>) -> Self {
-        Self::from_rows(*value)
+        Self::from_rows(value as Box<[[T; C]]>)
     }
 }
 
@@ -175,7 +175,7 @@ impl<T, const R: usize, const C: usize> TryFromRows<[Box<[T; C]>; R]> for Matrix
         let shape = Shape::new(nrows, ncols);
         let shape = AxisShape::from_shape(shape, order);
         shape.size::<T>()?;
-        let data = value.into_iter().flat_map(|row| *row).collect();
+        let data = value.into_iter().flat_map(|row| row as Box<[T]>).collect();
         Ok(Self { order, shape, data })
     }
 }
@@ -205,7 +205,7 @@ impl<T, const R: usize, const C: usize> TryFromRows<Box<[Box<[T; C]>; R]>> for M
     /// ```
     #[inline]
     fn try_from_rows(value: Box<[Box<[T; C]>; R]>) -> Result<Self> {
-        Self::try_from_rows(*value)
+        Self::try_from_rows(value as Box<[Box<[T; C]>]>)
     }
 }
 
@@ -239,7 +239,7 @@ impl<T, const C: usize> TryFromRows<Box<[Box<[T; C]>]>> for Matrix<T> {
         let shape = Shape::new(nrows, ncols);
         let shape = AxisShape::from_shape(shape, order);
         shape.size::<T>()?;
-        let data = value.into_iter().flat_map(|row| *row).collect();
+        let data = value.into_iter().flat_map(|row| row as Box<[T]>).collect();
         Ok(Self { order, shape, data })
     }
 }
@@ -349,7 +349,7 @@ impl<T, const R: usize> TryFromRows<Box<[Box<[T]>; R]>> for Matrix<T> {
     /// ```
     #[inline]
     fn try_from_rows(value: Box<[Box<[T]>; R]>) -> Result<Self> {
-        Self::try_from_rows(*value)
+        Self::try_from_rows(value as Box<[Box<[T]>]>)
     }
 }
 
@@ -509,7 +509,7 @@ impl<T, const R: usize> TryFromRows<Box<[Vec<T>; R]>> for Matrix<T> {
     /// ```
     #[inline]
     fn try_from_rows(value: Box<[Vec<T>; R]>) -> Result<Self> {
-        Self::try_from_rows(*value)
+        Self::try_from_rows(value as Box<[Vec<T>]>)
     }
 }
 
