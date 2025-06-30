@@ -298,13 +298,12 @@ impl<T, const C: usize> TryFromCols<[Box<[T]>; C]> for Matrix<T> {
     /// ```
     fn try_from_cols(value: [Box<[T]>; C]) -> Result<Self> {
         let order = Order::ColMajor;
-        if C == 0 {
+        let mut iter = value.into_iter();
+        let Some(first) = iter.next() else {
             let shape = AxisShape::default();
             let data = Vec::new();
             return Ok(Self { order, shape, data });
-        }
-        let mut iter = value.into_iter();
-        let first = unsafe { iter.next().unwrap_unchecked() };
+        };
         let nrows = first.len();
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
@@ -379,13 +378,12 @@ impl<T> TryFromCols<Box<[Box<[T]>]>> for Matrix<T> {
     fn try_from_cols(value: Box<[Box<[T]>]>) -> Result<Self> {
         let order = Order::ColMajor;
         let ncols = value.len();
-        if ncols == 0 {
+        let mut iter = value.into_iter();
+        let Some(first) = iter.next() else {
             let shape = AxisShape::default();
             let data = Vec::new();
             return Ok(Self { order, shape, data });
-        }
-        let mut iter = value.into_iter();
-        let first = unsafe { iter.next().unwrap_unchecked() };
+        };
         let nrows = first.len();
         let shape = Shape::new(nrows, ncols);
         let shape = AxisShape::from_shape(shape, order);
@@ -458,13 +456,12 @@ impl<T, const C: usize> TryFromCols<[Vec<T>; C]> for Matrix<T> {
     /// ```
     fn try_from_cols(value: [Vec<T>; C]) -> Result<Self> {
         let order = Order::ColMajor;
-        if C == 0 {
+        let mut iter = value.into_iter();
+        let Some(first) = iter.next() else {
             let shape = AxisShape::default();
             let data = Vec::new();
             return Ok(Self { order, shape, data });
-        }
-        let mut iter = value.into_iter();
-        let first = unsafe { iter.next().unwrap_unchecked() };
+        };
         let nrows = first.len();
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
@@ -539,13 +536,12 @@ impl<T> TryFromCols<Box<[Vec<T>]>> for Matrix<T> {
     fn try_from_cols(value: Box<[Vec<T>]>) -> Result<Self> {
         let order = Order::ColMajor;
         let ncols = value.len();
-        if ncols == 0 {
+        let mut iter = value.into_iter();
+        let Some(first) = iter.next() else {
             let shape = AxisShape::default();
             let data = Vec::new();
             return Ok(Self { order, shape, data });
-        }
-        let mut iter = value.into_iter();
-        let first = unsafe { iter.next().unwrap_unchecked() };
+        };
         let nrows = first.len();
         let shape = Shape::new(nrows, ncols);
         let shape = AxisShape::from_shape(shape, order);
@@ -630,8 +626,8 @@ where
         };
         // could panic if capacity overflows
         let mut data: Vec<T> = first.into_iter().collect();
-        let mut ncols = 1;
         let nrows = data.len();
+        let mut ncols = 1;
         let mut size = nrows;
         for col in iter {
             // could panic if capacity overflows
