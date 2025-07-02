@@ -70,8 +70,8 @@ impl<T> Matrix<T> {
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_default<S>(shape: S) -> Result<Self>
     where
-        T: Default,
         S: AsShape,
+        T: Default,
     {
         let order = Order::default();
         let shape = AxisShape::from_shape(shape, order);
@@ -102,8 +102,8 @@ impl<T> Matrix<T> {
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_value<S>(shape: S, value: T) -> Result<Self>
     where
-        T: Clone,
         S: AsShape,
+        T: Clone,
     {
         let order = Order::default();
         let shape = AxisShape::from_shape(shape, order);
