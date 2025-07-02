@@ -119,6 +119,7 @@ mod eq;
 mod fmt;
 mod hash;
 mod macros;
+mod resize;
 mod swap;
 
 #[cfg(feature = "serde")]
@@ -457,58 +458,6 @@ impl<T> Matrix<T> {
             }
             _ => Err(Error::SizeMismatch),
         }
-    }
-
-    /// Resizes the matrix to the specified shape.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if the size of the shape exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
-    ///
-    /// # Notes
-    ///
-    /// Reducing the size does not automatically shrink the capacity.
-    /// This choice is made to avoid potential reallocation. Consider
-    /// explicitly calling [`shrink_to_fit`] if needed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use matreex::Result;
-    /// use matreex::{Order, matrix};
-    ///
-    /// # fn main() -> Result<()> {
-    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    ///
-    /// let mut row_major = matrix.clone();
-    /// row_major.set_order(Order::RowMajor);
-    /// row_major.resize((2, 2))?;
-    /// assert_eq!(row_major, matrix![[1, 2], [3, 4]]);
-    /// row_major.resize((2, 3))?;
-    /// assert_eq!(row_major, matrix![[1, 2, 3], [4, 0, 0]]);
-    ///
-    /// let mut col_major = matrix.clone();
-    /// col_major.set_order(Order::ColMajor);
-    /// col_major.resize((2, 2))?;
-    /// assert_eq!(col_major, matrix![[1, 2], [4, 5]]);
-    /// col_major.resize((2, 3))?;
-    /// assert_eq!(col_major, matrix![[1, 2, 0], [4, 5, 0]]);
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
-    /// [`shrink_to_fit`]: Matrix::shrink_to_fit
-    pub fn resize<S>(&mut self, shape: S) -> Result<&mut Self>
-    where
-        T: Default,
-        S: AsShape,
-    {
-        let shape = AxisShape::from_shape(shape, self.order);
-        let size = shape.size::<T>()?;
-        self.shape = shape;
-        self.data.resize_with(size, T::default);
-        Ok(self)
     }
 
     /// Shrinks the capacity of the matrix as much as possible.
@@ -934,66 +883,6 @@ mod tests {
 
             let error = matrix.reshape((isize::MAX as usize + 1, 1)).unwrap_err();
             assert_eq!(error, Error::SizeMismatch);
-            testkit::assert_loose_eq(&matrix, &unchanged);
-        });
-    }
-
-    #[test]
-    fn test_resize() {
-        // row-major
-        // TODO: wait for method refactoring to make it order-irrelevant
-        {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::RowMajor);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.resize((2, 2)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2], [3, 4]]);
-
-            matrix.resize((3, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0], [0, 0, 0]]);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0]]);
-
-            matrix.resize((2, 0)).unwrap();
-            assert_eq!(matrix, matrix![[], []]);
-        }
-
-        // col-major
-        // TODO: wait for method refactoring to make it order-irrelevant
-        {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::ColMajor);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.resize((2, 2)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2], [4, 5]]);
-
-            matrix.resize((3, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 5, 0], [4, 0, 0], [2, 0, 0]]);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 0], [4, 5, 0]]);
-
-            matrix.resize((2, 0)).unwrap();
-            assert_eq!(matrix, matrix![[], []]);
-        }
-
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
-            let unchanged = matrix.clone();
-
-            let error = matrix.resize((usize::MAX, 2)).unwrap_err();
-            assert_eq!(error, Error::SizeOverflow);
-            testkit::assert_loose_eq(&matrix, &unchanged);
-
-            let error = matrix.resize((isize::MAX as usize + 1, 1)).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
             testkit::assert_loose_eq(&matrix, &unchanged);
         });
     }
