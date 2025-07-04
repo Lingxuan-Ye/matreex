@@ -596,8 +596,9 @@ impl AxisIndex {
     }
 
     // `to_wapping_index` is not implemented for two reasons:
-    // - it is a one-to-many mapping
-    // - it serves no practical purpose
+    //
+    // - It is a one-to-many mapping.
+    // - It serves no practical purpose.
 
     /// # Panics
     ///

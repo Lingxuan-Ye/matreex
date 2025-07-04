@@ -289,7 +289,6 @@ impl<T> Matrix<T> {
 
         let size = self.size();
         unsafe {
-            // avoid double free
             self.data.set_len(0);
         }
         let old_base = self.data.as_ptr();
@@ -472,7 +471,7 @@ impl<T> Matrix<T> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert!(matrix.capacity() >= 6);
     ///
-    /// matrix.resize((1, 3))?;
+    /// matrix.resize((1, 3), 0)?;
     /// assert!(matrix.capacity() >= 6);
     ///
     /// matrix.shrink_to_fit();
@@ -504,7 +503,7 @@ impl<T> Matrix<T> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert!(matrix.capacity() >= 6);
     ///
-    /// matrix.resize((1, 3))?;
+    /// matrix.resize((1, 3), 0)?;
     /// assert!(matrix.capacity() >= 6);
     ///
     /// matrix.shrink_to(4);
@@ -703,8 +702,8 @@ mod tests {
 
     #[test]
     fn test_transpose() {
-        // testing `Matrix::transpose` in different orders is meaningless
-        // due to dependency inversion
+        // Testing `Matrix::transpose` in different orders is meaningless
+        // due to dependency inversion.
 
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         matrix.transpose();
@@ -716,13 +715,13 @@ mod tests {
         let expected = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::assert_loose_eq(&matrix, &expected);
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let mut matrix = matrix![[0; 0]; 2];
         matrix.transpose();
         let expected = matrix![[0; 2]; 0];
         testkit::assert_loose_eq(&matrix, &expected);
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let mut matrix = matrix![[0; 3]; 0];
         matrix.transpose();
         let expected = matrix![[0; 0]; 3];
@@ -731,8 +730,8 @@ mod tests {
 
     #[test]
     fn test_switch_order() {
-        // testing `Matrix::switch_order` in different orders is meaningless
-        // due to dependency inversion
+        // Testing `Matrix::switch_order` in different orders is meaningless
+        // due to dependency inversion.
 
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let order = matrix.order;
@@ -768,8 +767,8 @@ mod tests {
 
     #[test]
     fn test_set_order() {
-        // testing `Matrix::set_order` in different orders is meaningless
-        // due to dependency inversion
+        // Testing `Matrix::set_order` in different orders is meaningless
+        // due to dependency inversion.
 
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let order = Order::RowMajor;
@@ -1010,7 +1009,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // to matrix of references
+        // Map to matrix of references.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let output = matrix.map_ref(|element| element).unwrap();

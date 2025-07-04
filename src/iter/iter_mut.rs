@@ -251,7 +251,6 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         let base = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
         let matrix_stride = matrix.stride();
         let lower = if size_of::<T>() == 0 {
-            // would work, trust me
             base
         } else {
             let offset = n * matrix_stride.major();
@@ -278,7 +277,6 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         let base = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
         let matrix_stride = matrix.stride();
         let lower = if size_of::<T>() == 0 {
-            // would work, trust me
             base
         } else {
             let offset = n * matrix_stride.minor();

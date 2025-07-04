@@ -338,7 +338,6 @@ impl<L> Matrix<L> {
         } else {
             let mut rhs = rhs;
             unsafe {
-                // avoid double free
                 rhs.data.set_len(0);
             }
             let rhs_base = rhs.data.as_ptr();
@@ -405,7 +404,6 @@ impl<L> Matrix<L> {
         } else {
             let mut rhs = rhs;
             unsafe {
-                // avoid double free
                 rhs.data.set_len(0);
             }
             let rhs_base = rhs.data.as_ptr();
@@ -517,7 +515,6 @@ impl<L> Matrix<L> {
         } else {
             let mut rhs = rhs;
             unsafe {
-                // avoid double free
                 rhs.data.set_len(0);
             }
             let rhs_base = rhs.data.as_ptr();
@@ -878,7 +875,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -890,7 +887,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -916,14 +913,14 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 0]; 3];
         let rhs = matrix![[0; 0]; 3];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let _ = lhs.elementwise_operation(&rhs, |_, _| ());
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 2]; 0];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -944,7 +941,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -973,14 +970,14 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 0]; 3];
         let rhs = matrix![[0; 0]; 3];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let _ = lhs.elementwise_operation_consume_self(&rhs, |_, _| ());
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 2]; 0];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -1000,7 +997,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -1029,14 +1026,14 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 0]; 3];
         let rhs = matrix![[0; 0]; 3];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let _ = lhs.elementwise_operation_consume_rhs(rhs, |_, _| ());
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 2]; 0];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -1074,14 +1071,14 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 0]; 3];
         let rhs = matrix![[0; 0]; 3];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             let _ = lhs.elementwise_operation_consume_both(rhs, |_, _| ());
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 2]; 0];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -1100,7 +1097,7 @@ mod tests {
             testkit::assert_loose_eq(&lhs, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -1133,14 +1130,14 @@ mod tests {
             testkit::assert_loose_eq(&lhs, &unchanged);
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 0]; 3];
         let rhs = matrix![[0; 0]; 3];
         testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
             let _ = lhs.elementwise_operation_assign(&rhs, |_, _| ());
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 2]; 0];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
@@ -1181,14 +1178,14 @@ mod tests {
             testkit::assert_loose_eq(&lhs, &unchanged);
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 0]; 3];
         let rhs = matrix![[0; 0]; 3];
         testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
             let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 2]; 0];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
@@ -1251,8 +1248,8 @@ mod tests {
         let lhs = matrix![[0; 0]; isize::MAX as usize + 1];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
-            // the size of the resulting matrix would be `2 * isize::MAX + 2`,
-            // which is greater than `usize::MAX`
+            // The size of the resulting matrix would be `2 * isize::MAX + 2`,
+            // which is greater than `usize::MAX`.
             let error = lhs
                 .multiplication_like_operation(rhs, |_, _| 0)
                 .unwrap_err();
@@ -1262,8 +1259,8 @@ mod tests {
         let lhs = matrix![[0; 0]; isize::MAX as usize - 1];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
-            // the required capacity of the resulting matrix would be
-            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`
+            // The required capacity of the resulting matrix would be
+            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`.
             let error = lhs
                 .multiplication_like_operation(rhs, |_, _| 0u8)
                 .unwrap_err();
@@ -1281,7 +1278,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let output = {
@@ -1292,7 +1289,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let scalar = 2;
@@ -1324,7 +1321,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let scalar = 2;
@@ -1355,7 +1352,7 @@ mod tests {
             testkit::assert_loose_eq(&matrix, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let mut matrix = matrix.map_ref(|x| x).unwrap();

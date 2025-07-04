@@ -61,14 +61,14 @@ mod tests {
             assert_ne!(lhs, rhs);
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 0]; 3];
         let rhs = matrix![[0; 0]; 3];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
             assert_eq!(lhs, rhs);
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let lhs = matrix![[0; 2]; 0];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {

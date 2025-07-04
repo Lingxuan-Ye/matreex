@@ -49,7 +49,7 @@ impl<T> Matrix<T> {
         Self { order, shape, data }
     }
 
-    /// Creates a new [`Matrix<T>`] with the specified shape, filled with
+    /// Creates a new [`Matrix<T>`] with the specified shape, filling with
     /// the default value.
     ///
     /// # Errors
@@ -81,7 +81,7 @@ impl<T> Matrix<T> {
         Ok(Self { order, shape, data })
     }
 
-    /// Creates a new [`Matrix<T>`] with the specified shape, filled with
+    /// Creates a new [`Matrix<T>`] with the specified shape, filling with
     /// the given value.
     ///
     /// # Errors
@@ -112,8 +112,8 @@ impl<T> Matrix<T> {
         Ok(Self { order, shape, data })
     }
 
-    /// Creates a new [`Matrix<T>`] with the specified shape, where each
-    /// element is initialized using its index.
+    /// Creates a new [`Matrix<T>`] with the specified shape, filling with
+    /// values initialized using their indices.
     ///
     /// # Errors
     ///

@@ -42,14 +42,14 @@ where
     T: Clone,
     F: Fn(Matrix<T>),
 {
-    // row-major
+    // RowMajor
     {
         let mut input = input.clone();
         input.set_order(Order::RowMajor);
         testcase(input)
     }
 
-    // col-major
+    // ColMajor
     {
         let mut input = input;
         input.set_order(Order::ColMajor);
@@ -66,7 +66,7 @@ where
     U: Clone,
     F: Fn(Matrix<T>, Matrix<U>),
 {
-    // row-major & row-major
+    // RowMajor & RowMajor
     {
         let mut input_0 = input_0.clone();
         let mut input_1 = input_1.clone();
@@ -75,7 +75,7 @@ where
         testcase(input_0, input_1)
     }
 
-    // row-major & col-major
+    // RowMajor & ColMajor
     {
         let mut input_0 = input_0.clone();
         let mut input_1 = input_1.clone();
@@ -84,7 +84,7 @@ where
         testcase(input_0, input_1)
     }
 
-    // col-major & row-major
+    // ColMajor & RowMajor
     {
         let mut input_0 = input_0.clone();
         let mut input_1 = input_1.clone();
@@ -93,7 +93,7 @@ where
         testcase(input_0, input_1)
     }
 
-    // col-major & col-major
+    // ColMajor & ColMajor
     {
         let mut input_0 = input_0;
         let mut input_1 = input_1;

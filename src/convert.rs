@@ -26,7 +26,7 @@ impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     ///
     /// let rows: [[i32; 3]; 2] = [[1, 2, 3], [4, 5, 6]];
     /// let matrix = Matrix::from(rows);
-    /// // this is actually a circular validation
+    /// // This is actually a circular validation.
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     ///

@@ -411,8 +411,8 @@ mod tests {
         let lhs = matrix![[0; 0]; isize::MAX as usize + 1];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
-            // the size of the resulting matrix would be `2 * isize::MAX + 2`,
-            // which is greater than `usize::MAX`
+            // The size of the resulting matrix would be `2 * isize::MAX + 2`,
+            // which is greater than `usize::MAX`.
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
         });
@@ -420,8 +420,8 @@ mod tests {
         let lhs = matrix![[0u8; 0]; isize::MAX as usize - 1];
         let rhs = matrix![[0u8; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
-            // the required capacity of the resulting matrix would be
-            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`
+            // The required capacity of the resulting matrix would be
+            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`.
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         });

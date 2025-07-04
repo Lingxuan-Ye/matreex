@@ -44,7 +44,7 @@ impl<T, const R: usize, const C: usize> FromRows<[[T; C]; R]> for Matrix<T> {
     ///
     /// let rows: [[i32; 3]; 2] = [[1, 2, 3], [4, 5, 6]];
     /// let matrix = Matrix::from_rows(rows);
-    /// // this is actually a circular validation
+    /// // This is actually a circular validation.
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     fn from_rows(value: [[T; C]; R]) -> Self {
@@ -625,13 +625,13 @@ where
             let data = Vec::new();
             return Self { order, shape, data };
         };
-        // could panic if capacity overflows
+        // Could panic if capacity overflows.
         let mut data: Vec<T> = first.into_iter().collect();
         let mut nrows = 1;
         let ncols = data.len();
         let mut size = ncols;
         for row in iter {
-            // could panic if capacity overflows
+            // Could panic if capacity overflows.
             data.extend(row);
             if data.len() - size != ncols {
                 panic!("{}", Error::LengthInconsistent);
@@ -742,7 +742,7 @@ mod tests {
         }
 
         {
-            // unable to cover
+            // Unable to cover.
             // let rows: [Box<[(); MAX]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
             // assert!(Matrix::try_from_rows(rows).is_ok());
 
@@ -863,7 +863,7 @@ mod tests {
             assert_eq!(error, Error::SizeOverflow);
         }
 
-        // unable to cover (run out of memory)
+        // Unable to cover. (run out of memory)
         // {
         //     let rows: [Box<[u8; MAX]>; 2] = [Box::new([0; MAX]), Box::new([0; MAX])];
         //     let error = Matrix::try_from_rows(rows).unwrap_err();

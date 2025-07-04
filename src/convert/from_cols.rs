@@ -624,13 +624,13 @@ where
             let data = Vec::new();
             return Self { order, shape, data };
         };
-        // could panic if capacity overflows
+        // Could panic if capacity overflows.
         let mut data: Vec<T> = first.into_iter().collect();
         let nrows = data.len();
         let mut ncols = 1;
         let mut size = nrows;
         for col in iter {
-            // could panic if capacity overflows
+            // Could panic if capacity overflows.
             data.extend(col);
             if data.len() - size != nrows {
                 panic!("{}", Error::LengthInconsistent);
@@ -741,7 +741,7 @@ mod tests {
         }
 
         {
-            // unable to cover
+            // Unable to cover.
             // let cols: [Box<[(); MAX]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
             // assert!(Matrix::try_from_cols(cols).is_ok());
 
@@ -862,7 +862,7 @@ mod tests {
             assert_eq!(error, Error::SizeOverflow);
         }
 
-        // unable to cover (run out of memory)
+        // Unable to cover. (run out of memory)
         // {
         //     let cols: [Box<[u8; MAX]>; 2] = [Box::new([0; MAX]), Box::new([0; MAX])];
         //     let error = Matrix::try_from_cols(cols).unwrap_err();

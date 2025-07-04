@@ -378,8 +378,8 @@ impl<T> Matrix<T> {
         let order = self.order;
         let stride = self.stride();
         self.data.iter().enumerate().map(move |(index, element)| {
-            // hope loop-invariant code motion applies here,
-            // as well as to similar code
+            // Hope loop-invariant code motion applies here,
+            // as well as to similar code.
             let index = Index::from_flattened(index, order, stride);
             (index, element)
         })
@@ -829,13 +829,13 @@ mod tests {
                 });
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let matrix = matrix![[0; 0]; 2];
         testkit::for_each_order_unary(matrix, |matrix| {
             matrix.iter_elements_with_index().for_each(|_| ());
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let matrix = matrix![[0; 3]; 0];
         testkit::for_each_order_unary(matrix, |matrix| {
             matrix.iter_elements_with_index().for_each(|_| ());
@@ -855,13 +855,13 @@ mod tests {
             testkit::assert_loose_eq(&matrix, &expected);
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let matrix = matrix![[0; 0]; 2];
         testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix.iter_elements_mut_with_index().for_each(|_| ());
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let matrix = matrix![[0; 3]; 0];
         testkit::for_each_order_unary(matrix, |mut matrix| {
             matrix.iter_elements_mut_with_index().for_each(|_| ());
@@ -880,13 +880,13 @@ mod tests {
                 });
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let matrix = matrix![[0; 0]; 2];
         testkit::for_each_order_unary(matrix, |matrix| {
             matrix.into_iter_elements_with_index().for_each(|_| ());
         });
 
-        // assert no panic from unflattening indices occurs
+        // Assert no panic from unflattening indices occurs.
         let matrix = matrix![[0; 3]; 0];
         testkit::for_each_order_unary(matrix, |matrix| {
             matrix.into_iter_elements_with_index().for_each(|_| ());

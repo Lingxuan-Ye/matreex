@@ -34,8 +34,8 @@ mod constant {
     }
 }
 
-// refactoring the `Debug` and `Display` implementations will NOT
-// be considered a breaking change
+// Refactoring the `Debug` and `Display` implementations will NOT
+// be considered a breaking change.
 
 impl<T> fmt::Debug for Matrix<T>
 where
@@ -93,7 +93,7 @@ where
         f.write_str(constant::whitespace::NEWLINE)?;
 
         for row in 0..nrows {
-            // first line of the element representation
+            // The first line of the element representation
             f.write_str(constant::whitespace::INDENT)?;
             f.write_index(row, index_width)?;
             f.write_str(constant::row::INDEX_GAP)?;
@@ -102,8 +102,8 @@ where
                 if col != 0 {
                     f.write_str(constant::element::SEPARATOR)?;
                 }
-                // hope loop-invariant code motion applies here,
-                // as well as to similar code
+                // Hope loop-invariant code motion applies here,
+                // as well as to similar code.
                 let index = Index::new(row, col).to_flattened(order, stride);
                 f.write_index(index, index_width)?;
                 f.write_str(constant::element::INDEX_GAP)?;
@@ -117,7 +117,7 @@ where
             f.write_str(constant::row::SEPARATOR)?;
             f.write_str(constant::whitespace::NEWLINE)?;
 
-            // remaining lines of the element representation
+            // The remaining lines of the element representation.
             for _ in 1..element_hight {
                 f.write_str(constant::whitespace::INDENT)?;
                 f.write_str(&index_padding)?;
@@ -184,7 +184,7 @@ where
         f.write_str(constant::whitespace::NEWLINE)?;
 
         for row in 0..nrows {
-            // first line of the element representation
+            // The first line of the element representation.
             f.write_str(constant::whitespace::INDENT)?;
             f.write_str(constant::row::DELIMITER_LEFT)?;
             for col in 0..ncols {
@@ -202,7 +202,7 @@ where
             f.write_str(constant::row::SEPARATOR)?;
             f.write_str(constant::whitespace::NEWLINE)?;
 
-            // remaining lines of the element representation
+            // The remaining lines of the element representation.
             for _ in 1..element_hight {
                 f.write_str(constant::whitespace::INDENT)?;
                 f.write_str(constant::row::DELIMITER_PADDING)?;
