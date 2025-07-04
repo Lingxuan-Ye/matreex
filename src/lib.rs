@@ -291,8 +291,8 @@ impl<T> Matrix<T> {
         unsafe {
             self.data.set_len(0);
         }
-        let old_base = self.data.as_ptr();
         let mut new_data = Vec::<T>::with_capacity(size);
+        let old_base = self.data.as_ptr();
         let new_base = new_data.as_mut_ptr();
         let old_stride = self.stride();
         self.shape.transpose();
@@ -307,10 +307,10 @@ impl<T> Matrix<T> {
                 ptr::copy_nonoverlapping(src, dst, 1);
             }
         }
-        unsafe {
-            new_data.set_len(size);
-        }
         self.data = new_data;
+        unsafe {
+            self.data.set_len(size);
+        }
 
         self
     }
@@ -556,16 +556,17 @@ impl<T> Matrix<T> {
     where
         T: Clone,
     {
-        let dst_stride = self.stride();
         let src_stride = src.stride();
+        let dst_stride = self.stride();
+
         if self.order == src.order {
             let major = cmp::min(self.major(), src.major());
             let minor = cmp::min(self.minor(), src.minor());
             for i in 0..major {
-                let dst_lower = i * dst_stride.major();
-                let dst_upper = dst_lower + minor * dst_stride.minor();
                 let src_lower = i * src_stride.major();
                 let src_upper = src_lower + minor * src_stride.minor();
+                let dst_lower = i * dst_stride.major();
+                let dst_upper = dst_lower + minor * dst_stride.minor();
                 unsafe {
                     self.data
                         .get_unchecked_mut(dst_lower..dst_upper)
@@ -587,6 +588,7 @@ impl<T> Matrix<T> {
                 }
             }
         }
+
         self
     }
 
