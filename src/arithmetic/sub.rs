@@ -177,9 +177,36 @@ impl_primitive_scalar_sub! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize 
 
 #[cfg(test)]
 mod tests {
+    use self::mock::{MockL, MockR, MockU};
     use crate::matrix;
     use crate::testkit;
-    use crate::testkit::mock::{MockL, MockR, MockU};
+
+    mod mock {
+        use core::ops::{Sub, SubAssign};
+
+        #[derive(Clone, Debug, PartialEq)]
+        pub(super) struct MockL(pub(super) i32);
+
+        #[derive(Clone)]
+        pub(super) struct MockR(pub(super) i32);
+
+        #[derive(Debug, PartialEq)]
+        pub(super) struct MockU(pub(super) i32);
+
+        impl Sub<MockR> for MockL {
+            type Output = MockU;
+
+            fn sub(self, rhs: MockR) -> Self::Output {
+                MockU(self.0 - rhs.0)
+            }
+        }
+
+        impl SubAssign<MockR> for MockL {
+            fn sub_assign(&mut self, rhs: MockR) {
+                self.0 -= rhs.0;
+            }
+        }
+    }
 
     #[test]
     fn test_sub() {

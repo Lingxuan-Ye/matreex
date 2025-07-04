@@ -33,9 +33,27 @@ where
 
 #[cfg(test)]
 mod tests {
+    use self::mock::{MockT, MockU};
     use crate::matrix;
     use crate::testkit;
-    use crate::testkit::mock::{MockT, MockU};
+
+    mod mock {
+        use core::ops::Neg;
+
+        #[derive(Clone)]
+        pub(super) struct MockT(pub(super) i32);
+
+        #[derive(Debug, PartialEq)]
+        pub(super) struct MockU(pub(super) i32);
+
+        impl Neg for MockT {
+            type Output = MockU;
+
+            fn neg(self) -> Self::Output {
+                MockU(-self.0)
+            }
+        }
+    }
 
     #[test]
     fn neg() {
