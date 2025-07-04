@@ -893,7 +893,7 @@ mod tests {
         testkit::for_each_order_unary(matrix, |mut matrix| {
             assert!(matrix.capacity() >= 6);
 
-            matrix.resize((1, 3)).unwrap();
+            matrix.resize((1, 3), 0).unwrap();
             assert!(matrix.capacity() >= 6);
 
             matrix.shrink_to_fit();
@@ -907,7 +907,7 @@ mod tests {
         testkit::for_each_order_unary(matrix, |mut matrix| {
             assert!(matrix.capacity() >= 6);
 
-            matrix.resize((1, 3)).unwrap();
+            matrix.resize((1, 3), 0).unwrap();
             assert!(matrix.capacity() >= 6);
 
             matrix.shrink_to(4);
