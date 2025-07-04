@@ -7,30 +7,30 @@ use alloc::vec::Vec;
 use core::fmt;
 
 mod constant {
-    pub(crate) mod whitespace {
-        pub(crate) const SPACE: &str = " ";
-        pub(crate) const INDENT: &str = "    ";
-        pub(crate) const NEWLINE: &str = "\n";
+    pub(super) mod whitespace {
+        pub(in super::super) const SPACE: &str = " ";
+        pub(in super::super) const INDENT: &str = "    ";
+        pub(in super::super) const NEWLINE: &str = "\n";
     }
 
-    pub(crate) mod matrix {
-        pub(crate) const DELIMITER_LEFT: &str = "[";
-        pub(crate) const DELIMITER_RIGHT: &str = "]";
+    pub(super) mod matrix {
+        pub(in super::super) const DELIMITER_LEFT: &str = "[";
+        pub(in super::super) const DELIMITER_RIGHT: &str = "]";
     }
 
-    pub(crate) mod row {
-        pub(crate) const INDEX_GAP: &str = "  ";
-        pub(crate) const DELIMITER_LEFT: &str = "[  ";
-        pub(crate) const DELIMITER_RIGHT: &str = "  ]";
-        pub(crate) const DELIMITER_PADDING: &str = "   ";
-        pub(crate) const SEPARATOR: &str = "";
-        pub(crate) const SEPARATOR_PADDING: &str = "";
+    pub(super) mod row {
+        pub(in super::super) const INDEX_GAP: &str = "  ";
+        pub(in super::super) const DELIMITER_LEFT: &str = "[  ";
+        pub(in super::super) const DELIMITER_RIGHT: &str = "  ]";
+        pub(in super::super) const DELIMITER_PADDING: &str = "   ";
+        pub(in super::super) const SEPARATOR: &str = "";
+        pub(in super::super) const SEPARATOR_PADDING: &str = "";
     }
 
-    pub(crate) mod element {
-        pub(crate) const INDEX_GAP: &str = " ";
-        pub(crate) const SEPARATOR: &str = "  ";
-        pub(crate) const SEPARATOR_PADDING: &str = "  ";
+    pub(super) mod element {
+        pub(in super::super) const INDEX_GAP: &str = " ";
+        pub(in super::super) const SEPARATOR: &str = "  ";
+        pub(in super::super) const SEPARATOR_PADDING: &str = "  ";
     }
 }
 

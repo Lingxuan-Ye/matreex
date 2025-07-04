@@ -17,7 +17,7 @@ use core::ptr::{NonNull, without_provenance_mut};
 /// `Option` discriminant to avoid spatial overhead. Here `layout`
 /// is chosen for simplicity.
 #[derive(Debug)]
-pub(crate) struct IterVectorsMut<'a, T> {
+pub(super) struct IterVectorsMut<'a, T> {
     lower: NonNull<T>,
     upper: NonNull<T>,
     layout: Option<Layout>,
@@ -35,7 +35,7 @@ unsafe impl<T> Send for IterVectorsMut<'_, T> where T: Send {}
 unsafe impl<T> Sync for IterVectorsMut<'_, T> where T: Sync {}
 
 impl<'a, T> IterVectorsMut<'a, T> {
-    pub(crate) fn over_major_axis(matrix: &'a mut Matrix<T>) -> Self {
+    pub(super) fn over_major_axis(matrix: &'a mut Matrix<T>) -> Self {
         if matrix.is_empty() {
             return Self::empty();
         }
@@ -53,7 +53,7 @@ impl<'a, T> IterVectorsMut<'a, T> {
         }
     }
 
-    pub(crate) fn over_minor_axis(matrix: &'a mut Matrix<T>) -> Self {
+    pub(super) fn over_minor_axis(matrix: &'a mut Matrix<T>) -> Self {
         if matrix.is_empty() {
             return Self::empty();
         }
@@ -225,7 +225,7 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
 /// in either `lower`, `upper`, or `stride` as an `Option` discriminant
 /// to avoid spatial overhead. Here `stride` is chosen for simplicity.
 #[derive(Debug)]
-pub(crate) struct IterNthVectorMut<'a, T> {
+pub(super) struct IterNthVectorMut<'a, T> {
     lower: NonNull<T>,
     upper: NonNull<T>,
     stride: Option<NonZero<usize>>,
@@ -239,7 +239,7 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// This is an alternative to [`Matrix::iter_nth_major_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
-    pub(crate) fn over_major_axis_vector(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
+    pub(super) fn over_major_axis_vector(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
         if n >= matrix.major() {
             return Err(Error::IndexOutOfBounds);
         }
@@ -265,7 +265,7 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// This is an alternative to [`Matrix::iter_nth_minor_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
-    pub(crate) fn over_minor_axis_vector(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
+    pub(super) fn over_minor_axis_vector(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
         if n >= matrix.minor() {
             return Err(Error::IndexOutOfBounds);
         }
