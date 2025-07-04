@@ -549,48 +549,47 @@ mod tests {
     }
 
     fn assert_counts(scope: &Scope, old_shape: Shape, new_shape: Shape) {
+        let old_nrows = old_shape.nrows();
+        let old_ncols = old_shape.ncols();
+        let new_nrows = new_shape.nrows();
+        let new_ncols = new_shape.ncols();
         let expected_init_count;
         let expected_drop_count;
-        match (
-            new_shape.nrows().cmp(&old_shape.nrows()),
-            new_shape.ncols().cmp(&old_shape.ncols()),
-        ) {
+        match (new_nrows.cmp(&old_nrows), new_ncols.cmp(&old_ncols)) {
             (Ordering::Less, Ordering::Less) => {
                 expected_init_count = 0;
-                expected_drop_count =
-                    old_shape.nrows() * old_shape.ncols() - new_shape.nrows() * new_shape.ncols();
+                expected_drop_count = old_nrows * old_ncols - new_nrows * new_ncols;
             }
             (Ordering::Less, Ordering::Equal) => {
                 expected_init_count = 0;
-                expected_drop_count = (old_shape.nrows() - new_shape.nrows()) * old_shape.ncols();
+                expected_drop_count = (old_nrows - new_nrows) * old_ncols;
             }
             (Ordering::Less, Ordering::Greater) => {
-                expected_init_count = (new_shape.ncols() - old_shape.ncols()) * new_shape.nrows();
-                expected_drop_count = (old_shape.nrows() - new_shape.nrows()) * old_shape.ncols();
+                expected_init_count = (new_ncols - old_ncols) * new_nrows;
+                expected_drop_count = (old_nrows - new_nrows) * old_ncols;
             }
             (Ordering::Equal, Ordering::Less) => {
                 expected_init_count = 0;
-                expected_drop_count = (old_shape.ncols() - new_shape.ncols()) * old_shape.nrows();
+                expected_drop_count = (old_ncols - new_ncols) * old_nrows;
             }
             (Ordering::Equal, Ordering::Equal) => {
                 expected_init_count = 0;
                 expected_drop_count = 0;
             }
             (Ordering::Equal, Ordering::Greater) => {
-                expected_init_count = (new_shape.ncols() - old_shape.ncols()) * old_shape.nrows();
+                expected_init_count = (new_ncols - old_ncols) * old_nrows;
                 expected_drop_count = 0;
             }
             (Ordering::Greater, Ordering::Less) => {
-                expected_init_count = (new_shape.nrows() - old_shape.nrows()) * new_shape.ncols();
-                expected_drop_count = (old_shape.ncols() - new_shape.ncols()) * old_shape.nrows();
+                expected_init_count = (new_nrows - old_nrows) * new_ncols;
+                expected_drop_count = (old_ncols - new_ncols) * old_nrows;
             }
             (Ordering::Greater, Ordering::Equal) => {
-                expected_init_count = (new_shape.nrows() - old_shape.nrows()) * new_shape.ncols();
+                expected_init_count = (new_nrows - old_nrows) * new_ncols;
                 expected_drop_count = 0;
             }
             (Ordering::Greater, Ordering::Greater) => {
-                expected_init_count =
-                    new_shape.nrows() * new_shape.ncols() - old_shape.nrows() * old_shape.ncols();
+                expected_init_count = new_nrows * new_ncols - old_nrows * old_ncols;
                 expected_drop_count = 0;
             }
         }
@@ -644,9 +643,7 @@ mod tests {
                                     matrix.resize(new_shape, Mock(Index::default())).unwrap();
                                     assert_counts(scope, old_shape, new_shape);
                                     let expected = Matrix::with_initializer(new_shape, |index| {
-                                        if index.row >= old_shape.nrows()
-                                            || index.col >= old_shape.ncols()
-                                        {
+                                        if index.row >= old_nrows || index.col >= old_ncols {
                                             Mock(Index::default())
                                         } else {
                                             Mock(index)
@@ -666,9 +663,7 @@ mod tests {
                                     matrix.resize(new_shape, Mock(Index::default())).unwrap();
                                     assert_counts(scope, old_shape, new_shape);
                                     let expected = Matrix::with_initializer(new_shape, |index| {
-                                        if index.row >= old_shape.nrows()
-                                            || index.col >= old_shape.ncols()
-                                        {
+                                        if index.row >= old_nrows || index.col >= old_ncols {
                                             Mock(Index::default())
                                         } else {
                                             Mock(index)
@@ -688,9 +683,7 @@ mod tests {
                                     matrix.resize(new_shape, Mock(Index::default())).unwrap();
                                     assert_counts(scope, old_shape, new_shape);
                                     let expected = Matrix::with_initializer(new_shape, |index| {
-                                        if index.row >= old_shape.nrows()
-                                            || index.col >= old_shape.ncols()
-                                        {
+                                        if index.row >= old_nrows || index.col >= old_ncols {
                                             Mock(Index::default())
                                         } else {
                                             Mock(index)
