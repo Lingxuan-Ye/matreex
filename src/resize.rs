@@ -609,7 +609,10 @@ mod tests {
 
     #[test]
     fn test_resize() {
-        let lens = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        #[cfg(miri)]
+        let lens = [0, 1, 2, 3, 5];
+        #[cfg(not(miri))]
+        let lens = [0, 1, 2, 3, 5, 7, 11, 13, 17, 19];
 
         for old_nrows in lens {
             for old_ncols in lens {
