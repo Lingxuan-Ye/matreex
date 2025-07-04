@@ -6,6 +6,34 @@ use core::cmp::Ordering;
 use core::ptr;
 
 impl<T> Matrix<T> {
+    /// Resizes the matrix to the specified shape, filling with the
+    /// given value.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use matreex::Result;
+    /// use matreex::{Order, matrix};
+    ///
+    /// # fn main() -> Result<()> {
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    ///
+    /// matrix.resize((2, 2), 0)?;
+    /// assert_eq!(matrix, matrix![[1, 2], [4, 5]]);
+    ///
+    /// matrix.resize((3, 3), 0)?;
+    /// assert_eq!(matrix, matrix![[1, 2, 0], [4, 5, 0], [0, 0, 0]]);
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn resize<S>(&mut self, shape: S, value: T) -> Result<&mut Self>
     where
         S: AsShape,
