@@ -17,7 +17,7 @@ use core::ptr::{NonNull, without_provenance_mut};
 /// `Option` discriminant to avoid spatial overhead. Here `layout`
 /// is chosen for simplicity.
 #[derive(Debug)]
-pub(crate) struct IterVectorsMut<'a, T> {
+pub(super) struct IterVectorsMut<'a, T> {
     lower: NonNull<T>,
     upper: NonNull<T>,
     layout: Option<Layout>,
@@ -35,47 +35,39 @@ unsafe impl<T> Send for IterVectorsMut<'_, T> where T: Send {}
 unsafe impl<T> Sync for IterVectorsMut<'_, T> where T: Sync {}
 
 impl<'a, T> IterVectorsMut<'a, T> {
-    pub(crate) fn over_major_axis(matrix: &'a mut Matrix<T>) -> Self {
+    pub(super) fn over_major_axis(matrix: &'a mut Matrix<T>) -> Self {
         if matrix.is_empty() {
             return Self::empty();
         }
 
+        let matrix_stride = matrix.stride();
+
         unsafe {
-            let buffer = NonNull::new_unchecked(matrix.data.as_mut_ptr());
-            let axis_stride = NonZero::new_unchecked(matrix.major_stride());
+            let base = NonNull::new_unchecked(matrix.data.as_mut_ptr());
+            let axis_stride = NonZero::new_unchecked(matrix_stride.major());
             let axis_length = NonZero::new_unchecked(matrix.major());
-            let vector_stride = NonZero::new_unchecked(matrix.minor_stride());
+            let vector_stride = NonZero::new_unchecked(matrix_stride.minor());
             let vector_length = NonZero::new_unchecked(matrix.minor());
 
-            Self::assemble(
-                buffer,
-                axis_stride,
-                axis_length,
-                vector_stride,
-                vector_length,
-            )
+            Self::assemble(base, axis_stride, axis_length, vector_stride, vector_length)
         }
     }
 
-    pub(crate) fn over_minor_axis(matrix: &'a mut Matrix<T>) -> Self {
+    pub(super) fn over_minor_axis(matrix: &'a mut Matrix<T>) -> Self {
         if matrix.is_empty() {
             return Self::empty();
         }
 
+        let matrix_stride = matrix.stride();
+
         unsafe {
-            let buffer = NonNull::new_unchecked(matrix.data.as_mut_ptr());
-            let axis_stride = NonZero::new_unchecked(matrix.minor_stride());
+            let base = NonNull::new_unchecked(matrix.data.as_mut_ptr());
+            let axis_stride = NonZero::new_unchecked(matrix_stride.minor());
             let axis_length = NonZero::new_unchecked(matrix.minor());
-            let vector_stride = NonZero::new_unchecked(matrix.major_stride());
+            let vector_stride = NonZero::new_unchecked(matrix_stride.major());
             let vector_length = NonZero::new_unchecked(matrix.major());
 
-            Self::assemble(
-                buffer,
-                axis_stride,
-                axis_length,
-                vector_stride,
-                vector_length,
-            )
+            Self::assemble(base, axis_stride, axis_length, vector_stride, vector_length)
         }
     }
 
@@ -99,33 +91,33 @@ impl<'a, T> IterVectorsMut<'a, T> {
     ///
     /// # Safety
     ///
-    /// To iterate over the vectors of a matrix, `buffer` must point to the
+    /// To iterate over the vectors of a matrix, `base` must point to the
     /// underlying buffer of that matrix, and the remaining arguments must
     /// be one of the following sets of values in their [`NonZero`] form:
     ///
     /// - For iterating over the major axis:
-    ///   - `axis_stride`: `matrix.major_stride()`
+    ///   - `axis_stride`: `matrix.stride().major()`
     ///   - `axis_length`: `matrix.major()`
-    ///   - `vector_stride`: `matrix.minor_stride()` (i.e., `1`)
+    ///   - `vector_stride`: `matrix.stride().minor()` (i.e., `1`)
     ///   - `vector_length`: `matrix.minor()`
     ///
     /// - For iterating over the minor axis:
-    ///   - `axis_stride`: `matrix.minor_stride()` (i.e., `1`)
+    ///   - `axis_stride`: `matrix.stride().minor()` (i.e., `1`)
     ///   - `axis_length`: `matrix.minor()`
-    ///   - `vector_stride`: `matrix.major_stride()`
+    ///   - `vector_stride`: `matrix.stride().major()`
     ///   - `vector_length`: `matrix.major()`
     ///
     /// This returns a detached iterator whose lifetime is not bound to
     /// any matrix. The returned iterator is valid only if the matrix
     /// remains in scope.
     unsafe fn assemble(
-        buffer: NonNull<T>,
+        base: NonNull<T>,
         axis_stride: NonZero<usize>,
         axis_length: NonZero<usize>,
         vector_stride: NonZero<usize>,
         vector_length: NonZero<usize>,
     ) -> Self {
-        let lower = buffer;
+        let lower = base;
         let offset = axis_stride.get() * (axis_length.get() - 1);
         let upper = if size_of::<T>() == 0 {
             let addr = lower.addr().get() + offset;
@@ -233,7 +225,7 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
 /// in either `lower`, `upper`, or `stride` as an `Option` discriminant
 /// to avoid spatial overhead. Here `stride` is chosen for simplicity.
 #[derive(Debug)]
-pub(crate) struct IterNthVectorMut<'a, T> {
+pub(super) struct IterNthVectorMut<'a, T> {
     lower: NonNull<T>,
     upper: NonNull<T>,
     stride: Option<NonZero<usize>>,
@@ -247,7 +239,7 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// This is an alternative to [`Matrix::iter_nth_major_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
-    pub(crate) fn over_major_axis_vector(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
+    pub(super) fn over_major_axis_vector(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
         if n >= matrix.major() {
             return Err(Error::IndexOutOfBounds);
         }
@@ -256,15 +248,15 @@ impl<'a, T> IterNthVectorMut<'a, T> {
             return Ok(Self::empty());
         }
 
-        let buffer = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let base = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let matrix_stride = matrix.stride();
         let lower = if size_of::<T>() == 0 {
-            // would work, trust me
-            buffer
+            base
         } else {
-            let offset = n * matrix.major_stride();
-            unsafe { buffer.add(offset) }
+            let offset = n * matrix_stride.major();
+            unsafe { base.add(offset) }
         };
-        let stride = unsafe { NonZero::new_unchecked(matrix.minor_stride()) };
+        let stride = unsafe { NonZero::new_unchecked(matrix_stride.minor()) };
         let length = unsafe { NonZero::new_unchecked(matrix.minor()) };
 
         unsafe { Ok(Self::assemble(lower, stride, length)) }
@@ -273,7 +265,7 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// This is an alternative to [`Matrix::iter_nth_minor_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
-    pub(crate) fn over_minor_axis_vector(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
+    pub(super) fn over_minor_axis_vector(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
         if n >= matrix.minor() {
             return Err(Error::IndexOutOfBounds);
         }
@@ -282,15 +274,15 @@ impl<'a, T> IterNthVectorMut<'a, T> {
             return Ok(Self::empty());
         }
 
-        let buffer = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let base = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let matrix_stride = matrix.stride();
         let lower = if size_of::<T>() == 0 {
-            // would work, trust me
-            buffer
+            base
         } else {
-            let offset = n * matrix.minor_stride();
-            unsafe { buffer.add(offset) }
+            let offset = n * matrix_stride.minor();
+            unsafe { base.add(offset) }
         };
-        let stride = unsafe { NonZero::new_unchecked(matrix.major_stride()) };
+        let stride = unsafe { NonZero::new_unchecked(matrix_stride.major()) };
         let length = unsafe { NonZero::new_unchecked(matrix.major()) };
 
         unsafe { Ok(Self::assemble(lower, stride, length)) }
@@ -316,16 +308,16 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     ///
     /// # Safety
     ///
-    /// To iterate over the nth vector of a matrix, `lower` must point
-    /// to the head of that vector, and the remaining arguments must be
-    /// one of the following sets of values in their [`NonZero`] form:
+    /// To iterate over the nth vector of a matrix, `lower` must point to
+    /// the start of that vector, and the remaining arguments must be one
+    /// of the following sets of values in their [`NonZero`] form:
     ///
     /// - For iterating over a major axis vector:
-    ///   - `stride`: `matrix.minor_stride()` (i.e., `1`)
+    ///   - `stride`: `matrix.stride().minor()` (i.e., `1`)
     ///   - `length`: `matrix.minor()`
     ///
     /// - For iterating over a minor axis vector:
-    ///   - `stride`: `matrix.major_stride()`
+    ///   - `stride`: `matrix.stride().major()`
     ///   - `length`: `matrix.major()`
     ///
     /// This returns a detached iterator whose lifetime is not bound to

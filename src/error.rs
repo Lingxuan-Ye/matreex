@@ -6,18 +6,11 @@ pub type Result<T> = core::result::Result<T, Error>;
 /// An enum for error types.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub enum Error {
-    /// Error when the matrix size exceeds [`usize::MAX`].
+    /// Error when the size exceeds [`usize::MAX`].
     SizeOverflow,
 
-    /// Error when the matrix size does not match the length of its
+    /// Error when the size of the shape does not match the size of the
     /// underlying data.
-    ///
-    /// This equality is an invariant that must be maintained. If the
-    /// matrix size exceeds the data length, indexing into the matrix
-    /// may result in out-of-bounds memory access, leading to *[undefined
-    /// behavior]*.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     SizeMismatch,
 
     /// Error when attempting to allocate more than [`isize::MAX`] bytes
@@ -40,8 +33,8 @@ pub enum Error {
     /// not satisfy this requirement.
     SquareMatrixRequired,
 
-    /// Error when the shapes of two matrices are not conformable for
-    /// the intended operation.
+    /// Error when the shapes of two matrices are not conformable for the
+    /// intended operation.
     ShapeNotConformable,
 }
 

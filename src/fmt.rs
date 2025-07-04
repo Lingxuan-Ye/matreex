@@ -7,35 +7,35 @@ use alloc::vec::Vec;
 use core::fmt;
 
 mod constant {
-    pub(crate) mod whitespace {
-        pub(crate) const SPACE: &str = " ";
-        pub(crate) const INDENT: &str = "    ";
-        pub(crate) const NEWLINE: &str = "\n";
+    pub(super) mod whitespace {
+        pub(in super::super) const SPACE: &str = " ";
+        pub(in super::super) const INDENT: &str = "    ";
+        pub(in super::super) const NEWLINE: &str = "\n";
     }
 
-    pub(crate) mod matrix {
-        pub(crate) const DELIMITER_LEFT: &str = "[";
-        pub(crate) const DELIMITER_RIGHT: &str = "]";
+    pub(super) mod matrix {
+        pub(in super::super) const DELIMITER_LEFT: &str = "[";
+        pub(in super::super) const DELIMITER_RIGHT: &str = "]";
     }
 
-    pub(crate) mod row {
-        pub(crate) const INDEX_GAP: &str = "  ";
-        pub(crate) const DELIMITER_LEFT: &str = "[  ";
-        pub(crate) const DELIMITER_RIGHT: &str = "  ]";
-        pub(crate) const DELIMITER_PADDING: &str = "   ";
-        pub(crate) const SEPARATOR: &str = "";
-        pub(crate) const SEPARATOR_PADDING: &str = "";
+    pub(super) mod row {
+        pub(in super::super) const INDEX_GAP: &str = "  ";
+        pub(in super::super) const DELIMITER_LEFT: &str = "[  ";
+        pub(in super::super) const DELIMITER_RIGHT: &str = "  ]";
+        pub(in super::super) const DELIMITER_PADDING: &str = "   ";
+        pub(in super::super) const SEPARATOR: &str = "";
+        pub(in super::super) const SEPARATOR_PADDING: &str = "";
     }
 
-    pub(crate) mod element {
-        pub(crate) const INDEX_GAP: &str = " ";
-        pub(crate) const SEPARATOR: &str = "  ";
-        pub(crate) const SEPARATOR_PADDING: &str = "  ";
+    pub(super) mod element {
+        pub(in super::super) const INDEX_GAP: &str = " ";
+        pub(in super::super) const SEPARATOR: &str = "  ";
+        pub(in super::super) const SEPARATOR_PADDING: &str = "  ";
     }
 }
 
-// refactoring the `Debug` and `Display` implementations will NOT
-// be considered a breaking change
+// Refactoring the `Debug` and `Display` implementations will NOT
+// be considered a breaking change.
 
 impl<T> fmt::Debug for Matrix<T>
 where
@@ -48,6 +48,8 @@ where
             return Ok(());
         }
 
+        let order = self.order;
+        let stride = self.stride();
         let shape = self.shape();
         let nrows = shape.nrows();
         let ncols = shape.ncols();
@@ -91,7 +93,7 @@ where
         f.write_str(constant::whitespace::NEWLINE)?;
 
         for row in 0..nrows {
-            // first line of the element representation
+            // The first line of the element representation
             f.write_str(constant::whitespace::INDENT)?;
             f.write_index(row, index_width)?;
             f.write_str(constant::row::INDEX_GAP)?;
@@ -100,9 +102,9 @@ where
                 if col != 0 {
                     f.write_str(constant::element::SEPARATOR)?;
                 }
-                // hope loop-invariant code motion applies here,
-                // as well as to similar code
-                let index = Index::new(row, col).to_flattened(self.order, self.shape);
+                // Hope loop-invariant code motion applies here,
+                // as well as to similar code.
+                let index = Index::new(row, col).to_flattened(order, stride);
                 f.write_index(index, index_width)?;
                 f.write_str(constant::element::INDEX_GAP)?;
                 match cache[index].next() {
@@ -115,7 +117,7 @@ where
             f.write_str(constant::row::SEPARATOR)?;
             f.write_str(constant::whitespace::NEWLINE)?;
 
-            // remaining lines of the element representation
+            // The remaining lines of the element representation.
             for _ in 1..element_hight {
                 f.write_str(constant::whitespace::INDENT)?;
                 f.write_str(&index_padding)?;
@@ -125,7 +127,7 @@ where
                     if col != 0 {
                         f.write_str(constant::element::SEPARATOR_PADDING)?;
                     }
-                    let index = Index::new(row, col).to_flattened(self.order, self.shape);
+                    let index = Index::new(row, col).to_flattened(order, stride);
                     f.write_str(&index_padding)?;
                     f.write_str(constant::element::INDEX_GAP)?;
                     match cache[index].next() {
@@ -155,6 +157,8 @@ where
             return Ok(());
         }
 
+        let order = self.order;
+        let stride = self.stride();
         let shape = self.shape();
         let nrows = shape.nrows();
         let ncols = shape.ncols();
@@ -180,14 +184,14 @@ where
         f.write_str(constant::whitespace::NEWLINE)?;
 
         for row in 0..nrows {
-            // first line of the element representation
+            // The first line of the element representation.
             f.write_str(constant::whitespace::INDENT)?;
             f.write_str(constant::row::DELIMITER_LEFT)?;
             for col in 0..ncols {
                 if col != 0 {
                     f.write_str(constant::element::SEPARATOR)?;
                 }
-                let index = Index::new(row, col).to_flattened(self.order, self.shape);
+                let index = Index::new(row, col).to_flattened(order, stride);
                 match cache[index].next() {
                     None if element_width > 0 => f.write_str(&element_padding)?,
                     Some(line) => f.write_element_line(line, element_width)?,
@@ -198,7 +202,7 @@ where
             f.write_str(constant::row::SEPARATOR)?;
             f.write_str(constant::whitespace::NEWLINE)?;
 
-            // remaining lines of the element representation
+            // The remaining lines of the element representation.
             for _ in 1..element_hight {
                 f.write_str(constant::whitespace::INDENT)?;
                 f.write_str(constant::row::DELIMITER_PADDING)?;
@@ -206,7 +210,7 @@ where
                     if col != 0 {
                         f.write_str(constant::element::SEPARATOR_PADDING)?;
                     }
-                    let index = Index::new(row, col).to_flattened(self.order, self.shape);
+                    let index = Index::new(row, col).to_flattened(order, stride);
                     match cache[index].next() {
                         None if element_width > 0 => f.write_str(&element_padding)?,
                         Some(line) => f.write_element_line(line, element_width)?,

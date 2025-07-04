@@ -5,19 +5,19 @@ use crate::shape::{AxisShape, Shape};
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
-/// A trait used for conversion from a sequence of rows.
+/// A trait for conversion from a sequence of rows.
 pub trait FromRows<T>: Sized {
     /// Converts from a sequence of rows.
     fn from_rows(value: T) -> Self;
 }
 
-/// A trait used for fallible conversion from a sequence of rows.
+/// A trait for fallible conversion from a sequence of rows.
 pub trait TryFromRows<T>: Sized {
     /// Attempts to convert from a sequence of rows.
     fn try_from_rows(value: T) -> Result<Self>;
 }
 
-/// A trait used for conversion from an iterator over rows.
+/// A trait for conversion from an iterator over rows.
 pub trait FromRowIterator<T, V>: Sized
 where
     V: IntoIterator<Item = T>,
@@ -44,7 +44,7 @@ impl<T, const R: usize, const C: usize> FromRows<[[T; C]; R]> for Matrix<T> {
     ///
     /// let rows: [[i32; 3]; 2] = [[1, 2, 3], [4, 5, 6]];
     /// let matrix = Matrix::from_rows(rows);
-    /// // this is actually a circular validation
+    /// // This is actually a circular validation.
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     fn from_rows(value: [[T; C]; R]) -> Self {
@@ -54,35 +54,6 @@ impl<T, const R: usize, const C: usize> FromRows<[[T; C]; R]> for Matrix<T> {
         let shape = Shape::new(nrows, ncols);
         let shape = AxisShape::from_shape(shape, order);
         let data = value.into_iter().flatten().collect();
-        Self { order, shape, data }
-    }
-}
-
-impl<T, const R: usize, const C: usize> FromRows<[Box<[T; C]>; R]> for Matrix<T> {
-    /// Converts to [`Matrix<T>`] from a sequence of rows.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be [`Order::RowMajor`],
-    /// regardless of the default.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::convert::FromRows;
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let rows: [Box<[i32; 3]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
-    /// let matrix = Matrix::from_rows(rows);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    fn from_rows(value: [Box<[T; C]>; R]) -> Self {
-        let order = Order::RowMajor;
-        let nrows = R;
-        let ncols = C;
-        let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
-        let data = value.into_iter().flat_map(|row| *row).collect();
         Self { order, shape, data }
     }
 }
@@ -107,31 +78,7 @@ impl<T, const R: usize, const C: usize> FromRows<Box<[[T; C]; R]>> for Matrix<T>
     /// ```
     #[inline]
     fn from_rows(value: Box<[[T; C]; R]>) -> Self {
-        Self::from_rows(*value)
-    }
-}
-
-impl<T, const R: usize, const C: usize> FromRows<Box<[Box<[T; C]>; R]>> for Matrix<T> {
-    /// Converts to [`Matrix<T>`] from a sequence of rows.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be [`Order::RowMajor`],
-    /// regardless of the default.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::convert::FromRows;
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let rows: Box<[Box<[i32; 3]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
-    /// let matrix = Matrix::from_rows(rows);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    #[inline]
-    fn from_rows(value: Box<[Box<[T; C]>; R]>) -> Self {
-        Self::from_rows(*value)
+        Self::from_rows(value as Box<[[T; C]]>)
     }
 }
 
@@ -164,35 +111,6 @@ impl<T, const C: usize> FromRows<Box<[[T; C]]>> for Matrix<T> {
     }
 }
 
-impl<T, const C: usize> FromRows<Box<[Box<[T; C]>]>> for Matrix<T> {
-    /// Converts to [`Matrix<T>`] from a sequence of rows.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be [`Order::RowMajor`],
-    /// regardless of the default.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::convert::FromRows;
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let rows: Box<[Box<[i32; 3]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
-    /// let matrix = Matrix::from_rows(rows);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    fn from_rows(value: Box<[Box<[T; C]>]>) -> Self {
-        let order = Order::RowMajor;
-        let nrows = value.len();
-        let ncols = C;
-        let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
-        let data = value.into_iter().flat_map(|row| *row).collect();
-        Self { order, shape, data }
-    }
-}
-
 impl<T, const C: usize> FromRows<Vec<[T; C]>> for Matrix<T> {
     /// Converts to [`Matrix<T>`] from a sequence of rows.
     ///
@@ -217,30 +135,6 @@ impl<T, const C: usize> FromRows<Vec<[T; C]>> for Matrix<T> {
     }
 }
 
-impl<T, const C: usize> FromRows<Vec<Box<[T; C]>>> for Matrix<T> {
-    /// Converts to [`Matrix<T>`] from a sequence of rows.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be [`Order::RowMajor`],
-    /// regardless of the default.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::convert::FromRows;
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let rows: Vec<Box<[i32; 3]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
-    /// let matrix = Matrix::from_rows(rows);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    #[inline]
-    fn from_rows(value: Vec<Box<[T; C]>>) -> Self {
-        Self::from_rows(value.into_boxed_slice())
-    }
-}
-
 impl<T, U> TryFromRows<T> for Matrix<U>
 where
     Matrix<U>: FromRows<T>,
@@ -251,13 +145,141 @@ where
     }
 }
 
+impl<T, const R: usize, const C: usize> TryFromRows<[Box<[T; C]>; R]> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: [Box<[i32; 3]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
+    fn try_from_rows(value: [Box<[T; C]>; R]) -> Result<Self> {
+        let order = Order::RowMajor;
+        let nrows = R;
+        let ncols = C;
+        let shape = Shape::new(nrows, ncols);
+        let shape = AxisShape::from_shape(shape, order);
+        shape.size::<T>()?;
+        let data = value.into_iter().flat_map(|row| row as Box<[T]>).collect();
+        Ok(Self { order, shape, data })
+    }
+}
+
+impl<T, const R: usize, const C: usize> TryFromRows<Box<[Box<[T; C]>; R]>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[Box<[i32; 3]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
+    #[inline]
+    fn try_from_rows(value: Box<[Box<[T; C]>; R]>) -> Result<Self> {
+        Self::try_from_rows(value as Box<[Box<[T; C]>]>)
+    }
+}
+
+impl<T, const C: usize> TryFromRows<Box<[Box<[T; C]>]>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[Box<[i32; 3]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
+    fn try_from_rows(value: Box<[Box<[T; C]>]>) -> Result<Self> {
+        let order = Order::RowMajor;
+        let nrows = value.len();
+        let ncols = C;
+        let shape = Shape::new(nrows, ncols);
+        let shape = AxisShape::from_shape(shape, order);
+        shape.size::<T>()?;
+        let data = value.into_iter().flat_map(|row| row as Box<[T]>).collect();
+        Ok(Self { order, shape, data })
+    }
+}
+
+impl<T, const C: usize> TryFromRows<Vec<Box<[T; C]>>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Vec<Box<[i32; 3]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
+    #[inline]
+    fn try_from_rows(value: Vec<Box<[T; C]>>) -> Result<Self> {
+        Self::try_from_rows(value.into_boxed_slice())
+    }
+}
+
 impl<T, const R: usize> TryFromRows<[Box<[T]>; R]> for Matrix<T> {
     /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -277,63 +299,12 @@ impl<T, const R: usize> TryFromRows<[Box<[T]>; R]> for Matrix<T> {
     /// ```
     fn try_from_rows(value: [Box<[T]>; R]) -> Result<Self> {
         let order = Order::RowMajor;
-        if R == 0 {
+        let mut iter = value.into_iter();
+        let Some(first) = iter.next() else {
             let shape = AxisShape::default();
             let data = Vec::new();
             return Ok(Self { order, shape, data });
-        }
-        let mut iter = value.into_iter();
-        let first = unsafe { iter.next().unwrap_unchecked() };
-        let nrows = R;
-        let ncols = first.len();
-        let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
-        let size = shape.size::<T>()?;
-        let mut data = Vec::with_capacity(size);
-        data.extend(first);
-        for row in iter {
-            if row.len() != ncols {
-                return Err(Error::LengthInconsistent);
-            }
-            data.extend(row);
-        }
-        Ok(Self { order, shape, data })
-    }
-}
-
-impl<T, const R: usize> TryFromRows<[Vec<T>; R]> for Matrix<T> {
-    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
-    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be [`Order::RowMajor`],
-    /// regardless of the default.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::convert::TryFromRows;
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let rows: [Vec<i32>; 2] = [vec![1, 2, 3], vec![4, 5, 6]];
-    /// let result = Matrix::try_from_rows(rows);
-    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
-    /// ```
-    fn try_from_rows(value: [Vec<T>; R]) -> Result<Self> {
-        let order = Order::RowMajor;
-        if R == 0 {
-            let shape = AxisShape::default();
-            let data = Vec::new();
-            return Ok(Self { order, shape, data });
-        }
-        let mut iter = value.into_iter();
-        let first = unsafe { iter.next().unwrap_unchecked() };
+        };
         let nrows = R;
         let ncols = first.len();
         let shape = Shape::new(nrows, ncols);
@@ -356,8 +327,8 @@ impl<T, const R: usize> TryFromRows<Box<[Box<[T]>; R]>> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -377,37 +348,7 @@ impl<T, const R: usize> TryFromRows<Box<[Box<[T]>; R]>> for Matrix<T> {
     /// ```
     #[inline]
     fn try_from_rows(value: Box<[Box<[T]>; R]>) -> Result<Self> {
-        Self::try_from_rows(*value)
-    }
-}
-
-impl<T, const R: usize> TryFromRows<Box<[Vec<T>; R]>> for Matrix<T> {
-    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
-    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be [`Order::RowMajor`],
-    /// regardless of the default.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::convert::TryFromRows;
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let rows: Box<[Vec<i32>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
-    /// let result = Matrix::try_from_rows(rows);
-    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
-    /// ```
-    #[inline]
-    fn try_from_rows(value: Box<[Vec<T>; R]>) -> Result<Self> {
-        Self::try_from_rows(*value)
+        Self::try_from_rows(value as Box<[Box<[T]>]>)
     }
 }
 
@@ -416,8 +357,8 @@ impl<T> TryFromRows<Box<[Box<[T]>]>> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -438,63 +379,12 @@ impl<T> TryFromRows<Box<[Box<[T]>]>> for Matrix<T> {
     fn try_from_rows(value: Box<[Box<[T]>]>) -> Result<Self> {
         let order = Order::RowMajor;
         let nrows = value.len();
-        if nrows == 0 {
+        let mut iter = value.into_iter();
+        let Some(first) = iter.next() else {
             let shape = AxisShape::default();
             let data = Vec::new();
             return Ok(Self { order, shape, data });
-        }
-        let mut iter = value.into_iter();
-        let first = unsafe { iter.next().unwrap_unchecked() };
-        let ncols = first.len();
-        let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
-        let size = shape.size::<T>()?;
-        let mut data = Vec::with_capacity(size);
-        data.extend(first);
-        for row in iter {
-            if row.len() != ncols {
-                return Err(Error::LengthInconsistent);
-            }
-            data.extend(row);
-        }
-        Ok(Self { order, shape, data })
-    }
-}
-
-impl<T> TryFromRows<Box<[Vec<T>]>> for Matrix<T> {
-    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
-    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
-    ///
-    /// # Notes
-    ///
-    /// The order of the resulting matrix will always be [`Order::RowMajor`],
-    /// regardless of the default.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::convert::TryFromRows;
-    /// use matreex::{Matrix, matrix};
-    ///
-    /// let rows: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
-    /// let result = Matrix::try_from_rows(rows);
-    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
-    /// ```
-    fn try_from_rows(value: Box<[Vec<T>]>) -> Result<Self> {
-        let order = Order::RowMajor;
-        let nrows = value.len();
-        if nrows == 0 {
-            let shape = AxisShape::default();
-            let data = Vec::new();
-            return Ok(Self { order, shape, data });
-        }
-        let mut iter = value.into_iter();
-        let first = unsafe { iter.next().unwrap_unchecked() };
+        };
         let ncols = first.len();
         let shape = Shape::new(nrows, ncols);
         let shape = AxisShape::from_shape(shape, order);
@@ -516,8 +406,8 @@ impl<T> TryFromRows<Vec<Box<[T]>>> for Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -541,13 +431,141 @@ impl<T> TryFromRows<Vec<Box<[T]>>> for Matrix<T> {
     }
 }
 
+impl<T, const R: usize> TryFromRows<[Vec<T>; R]> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: [Vec<i32>; 2] = [vec![1, 2, 3], vec![4, 5, 6]];
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
+    fn try_from_rows(value: [Vec<T>; R]) -> Result<Self> {
+        let order = Order::RowMajor;
+        let mut iter = value.into_iter();
+        let Some(first) = iter.next() else {
+            let shape = AxisShape::default();
+            let data = Vec::new();
+            return Ok(Self { order, shape, data });
+        };
+        let nrows = R;
+        let ncols = first.len();
+        let shape = Shape::new(nrows, ncols);
+        let shape = AxisShape::from_shape(shape, order);
+        let size = shape.size::<T>()?;
+        let mut data = Vec::with_capacity(size);
+        data.extend(first);
+        for row in iter {
+            if row.len() != ncols {
+                return Err(Error::LengthInconsistent);
+            }
+            data.extend(row);
+        }
+        Ok(Self { order, shape, data })
+    }
+}
+
+impl<T, const R: usize> TryFromRows<Box<[Vec<T>; R]>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[Vec<i32>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
+    #[inline]
+    fn try_from_rows(value: Box<[Vec<T>; R]>) -> Result<Self> {
+        Self::try_from_rows(value as Box<[Vec<T>]>)
+    }
+}
+
+impl<T> TryFromRows<Box<[Vec<T>]>> for Matrix<T> {
+    /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
+    ///
+    /// # Notes
+    ///
+    /// The order of the resulting matrix will always be [`Order::RowMajor`],
+    /// regardless of the default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::convert::TryFromRows;
+    /// use matreex::{Matrix, matrix};
+    ///
+    /// let rows: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+    /// let result = Matrix::try_from_rows(rows);
+    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// ```
+    fn try_from_rows(value: Box<[Vec<T>]>) -> Result<Self> {
+        let order = Order::RowMajor;
+        let nrows = value.len();
+        let mut iter = value.into_iter();
+        let Some(first) = iter.next() else {
+            let shape = AxisShape::default();
+            let data = Vec::new();
+            return Ok(Self { order, shape, data });
+        };
+        let ncols = first.len();
+        let shape = Shape::new(nrows, ncols);
+        let shape = AxisShape::from_shape(shape, order);
+        let size = shape.size::<T>()?;
+        let mut data = Vec::with_capacity(size);
+        data.extend(first);
+        for row in iter {
+            if row.len() != ncols {
+                return Err(Error::LengthInconsistent);
+            }
+            data.extend(row);
+        }
+        Ok(Self { order, shape, data })
+    }
+}
+
 impl<T> TryFromRows<Vec<Vec<T>>> for Matrix<T> {
     /// Attempts to convert to [`Matrix<T>`] from a sequence of rows.
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     ///
     /// # Notes
@@ -607,13 +625,13 @@ where
             let data = Vec::new();
             return Self { order, shape, data };
         };
-        // could panic if capacity overflows
+        // Could panic if capacity overflows.
         let mut data: Vec<T> = first.into_iter().collect();
         let mut nrows = 1;
         let ncols = data.len();
         let mut size = ncols;
         for row in iter {
-            // could panic if capacity overflows
+            // Could panic if capacity overflows.
             data.extend(row);
             if data.len() - size != ncols {
                 panic!("{}", Error::LengthInconsistent);
@@ -647,15 +665,7 @@ mod tests {
         let matrix = Matrix::from_rows(rows);
         testkit::assert_strict_eq(&matrix, &expected);
 
-        let rows: [Box<[i32; 3]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
-        let matrix = Matrix::from_rows(rows);
-        testkit::assert_strict_eq(&matrix, &expected);
-
         let rows: Box<[[i32; 3]; 2]> = Box::new([[1, 2, 3], [4, 5, 6]]);
-        let matrix = Matrix::from_rows(rows);
-        testkit::assert_strict_eq(&matrix, &expected);
-
-        let rows: Box<[Box<[i32; 3]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
         let matrix = Matrix::from_rows(rows);
         testkit::assert_strict_eq(&matrix, &expected);
 
@@ -663,15 +673,7 @@ mod tests {
         let matrix = Matrix::from_rows(rows);
         testkit::assert_strict_eq(&matrix, &expected);
 
-        let rows: Box<[Box<[i32; 3]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
-        let matrix = Matrix::from_rows(rows);
-        testkit::assert_strict_eq(&matrix, &expected);
-
         let rows: Vec<[i32; 3]> = vec![[1, 2, 3], [4, 5, 6]];
-        let matrix = Matrix::from_rows(rows);
-        testkit::assert_strict_eq(&matrix, &expected);
-
-        let rows: Vec<Box<[i32; 3]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
         let matrix = Matrix::from_rows(rows);
         testkit::assert_strict_eq(&matrix, &expected);
     }
@@ -689,11 +691,24 @@ mod tests {
                 Matrix { order, shape, data }
             };
 
-            let rows: [Box<[i32]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let rows: [Box<[i32; 3]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
             let matrix = Matrix::try_from_rows(rows).unwrap();
             testkit::assert_strict_eq(&matrix, &expected);
 
-            let rows: [Vec<i32>; 2] = [vec![1, 2, 3], vec![4, 5, 6]];
+            let rows: Box<[Box<[i32; 3]>; 2]> =
+                Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let matrix = Matrix::try_from_rows(rows).unwrap();
+            testkit::assert_strict_eq(&matrix, &expected);
+
+            let rows: Box<[Box<[i32; 3]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let matrix = Matrix::try_from_rows(rows).unwrap();
+            testkit::assert_strict_eq(&matrix, &expected);
+
+            let rows: Vec<Box<[i32; 3]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let matrix = Matrix::try_from_rows(rows).unwrap();
+            testkit::assert_strict_eq(&matrix, &expected);
+
+            let rows: [Box<[i32]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
             let matrix = Matrix::try_from_rows(rows).unwrap();
             testkit::assert_strict_eq(&matrix, &expected);
 
@@ -701,19 +716,23 @@ mod tests {
             let matrix = Matrix::try_from_rows(rows).unwrap();
             testkit::assert_strict_eq(&matrix, &expected);
 
-            let rows: Box<[Vec<i32>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
-            let matrix = Matrix::try_from_rows(rows).unwrap();
-            testkit::assert_strict_eq(&matrix, &expected);
-
             let rows: Box<[Box<[i32]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
             let matrix = Matrix::try_from_rows(rows).unwrap();
             testkit::assert_strict_eq(&matrix, &expected);
 
-            let rows: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+            let rows: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
             let matrix = Matrix::try_from_rows(rows).unwrap();
             testkit::assert_strict_eq(&matrix, &expected);
 
-            let rows: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let rows: [Vec<i32>; 2] = [vec![1, 2, 3], vec![4, 5, 6]];
+            let matrix = Matrix::try_from_rows(rows).unwrap();
+            testkit::assert_strict_eq(&matrix, &expected);
+
+            let rows: Box<[Vec<i32>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+            let matrix = Matrix::try_from_rows(rows).unwrap();
+            testkit::assert_strict_eq(&matrix, &expected);
+
+            let rows: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
             let matrix = Matrix::try_from_rows(rows).unwrap();
             testkit::assert_strict_eq(&matrix, &expected);
 
@@ -723,25 +742,39 @@ mod tests {
         }
 
         {
-            let rows: [Box<[()]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
-            assert!(Matrix::try_from_rows(rows).is_ok());
+            // Unable to cover.
+            // let rows: [Box<[(); MAX]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
+            // assert!(Matrix::try_from_rows(rows).is_ok());
 
-            let rows: [Vec<()>; 2] = [vec![(); MAX], vec![(); MAX]];
+            // let rows: Box<[Box<[(); MAX]>; 2]> =
+            //     Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
+            // assert!(Matrix::try_from_rows(rows).is_ok());
+
+            // let rows: Box<[Box<[(); MAX]>]> = Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
+            // assert!(Matrix::try_from_rows(rows).is_ok());
+
+            // let rows: Vec<Box<[(); MAX]>> = vec![Box::new([(); MAX]), Box::new([(); MAX])];
+            // assert!(Matrix::try_from_rows(rows).is_ok());
+
+            let rows: [Box<[()]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
             assert!(Matrix::try_from_rows(rows).is_ok());
 
             let rows: Box<[Box<[()]>; 2]> = Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
             assert!(Matrix::try_from_rows(rows).is_ok());
 
-            let rows: Box<[Vec<()>; 2]> = Box::new([vec![(); MAX], vec![(); MAX]]);
-            assert!(Matrix::try_from_rows(rows).is_ok());
-
             let rows: Box<[Box<[()]>]> = Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
             assert!(Matrix::try_from_rows(rows).is_ok());
 
-            let rows: Box<[Vec<()>]> = Box::new([vec![(); MAX], vec![(); MAX]]);
+            let rows: Vec<Box<[()]>> = vec![Box::new([(); MAX]), Box::new([(); MAX])];
             assert!(Matrix::try_from_rows(rows).is_ok());
 
-            let rows: Vec<Box<[()]>> = vec![Box::new([(); MAX]), Box::new([(); MAX])];
+            let rows: [Vec<()>; 2] = [vec![(); MAX], vec![(); MAX]];
+            assert!(Matrix::try_from_rows(rows).is_ok());
+
+            let rows: Box<[Vec<()>; 2]> = Box::new([vec![(); MAX], vec![(); MAX]]);
+            assert!(Matrix::try_from_rows(rows).is_ok());
+
+            let rows: Box<[Vec<()>]> = Box::new([vec![(); MAX], vec![(); MAX]]);
             assert!(Matrix::try_from_rows(rows).is_ok());
 
             let rows: Vec<Vec<()>> = vec![vec![(); MAX], vec![(); MAX]];
@@ -749,7 +782,7 @@ mod tests {
         }
 
         {
-            let rows: [Box<[()]>; 3] = [
+            let rows: [Box<[(); MAX]>; 3] = [
                 Box::new([(); MAX]),
                 Box::new([(); MAX]),
                 Box::new([(); MAX]),
@@ -757,7 +790,35 @@ mod tests {
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
-            let rows: [Vec<()>; 3] = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
+            let rows: Box<[Box<[(); MAX]>; 3]> = Box::new([
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ]);
+            let error = Matrix::try_from_rows(rows).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let rows: Box<[Box<[(); MAX]>]> = Box::new([
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ]);
+            let error = Matrix::try_from_rows(rows).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let rows: Vec<Box<[(); MAX]>> = vec![
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ];
+            let error = Matrix::try_from_rows(rows).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let rows: [Box<[()]>; 3] = [
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ];
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
@@ -769,19 +830,11 @@ mod tests {
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
-            let rows: Box<[Vec<()>; 3]> = Box::new([vec![(); MAX], vec![(); MAX], vec![(); MAX]]);
-            let error = Matrix::try_from_rows(rows).unwrap_err();
-            assert_eq!(error, Error::SizeOverflow);
-
             let rows: Box<[Box<[()]>]> = Box::new([
                 Box::new([(); MAX]),
                 Box::new([(); MAX]),
                 Box::new([(); MAX]),
             ]);
-            let error = Matrix::try_from_rows(rows).unwrap_err();
-            assert_eq!(error, Error::SizeOverflow);
-
-            let rows: Box<[Vec<()>]> = Box::new([vec![(); MAX], vec![(); MAX], vec![(); MAX]]);
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
@@ -793,18 +846,42 @@ mod tests {
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
+            let rows: [Vec<()>; 3] = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
+            let error = Matrix::try_from_rows(rows).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let rows: Box<[Vec<()>; 3]> = Box::new([vec![(); MAX], vec![(); MAX], vec![(); MAX]]);
+            let error = Matrix::try_from_rows(rows).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let rows: Box<[Vec<()>]> = Box::new([vec![(); MAX], vec![(); MAX], vec![(); MAX]]);
+            let error = Matrix::try_from_rows(rows).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
             let rows: Vec<Vec<()>> = vec![vec![(); MAX], vec![(); MAX], vec![(); MAX]];
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
         }
 
-        // unable to cover (run out of memory)
+        // Unable to cover. (run out of memory)
         // {
-        //     let rows: [Box<[u8]>; 2] = [Box::new([0; MAX]), Box::new([0; MAX])];
+        //     let rows: [Box<[u8; MAX]>; 2] = [Box::new([0; MAX]), Box::new([0; MAX])];
         //     let error = Matrix::try_from_rows(rows).unwrap_err();
         //     assert_eq!(error, Error::CapacityOverflow);
 
-        //     let rows: [Vec<u8>; 2] = [vec![0; MAX], vec![0; MAX]];
+        //     let rows: Box<[Box<[u8; MAX]>; 2]> = Box::new([Box::new([0; MAX]), Box::new([0; MAX])]);
+        //     let error = Matrix::try_from_rows(rows).unwrap_err();
+        //     assert_eq!(error, Error::CapacityOverflow);
+
+        //     let rows: Box<[Box<[u8; MAX]>]> = Box::new([Box::new([0; MAX]), Box::new([0; MAX])]);
+        //     let error = Matrix::try_from_rows(rows).unwrap_err();
+        //     assert_eq!(error, Error::CapacityOverflow);
+
+        //     let rows: Vec<Box<[u8; MAX]>> = vec![Box::new([0; MAX]), Box::new([0; MAX])];
+        //     let error = Matrix::try_from_rows(rows).unwrap_err();
+        //     assert_eq!(error, Error::CapacityOverflow);
+
+        //     let rows: [Box<[u8]>; 2] = [Box::new([0; MAX]), Box::new([0; MAX])];
         //     let error = Matrix::try_from_rows(rows).unwrap_err();
         //     assert_eq!(error, Error::CapacityOverflow);
 
@@ -812,19 +889,23 @@ mod tests {
         //     let error = Matrix::try_from_rows(rows).unwrap_err();
         //     assert_eq!(error, Error::CapacityOverflow);
 
-        //     let rows: Box<[Vec<u8>; 2]> = Box::new([vec![0; MAX], vec![0; MAX]]);
-        //     let error = Matrix::try_from_rows(rows).unwrap_err();
-        //     assert_eq!(error, Error::CapacityOverflow);
-
         //     let rows: Box<[Box<[u8]>]> = Box::new([Box::new([0; MAX]), Box::new([0; MAX])]);
         //     let error = Matrix::try_from_rows(rows).unwrap_err();
         //     assert_eq!(error, Error::CapacityOverflow);
 
-        //     let rows: Box<[Vec<u8>]> = Box::new([vec![0; MAX], vec![0; MAX]]);
+        //     let rows: Vec<Box<[u8]>> = vec![Box::new([0; MAX]), Box::new([0; MAX])];
         //     let error = Matrix::try_from_rows(rows).unwrap_err();
         //     assert_eq!(error, Error::CapacityOverflow);
 
-        //     let rows: Vec<Box<[u8]>> = vec![Box::new([0; MAX]), Box::new([0; MAX])];
+        //     let rows: [Vec<u8>; 2] = [vec![0; MAX], vec![0; MAX]];
+        //     let error = Matrix::try_from_rows(rows).unwrap_err();
+        //     assert_eq!(error, Error::CapacityOverflow);
+
+        //     let rows: Box<[Vec<u8>; 2]> = Box::new([vec![0; MAX], vec![0; MAX]]);
+        //     let error = Matrix::try_from_rows(rows).unwrap_err();
+        //     assert_eq!(error, Error::CapacityOverflow);
+
+        //     let rows: Box<[Vec<u8>]> = Box::new([vec![0; MAX], vec![0; MAX]]);
         //     let error = Matrix::try_from_rows(rows).unwrap_err();
         //     assert_eq!(error, Error::CapacityOverflow);
 
@@ -838,7 +919,7 @@ mod tests {
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
-            let rows: [Vec<i32>; 2] = [vec![1, 2, 3], vec![4, 5]];
+            let rows: Box<[Box<[i32]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5])]);
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
@@ -846,19 +927,19 @@ mod tests {
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
+            let rows: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5])];
+            let error = Matrix::try_from_rows(rows).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
+            let rows: [Vec<i32>; 2] = [vec![1, 2, 3], vec![4, 5]];
+            let error = Matrix::try_from_rows(rows).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
             let rows: Box<[Vec<i32>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5]]);
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
-            let rows: Box<[Box<[i32]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5])]);
-            let error = Matrix::try_from_rows(rows).unwrap_err();
-            assert_eq!(error, Error::LengthInconsistent);
-
             let rows: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5]]);
-            let error = Matrix::try_from_rows(rows).unwrap_err();
-            assert_eq!(error, Error::LengthInconsistent);
-
-            let rows: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5])];
             let error = Matrix::try_from_rows(rows).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 

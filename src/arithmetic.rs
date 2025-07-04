@@ -179,7 +179,7 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -216,13 +216,15 @@ impl<L> Matrix<L> {
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, self.shape)
+                    let index = AxisIndex::from_flattened(index, lhs_stride)
                         .swap()
-                        .to_flattened(rhs.shape);
+                        .to_flattened(rhs_stride);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -237,7 +239,7 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -274,13 +276,15 @@ impl<L> Matrix<L> {
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, self.shape)
+                    let index = AxisIndex::from_flattened(index, lhs_stride)
                         .swap()
-                        .to_flattened(rhs.shape);
+                        .to_flattened(rhs_stride);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -295,7 +299,7 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -332,19 +336,20 @@ impl<L> Matrix<L> {
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
-            let mut rhs_data = rhs.data;
+            let mut rhs = rhs;
             unsafe {
-                // avoid double free
-                rhs_data.set_len(0);
+                rhs.data.set_len(0);
             }
-            let rhs_base = rhs_data.as_ptr();
+            let rhs_base = rhs.data.as_ptr();
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, self.shape)
+                    let index = AxisIndex::from_flattened(index, lhs_stride)
                         .swap()
-                        .to_flattened(rhs.shape);
+                        .to_flattened(rhs_stride);
                     let right = unsafe { ptr::read(rhs_base.add(index)) };
                     op(left, right)
                 })
@@ -360,7 +365,7 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -397,19 +402,20 @@ impl<L> Matrix<L> {
                 .map(|(left, right)| op(left, right))
                 .collect()
         } else {
-            let mut rhs_data = rhs.data;
+            let mut rhs = rhs;
             unsafe {
-                // avoid double free
-                rhs_data.set_len(0);
+                rhs.data.set_len(0);
             }
-            let rhs_base = rhs_data.as_ptr();
+            let rhs_base = rhs.data.as_ptr();
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, self.shape)
+                    let index = AxisIndex::from_flattened(index, lhs_stride)
                         .swap()
-                        .to_flattened(rhs.shape);
+                        .to_flattened(rhs_stride);
                     let right = unsafe { ptr::read(rhs_base.add(index)) };
                     op(left, right)
                 })
@@ -456,10 +462,12 @@ impl<L> Matrix<L> {
                 .zip(&rhs.data)
                 .for_each(|(left, right)| op(left, right));
         } else {
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = AxisIndex::from_flattened(index, self.shape)
+                let index = AxisIndex::from_flattened(index, lhs_stride)
                     .swap()
-                    .to_flattened(rhs.shape);
+                    .to_flattened(rhs_stride);
                 let right = unsafe { rhs.data.get_unchecked(index) };
                 op(left, right)
             });
@@ -505,16 +513,17 @@ impl<L> Matrix<L> {
                 .zip(rhs.data)
                 .for_each(|(left, right)| op(left, right));
         } else {
-            let mut rhs_data = rhs.data;
+            let mut rhs = rhs;
             unsafe {
-                // avoid double free
-                rhs_data.set_len(0);
+                rhs.data.set_len(0);
             }
-            let rhs_base = rhs_data.as_ptr();
+            let rhs_base = rhs.data.as_ptr();
+            let lhs_stride = self.stride();
+            let rhs_stride = rhs.stride();
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = AxisIndex::from_flattened(index, self.shape)
+                let index = AxisIndex::from_flattened(index, lhs_stride)
                     .swap()
-                    .to_flattened(rhs.shape);
+                    .to_flattened(rhs_stride);
                 let right = unsafe { ptr::read(rhs_base.add(index)) };
                 op(left, right)
             });
@@ -530,8 +539,8 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the computed size of the output matrix exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -619,7 +628,7 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -655,7 +664,7 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -718,8 +727,9 @@ impl<T> Matrix<T> {
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline(always)]
     unsafe fn get_nth_major_axis_vector_unchecked(&self, n: usize) -> &[T] {
-        let lower = n * self.major_stride();
-        let upper = lower + self.major_stride();
+        let stride = self.stride();
+        let lower = n * stride.major();
+        let upper = lower + stride.major();
         unsafe { self.data.get_unchecked(lower..upper) }
     }
 }
@@ -865,7 +875,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -877,7 +887,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -902,6 +912,20 @@ mod tests {
             let error = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation(&rhs, |_, _| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation(&rhs, |_, _| ());
+        });
     }
 
     #[test]
@@ -917,7 +941,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -945,6 +969,20 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_self(&rhs, |_, _| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_self(&rhs, |_, _| ());
+        });
     }
 
     #[test]
@@ -959,7 +997,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -986,6 +1024,20 @@ mod tests {
                 .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_rhs(rhs, |_, _| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_rhs(rhs, |_, _| ());
         });
     }
 
@@ -1018,6 +1070,20 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
         });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_both(rhs, |_, _| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
+            let _ = lhs.elementwise_operation_consume_both(rhs, |_, _| ());
+        });
     }
 
     #[test]
@@ -1031,7 +1097,7 @@ mod tests {
             testkit::assert_loose_eq(&lhs, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let lhs = matrix![[1, 2, 3], [4, 5, 6]];
         let rhs = matrix![[2, 2, 2], [2, 2, 2]];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
@@ -1062,6 +1128,20 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
             testkit::assert_loose_eq(&lhs, &unchanged);
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            let _ = lhs.elementwise_operation_assign(&rhs, |_, _| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            let _ = lhs.elementwise_operation_assign(&rhs, |_, _| ());
         });
     }
 
@@ -1096,6 +1176,20 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
             testkit::assert_loose_eq(&lhs, &unchanged);
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 0]; 3];
+        let rhs = matrix![[0; 0]; 3];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let lhs = matrix![[0; 2]; 0];
+        let rhs = matrix![[0; 2]; 0];
+        testkit::for_each_order_binary(lhs, rhs, |mut lhs, rhs| {
+            let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());
         });
     }
 
@@ -1154,8 +1248,8 @@ mod tests {
         let lhs = matrix![[0; 0]; isize::MAX as usize + 1];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
-            // the size of the resulting matrix would be `2 * isize::MAX + 2`,
-            // which is greater than `usize::MAX`
+            // The size of the resulting matrix would be `2 * isize::MAX + 2`,
+            // which is greater than `usize::MAX`.
             let error = lhs
                 .multiplication_like_operation(rhs, |_, _| 0)
                 .unwrap_err();
@@ -1165,8 +1259,8 @@ mod tests {
         let lhs = matrix![[0; 0]; isize::MAX as usize - 1];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
-            // the required capacity of the resulting matrix would be
-            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`
+            // The required capacity of the resulting matrix would be
+            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`.
             let error = lhs
                 .multiplication_like_operation(rhs, |_, _| 0u8)
                 .unwrap_err();
@@ -1184,7 +1278,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let output = {
@@ -1195,7 +1289,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let scalar = 2;
@@ -1227,7 +1321,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let scalar = 2;
@@ -1258,7 +1352,7 @@ mod tests {
             testkit::assert_loose_eq(&matrix, &expected);
         });
 
-        // misuse but should work
+        // This is a misuse but should work.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let mut matrix = matrix.map_ref(|x| x).unwrap();

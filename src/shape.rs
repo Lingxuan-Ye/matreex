@@ -33,7 +33,7 @@ impl Shape {
         Self { nrows, ncols }
     }
 
-    /// Returns the number of rows of the shape.
+    /// Returns the number of rows.
     ///
     /// # Examples
     ///
@@ -48,7 +48,7 @@ impl Shape {
         self.nrows
     }
 
-    /// Returns the number of columns of the shape.
+    /// Returns the number of columns.
     ///
     /// # Examples
     ///
@@ -63,11 +63,11 @@ impl Shape {
         self.ncols
     }
 
-    /// Returns the size of the shape.
+    /// Returns the size.
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size exceeds [`usize::MAX`].
     ///
     /// # Examples
     ///
@@ -82,9 +82,7 @@ impl Shape {
     /// ```
     #[inline]
     pub fn size(&self) -> Result<usize> {
-        self.nrows
-            .checked_mul(self.ncols)
-            .ok_or(Error::SizeOverflow)
+        AsShape::size(self)
     }
 
     /// Transposes the shape.
@@ -121,6 +119,92 @@ impl From<[usize; 2]> for Shape {
     }
 }
 
+/// A trait for specifying the shape of a [`Matrix<T>`].
+///
+/// # Examples
+///
+/// ```
+/// use matreex::{Matrix, matrix};
+/// use matreex::shape::AsShape;
+///
+/// struct S(usize, usize);
+///
+/// impl AsShape for S {
+///     fn nrows(&self) -> usize {
+///         self.0
+///     }
+///
+///     fn ncols(&self) -> usize {
+///         self.1
+///     }
+/// }
+///
+/// let result = Matrix::with_value(S(2, 3), 0);
+/// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
+/// ```
+///
+/// [`Matrix<T>`]: crate::Matrix
+pub trait AsShape {
+    /// Returns the number of rows.
+    fn nrows(&self) -> usize;
+
+    /// Returns the number of columns.
+    fn ncols(&self) -> usize;
+
+    /// Returns the size.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the size exceeds [`usize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// This method has a default implementation, overriding it is not
+    /// recommended.
+    #[inline]
+    fn size(&self) -> Result<usize> {
+        self.nrows()
+            .checked_mul(self.ncols())
+            .ok_or(Error::SizeOverflow)
+    }
+}
+
+impl AsShape for Shape {
+    #[inline]
+    fn nrows(&self) -> usize {
+        self.nrows
+    }
+
+    #[inline]
+    fn ncols(&self) -> usize {
+        self.ncols
+    }
+}
+
+impl AsShape for (usize, usize) {
+    #[inline]
+    fn nrows(&self) -> usize {
+        self.0
+    }
+
+    #[inline]
+    fn ncols(&self) -> usize {
+        self.1
+    }
+}
+
+impl AsShape for [usize; 2] {
+    #[inline]
+    fn nrows(&self) -> usize {
+        self[0]
+    }
+
+    #[inline]
+    fn ncols(&self) -> usize {
+        self[1]
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub(crate) struct AxisShape {
@@ -137,18 +221,28 @@ impl AxisShape {
         self.minor
     }
 
-    pub(crate) fn major_stride(&self) -> usize {
-        self.minor
+    pub(crate) fn nrows(&self, order: Order) -> usize {
+        match order {
+            Order::RowMajor => self.major,
+            Order::ColMajor => self.minor,
+        }
     }
 
-    pub(crate) fn minor_stride(&self) -> usize {
-        1
+    pub(crate) fn ncols(&self, order: Order) -> usize {
+        match order {
+            Order::RowMajor => self.minor,
+            Order::ColMajor => self.major,
+        }
+    }
+
+    pub(crate) fn stride(&self) -> Stride {
+        Stride(self.minor)
     }
 
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     pub(crate) fn size<T>(&self) -> Result<usize> {
         let size = self
             .major
@@ -166,24 +260,13 @@ impl AxisShape {
         self
     }
 
-    pub(crate) fn nrows(&self, order: Order) -> usize {
-        match order {
-            Order::RowMajor => self.major,
-            Order::ColMajor => self.minor,
-        }
-    }
-
-    pub(crate) fn ncols(&self, order: Order) -> usize {
-        match order {
-            Order::RowMajor => self.minor,
-            Order::ColMajor => self.major,
-        }
-    }
-
-    pub(crate) fn from_shape(shape: Shape, order: Order) -> Self {
+    pub(crate) fn from_shape<S>(shape: S, order: Order) -> Self
+    where
+        S: AsShape,
+    {
         let (major, minor) = match order {
-            Order::RowMajor => (shape.nrows, shape.ncols),
-            Order::ColMajor => (shape.ncols, shape.nrows),
+            Order::RowMajor => (shape.nrows(), shape.ncols()),
+            Order::ColMajor => (shape.ncols(), shape.nrows()),
         };
         Self { major, minor }
     }
@@ -194,6 +277,20 @@ impl AxisShape {
             Order::ColMajor => (self.minor, self.major),
         };
         Shape { nrows, ncols }
+    }
+}
+
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+pub(crate) struct Stride(usize);
+
+impl Stride {
+    pub(crate) fn major(&self) -> usize {
+        self.0
+    }
+
+    pub(crate) fn minor(&self) -> usize {
+        1
     }
 }
 
@@ -230,5 +327,14 @@ mod tests {
         let mut shape = Shape::new(3, 2);
         shape.transpose();
         assert_eq!(shape, Shape::new(2, 3));
+    }
+
+    #[test]
+    fn test_as_shape_size() {
+        let shape = (2, 3);
+        assert_eq!(shape.size(), Ok(6));
+
+        let shape = (2, usize::MAX);
+        assert_eq!(shape.size(), Err(Error::SizeOverflow));
     }
 }

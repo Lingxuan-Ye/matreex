@@ -375,10 +375,12 @@ impl<T> Matrix<T> {
     pub fn iter_elements_with_index(
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &T)> {
-        self.data.iter().enumerate().map(|(index, element)| {
-            // hope loop-invariant code motion applies here,
-            // as well as to similar code
-            let index = Index::from_flattened(index, self.order, self.shape);
+        let order = self.order;
+        let stride = self.stride();
+        self.data.iter().enumerate().map(move |(index, element)| {
+            // Hope loop-invariant code motion applies here,
+            // as well as to similar code.
+            let index = Index::from_flattened(index, order, stride);
             (index, element)
         })
     }
@@ -406,10 +408,15 @@ impl<T> Matrix<T> {
     pub fn iter_elements_mut_with_index(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &mut T)> {
-        self.data.iter_mut().enumerate().map(|(index, element)| {
-            let index = Index::from_flattened(index, self.order, self.shape);
-            (index, element)
-        })
+        let order = self.order;
+        let stride = self.stride();
+        self.data
+            .iter_mut()
+            .enumerate()
+            .map(move |(index, element)| {
+                let index = Index::from_flattened(index, order, stride);
+                (index, element)
+            })
     }
 
     /// Creates a consuming iterator, that is, one that moves each
@@ -435,11 +442,13 @@ impl<T> Matrix<T> {
     pub fn into_iter_elements_with_index(
         self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, T)> {
+        let order = self.order;
+        let stride = self.stride();
         self.data
             .into_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Index::from_flattened(index, self.order, self.shape);
+                let index = Index::from_flattened(index, order, stride);
                 (index, element)
             })
     }
@@ -494,8 +503,9 @@ impl<T> Matrix<T> {
         &self,
         n: usize,
     ) -> Take<StepBy<Skip<Iter<'_, T>>>> {
-        let skip = n * self.major_stride();
-        let step = self.minor_stride();
+        let stride = self.stride();
+        let skip = n * stride.major();
+        let step = stride.minor();
         let take = self.minor();
         self.data.iter().skip(skip).step_by(step).take(take)
     }
@@ -504,8 +514,9 @@ impl<T> Matrix<T> {
         &self,
         n: usize,
     ) -> Take<StepBy<Skip<Iter<'_, T>>>> {
-        let skip = n * self.minor_stride();
-        let step = self.major_stride();
+        let stride = self.stride();
+        let skip = n * stride.minor();
+        let step = stride.major();
         let take = self.major();
         self.data.iter().skip(skip).step_by(step).take(take)
     }
@@ -514,8 +525,9 @@ impl<T> Matrix<T> {
         &mut self,
         n: usize,
     ) -> Take<StepBy<Skip<IterMut<'_, T>>>> {
-        let skip = n * self.major_stride();
-        let step = self.minor_stride();
+        let stride = self.stride();
+        let skip = n * stride.major();
+        let step = stride.minor();
         let take = self.minor();
         self.data.iter_mut().skip(skip).step_by(step).take(take)
     }
@@ -524,8 +536,9 @@ impl<T> Matrix<T> {
         &mut self,
         n: usize,
     ) -> Take<StepBy<Skip<IterMut<'_, T>>>> {
-        let skip = n * self.minor_stride();
-        let step = self.major_stride();
+        let stride = self.stride();
+        let skip = n * stride.minor();
+        let step = stride.major();
         let take = self.major();
         self.data.iter_mut().skip(skip).step_by(step).take(take)
     }
@@ -815,6 +828,18 @@ mod tests {
                     assert_eq!(element, &matrix[index]);
                 });
         });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 0]; 2];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.iter_elements_with_index().for_each(|_| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 3]; 0];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.iter_elements_with_index().for_each(|_| ());
+        });
     }
 
     #[test]
@@ -829,6 +854,18 @@ mod tests {
             let expected = matrix![[1, 3, 5], [5, 7, 9]];
             testkit::assert_loose_eq(&matrix, &expected);
         });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 0]; 2];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            matrix.iter_elements_mut_with_index().for_each(|_| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 3]; 0];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            matrix.iter_elements_mut_with_index().for_each(|_| ());
+        });
     }
 
     #[test]
@@ -841,6 +878,18 @@ mod tests {
                 .for_each(|(index, element)| {
                     assert_eq!(element, matrix[index]);
                 });
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 0]; 2];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.into_iter_elements_with_index().for_each(|_| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 3]; 0];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.into_iter_elements_with_index().for_each(|_| ());
         });
     }
 }

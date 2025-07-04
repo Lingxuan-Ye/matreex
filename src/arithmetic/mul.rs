@@ -70,8 +70,8 @@ impl<L> Matrix<L> {
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if the matrices are not conformable.
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the computed size of the output matrix exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
     ///
@@ -242,10 +242,39 @@ impl_primitive_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize 
 
 #[cfg(test)]
 mod tests {
+    use self::mock::{MockL, MockR, MockU};
     use crate::error::Error;
     use crate::matrix;
     use crate::testkit;
-    use crate::testkit::mock::{MockL, MockR, MockU};
+
+    mod mock {
+        use core::ops::{Add, Mul};
+
+        #[derive(Clone)]
+        pub(super) struct MockL(pub(super) i32);
+
+        #[derive(Clone)]
+        pub(super) struct MockR(pub(super) i32);
+
+        #[derive(Debug, Default, PartialEq)]
+        pub(super) struct MockU(pub(super) i32);
+
+        impl Mul<MockR> for MockL {
+            type Output = MockU;
+
+            fn mul(self, rhs: MockR) -> Self::Output {
+                MockU(self.0 * rhs.0)
+            }
+        }
+
+        impl Add for MockU {
+            type Output = Self;
+
+            fn add(self, rhs: Self) -> Self::Output {
+                Self(self.0 + rhs.0)
+            }
+        }
+    }
 
     #[test]
     fn test_mul() {
@@ -382,8 +411,8 @@ mod tests {
         let lhs = matrix![[0; 0]; isize::MAX as usize + 1];
         let rhs = matrix![[0; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
-            // the size of the resulting matrix would be `2 * isize::MAX + 2`,
-            // which is greater than `usize::MAX`
+            // The size of the resulting matrix would be `2 * isize::MAX + 2`,
+            // which is greater than `usize::MAX`.
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
         });
@@ -391,8 +420,8 @@ mod tests {
         let lhs = matrix![[0u8; 0]; isize::MAX as usize - 1];
         let rhs = matrix![[0u8; 2]; 0];
         testkit::for_each_order_binary(lhs, rhs, |lhs, rhs| {
-            // the required capacity of the resulting matrix would be
-            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`
+            // The required capacity of the resulting matrix would be
+            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`.
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         });

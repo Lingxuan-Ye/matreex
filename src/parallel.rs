@@ -37,7 +37,7 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -72,7 +72,7 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -186,10 +186,15 @@ impl<T> Matrix<T> {
     where
         T: Sync,
     {
-        self.data.par_iter().enumerate().map(|(index, element)| {
-            let index = Index::from_flattened(index, self.order, self.shape);
-            (index, element)
-        })
+        let order = self.order;
+        let stride = self.stride();
+        self.data
+            .par_iter()
+            .enumerate()
+            .map(move |(index, element)| {
+                let index = Index::from_flattened(index, order, stride);
+                (index, element)
+            })
     }
 
     /// Returns a parallel iterator that allows modifying each element
@@ -215,11 +220,13 @@ impl<T> Matrix<T> {
     where
         T: Send,
     {
+        let order = self.order;
+        let stride = self.stride();
         self.data
             .par_iter_mut()
             .enumerate()
-            .map(|(index, element)| {
-                let index = Index::from_flattened(index, self.order, self.shape);
+            .map(move |(index, element)| {
+                let index = Index::from_flattened(index, order, stride);
                 (index, element)
             })
     }
@@ -245,11 +252,13 @@ impl<T> Matrix<T> {
     where
         T: Send,
     {
+        let order = self.order;
+        let stride = self.stride();
         self.data
             .into_par_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Index::from_flattened(index, self.order, self.shape);
+                let index = Index::from_flattened(index, order, stride);
                 (index, element)
             })
     }
@@ -297,7 +306,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // to matrix of references
+        // Map to matrix of references.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let output = matrix.par_map_ref(|element| element).unwrap();
@@ -354,6 +363,18 @@ mod tests {
                     assert_eq!(element, &matrix[index]);
                 });
         });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 0]; 2];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.par_iter_elements_with_index().for_each(|_| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 3]; 0];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.par_iter_elements_with_index().for_each(|_| ());
+        });
     }
 
     #[test]
@@ -368,6 +389,18 @@ mod tests {
             let expected = matrix![[1, 3, 5], [5, 7, 9]];
             testkit::assert_loose_eq(&matrix, &expected);
         });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 0]; 2];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            matrix.par_iter_elements_mut_with_index().for_each(|_| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 3]; 0];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            matrix.par_iter_elements_mut_with_index().for_each(|_| ());
+        });
     }
 
     #[test]
@@ -380,6 +413,18 @@ mod tests {
                 .for_each(|(index, element)| {
                     assert_eq!(element, matrix[index]);
                 });
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 0]; 2];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.into_par_iter_elements_with_index().for_each(|_| ());
+        });
+
+        // Assert no panic from unflattening indices occurs.
+        let matrix = matrix![[0; 3]; 0];
+        testkit::for_each_order_unary(matrix, |matrix| {
+            matrix.into_par_iter_elements_with_index().for_each(|_| ());
         });
     }
 }

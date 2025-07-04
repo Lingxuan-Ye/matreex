@@ -1,4 +1,4 @@
-//! Provides helper functions and mock types for tests.
+//! Provides helper functions for tests.
 //!
 //! # Principles for Writing Tests
 //!
@@ -42,14 +42,14 @@ where
     T: Clone,
     F: Fn(Matrix<T>),
 {
-    // row-major
+    // RowMajor
     {
         let mut input = input.clone();
         input.set_order(Order::RowMajor);
         testcase(input)
     }
 
-    // col-major
+    // ColMajor
     {
         let mut input = input;
         input.set_order(Order::ColMajor);
@@ -66,7 +66,7 @@ where
     U: Clone,
     F: Fn(Matrix<T>, Matrix<U>),
 {
-    // row-major & row-major
+    // RowMajor & RowMajor
     {
         let mut input_0 = input_0.clone();
         let mut input_1 = input_1.clone();
@@ -75,7 +75,7 @@ where
         testcase(input_0, input_1)
     }
 
-    // row-major & col-major
+    // RowMajor & ColMajor
     {
         let mut input_0 = input_0.clone();
         let mut input_1 = input_1.clone();
@@ -84,7 +84,7 @@ where
         testcase(input_0, input_1)
     }
 
-    // col-major & row-major
+    // ColMajor & RowMajor
     {
         let mut input_0 = input_0.clone();
         let mut input_1 = input_1.clone();
@@ -93,119 +93,12 @@ where
         testcase(input_0, input_1)
     }
 
-    // col-major & col-major
+    // ColMajor & ColMajor
     {
         let mut input_0 = input_0;
         let mut input_1 = input_1;
         input_0.set_order(Order::ColMajor);
         input_1.set_order(Order::ColMajor);
         testcase(input_0, input_1)
-    }
-}
-
-pub(crate) mod mock {
-    use core::ops::Neg;
-    use core::ops::{Add, AddAssign};
-    use core::ops::{Div, DivAssign};
-    use core::ops::{Mul, MulAssign};
-    use core::ops::{Rem, RemAssign};
-    use core::ops::{Sub, SubAssign};
-
-    #[derive(Clone, Copy, Debug, Default, PartialEq)]
-    pub(crate) struct MockL(pub(crate) i32);
-
-    #[derive(Clone, Copy, Debug, Default, PartialEq)]
-    pub(crate) struct MockR(pub(crate) i32);
-
-    #[derive(Clone, Copy, Debug, Default, PartialEq)]
-    pub(crate) struct MockT(pub(crate) i32);
-
-    #[derive(Clone, Copy, Debug, Default, PartialEq)]
-    pub(crate) struct MockU(pub(crate) i32);
-
-    impl Add<MockR> for MockL {
-        type Output = MockU;
-
-        fn add(self, rhs: MockR) -> Self::Output {
-            MockU(self.0 + rhs.0)
-        }
-    }
-
-    impl AddAssign<MockR> for MockL {
-        fn add_assign(&mut self, rhs: MockR) {
-            self.0 += rhs.0;
-        }
-    }
-
-    impl Sub<MockR> for MockL {
-        type Output = MockU;
-
-        fn sub(self, rhs: MockR) -> Self::Output {
-            MockU(self.0 - rhs.0)
-        }
-    }
-
-    impl SubAssign<MockR> for MockL {
-        fn sub_assign(&mut self, rhs: MockR) {
-            self.0 -= rhs.0;
-        }
-    }
-
-    impl Mul<MockR> for MockL {
-        type Output = MockU;
-
-        fn mul(self, rhs: MockR) -> Self::Output {
-            MockU(self.0 * rhs.0)
-        }
-    }
-
-    impl MulAssign<MockR> for MockL {
-        fn mul_assign(&mut self, rhs: MockR) {
-            self.0 *= rhs.0;
-        }
-    }
-
-    impl Div<MockR> for MockL {
-        type Output = MockU;
-
-        fn div(self, rhs: MockR) -> Self::Output {
-            MockU(self.0 / rhs.0)
-        }
-    }
-
-    impl DivAssign<MockR> for MockL {
-        fn div_assign(&mut self, rhs: MockR) {
-            self.0 /= rhs.0;
-        }
-    }
-
-    impl Rem<MockR> for MockL {
-        type Output = MockU;
-
-        fn rem(self, rhs: MockR) -> Self::Output {
-            MockU(self.0 % rhs.0)
-        }
-    }
-
-    impl RemAssign<MockR> for MockL {
-        fn rem_assign(&mut self, rhs: MockR) {
-            self.0 %= rhs.0;
-        }
-    }
-
-    impl Neg for MockT {
-        type Output = MockU;
-
-        fn neg(self) -> Self::Output {
-            MockU(-self.0)
-        }
-    }
-
-    impl Add for MockU {
-        type Output = Self;
-
-        fn add(self, rhs: Self) -> Self::Output {
-            Self(self.0 + rhs.0)
-        }
     }
 }

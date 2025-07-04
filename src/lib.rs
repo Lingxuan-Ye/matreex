@@ -98,7 +98,7 @@ pub use self::order::Order;
 pub use self::shape::Shape;
 
 use self::index::AxisIndex;
-use self::shape::AxisShape;
+use self::shape::{AsShape, AxisShape, Stride};
 use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
@@ -119,6 +119,7 @@ mod eq;
 mod fmt;
 mod hash;
 mod macros;
+mod resize;
 mod swap;
 
 #[cfg(feature = "serde")]
@@ -126,6 +127,10 @@ mod deserialize;
 
 #[cfg(test)]
 mod testkit;
+
+// In a matrix, the size of its shape must equal the size of its
+// underlying data. Violating this invariant may lead to undefined
+// behavior.
 
 /// [`Matrix<T>`] means matrix.
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -254,16 +259,9 @@ impl<T> Matrix<T> {
         self.shape.minor()
     }
 
-    /// Returns the stride of the major axis.
-    fn major_stride(&self) -> usize {
-        self.shape.major_stride()
-    }
-
-    /// Returns the stride of the minor axis.
-    ///
-    /// It always returns `1`.
-    fn minor_stride(&self) -> usize {
-        self.shape.minor_stride()
+    /// Returns the stride of the matrix.
+    fn stride(&self) -> Stride {
+        self.shape.stride()
     }
 }
 
@@ -290,28 +288,26 @@ impl<T> Matrix<T> {
         }
 
         let size = self.size();
-        let src_shape = self.shape;
-        self.shape.transpose();
-        let dst_shape = self.shape;
         unsafe {
             self.data.set_len(0);
         }
-        let src_base = self.data.as_ptr();
-        let mut dst_data = Vec::<T>::with_capacity(size);
-        let dst_base = dst_data.as_mut_ptr();
-
-        for src_index in 0..size {
+        let mut new_data = Vec::<T>::with_capacity(size);
+        let old_base = self.data.as_ptr();
+        let new_base = new_data.as_mut_ptr();
+        let old_stride = self.stride();
+        self.shape.transpose();
+        let new_stride = self.stride();
+        for old_index in 0..size {
             unsafe {
-                let src = src_base.add(src_index);
-                let dst_index = AxisIndex::from_flattened(src_index, src_shape)
+                let src = old_base.add(old_index);
+                let new_index = AxisIndex::from_flattened(old_index, old_stride)
                     .swap()
-                    .to_flattened(dst_shape);
-                let dst = dst_base.add(dst_index);
+                    .to_flattened(new_stride);
+                let dst = new_base.add(new_index);
                 ptr::copy_nonoverlapping(src, dst, 1);
             }
         }
-
-        self.data = dst_data;
+        self.data = new_data;
         unsafe {
             self.data.set_len(size);
         }
@@ -426,8 +422,8 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeMismatch`] if the size of the new shape does not
-    ///   match the current size of the matrix.
+    /// - [`Error::SizeMismatch`] if the size of the shape does not match
+    ///   the size of the underlying data.
     ///
     /// # Examples
     ///
@@ -452,9 +448,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn reshape<S>(&mut self, shape: S) -> Result<&mut Self>
     where
-        S: Into<Shape>,
+        S: AsShape,
     {
-        let shape = shape.into();
         match shape.size() {
             Ok(size) if self.size() == size => {
                 self.shape = AxisShape::from_shape(shape, self.order);
@@ -462,58 +457,6 @@ impl<T> Matrix<T> {
             }
             _ => Err(Error::SizeMismatch),
         }
-    }
-
-    /// Resizes the matrix to the specified shape.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
-    ///
-    /// # Notes
-    ///
-    /// Reducing the size does not automatically shrink the capacity.
-    /// This choice is made to avoid potential reallocation. Consider
-    /// explicitly calling [`shrink_to_fit`] if needed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use matreex::Result;
-    /// use matreex::{Order, matrix};
-    ///
-    /// # fn main() -> Result<()> {
-    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    ///
-    /// let mut row_major = matrix.clone();
-    /// row_major.set_order(Order::RowMajor);
-    /// row_major.resize((2, 2))?;
-    /// assert_eq!(row_major, matrix![[1, 2], [3, 4]]);
-    /// row_major.resize((2, 3))?;
-    /// assert_eq!(row_major, matrix![[1, 2, 3], [4, 0, 0]]);
-    ///
-    /// let mut col_major = matrix.clone();
-    /// col_major.set_order(Order::ColMajor);
-    /// col_major.resize((2, 2))?;
-    /// assert_eq!(col_major, matrix![[1, 2], [4, 5]]);
-    /// col_major.resize((2, 3))?;
-    /// assert_eq!(col_major, matrix![[1, 2, 0], [4, 5, 0]]);
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
-    /// [`shrink_to_fit`]: Matrix::shrink_to_fit
-    pub fn resize<S>(&mut self, shape: S) -> Result<&mut Self>
-    where
-        T: Default,
-        S: Into<Shape>,
-    {
-        let shape = AxisShape::from_shape(shape.into(), self.order);
-        let size = shape.size::<T>()?;
-        self.shape = shape;
-        self.data.resize_with(size, T::default);
-        Ok(self)
     }
 
     /// Shrinks the capacity of the matrix as much as possible.
@@ -528,7 +471,7 @@ impl<T> Matrix<T> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert!(matrix.capacity() >= 6);
     ///
-    /// matrix.resize((1, 3))?;
+    /// matrix.resize((1, 3), 0)?;
     /// assert!(matrix.capacity() >= 6);
     ///
     /// matrix.shrink_to_fit();
@@ -560,7 +503,7 @@ impl<T> Matrix<T> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert!(matrix.capacity() >= 6);
     ///
-    /// matrix.resize((1, 3))?;
+    /// matrix.resize((1, 3), 0)?;
     /// assert!(matrix.capacity() >= 6);
     ///
     /// matrix.shrink_to(4);
@@ -596,7 +539,7 @@ impl<T> Matrix<T> {
         self.data.contains(value)
     }
 
-    /// Overwrites the overlapping part of this matrix with `source`,
+    /// Overwrites the overlapping part of this matrix with `src`,
     /// leaving the non-overlapping part unchanged.
     ///
     /// # Examples
@@ -604,44 +547,48 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
-    /// let source = matrix![[1, 1], [1, 1], [1, 1]];
-    /// matrix.overwrite(&source);
-    /// assert_eq!(matrix, matrix![[1, 1, 0], [1, 1, 0]]);
+    /// let mut dst = matrix![[0, 0, 0], [0, 0, 0]];
+    /// let src = matrix![[1, 1], [1, 1], [1, 1]];
+    /// dst.overwrite(&src);
+    /// assert_eq!(dst, matrix![[1, 1, 0], [1, 1, 0]]);
     /// ```
-    pub fn overwrite(&mut self, source: &Self) -> &mut Self
+    pub fn overwrite(&mut self, src: &Self) -> &mut Self
     where
         T: Clone,
     {
-        if self.order == source.order {
-            let major = cmp::min(self.major(), source.major());
-            let minor = cmp::min(self.minor(), source.minor());
+        let src_stride = src.stride();
+        let dst_stride = self.stride();
+
+        if self.order == src.order {
+            let major = cmp::min(self.major(), src.major());
+            let minor = cmp::min(self.minor(), src.minor());
             for i in 0..major {
-                let self_lower = i * self.major_stride();
-                let self_upper = self_lower + minor * self.minor_stride();
-                let source_lower = i * source.major_stride();
-                let source_upper = source_lower + minor * self.minor_stride();
+                let src_lower = i * src_stride.major();
+                let src_upper = src_lower + minor * src_stride.minor();
+                let dst_lower = i * dst_stride.major();
+                let dst_upper = dst_lower + minor * dst_stride.minor();
                 unsafe {
                     self.data
-                        .get_unchecked_mut(self_lower..self_upper)
-                        .clone_from_slice(source.data.get_unchecked(source_lower..source_upper));
+                        .get_unchecked_mut(dst_lower..dst_upper)
+                        .clone_from_slice(src.data.get_unchecked(src_lower..src_upper));
                 }
             }
         } else {
-            let major = cmp::min(self.major(), source.minor());
-            let minor = cmp::min(self.minor(), source.major());
+            let major = cmp::min(self.major(), src.minor());
+            let minor = cmp::min(self.minor(), src.major());
             for i in 0..major {
-                let self_lower = i * self.major_stride();
-                let self_upper = self_lower + minor * self.minor_stride();
+                let dst_lower = i * dst_stride.major();
+                let dst_upper = dst_lower + minor * dst_stride.minor();
                 unsafe {
                     self.data
-                        .get_unchecked_mut(self_lower..self_upper)
+                        .get_unchecked_mut(dst_lower..dst_upper)
                         .iter_mut()
-                        .zip(source.data.iter().skip(i).step_by(source.major_stride()))
-                        .for_each(|(x, y)| *x = y.clone());
+                        .zip(src.data.iter().skip(i).step_by(src_stride.major()))
+                        .for_each(|(d, s)| *d = s.clone());
                 }
             }
         }
+
         self
     }
 
@@ -671,7 +618,7 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -702,7 +649,7 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -757,22 +704,37 @@ mod tests {
 
     #[test]
     fn test_transpose() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        // Testing `Matrix::transpose` in different orders is meaningless
+        // due to dependency inversion.
 
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         matrix.transpose();
         let expected = matrix![[1, 4], [2, 5], [3, 6]];
         testkit::assert_loose_eq(&matrix, &expected);
 
+        let mut matrix = matrix![[1, 4], [2, 5], [3, 6]];
         matrix.transpose();
         let expected = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::assert_loose_eq(&matrix, &expected);
 
-        // testing `Matrix::transpose` in different orders is pointless
-        // since `Matrix::set_order` depends on this method
+        // Assert no panic from unflattening indices occurs.
+        let mut matrix = matrix![[0; 0]; 2];
+        matrix.transpose();
+        let expected = matrix![[0; 2]; 0];
+        testkit::assert_loose_eq(&matrix, &expected);
+
+        // Assert no panic from unflattening indices occurs.
+        let mut matrix = matrix![[0; 3]; 0];
+        matrix.transpose();
+        let expected = matrix![[0; 0]; 3];
+        testkit::assert_loose_eq(&matrix, &expected);
     }
 
     #[test]
     fn test_switch_order() {
+        // Testing `Matrix::switch_order` in different orders is meaningless
+        // due to dependency inversion.
+
         let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let order = matrix.order;
 
@@ -789,30 +751,35 @@ mod tests {
 
     #[test]
     fn test_switch_order_without_rearrangement() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        let order = matrix.order;
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            let order = matrix.order;
 
-        matrix.switch_order_without_rearrangement();
-        assert_ne!(matrix.order, order);
-        let expected = matrix![[1, 4], [2, 5], [3, 6]];
-        testkit::assert_loose_eq(&matrix, &expected);
+            matrix.switch_order_without_rearrangement();
+            assert_ne!(matrix.order, order);
+            let expected = matrix![[1, 4], [2, 5], [3, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
 
-        matrix.switch_order_without_rearrangement();
-        assert_eq!(matrix.order, order);
-        let expected = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::assert_loose_eq(&matrix, &expected);
+            matrix.switch_order_without_rearrangement();
+            assert_eq!(matrix.order, order);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
     fn test_set_order() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        // Testing `Matrix::set_order` in different orders is meaningless
+        // due to dependency inversion.
 
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let order = Order::RowMajor;
         matrix.set_order(order);
         assert_eq!(matrix.order, order);
         let expected = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::assert_loose_eq(&matrix, &expected);
 
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let order = Order::ColMajor;
         matrix.set_order(order);
         assert_eq!(matrix.order, order);
@@ -822,20 +789,33 @@ mod tests {
 
     #[test]
     fn test_set_order_without_rearrangement() {
-        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        matrix.set_order(Order::RowMajor);
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            let old_order = matrix.order;
+            let new_order = Order::RowMajor;
+            matrix.set_order_without_rearrangement(new_order);
+            assert_eq!(matrix.order, new_order);
+            let expected = if new_order == old_order {
+                matrix![[1, 2, 3], [4, 5, 6]]
+            } else {
+                matrix![[1, 4], [2, 5], [3, 6]]
+            };
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
 
-        let order = Order::RowMajor;
-        matrix.set_order_without_rearrangement(order);
-        assert_eq!(matrix.order, order);
-        let expected = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::assert_loose_eq(&matrix, &expected);
-
-        let order = Order::ColMajor;
-        matrix.set_order_without_rearrangement(order);
-        assert_eq!(matrix.order, order);
-        let expected = matrix![[1, 4], [2, 5], [3, 6]];
-        testkit::assert_loose_eq(&matrix, &expected);
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            let old_order = matrix.order;
+            let new_order = Order::ColMajor;
+            matrix.set_order_without_rearrangement(new_order);
+            assert_eq!(matrix.order, new_order);
+            let expected = if new_order == old_order {
+                matrix![[1, 2, 3], [4, 5, 6]]
+            } else {
+                matrix![[1, 4], [2, 5], [3, 6]]
+            };
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
     }
 
     #[test]
@@ -909,72 +889,12 @@ mod tests {
     }
 
     #[test]
-    fn test_resize() {
-        // row-major
-        // TODO: wait for method refactoring to make it order-irrelevant
-        {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::RowMajor);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.resize((2, 2)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2], [3, 4]]);
-
-            matrix.resize((3, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0], [0, 0, 0]]);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 0, 0]]);
-
-            matrix.resize((2, 0)).unwrap();
-            assert_eq!(matrix, matrix![[], []]);
-        }
-
-        // col-major
-        // TODO: wait for method refactoring to make it order-irrelevant
-        {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::ColMajor);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-
-            matrix.resize((2, 2)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2], [4, 5]]);
-
-            matrix.resize((3, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 5, 0], [4, 0, 0], [2, 0, 0]]);
-
-            matrix.resize((2, 3)).unwrap();
-            assert_eq!(matrix, matrix![[1, 2, 0], [4, 5, 0]]);
-
-            matrix.resize((2, 0)).unwrap();
-            assert_eq!(matrix, matrix![[], []]);
-        }
-
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
-            let unchanged = matrix.clone();
-
-            let error = matrix.resize((usize::MAX, 2)).unwrap_err();
-            assert_eq!(error, Error::SizeOverflow);
-            testkit::assert_loose_eq(&matrix, &unchanged);
-
-            let error = matrix.resize((isize::MAX as usize + 1, 1)).unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
-            testkit::assert_loose_eq(&matrix, &unchanged);
-        });
-    }
-
-    #[test]
     fn test_shrink_to_fit() {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |mut matrix| {
             assert!(matrix.capacity() >= 6);
 
-            matrix.resize((1, 3)).unwrap();
+            matrix.resize((1, 3), 0).unwrap();
             assert!(matrix.capacity() >= 6);
 
             matrix.shrink_to_fit();
@@ -988,7 +908,7 @@ mod tests {
         testkit::for_each_order_unary(matrix, |mut matrix| {
             assert!(matrix.capacity() >= 6);
 
-            matrix.resize((1, 3)).unwrap();
+            matrix.resize((1, 3), 0).unwrap();
             assert!(matrix.capacity() >= 6);
 
             matrix.shrink_to(4);
@@ -1015,44 +935,44 @@ mod tests {
 
     #[test]
     fn test_overwrite() {
-        let destination = matrix![[0, 0, 0], [0, 0, 0]];
-        let source = matrix![[1, 2]];
-        testkit::for_each_order_binary(destination, source, |mut destination, source| {
-            destination.overwrite(&source);
+        let dst = matrix![[0, 0, 0], [0, 0, 0]];
+        let src = matrix![[1, 2]];
+        testkit::for_each_order_binary(dst, src, |mut dst, src| {
+            dst.overwrite(&src);
             let expected = matrix![[1, 2, 0], [0, 0, 0]];
-            testkit::assert_loose_eq(&destination, &expected);
+            testkit::assert_loose_eq(&dst, &expected);
         });
 
-        let destination = matrix![[0, 0, 0], [0, 0, 0]];
-        let source = matrix![[1, 2], [3, 4]];
-        testkit::for_each_order_binary(destination, source, |mut destination, source| {
-            destination.overwrite(&source);
+        let dst = matrix![[0, 0, 0], [0, 0, 0]];
+        let src = matrix![[1, 2], [3, 4]];
+        testkit::for_each_order_binary(dst, src, |mut dst, src| {
+            dst.overwrite(&src);
             let expected = matrix![[1, 2, 0], [3, 4, 0]];
-            testkit::assert_loose_eq(&destination, &expected);
+            testkit::assert_loose_eq(&dst, &expected);
         });
 
-        let destination = matrix![[0, 0, 0], [0, 0, 0]];
-        let source = matrix![[1, 2], [3, 4], [5, 6]];
-        testkit::for_each_order_binary(destination, source, |mut destination, source| {
-            destination.overwrite(&source);
+        let dst = matrix![[0, 0, 0], [0, 0, 0]];
+        let src = matrix![[1, 2], [3, 4], [5, 6]];
+        testkit::for_each_order_binary(dst, src, |mut dst, src| {
+            dst.overwrite(&src);
             let expected = matrix![[1, 2, 0], [3, 4, 0]];
-            testkit::assert_loose_eq(&destination, &expected);
+            testkit::assert_loose_eq(&dst, &expected);
         });
 
-        let destination = matrix![[0, 0, 0], [0, 0, 0]];
-        let source = matrix![[1, 2, 3]];
-        testkit::for_each_order_binary(destination, source, |mut destination, source| {
-            destination.overwrite(&source);
+        let dst = matrix![[0, 0, 0], [0, 0, 0]];
+        let src = matrix![[1, 2, 3]];
+        testkit::for_each_order_binary(dst, src, |mut dst, src| {
+            dst.overwrite(&src);
             let expected = matrix![[1, 2, 3], [0, 0, 0]];
-            testkit::assert_loose_eq(&destination, &expected);
+            testkit::assert_loose_eq(&dst, &expected);
         });
 
-        let destination = matrix![[0, 0, 0], [0, 0, 0]];
-        let source = matrix![[1, 2, 3, 4]];
-        testkit::for_each_order_binary(destination, source, |mut destination, source| {
-            destination.overwrite(&source);
+        let dst = matrix![[0, 0, 0], [0, 0, 0]];
+        let src = matrix![[1, 2, 3, 4]];
+        testkit::for_each_order_binary(dst, src, |mut dst, src| {
+            dst.overwrite(&src);
             let expected = matrix![[1, 2, 3], [0, 0, 0]];
-            testkit::assert_loose_eq(&destination, &expected);
+            testkit::assert_loose_eq(&dst, &expected);
         });
     }
 
@@ -1091,7 +1011,7 @@ mod tests {
             testkit::assert_loose_eq(&output, &expected);
         });
 
-        // to matrix of references
+        // Map to matrix of references.
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::for_each_order_unary(matrix, |matrix| {
             let output = matrix.map_ref(|element| element).unwrap();
