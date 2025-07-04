@@ -267,7 +267,7 @@ impl<T> Matrix<T> {
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let new_base = new_data.as_mut_ptr();
-                            let mut src = tail_start;
+                            let mut src = tail_start.cast_const();
                             let mut dst = new_base.add(new_size);
                             for _ in 1..new_shape.major() {
                                 src = src.sub(old_stride.major());
@@ -301,7 +301,7 @@ impl<T> Matrix<T> {
                             init_range(to_init_start, to_init_len, value);
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
-                            let old_base = self.data.as_mut_ptr();
+                            let old_base = self.data.as_ptr();
                             let new_base = new_data.as_mut_ptr();
                             let mut src = old_base.add(old_size);
                             let mut dst = new_base.add(new_size);
@@ -341,7 +341,7 @@ impl<T> Matrix<T> {
                             init_range(to_init_start, to_init_len, value);
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
-                            let old_base = self.data.as_mut_ptr();
+                            let old_base = self.data.as_ptr();
                             let new_base = new_data.as_mut_ptr();
                             let tail_start = new_base.add(tail_offset);
                             init_range(tail_start, tail_len, value.clone());
