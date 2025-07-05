@@ -102,8 +102,6 @@ where
                 if col != 0 {
                     f.write_str(constant::element::SEPARATOR)?;
                 }
-                // Hope loop-invariant code motion applies here,
-                // as well as to similar code.
                 let index = Index::new(row, col).to_flattened(order, stride);
                 f.write_index(index, index_width)?;
                 f.write_str(constant::element::INDEX_GAP)?;
