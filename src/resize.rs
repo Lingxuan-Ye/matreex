@@ -267,7 +267,7 @@ impl<T> Matrix<T> {
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let new_base = new_data.as_mut_ptr();
-                            let mut src = tail_start.cast_const();
+                            let mut src = tail_start;
                             let mut dst = new_base.add(new_size);
                             for _ in 1..new_shape.major() {
                                 src = src.sub(old_stride.major());
