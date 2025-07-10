@@ -300,10 +300,19 @@ impl Index {
     /// # Panics
     ///
     /// Panics if `stride.major()` is zero.
+    ///
+    /// # Notes
+    ///
+    /// For simplicity and out of trust in loop-invariant code motion,
+    /// the order-specific version will not be provided.
     pub(crate) fn from_flattened(index: usize, order: Order, stride: Stride) -> Self {
         AxisIndex::from_flattened(index, stride).to_index(order)
     }
 
+    /// # Notes
+    ///
+    /// For simplicity and out of trust in loop-invariant code motion,
+    /// the order-specific version will not be provided.
     pub(crate) fn to_flattened(self, order: Order, stride: Stride) -> usize {
         AxisIndex::from_index(self, order).to_flattened(stride)
     }
@@ -551,6 +560,10 @@ impl AxisIndex {
         self
     }
 
+    /// # Notes
+    ///
+    /// For simplicity and out of trust in loop-invariant code motion,
+    /// the order-specific version will not be provided.
     pub(crate) fn from_index<I>(index: I, order: Order) -> Self
     where
         I: AsIndex,
@@ -562,6 +575,10 @@ impl AxisIndex {
         Self { major, minor }
     }
 
+    /// # Notes
+    ///
+    /// For simplicity and out of trust in loop-invariant code motion,
+    /// the order-specific version will not be provided.
     pub(crate) fn to_index(self, order: Order) -> Index {
         let (row, col) = match order {
             Order::RowMajor => (self.major, self.minor),
@@ -573,6 +590,11 @@ impl AxisIndex {
     /// # Panics
     ///
     /// Panics if the size of the `shape` is zero.
+    ///
+    /// # Notes
+    ///
+    /// For simplicity and out of trust in loop-invariant code motion,
+    /// the order-specific versions will not be provided.
     pub(crate) fn from_wrapping_index(
         index: WrappingIndex,
         order: Order,
@@ -595,7 +617,7 @@ impl AxisIndex {
         Self { major, minor }
     }
 
-    // `to_wapping_index` is not implemented for two reasons:
+    // `AxisIndex::to_wapping_index` is not implemented for two reasons:
     //
     // - It is a one-to-many mapping.
     // - It serves no practical purpose.

@@ -40,7 +40,7 @@ impl<T> Matrix<T> {
         T: Clone,
     {
         // At any given point of execution, the invariant that the size
-        // of `self.shape` is equal to the size of `self.data` must be
+        // of `self.shape` is equal to the length of `self.data` must be
         // upheld, and the memory within `self.shape` must be valid, or
         // minimal exception safety will be violated.
         //

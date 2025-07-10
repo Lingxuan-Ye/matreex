@@ -128,7 +128,7 @@ mod deserialize;
 #[cfg(test)]
 mod testkit;
 
-// In a matrix, the size of its shape must equal the size of its
+// In a matrix, the size of its shape must equal the length of its
 // underlying data. Violating this invariant may lead to undefined
 // behavior.
 
