@@ -123,7 +123,7 @@ mod resize;
 mod swap;
 
 #[cfg(feature = "serde")]
-mod deserialize;
+mod serde;
 
 #[cfg(test)]
 mod testkit;
@@ -133,7 +133,6 @@ mod testkit;
 // behavior.
 
 /// [`Matrix<T>`] means matrix.
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Clone)]
 pub struct Matrix<T> {
     order: Order,
