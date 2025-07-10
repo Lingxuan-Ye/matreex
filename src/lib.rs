@@ -98,7 +98,7 @@ pub use self::order::Order;
 pub use self::shape::Shape;
 
 use self::index::AxisIndex;
-use self::shape::{AsShape, AxisShape, Stride};
+use self::shape::{AxisShape, Stride};
 use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
@@ -416,47 +416,6 @@ impl<T> Matrix<T> {
             self.switch_order_without_rearrangement();
         }
         self
-    }
-
-    /// Reshapes the matrix to the specified shape.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeMismatch`] if the size of the shape does not match
-    ///   the size of the underlying data.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use matreex::Result;
-    /// use matreex::{Order, matrix};
-    ///
-    /// # fn main() -> Result<()> {
-    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    ///
-    /// let mut row_major = matrix.clone();
-    /// row_major.set_order(Order::RowMajor);
-    /// row_major.reshape((3, 2))?;
-    /// assert_eq!(row_major, matrix![[1, 2], [3, 4], [5, 6]]);
-    ///
-    /// let mut col_major = matrix.clone();
-    /// col_major.set_order(Order::ColMajor);
-    /// col_major.reshape((3, 2))?;
-    /// assert_eq!(col_major, matrix![[1, 5], [4, 3], [2, 6]]);
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn reshape<S>(&mut self, shape: S) -> Result<&mut Self>
-    where
-        S: AsShape,
-    {
-        match shape.size() {
-            Ok(size) if self.size() == size => {
-                self.shape = AxisShape::from_shape(shape, self.order);
-                Ok(self)
-            }
-            _ => Err(Error::SizeMismatch),
-        }
     }
 
     /// Shrinks the capacity of the matrix as much as possible.
@@ -815,76 +774,6 @@ mod tests {
                 matrix![[1, 4], [2, 5], [3, 6]]
             };
             testkit::assert_loose_eq(&matrix, &expected);
-        });
-    }
-
-    #[test]
-    fn test_reshape() {
-        {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::RowMajor);
-
-            matrix.reshape((2, 3)).unwrap();
-            let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-
-            matrix.reshape((3, 2)).unwrap();
-            let expected = matrix![[1, 2], [3, 4], [5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-
-            matrix.reshape((1, 6)).unwrap();
-            let expected = matrix![[1, 2, 3, 4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-
-            matrix.reshape((6, 1)).unwrap();
-            let expected = matrix![[1], [2], [3], [4], [5], [6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-
-            matrix.reshape((2, 3)).unwrap();
-            let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-        }
-
-        {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::ColMajor);
-
-            matrix.reshape((2, 3)).unwrap();
-            let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-
-            matrix.reshape((3, 2)).unwrap();
-            let expected = matrix![[1, 5], [4, 3], [2, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-
-            matrix.reshape((1, 6)).unwrap();
-            let expected = matrix![[1, 4, 2, 5, 3, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-
-            matrix.reshape((6, 1)).unwrap();
-            let expected = matrix![[1], [4], [2], [5], [3], [6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-
-            matrix.reshape((2, 3)).unwrap();
-            let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-        }
-
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
-            let unchanged = matrix.clone();
-
-            let error = matrix.reshape((2, 2)).unwrap_err();
-            assert_eq!(error, Error::SizeMismatch);
-            testkit::assert_loose_eq(&matrix, &unchanged);
-
-            let error = matrix.reshape((usize::MAX, 2)).unwrap_err();
-            assert_eq!(error, Error::SizeMismatch);
-            testkit::assert_loose_eq(&matrix, &unchanged);
-
-            let error = matrix.reshape((isize::MAX as usize + 1, 1)).unwrap_err();
-            assert_eq!(error, Error::SizeMismatch);
-            testkit::assert_loose_eq(&matrix, &unchanged);
         });
     }
 
