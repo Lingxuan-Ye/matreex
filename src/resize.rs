@@ -902,7 +902,7 @@ impl<T> MemoryRange<T> {
 
 #[cfg(test)]
 mod tests {
-    use self::mock::{Mock, Scope};
+    use self::mock::{Count, Mock, Scope};
     use super::*;
     use crate::error::Error;
     use crate::shape::Shape;
@@ -916,19 +916,13 @@ mod tests {
         use std::thread_local;
 
         thread_local! {
-            static COUNT: Cell<Count> = const { Cell::new(Count::new()) };
+            static COUNT: Cell<Count> = const { Cell::new(Count {init: 0, drop: 0}) };
         }
 
         #[derive(Clone, Copy)]
-        struct Count {
-            clone: usize,
-            drop: usize,
-        }
-
-        impl Count {
-            const fn new() -> Self {
-                Self { clone: 0, drop: 0 }
-            }
+        pub(super) struct Count {
+            pub(super) init: usize,
+            pub(super) drop: usize,
         }
 
         pub(super) struct Scope {
@@ -941,8 +935,7 @@ mod tests {
             where
                 F: FnOnce(&Scope),
             {
-                let outer_count = COUNT.get();
-                COUNT.set(Count::new());
+                let outer_count = COUNT.replace(Count { init: 0, drop: 0 });
                 let scope = Self {
                     outer_count,
                     marker: PhantomData,
@@ -950,24 +943,24 @@ mod tests {
                 f(&scope);
             }
 
-            /// Returns the current clone count for the `Mock` instances in
-            /// the innermost active `Scope` on this thread, regardless of
-            /// which `Scope` instance this method is called on.
+            /// Returns the current init count for the [`Mock`] instances in
+            /// the innermost active [`Scope`] on this thread, regardless of
+            /// which instance this method is called on.
             ///
             /// # Notes
             ///
-            /// All concrete types of `Mock<T>` are counted indiscriminately.
-            pub(super) fn clone_count(&self) -> usize {
-                COUNT.get().clone
+            /// All concrete types of [`Mock<T>`] are counted indiscriminately.
+            pub(super) fn init_count(&self) -> usize {
+                COUNT.get().init
             }
 
-            /// Returns the current drop count for the `Mock` instances in
-            /// the innermost active `Scope` on this thread, regardless of
-            /// which `Scope` instance this method is called on.
+            /// Returns the current drop count for the [`Mock`] instances in
+            /// the innermost active [`Scope`] on this thread, regardless of
+            /// which instance this method is called on.
             ///
             /// # Notes
             ///
-            /// All concrete types of `Mock<T>` are counted indiscriminately.
+            /// All concrete types of [`Mock<T>`] are counted indiscriminately.
             pub(super) fn drop_count(&self) -> usize {
                 COUNT.get().drop
             }
@@ -977,29 +970,42 @@ mod tests {
             fn drop(&mut self) {
                 let _ = COUNT.try_with(|cell| {
                     cell.update(|count| {
-                        let clone = self.outer_count.clone + count.clone;
+                        let init = self.outer_count.init + count.init;
                         let drop = self.outer_count.drop + count.drop;
-                        Count { clone, drop }
+                        Count { init, drop }
                     })
                 });
             }
         }
 
         #[derive(Debug, PartialEq)]
-        pub(super) struct Mock<T>(pub(super) T);
+        pub(super) struct Mock<T>(T);
+
+        impl<T> Mock<T> {
+            pub(super) fn new(value: T) -> Self {
+                let inst = Self(value);
+                inst.init();
+                inst
+            }
+
+            fn init(&self) {
+                COUNT.with(|cell| {
+                    cell.update(|mut count| {
+                        count.init += 1;
+                        count
+                    })
+                });
+            }
+        }
 
         impl<T> Clone for Mock<T>
         where
             T: Clone,
         {
             fn clone(&self) -> Self {
-                COUNT.with(|cell| {
-                    cell.update(|mut count| {
-                        count.clone += 1;
-                        count
-                    })
-                });
-                Mock(self.0.clone())
+                let inst = Self(self.0.clone());
+                inst.init();
+                inst
             }
         }
 
@@ -1015,62 +1021,52 @@ mod tests {
         }
     }
 
-    fn assert_counts(scope: &Scope, old_shape: Shape, new_shape: Shape) {
+    fn expected_count(old_shape: Shape, new_shape: Shape) -> Count {
         let old_nrows = old_shape.nrows();
         let old_ncols = old_shape.ncols();
         let new_nrows = new_shape.nrows();
         let new_ncols = new_shape.ncols();
-        let expected_init_count;
-        let expected_drop_count;
+        let init;
+        let drop;
         match (new_nrows.cmp(&old_nrows), new_ncols.cmp(&old_ncols)) {
             (Ordering::Less, Ordering::Less) => {
-                expected_init_count = 0;
-                expected_drop_count = old_nrows * old_ncols - new_nrows * new_ncols;
+                init = 0;
+                drop = old_nrows * old_ncols - new_nrows * new_ncols;
             }
             (Ordering::Less, Ordering::Equal) => {
-                expected_init_count = 0;
-                expected_drop_count = (old_nrows - new_nrows) * old_ncols;
+                init = 0;
+                drop = (old_nrows - new_nrows) * old_ncols;
             }
             (Ordering::Less, Ordering::Greater) => {
-                expected_init_count = (new_ncols - old_ncols) * new_nrows;
-                expected_drop_count = (old_nrows - new_nrows) * old_ncols;
+                init = (new_ncols - old_ncols) * new_nrows;
+                drop = (old_nrows - new_nrows) * old_ncols;
             }
             (Ordering::Equal, Ordering::Less) => {
-                expected_init_count = 0;
-                expected_drop_count = (old_ncols - new_ncols) * old_nrows;
+                init = 0;
+                drop = (old_ncols - new_ncols) * old_nrows;
             }
             (Ordering::Equal, Ordering::Equal) => {
-                expected_init_count = 0;
-                expected_drop_count = 0;
+                init = 0;
+                drop = 0;
             }
             (Ordering::Equal, Ordering::Greater) => {
-                expected_init_count = (new_ncols - old_ncols) * old_nrows;
-                expected_drop_count = 0;
+                init = (new_ncols - old_ncols) * old_nrows;
+                drop = 0;
             }
             (Ordering::Greater, Ordering::Less) => {
-                expected_init_count = (new_nrows - old_nrows) * new_ncols;
-                expected_drop_count = (old_ncols - new_ncols) * old_nrows;
+                init = (new_nrows - old_nrows) * new_ncols;
+                drop = (old_ncols - new_ncols) * old_nrows;
             }
             (Ordering::Greater, Ordering::Equal) => {
-                expected_init_count = (new_nrows - old_nrows) * new_ncols;
-                expected_drop_count = 0;
+                init = (new_nrows - old_nrows) * new_ncols;
+                drop = 0;
             }
             (Ordering::Greater, Ordering::Greater) => {
-                expected_init_count = new_nrows * new_ncols - old_nrows * old_ncols;
-                expected_drop_count = 0;
+                init = new_nrows * new_ncols - old_nrows * old_ncols;
+                drop = 0;
             }
         }
-        if expected_init_count < 1 {
-            assert_eq!(scope.clone_count(), 0);
-            // Argument `value` passed to `Matrix::resize`
-            // incurs an extra drop.
-            assert_eq!(scope.drop_count(), expected_drop_count + 1);
-        } else {
-            // Argument `value` passed to `Matrix::resize`
-            // saves an extra clone.
-            assert_eq!(scope.clone_count(), expected_init_count - 1);
-            assert_eq!(scope.drop_count(), expected_drop_count);
-        }
+        Count { init, drop }
     }
 
     #[test]
@@ -1089,126 +1085,172 @@ mod tests {
                         let new_shape = Shape::new(new_nrows, new_ncols);
 
                         // For zero-sized type.
-                        let matrix = Matrix::with_initializer(old_shape, |_| Mock(())).unwrap();
+                        let matrix =
+                            Matrix::with_initializer(old_shape, |_| Mock::new(())).unwrap();
                         testkit::for_each_order_unary(matrix, |mut matrix| {
                             Scope::with(|scope| {
-                                matrix.resize(new_shape, Mock(())).unwrap();
-                                assert_counts(scope, old_shape, new_shape);
-                                let expected =
-                                    Matrix::with_initializer(new_shape, |_| Mock(())).unwrap();
-                                testkit::assert_loose_eq(&matrix, &expected);
+                                matrix.resize(new_shape, Mock::new(())).unwrap();
+                                let expected_count = expected_count(old_shape, new_shape);
+                                if expected_count.init < 1 {
+                                    // Argument `value` passed to `Matrix::resize`
+                                    // results in an extra init and drop.
+                                    assert_eq!(scope.init_count(), 1);
+                                    assert_eq!(scope.drop_count(), expected_count.drop + 1);
+                                } else {
+                                    assert_eq!(scope.init_count(), expected_count.init);
+                                    assert_eq!(scope.drop_count(), expected_count.drop);
+                                }
                             });
+                            let expected =
+                                Matrix::with_initializer(new_shape, |_| Mock::new(())).unwrap();
+                            testkit::assert_loose_eq(&matrix, &expected);
                         });
 
                         // For non-zero-sized type.
                         let old_size = old_shape.size().unwrap();
                         let new_size = new_shape.size().unwrap();
                         if new_size <= old_size {
-                            let matrix = Matrix::with_initializer(old_shape, Mock).unwrap();
+                            let matrix = Matrix::with_initializer(old_shape, Mock::new).unwrap();
                             testkit::for_each_order_unary(matrix, |mut matrix| {
                                 Scope::with(|scope| {
-                                    matrix.resize(new_shape, Mock(Index::default())).unwrap();
-                                    assert_counts(scope, old_shape, new_shape);
-                                    let expected = Matrix::with_initializer(new_shape, |index| {
-                                        if index.row >= old_nrows || index.col >= old_ncols {
-                                            Mock(Index::default())
-                                        } else {
-                                            Mock(index)
-                                        }
-                                    })
-                                    .unwrap();
-                                    testkit::assert_loose_eq(&matrix, &expected);
+                                    matrix
+                                        .resize(new_shape, Mock::new(Index::default()))
+                                        .unwrap();
+                                    let expected_count = expected_count(old_shape, new_shape);
+                                    if expected_count.init < 1 {
+                                        assert_eq!(scope.init_count(), 1);
+                                        assert_eq!(scope.drop_count(), expected_count.drop + 1);
+                                    } else {
+                                        assert_eq!(scope.init_count(), expected_count.init);
+                                        assert_eq!(scope.drop_count(), expected_count.drop);
+                                    }
                                 });
+                                let expected = Matrix::with_initializer(new_shape, |index| {
+                                    if index.row >= old_nrows || index.col >= old_ncols {
+                                        Mock::new(Index::default())
+                                    } else {
+                                        Mock::new(index)
+                                    }
+                                })
+                                .unwrap();
+                                testkit::assert_loose_eq(&matrix, &expected);
                             });
                         } else {
-                            let matrix = Matrix::with_initializer(old_shape, Mock).unwrap();
+                            let matrix = Matrix::with_initializer(old_shape, Mock::new).unwrap();
                             testkit::for_each_order_unary(matrix, |mut matrix| {
+                                // Ensure the in place path is taken.
+                                matrix.data.reserve(new_size - old_size);
+                                assert!(new_size <= matrix.capacity());
                                 Scope::with(|scope| {
-                                    // Ensure the in place path is taken.
-                                    matrix.data.reserve(new_size - old_size);
-                                    assert!(new_size <= matrix.capacity());
-                                    matrix.resize(new_shape, Mock(Index::default())).unwrap();
-                                    assert_counts(scope, old_shape, new_shape);
-                                    let expected = Matrix::with_initializer(new_shape, |index| {
-                                        if index.row >= old_nrows || index.col >= old_ncols {
-                                            Mock(Index::default())
-                                        } else {
-                                            Mock(index)
-                                        }
-                                    })
-                                    .unwrap();
-                                    testkit::assert_loose_eq(&matrix, &expected);
+                                    matrix
+                                        .resize(new_shape, Mock::new(Index::default()))
+                                        .unwrap();
+                                    let expected_count = expected_count(old_shape, new_shape);
+                                    if expected_count.init < 1 {
+                                        assert_eq!(scope.init_count(), 1);
+                                        assert_eq!(scope.drop_count(), expected_count.drop + 1);
+                                    } else {
+                                        assert_eq!(scope.init_count(), expected_count.init);
+                                        assert_eq!(scope.drop_count(), expected_count.drop);
+                                    }
                                 });
+                                let expected = Matrix::with_initializer(new_shape, |index| {
+                                    if index.row >= old_nrows || index.col >= old_ncols {
+                                        Mock::new(Index::default())
+                                    } else {
+                                        Mock::new(index)
+                                    }
+                                })
+                                .unwrap();
+                                testkit::assert_loose_eq(&matrix, &expected);
                             });
 
-                            let matrix = Matrix::with_initializer(old_shape, Mock).unwrap();
+                            let matrix = Matrix::with_initializer(old_shape, Mock::new).unwrap();
                             testkit::for_each_order_unary(matrix, |mut matrix| {
+                                // Ensure the reallocation path is taken.
+                                matrix.data.shrink_to_fit();
+                                assert!(new_size > matrix.capacity());
                                 Scope::with(|scope| {
-                                    // Ensure the reallocation path is taken.
-                                    matrix.data.shrink_to_fit();
-                                    assert!(new_size > matrix.capacity());
-                                    matrix.resize(new_shape, Mock(Index::default())).unwrap();
-                                    assert_counts(scope, old_shape, new_shape);
-                                    let expected = Matrix::with_initializer(new_shape, |index| {
-                                        if index.row >= old_nrows || index.col >= old_ncols {
-                                            Mock(Index::default())
-                                        } else {
-                                            Mock(index)
-                                        }
-                                    })
-                                    .unwrap();
-                                    testkit::assert_loose_eq(&matrix, &expected);
+                                    matrix
+                                        .resize(new_shape, Mock::new(Index::default()))
+                                        .unwrap();
+                                    let expected_count = expected_count(old_shape, new_shape);
+                                    if expected_count.init < 1 {
+                                        assert_eq!(scope.init_count(), 1);
+                                        assert_eq!(scope.drop_count(), expected_count.drop + 1);
+                                    } else {
+                                        assert_eq!(scope.init_count(), expected_count.init);
+                                        assert_eq!(scope.drop_count(), expected_count.drop);
+                                    }
                                 });
+                                let expected = Matrix::with_initializer(new_shape, |index| {
+                                    if index.row >= old_nrows || index.col >= old_ncols {
+                                        Mock::new(Index::default())
+                                    } else {
+                                        Mock::new(index)
+                                    }
+                                })
+                                .unwrap();
+                                testkit::assert_loose_eq(&matrix, &expected);
                             });
                         }
                     }
                 }
 
                 let new_shape = Shape::new(usize::MAX, 2);
-                let matrix = Matrix::with_initializer(old_shape, |_| Mock(())).unwrap();
+                let matrix: Matrix<Mock<()>> =
+                    Matrix::with_initializer(old_shape, |_| Mock::new(())).unwrap();
                 testkit::for_each_order_unary(matrix, |mut matrix| {
+                    let unchanged = matrix.clone();
                     Scope::with(|scope| {
-                        let error = matrix.resize(new_shape, Mock(())).unwrap_err();
+                        let error = matrix.resize(new_shape, Mock::new(())).unwrap_err();
                         assert_eq!(error, Error::SizeOverflow);
-                        assert_eq!(scope.clone_count(), 0);
+                        assert_eq!(scope.init_count(), 1);
                         assert_eq!(scope.drop_count(), 1);
                     });
+                    testkit::assert_loose_eq(&matrix, &unchanged);
                 });
 
                 let new_shape = Shape::new(isize::MAX as usize / 4 + 1, 1);
                 let matrix: Matrix<Mock<i32>> =
-                    Matrix::with_initializer(old_shape, |_| Mock(0)).unwrap();
+                    Matrix::with_initializer(old_shape, |_| Mock::new(0)).unwrap();
                 testkit::for_each_order_unary(matrix, |mut matrix| {
+                    let unchanged = matrix.clone();
                     Scope::with(|scope| {
-                        let error = matrix.resize(new_shape, Mock(0)).unwrap_err();
+                        let error = matrix.resize(new_shape, Mock::new(0)).unwrap_err();
                         assert_eq!(error, Error::CapacityOverflow);
-                        assert_eq!(scope.clone_count(), 0);
+                        assert_eq!(scope.init_count(), 1);
                         assert_eq!(scope.drop_count(), 1);
                     });
+                    testkit::assert_loose_eq(&matrix, &unchanged);
                 });
 
                 let new_shape = Shape::new(isize::MAX as usize + 1, 1);
                 let matrix: Matrix<Mock<u8>> =
-                    Matrix::with_initializer(old_shape, |_| Mock(0)).unwrap();
+                    Matrix::with_initializer(old_shape, |_| Mock::new(0)).unwrap();
                 testkit::for_each_order_unary(matrix, |mut matrix| {
+                    let unchanged = matrix.clone();
                     Scope::with(|scope| {
-                        let error = matrix.resize(new_shape, Mock(0)).unwrap_err();
+                        let error = matrix.resize(new_shape, Mock::new(0)).unwrap_err();
                         assert_eq!(error, Error::CapacityOverflow);
-                        assert_eq!(scope.clone_count(), 0);
+                        assert_eq!(scope.init_count(), 1);
                         assert_eq!(scope.drop_count(), 1);
                     });
+                    testkit::assert_loose_eq(&matrix, &unchanged);
                 });
 
                 // Unable to cover.
                 // let new_shape = Shape::new(isize::MAX as usize + 1, 1);
                 // let matrix: Matrix<Mock<()>> =
-                //     Matrix::with_initializer(old_shape, |_| Mock(())).unwrap();
+                //     Matrix::with_initializer(old_shape, |_| Mock::new(())).unwrap();
                 // testkit::for_each_order_unary(matrix, |mut matrix| {
+                //     let unchanged = matrix.clone();
                 //     Scope::with(|scope| {
-                //         assert!(matrix.resize(new_shape, Mock(())).is_ok());
-                //         assert_eq!(scope.clone_count(), isize::MAX as usize);
+                //         assert!(matrix.resize(new_shape, Mock::new(())).is_ok());
+                //         assert_eq!(scope.init_count(), isize::MAX as usize);
                 //         assert_eq!(scope.drop_count(), 0);
                 //     });
+                //     testkit::assert_loose_eq(&matrix, &unchanged);
                 // });
             }
         }
