@@ -1,13 +1,16 @@
 use crate::Matrix;
 use crate::error::Result;
-use crate::shape::{AsShape, AxisShape};
+use crate::index::Index;
+use crate::order::Order;
+use crate::shape::{AsShape, AxisShape, Stride};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
+use core::num::NonZero;
 use core::ptr;
 
 impl<T> Matrix<T> {
-    /// Resizes the matrix to the specified shape, filling with the
-    /// given value.
+    /// Resizes the matrix to the specified shape, filling uninitialized parts
+    /// with the given value.
     ///
     /// # Errors
     ///
@@ -39,6 +42,8 @@ impl<T> Matrix<T> {
         S: AsShape,
         T: Clone,
     {
+        // # Exception Safety
+        //
         // At any given point of execution, the invariant that the size
         // of `self.shape` is equal to the length of `self.data` must be
         // upheld, and the memory within `self.shape` must be valid, or
@@ -48,45 +53,9 @@ impl<T> Matrix<T> {
         // guard that increments `self.data.len` after each successful
         // write, which could violate the invariant if `T::clone` or
         // `T::drop` panic.
-
-        let new_shape = AxisShape::from_shape(shape, self.order);
-        let new_size = new_shape.size::<T>()?;
-        let old_size = self.size();
-
-        // After these early returns, it is guaranteed that:
         //
-        // - All axis lengths and strides are non-zero.
-        // - All loop peel iterations for major axis vectors are valid.
-        match (old_size, new_size) {
-            (0, 0) => {
-                self.shape = new_shape;
-                return Ok(self);
-            }
-            (0, _) => unsafe {
-                self.data.reserve(new_size);
-                let to_init_start = self.data.as_mut_ptr();
-                let to_init_len = new_size;
-                init_range(to_init_start, to_init_len, value);
-                self.shape = new_shape;
-                self.data.set_len(new_size);
-                return Ok(self);
-            },
-            (_, 0) => unsafe {
-                self.shape = new_shape;
-                self.data.set_len(new_size);
-                let to_drop_start = self.data.as_mut_ptr();
-                let to_drop_len = old_size;
-                drop_range_in_place(to_drop_start, to_drop_len);
-                return Ok(self);
-            },
-            (_, _) => (),
-        }
-
-        let old_shape = self.shape;
-        let old_stride = old_shape.stride();
-        let new_stride = new_shape.stride();
-        let minor_stride = old_stride.minor();
-
+        // # Terminology
+        //
         // In the following code, some variables are prefixed with `tail`.
         // A tail is the trailing part of the underlying data that needs
         // to be dropped or initialized in the context of resizing. In
@@ -103,6 +72,47 @@ impl<T> Matrix<T> {
         //
         // Note that the tail may overlap with other parts of memory, so
         // the execution order matters.
+
+        let new_shape = AxisShape::from_shape(shape, self.order);
+        let new_size = new_shape.size::<T>()?;
+        let old_size = self.size();
+
+        // After these early returns, it is guaranteed that:
+        //
+        // - All axis lengths and strides are non-zero.
+        // - All loop peel iterations for major axis vectors are valid.
+        match (old_size, new_size) {
+            (0, 0) => {
+                self.shape = new_shape;
+                return Ok(self);
+            }
+
+            (0, _) => unsafe {
+                self.data.reserve(new_size);
+                let tail_start = self.data.as_mut_ptr();
+                let tail_len = new_size;
+                MemoryRange::new_unchecked(tail_start, tail_len).init(value);
+                self.shape = new_shape;
+                self.data.set_len(new_size);
+                return Ok(self);
+            },
+
+            (_, 0) => unsafe {
+                self.shape = new_shape;
+                self.data.set_len(new_size);
+                let tail_start = self.data.as_mut_ptr();
+                let tail_len = old_size;
+                MemoryRange::new_unchecked(tail_start, tail_len).drop_in_place();
+                return Ok(self);
+            },
+
+            (_, _) => (),
+        }
+
+        let old_shape = self.shape;
+        let old_stride = old_shape.stride();
+        let new_stride = new_shape.stride();
+        let minor_stride = old_stride.minor();
 
         let major_len_cmp = new_shape.major().cmp(&old_shape.major());
         let minor_len_cmp = new_shape.minor().cmp(&old_shape.minor());
@@ -121,22 +131,18 @@ impl<T> Matrix<T> {
                         let mut src = base;
                         let mut dst = base;
                         let to_drop_start = src.add(to_copy_len);
-                        drop_range_in_place(to_drop_start, to_drop_len);
+                        MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
                         for _ in 1..new_shape.major() {
                             src = src.add(old_stride.major());
                             dst = dst.add(new_stride.major());
                             ptr::copy(src, dst, to_copy_len);
                             let to_drop_start = src.add(to_copy_len);
-                            drop_range_in_place(to_drop_start, to_drop_len);
+                            MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
                         }
-                        if size_of::<T>() == 0 {
-                            let tail_len = old_size - new_shape.major() * old_stride.major();
-                            drop_range_in_place(base, tail_len);
-                        } else {
-                            let tail_start = src.add(old_stride.major());
-                            let tail_len = base.add(old_size).offset_from_unsigned(tail_start);
-                            drop_range_in_place(tail_start, tail_len);
-                        }
+                        let tail_start_index = new_shape.major() * old_stride.major();
+                        let tail_start = base.add(tail_start_index);
+                        let tail_len = old_size - tail_start_index;
+                        MemoryRange::new_unchecked(tail_start, tail_len).drop_in_place();
                     }
 
                     Ordering::Equal => {
@@ -144,38 +150,35 @@ impl<T> Matrix<T> {
                         let mut src = base;
                         let mut dst = base;
                         let to_drop_start = src.add(to_copy_len);
-                        drop_range_in_place(to_drop_start, to_drop_len);
+                        MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
                         for _ in 1..new_shape.major() {
                             src = src.add(old_stride.major());
                             dst = dst.add(new_stride.major());
                             ptr::copy(src, dst, to_copy_len);
                             let to_drop_start = src.add(to_copy_len);
-                            drop_range_in_place(to_drop_start, to_drop_len);
+                            MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
                         }
                     }
 
                     Ordering::Greater => {
+                        let tail_start_index = old_shape.major() * new_stride.major();
+                        let tail_len = new_size - tail_start_index;
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
                             let mut src = base;
                             let mut dst = base;
                             let to_drop_start = src.add(to_copy_len);
-                            drop_range_in_place(to_drop_start, to_drop_len);
+                            MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
                             for _ in 1..old_shape.major() {
                                 src = src.add(old_stride.major());
                                 dst = dst.add(new_stride.major());
                                 ptr::copy(src, dst, to_copy_len);
                                 let to_drop_start = src.add(to_copy_len);
-                                drop_range_in_place(to_drop_start, to_drop_len);
+                                MemoryRange::new_unchecked(to_drop_start, to_drop_len)
+                                    .drop_in_place();
                             }
-                            if size_of::<T>() == 0 {
-                                let tail_len = new_size - old_shape.major() * new_stride.major();
-                                init_range(base, tail_len, value);
-                            } else {
-                                let tail_start = dst.add(new_stride.major());
-                                let tail_len = base.add(new_size).offset_from_unsigned(tail_start);
-                                init_range(tail_start, tail_len, value);
-                            }
+                            let tail_start = base.add(tail_start_index);
+                            MemoryRange::new_unchecked(tail_start, tail_len).init(value);
                         } else {
                             // Manually reallocate to avoid unnecessary memory copying.
                             let mut new_data = Vec::<T>::with_capacity(new_size);
@@ -183,27 +186,21 @@ impl<T> Matrix<T> {
                             let new_base = new_data.as_mut_ptr();
                             let mut src = old_base;
                             let mut dst = new_base;
+                            // `src` and `dst` will never overlap because
+                            // they belong to different allocated objects.
                             ptr::copy_nonoverlapping(src, dst, to_copy_len);
                             let to_drop_start = src.add(to_copy_len);
-                            drop_range_in_place(to_drop_start, to_drop_len);
+                            MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
                             for _ in 1..old_shape.major() {
                                 src = src.add(old_stride.major());
                                 dst = dst.add(new_stride.major());
-                                // `src` and `dst` will never overlap because
-                                // they belong to different allocated objects.
                                 ptr::copy_nonoverlapping(src, dst, to_copy_len);
                                 let to_drop_start = src.add(to_copy_len);
-                                drop_range_in_place(to_drop_start, to_drop_len);
+                                MemoryRange::new_unchecked(to_drop_start, to_drop_len)
+                                    .drop_in_place();
                             }
-                            if size_of::<T>() == 0 {
-                                let tail_len = new_size - old_shape.major() * new_stride.major();
-                                init_range(new_base, tail_len, value);
-                            } else {
-                                let tail_start = dst.add(new_stride.major());
-                                let tail_len =
-                                    new_base.add(new_size).offset_from_unsigned(tail_start);
-                                init_range(tail_start, tail_len, value);
-                            }
+                            let tail_start = new_base.add(tail_start_index);
+                            MemoryRange::new_unchecked(tail_start, tail_len).init(value);
                             self.data = new_data;
                         }
                     }
@@ -219,19 +216,22 @@ impl<T> Matrix<T> {
                         self.shape = new_shape;
                         self.data.set_len(new_size);
                         let base = self.data.as_mut_ptr();
-                        let tail_start = base.add(new_size);
-                        let tail_len = old_size - new_size;
-                        drop_range_in_place(tail_start, tail_len);
+                        let tail_start_index = new_size;
+                        let tail_start = base.add(tail_start_index);
+                        let tail_len = old_size - tail_start_index;
+                        MemoryRange::new_unchecked(tail_start, tail_len).drop_in_place();
                     }
 
                     Ordering::Equal => (),
 
                     Ordering::Greater => {
-                        let tail_len = new_size - old_size;
-                        self.data.reserve(tail_len);
+                        let additional = new_size - old_size;
+                        self.data.reserve(additional);
                         let base = self.data.as_mut_ptr();
-                        let tail_start = base.add(old_size);
-                        init_range(tail_start, tail_len, value);
+                        let tail_start_index = old_size;
+                        let tail_start = base.add(tail_start_index);
+                        let tail_len = additional;
+                        MemoryRange::new_unchecked(tail_start, tail_len).init(value);
                         self.shape = new_shape;
                         self.data.set_len(new_size);
                     }
@@ -248,10 +248,10 @@ impl<T> Matrix<T> {
                 match major_len_cmp {
                     Ordering::Less => {
                         let base = self.data.as_mut_ptr();
-                        let tail_offset = new_shape.major() * old_stride.major();
-                        let tail_start = base.add(tail_offset);
-                        let tail_len = old_size - tail_offset;
-                        drop_range_in_place(tail_start, tail_len);
+                        let tail_start_index = new_shape.major() * old_stride.major();
+                        let tail_start = base.add(tail_start_index);
+                        let tail_len = old_size - tail_start_index;
+                        MemoryRange::new_unchecked(tail_start, tail_len).drop_in_place();
                         if new_size <= self.capacity() {
                             let mut src = tail_start;
                             let mut dst = base.add(new_size);
@@ -260,10 +260,11 @@ impl<T> Matrix<T> {
                                 dst = dst.sub(new_stride.major());
                                 ptr::copy(src, dst, to_copy_len);
                                 let to_init_start = dst.add(to_copy_len);
-                                init_range(to_init_start, to_init_len, value.clone());
+                                MemoryRange::new_unchecked(to_init_start, to_init_len)
+                                    .init(value.clone());
                             }
                             let to_init_start = dst.sub(to_init_len);
-                            init_range(to_init_start, to_init_len, value);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init(value);
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let new_base = new_data.as_mut_ptr();
@@ -274,13 +275,14 @@ impl<T> Matrix<T> {
                                 dst = dst.sub(new_stride.major());
                                 ptr::copy_nonoverlapping(src, dst, to_copy_len);
                                 let to_init_start = dst.add(to_copy_len);
-                                init_range(to_init_start, to_init_len, value.clone());
+                                MemoryRange::new_unchecked(to_init_start, to_init_len)
+                                    .init(value.clone());
                             }
                             src = src.sub(old_stride.major());
                             dst = dst.sub(new_stride.major());
                             ptr::copy_nonoverlapping(src, dst, to_copy_len);
                             let to_init_start = dst.add(to_copy_len);
-                            init_range(to_init_start, to_init_len, value);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init(value);
                             self.data = new_data;
                         }
                     }
@@ -295,10 +297,11 @@ impl<T> Matrix<T> {
                                 dst = dst.sub(new_stride.major());
                                 ptr::copy(src, dst, to_copy_len);
                                 let to_init_start = dst.add(to_copy_len);
-                                init_range(to_init_start, to_init_len, value.clone());
+                                MemoryRange::new_unchecked(to_init_start, to_init_len)
+                                    .init(value.clone());
                             }
                             let to_init_start = dst.sub(to_init_len);
-                            init_range(to_init_start, to_init_len, value);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init(value);
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let old_base = self.data.as_ptr();
@@ -310,24 +313,25 @@ impl<T> Matrix<T> {
                                 dst = dst.sub(new_stride.major());
                                 ptr::copy_nonoverlapping(src, dst, to_copy_len);
                                 let to_init_start = dst.add(to_copy_len);
-                                init_range(to_init_start, to_init_len, value.clone());
+                                MemoryRange::new_unchecked(to_init_start, to_init_len)
+                                    .init(value.clone());
                             }
                             src = src.sub(old_stride.major());
                             dst = dst.sub(new_stride.major());
                             ptr::copy_nonoverlapping(src, dst, to_copy_len);
                             let to_init_start = dst.add(to_copy_len);
-                            init_range(to_init_start, to_init_len, value);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init(value);
                             self.data = new_data;
                         }
                     }
 
                     Ordering::Greater => {
-                        let tail_offset = old_shape.major() * new_stride.major();
-                        let tail_len = new_size - tail_offset;
+                        let tail_start_index = old_shape.major() * new_stride.major();
+                        let tail_len = new_size - tail_start_index;
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
-                            let tail_start = base.add(tail_offset);
-                            init_range(tail_start, tail_len, value.clone());
+                            let tail_start = base.add(tail_start_index);
+                            MemoryRange::new_unchecked(tail_start, tail_len).init(value.clone());
                             let mut src = base.add(old_size);
                             let mut dst = tail_start;
                             for _ in 1..old_shape.major() {
@@ -335,16 +339,17 @@ impl<T> Matrix<T> {
                                 dst = dst.sub(new_stride.major());
                                 ptr::copy(src, dst, to_copy_len);
                                 let to_init_start = dst.add(to_copy_len);
-                                init_range(to_init_start, to_init_len, value.clone());
+                                MemoryRange::new_unchecked(to_init_start, to_init_len)
+                                    .init(value.clone());
                             }
                             let to_init_start = dst.sub(to_init_len);
-                            init_range(to_init_start, to_init_len, value);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init(value);
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let old_base = self.data.as_ptr();
                             let new_base = new_data.as_mut_ptr();
-                            let tail_start = new_base.add(tail_offset);
-                            init_range(tail_start, tail_len, value.clone());
+                            let tail_start = new_base.add(tail_start_index);
+                            MemoryRange::new_unchecked(tail_start, tail_len).init(value.clone());
                             let mut src = old_base.add(old_size);
                             let mut dst = tail_start;
                             for _ in 1..old_shape.major() {
@@ -352,13 +357,420 @@ impl<T> Matrix<T> {
                                 dst = dst.sub(new_stride.major());
                                 ptr::copy_nonoverlapping(src, dst, to_copy_len);
                                 let to_init_start = dst.add(to_copy_len);
-                                init_range(to_init_start, to_init_len, value.clone());
+                                MemoryRange::new_unchecked(to_init_start, to_init_len)
+                                    .init(value.clone());
                             }
                             src = src.sub(old_stride.major());
                             dst = dst.sub(new_stride.major());
                             ptr::copy_nonoverlapping(src, dst, to_copy_len);
                             let to_init_start = dst.add(to_copy_len);
-                            init_range(to_init_start, to_init_len, value);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init(value);
+                            self.data = new_data;
+                        }
+                    }
+                }
+
+                self.shape = new_shape;
+                self.data.set_len(new_size);
+            },
+        }
+
+        Ok(self)
+    }
+
+    pub fn resize_with<S, F>(&mut self, shape: S, mut initializer: F) -> Result<&mut Self>
+    where
+        S: AsShape,
+        F: FnMut(Index) -> T,
+    {
+        // Refer to `Matrix::resize` for details.
+
+        let order = self.order;
+        let new_shape = AxisShape::from_shape(shape, self.order);
+        let new_size = new_shape.size::<T>()?;
+        let old_size = self.size();
+        let new_stride = new_shape.stride();
+
+        match (old_size, new_size) {
+            (0, 0) => {
+                self.shape = new_shape;
+                return Ok(self);
+            }
+
+            (0, _) => unsafe {
+                self.data.reserve(new_size);
+                let tail_start_index = 0;
+                let tail_start = self.data.as_mut_ptr();
+                let tail_len = new_size;
+                MemoryRange::new_unchecked(tail_start, tail_len).init_with(
+                    tail_start_index,
+                    order,
+                    new_stride,
+                    &mut initializer,
+                );
+                self.shape = new_shape;
+                self.data.set_len(new_size);
+                return Ok(self);
+            },
+
+            (_, 0) => unsafe {
+                self.shape = new_shape;
+                self.data.set_len(new_size);
+                let tail_start = self.data.as_mut_ptr();
+                let tail_len = old_size;
+                MemoryRange::new_unchecked(tail_start, tail_len).drop_in_place();
+                return Ok(self);
+            },
+
+            (_, _) => (),
+        }
+
+        let old_shape = self.shape;
+        let old_stride = old_shape.stride();
+        let minor_stride = old_stride.minor();
+
+        let major_len_cmp = new_shape.major().cmp(&old_shape.major());
+        let minor_len_cmp = new_shape.minor().cmp(&old_shape.minor());
+
+        match minor_len_cmp {
+            Ordering::Less => unsafe {
+                self.shape = AxisShape::default();
+                self.data.set_len(0);
+
+                let to_copy_len = new_shape.minor() * minor_stride;
+                let to_drop_len = (old_shape.minor() - new_shape.minor()) * minor_stride;
+
+                match major_len_cmp {
+                    Ordering::Less => {
+                        let base = self.data.as_mut_ptr();
+                        let mut src = base;
+                        let mut dst = base;
+                        let to_drop_start = src.add(to_copy_len);
+                        MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
+                        for _ in 1..new_shape.major() {
+                            src = src.add(old_stride.major());
+                            dst = dst.add(new_stride.major());
+                            ptr::copy(src, dst, to_copy_len);
+                            let to_drop_start = src.add(to_copy_len);
+                            MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
+                        }
+                        let tail_start_index = new_shape.major() * old_stride.major();
+                        let tail_start = base.add(tail_start_index);
+                        let tail_len = old_size - tail_start_index;
+                        MemoryRange::new_unchecked(tail_start, tail_len).drop_in_place();
+                    }
+
+                    Ordering::Equal => {
+                        let base = self.data.as_mut_ptr();
+                        let mut src = base;
+                        let mut dst = base;
+                        let to_drop_start = src.add(to_copy_len);
+                        MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
+                        for _ in 1..new_shape.major() {
+                            src = src.add(old_stride.major());
+                            dst = dst.add(new_stride.major());
+                            ptr::copy(src, dst, to_copy_len);
+                            let to_drop_start = src.add(to_copy_len);
+                            MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
+                        }
+                    }
+
+                    Ordering::Greater => {
+                        let tail_start_index = old_shape.major() * new_stride.major();
+                        let tail_len = new_size - tail_start_index;
+                        if new_size <= self.capacity() {
+                            let base = self.data.as_mut_ptr();
+                            let mut src = base;
+                            let mut dst = base;
+                            let to_drop_start = src.add(to_copy_len);
+                            MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
+                            for _ in 1..old_shape.major() {
+                                src = src.add(old_stride.major());
+                                dst = dst.add(new_stride.major());
+                                ptr::copy(src, dst, to_copy_len);
+                                let to_drop_start = src.add(to_copy_len);
+                                MemoryRange::new_unchecked(to_drop_start, to_drop_len)
+                                    .drop_in_place();
+                            }
+                            let tail_start = base.add(tail_start_index);
+                            MemoryRange::new_unchecked(tail_start, tail_len).init_with(
+                                tail_start_index,
+                                order,
+                                new_stride,
+                                &mut initializer,
+                            );
+                        } else {
+                            let mut new_data = Vec::<T>::with_capacity(new_size);
+                            let old_base = self.data.as_mut_ptr();
+                            let new_base = new_data.as_mut_ptr();
+                            let mut src = old_base;
+                            let mut dst = new_base;
+                            ptr::copy_nonoverlapping(src, dst, to_copy_len);
+                            let to_drop_start = src.add(to_copy_len);
+                            MemoryRange::new_unchecked(to_drop_start, to_drop_len).drop_in_place();
+                            for _ in 1..old_shape.major() {
+                                src = src.add(old_stride.major());
+                                dst = dst.add(new_stride.major());
+                                ptr::copy_nonoverlapping(src, dst, to_copy_len);
+                                let to_drop_start = src.add(to_copy_len);
+                                MemoryRange::new_unchecked(to_drop_start, to_drop_len)
+                                    .drop_in_place();
+                            }
+                            let tail_start = new_base.add(tail_start_index);
+                            MemoryRange::new_unchecked(tail_start, tail_len).init_with(
+                                tail_start_index,
+                                order,
+                                new_stride,
+                                &mut initializer,
+                            );
+                            self.data = new_data;
+                        }
+                    }
+                }
+
+                self.shape = new_shape;
+                self.data.set_len(new_size);
+            },
+
+            Ordering::Equal => unsafe {
+                match major_len_cmp {
+                    Ordering::Less => {
+                        self.shape = new_shape;
+                        self.data.set_len(new_size);
+                        let base = self.data.as_mut_ptr();
+                        let tail_start_index = new_size;
+                        let tail_start = base.add(tail_start_index);
+                        let tail_len = old_size - tail_start_index;
+                        MemoryRange::new_unchecked(tail_start, tail_len).drop_in_place();
+                    }
+
+                    Ordering::Equal => (),
+
+                    Ordering::Greater => {
+                        let additional = new_size - old_size;
+                        self.data.reserve(additional);
+                        let base = self.data.as_mut_ptr();
+                        let tail_start_index = old_size;
+                        let tail_start = base.add(tail_start_index);
+                        let tail_len = additional;
+                        MemoryRange::new_unchecked(tail_start, tail_len).init_with(
+                            tail_start_index,
+                            order,
+                            new_stride,
+                            &mut initializer,
+                        );
+                        self.shape = new_shape;
+                        self.data.set_len(new_size);
+                    }
+                }
+            },
+
+            Ordering::Greater => unsafe {
+                self.shape = AxisShape::default();
+                self.data.set_len(0);
+
+                let to_copy_len = old_shape.minor() * minor_stride;
+                let to_init_len = (new_shape.minor() - old_shape.minor()) * minor_stride;
+
+                match major_len_cmp {
+                    Ordering::Less => {
+                        let base = self.data.as_mut_ptr();
+                        let tail_start_index = new_shape.major() * old_stride.major();
+                        let tail_start = base.add(tail_start_index);
+                        let tail_len = old_size - tail_start_index;
+                        MemoryRange::new_unchecked(tail_start, tail_len).drop_in_place();
+                        let mut to_init_start_index = new_size + to_copy_len;
+                        if new_size <= self.capacity() {
+                            let mut src = tail_start;
+                            let mut dst = base.add(new_size);
+                            for _ in 1..new_shape.major() {
+                                src = src.sub(old_stride.major());
+                                dst = dst.sub(new_stride.major());
+                                ptr::copy(src, dst, to_copy_len);
+                                to_init_start_index -= new_stride.major();
+                                let to_init_start = base.add(to_init_start_index);
+                                MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                    to_init_start_index,
+                                    order,
+                                    new_stride,
+                                    &mut initializer,
+                                );
+                            }
+                            to_init_start_index -= new_stride.major();
+                            let to_init_start = base.add(to_init_start_index);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                to_init_start_index,
+                                order,
+                                new_stride,
+                                &mut initializer,
+                            );
+                        } else {
+                            let mut new_data = Vec::<T>::with_capacity(new_size);
+                            let new_base = new_data.as_mut_ptr();
+                            let mut src = tail_start;
+                            let mut dst = new_base.add(new_size);
+                            for _ in 1..new_shape.major() {
+                                src = src.sub(old_stride.major());
+                                dst = dst.sub(new_stride.major());
+                                ptr::copy_nonoverlapping(src, dst, to_copy_len);
+                                to_init_start_index -= new_stride.major();
+                                let to_init_start = new_base.add(to_init_start_index);
+                                MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                    to_init_start_index,
+                                    order,
+                                    new_stride,
+                                    &mut initializer,
+                                );
+                            }
+                            src = src.sub(old_stride.major());
+                            dst = dst.sub(new_stride.major());
+                            ptr::copy_nonoverlapping(src, dst, to_copy_len);
+                            to_init_start_index -= new_stride.major();
+                            let to_init_start = new_base.add(to_init_start_index);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                to_init_start_index,
+                                order,
+                                new_stride,
+                                &mut initializer,
+                            );
+                            self.data = new_data;
+                        }
+                    }
+
+                    Ordering::Equal => {
+                        let mut to_init_start_index = new_size + to_copy_len;
+                        if new_size <= self.capacity() {
+                            let base = self.data.as_mut_ptr();
+                            let mut src = base.add(old_size);
+                            let mut dst = base.add(new_size);
+                            for _ in 1..new_shape.major() {
+                                src = src.sub(old_stride.major());
+                                dst = dst.sub(new_stride.major());
+                                ptr::copy(src, dst, to_copy_len);
+                                to_init_start_index -= new_stride.major();
+                                let to_init_start = base.add(to_init_start_index);
+                                MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                    to_init_start_index,
+                                    order,
+                                    new_stride,
+                                    &mut initializer,
+                                );
+                            }
+                            to_init_start_index -= new_stride.major();
+                            let to_init_start = base.add(to_init_start_index);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                to_init_start_index,
+                                order,
+                                new_stride,
+                                &mut initializer,
+                            );
+                        } else {
+                            let mut new_data = Vec::<T>::with_capacity(new_size);
+                            let old_base = self.data.as_ptr();
+                            let new_base = new_data.as_mut_ptr();
+                            let mut src = old_base.add(old_size);
+                            let mut dst = new_base.add(new_size);
+                            for _ in 1..new_shape.major() {
+                                src = src.sub(old_stride.major());
+                                dst = dst.sub(new_stride.major());
+                                ptr::copy_nonoverlapping(src, dst, to_copy_len);
+                                to_init_start_index -= new_stride.major();
+                                let to_init_start = new_base.add(to_init_start_index);
+                                MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                    to_init_start_index,
+                                    order,
+                                    new_stride,
+                                    &mut initializer,
+                                );
+                            }
+                            src = src.sub(old_stride.major());
+                            dst = dst.sub(new_stride.major());
+                            ptr::copy_nonoverlapping(src, dst, to_copy_len);
+                            to_init_start_index -= new_stride.major();
+                            let to_init_start = new_base.add(to_init_start_index);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                to_init_start_index,
+                                order,
+                                new_stride,
+                                &mut initializer,
+                            );
+                            self.data = new_data;
+                        }
+                    }
+
+                    Ordering::Greater => {
+                        let tail_start_index = old_shape.major() * new_stride.major();
+                        let tail_len = new_size - tail_start_index;
+                        let mut to_init_start_index = tail_start_index + to_copy_len;
+                        if new_size <= self.capacity() {
+                            let base = self.data.as_mut_ptr();
+                            let tail_start = base.add(tail_start_index);
+                            MemoryRange::new_unchecked(tail_start, tail_len).init_with(
+                                tail_start_index,
+                                order,
+                                new_stride,
+                                &mut initializer,
+                            );
+                            let mut src = base.add(old_size);
+                            let mut dst = tail_start;
+                            for _ in 1..old_shape.major() {
+                                src = src.sub(old_stride.major());
+                                dst = dst.sub(new_stride.major());
+                                ptr::copy(src, dst, to_copy_len);
+                                to_init_start_index -= new_stride.major();
+                                let to_init_start = base.add(to_init_start_index);
+                                MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                    to_init_start_index,
+                                    order,
+                                    new_stride,
+                                    &mut initializer,
+                                );
+                            }
+                            to_init_start_index -= new_stride.major();
+                            let to_init_start = base.add(to_init_start_index);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                to_init_start_index,
+                                order,
+                                new_stride,
+                                &mut initializer,
+                            );
+                        } else {
+                            let mut new_data = Vec::<T>::with_capacity(new_size);
+                            let old_base = self.data.as_ptr();
+                            let new_base = new_data.as_mut_ptr();
+                            let tail_start = new_base.add(tail_start_index);
+                            MemoryRange::new_unchecked(tail_start, tail_len).init_with(
+                                tail_start_index,
+                                order,
+                                new_stride,
+                                &mut initializer,
+                            );
+                            let mut src = old_base.add(old_size);
+                            let mut dst = tail_start;
+                            for _ in 1..old_shape.major() {
+                                src = src.sub(old_stride.major());
+                                dst = dst.sub(new_stride.major());
+                                ptr::copy_nonoverlapping(src, dst, to_copy_len);
+                                to_init_start_index -= new_stride.major();
+                                let to_init_start = new_base.add(to_init_start_index);
+                                MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                    to_init_start_index,
+                                    order,
+                                    new_stride,
+                                    &mut initializer,
+                                );
+                            }
+                            src = src.sub(old_stride.major());
+                            dst = dst.sub(new_stride.major());
+                            ptr::copy_nonoverlapping(src, dst, to_copy_len);
+                            to_init_start_index -= new_stride.major();
+                            let to_init_start = new_base.add(to_init_start_index);
+                            MemoryRange::new_unchecked(to_init_start, to_init_len).init_with(
+                                to_init_start_index,
+                                order,
+                                new_stride,
+                                &mut initializer,
+                            );
                             self.data = new_data;
                         }
                     }
@@ -373,62 +785,118 @@ impl<T> Matrix<T> {
     }
 }
 
-/// Drops the memory range starting at `start` and spanning
-/// `len * size_of::<T>()` bytes in place.
-///
-/// # Safety
-///
-/// Behavior is undefined if any of the following conditions are
-/// violated:
-///
-/// - The entire memory range must be contained within a single
-///   allocated object.
-/// - The entire memory range must be [valid] for both reads
-///   and writes.
-/// - `start` must be properly aligned, even if `T` has size 0.
-///
-/// Refer to [`ptr::drop_in_place`] for more exhaustive safety
-/// concerns.
-///
-/// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
-unsafe fn drop_range_in_place<T>(start: *mut T, len: usize) {
-    let to_drop = ptr::slice_from_raw_parts_mut(start, len);
-    unsafe {
-        ptr::drop_in_place(to_drop);
-    }
+/// A struct representing a non-empty memory range.
+struct MemoryRange<T> {
+    start: *mut T,
+    len: NonZero<usize>,
 }
 
-/// Initializes the memory range starting at `start` and spanning
-/// `len * size_of::<T>()` bytes, filling with the given value.
-///
-/// # Safety
-///
-/// Behavior is undefined if any of the following conditions are
-/// violated:
-///
-/// - The entire memory range must be contained within a single
-///   allocated object.
-/// - The entire memory range must be [valid] for writes.
-/// - `start` must be properly aligned, even if `T` has size 0.
-/// - `len` must be non-zero.
-///
-/// If any part of the memory range has already been initialized,
-/// the original values will leak. However, this is considered safe.
-///
-/// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
-unsafe fn init_range<T>(start: *mut T, len: usize, value: T)
-where
-    T: Clone,
-{
-    debug_assert_ne!(len, 0);
+impl<T> MemoryRange<T> {
+    /// Creates a new [`MemoryRange`].
+    ///
+    /// # Safety
+    ///
+    /// `len` must not be zero.
+    unsafe fn new_unchecked(start: *mut T, len: usize) -> Self {
+        let len = unsafe { NonZero::new_unchecked(len) };
+        Self { start, len }
+    }
 
-    let mut to_init = start;
-    unsafe {
-        for _ in 1..len {
-            ptr::write(to_init, value.clone());
-            to_init = to_init.add(1);
+    /// Initializes the memory range with the given value.
+    ///
+    /// # Safety
+    ///
+    /// Behavior is undefined if any of the following conditions are
+    /// violated:
+    ///
+    /// - The entire memory range must be contained within a single
+    ///   allocated object.
+    /// - The entire memory range must be [valid] for writes.
+    /// - `self.start` must be properly aligned, even if `T` has size 0.
+    ///
+    /// If any part of the memory range has already been initialized,
+    /// the original values will leak. However, this is considered safe.
+    ///
+    /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
+    unsafe fn init(self, value: T)
+    where
+        T: Clone,
+    {
+        let mut to_init = self.start;
+        unsafe {
+            for _ in 1..self.len.get() {
+                ptr::write(to_init, value.clone());
+                to_init = to_init.add(1);
+            }
+            ptr::write(to_init, value);
         }
-        ptr::write(to_init, value);
+    }
+
+    /// Initializes the memory range with values initialized using
+    /// their indices.
+    ///
+    /// # Safety
+    ///
+    /// Behavior is undefined if any of the following conditions are
+    /// violated:
+    ///
+    /// - The entire memory range must be contained within a single
+    ///   allocated object.
+    /// - The entire memory range must be [valid] for writes.
+    /// - `self.start` must be properly aligned, even if `T` has size 0.
+    ///
+    /// If any part of the memory range has already been initialized,
+    /// the original values will leak. However, this is considered safe.
+    ///
+    /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
+    unsafe fn init_with<F>(
+        self,
+        start_index: usize,
+        order: Order,
+        new_stride: Stride,
+        initializer: &mut F,
+    ) where
+        F: FnMut(Index) -> T,
+    {
+        let mut to_init_index = start_index;
+        let mut to_init = self.start;
+        unsafe {
+            for _ in 1..self.len.get() {
+                let index = Index::from_flattened(to_init_index, order, new_stride);
+                let value = initializer(index);
+                ptr::write(to_init, value);
+                to_init_index += 1;
+                to_init = to_init.add(1);
+            }
+            let index = Index::from_flattened(to_init_index, order, new_stride);
+            let value = initializer(index);
+            ptr::write(to_init, value);
+        }
+    }
+
+    /// Drops the memory range.
+    ///
+    /// # Safety
+    ///
+    /// Behavior is undefined if any of the following conditions are
+    /// violated:
+    ///
+    /// - The entire memory range must be contained within a single
+    ///   allocated object.
+    /// - The entire memory range must be [valid] for both reads and
+    ///   writes.
+    /// - The entire memory range must be fully initialized.
+    /// - `self.start` must be properly aligned, even if `T` has size 0.
+    ///
+    /// Refer to [`ptr::drop_in_place`] for more exhaustive safety
+    /// concerns.
+    ///
+    /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
+    unsafe fn drop_in_place(self) {
+        let to_drop = ptr::slice_from_raw_parts_mut(self.start, self.len.get());
+        unsafe {
+            ptr::drop_in_place(to_drop);
+        }
     }
 }
 
@@ -437,7 +905,6 @@ mod tests {
     use self::mock::{Mock, Scope};
     use super::*;
     use crate::error::Error;
-    use crate::index::Index;
     use crate::shape::Shape;
     use crate::testkit;
 
