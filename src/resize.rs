@@ -378,6 +378,50 @@ impl<T> Matrix<T> {
         Ok(self)
     }
 
+    /// Resizes the matrix to the specified shape, filling uninitialized parts
+    /// with values initialized using their indices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use matreex::Result;
+    /// use matreex::{Index, Order, matrix};
+    ///
+    /// # fn main() -> Result<()> {
+    /// let mut matrix = matrix![
+    ///     [Index::new(0, 0), Index::new(0, 1), Index::new(0, 2)],
+    ///     [Index::new(1, 0), Index::new(1, 1), Index::new(1, 2)],
+    /// ];
+    ///
+    /// matrix.resize_with((2, 2), |index| index)?;
+    /// assert_eq!(
+    ///     matrix,
+    ///     matrix![
+    ///         [Index::new(0, 0), Index::new(0, 1)],
+    ///         [Index::new(1, 0), Index::new(1, 1)],
+    ///     ]
+    /// );
+    ///
+    /// matrix.resize_with((3, 3), |index| index)?;
+    /// assert_eq!(
+    ///     matrix,
+    ///     matrix![
+    ///         [Index::new(0, 0), Index::new(0, 1), Index::new(0, 2)],
+    ///         [Index::new(1, 0), Index::new(1, 1), Index::new(1, 2)],
+    ///         [Index::new(2, 0), Index::new(2, 1), Index::new(2, 2)],
+    ///     ]
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn resize_with<S, F>(&mut self, shape: S, mut initializer: F) -> Result<&mut Self>
     where
         S: AsShape,
