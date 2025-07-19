@@ -378,8 +378,6 @@ impl<T> Matrix<T> {
         let order = self.order;
         let stride = self.stride();
         self.data.iter().enumerate().map(move |(index, element)| {
-            // Hope loop-invariant code motion applies here,
-            // as well as to similar code.
             let index = Index::from_flattened(index, order, stride);
             (index, element)
         })

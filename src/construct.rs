@@ -123,10 +123,16 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Matrix, matrix};
+    /// use matreex::{Index, Matrix, matrix};
     ///
-    /// let result = Matrix::with_initializer((2, 3), |index| index.row + index.col);
-    /// assert_eq!(result, Ok(matrix![[0, 1, 2], [1, 2, 3]]));
+    /// let result = Matrix::with_initializer((2, 3), |index| index);
+    /// assert_eq!(
+    ///     result,
+    ///     Ok(matrix![
+    ///         [Index::new(0, 0), Index::new(0, 1), Index::new(0, 2)],
+    ///         [Index::new(1, 0), Index::new(1, 1), Index::new(1, 2)],
+    ///     ])
+    /// );
     /// ```
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
@@ -236,23 +242,26 @@ mod tests {
     #[test]
     fn test_with_initializer() {
         let shape = Shape::new(2, 3);
-        let matrix = Matrix::with_initializer(shape, |index| index.row + index.col).unwrap();
+        let matrix = Matrix::with_initializer(shape, |index| index).unwrap();
         assert_eq!(matrix.order, Order::default());
-        let expected = matrix![[0, 1, 2], [1, 2, 3]];
+        let expected = matrix![
+            [Index::new(0, 0), Index::new(0, 1), Index::new(0, 2)],
+            [Index::new(1, 0), Index::new(1, 1), Index::new(1, 2)],
+        ];
         testkit::assert_loose_eq(&matrix, &expected);
 
         // assert no panic from unflattening indices occurs
         let shape = Shape::new(2, 0);
-        let matrix = Matrix::with_initializer(shape, |index| index.row + index.col).unwrap();
+        let matrix = Matrix::with_initializer(shape, |index| index).unwrap();
         assert_eq!(matrix.order, Order::default());
-        let expected = matrix![[0; 0]; 2];
+        let expected = matrix![[Index::default(); 0]; 2];
         testkit::assert_loose_eq(&matrix, &expected);
 
         // assert no panic from unflattening indices occurs
         let shape = Shape::new(0, 3);
-        let matrix = Matrix::with_initializer(shape, |index| index.row + index.col).unwrap();
+        let matrix = Matrix::with_initializer(shape, |index| index).unwrap();
         assert_eq!(matrix.order, Order::default());
-        let expected = matrix![[0; 3]; 0];
+        let expected = matrix![[Index::default(); 3]; 0];
         testkit::assert_loose_eq(&matrix, &expected);
 
         let shape = Shape::new(usize::MAX, 2);

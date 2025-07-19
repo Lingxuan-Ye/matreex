@@ -1,13 +1,30 @@
 use crate::Matrix;
 use crate::error::Error::SizeMismatch;
 use crate::order::Order;
-use crate::shape::AxisShape;
+use crate::shape::{AxisShape, Shape};
 use alloc::vec::Vec;
 use core::fmt;
 use core::marker::PhantomData;
 use serde::de::{Deserialize, Deserializer, Error, MapAccess, SeqAccess, Visitor};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 const FIELDS: &[&str] = &["order", "shape", "data"];
+
+impl<T> Serialize for Matrix<T>
+where
+    T: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut matrix = serializer.serialize_struct("Matrix", 3)?;
+        matrix.serialize_field("order", &self.order)?;
+        matrix.serialize_field("shape", &self.shape())?;
+        matrix.serialize_field("data", &self.data)?;
+        matrix.end()
+    }
+}
 
 impl<'de, T> Deserialize<'de> for Matrix<T>
 where
@@ -51,17 +68,17 @@ where
         let order: Order = seq
             .next_element()?
             .ok_or_else(|| Error::invalid_length(0, &self))?;
-        let shape: AxisShape = seq
+        let shape: Shape = seq
             .next_element()?
             .ok_or_else(|| Error::invalid_length(1, &self))?;
         let data: Vec<T> = seq
             .next_element()?
             .ok_or_else(|| Error::invalid_length(2, &self))?;
 
+        let shape = AxisShape::from_shape(shape, order);
         match shape.size::<T>() {
-            Err(error) => Err(Error::custom(error)),
-            Ok(size) if data.len() != size => Err(Error::custom(SizeMismatch)),
-            _ => Ok(Matrix { order, shape, data }),
+            Ok(size) if data.len() == size => Ok(Matrix { order, shape, data }),
+            _ => Err(Error::custom(SizeMismatch)),
         }
     }
 
@@ -70,7 +87,7 @@ where
         A: MapAccess<'de>,
     {
         let mut order: Option<Order> = None;
-        let mut shape: Option<AxisShape> = None;
+        let mut shape: Option<Shape> = None;
         let mut data: Option<Vec<T>> = None;
 
         while let Some(key) = map.next_key()? {
@@ -100,10 +117,10 @@ where
         let shape = shape.ok_or_else(|| Error::missing_field("shape"))?;
         let data = data.ok_or_else(|| Error::missing_field("data"))?;
 
+        let shape = AxisShape::from_shape(shape, order);
         match shape.size::<T>() {
-            Err(error) => Err(Error::custom(error)),
-            Ok(size) if data.len() != size => Err(Error::custom(SizeMismatch)),
-            _ => Ok(Matrix { order, shape, data }),
+            Ok(size) if data.len() == size => Ok(Matrix { order, shape, data }),
+            _ => Err(Error::custom(SizeMismatch)),
         }
     }
 }
@@ -173,12 +190,12 @@ mod tests {
                 },
                 Token::Str("shape"),
                 Token::Struct {
-                    name: "AxisShape",
+                    name: "Shape",
                     len: 2,
                 },
-                Token::Str("major"),
+                Token::Str("nrows"),
                 Token::U64(2),
-                Token::Str("minor"),
+                Token::Str("ncols"),
                 Token::U64(3),
                 Token::StructEnd,
                 Token::Str("data"),
@@ -215,13 +232,13 @@ mod tests {
                 },
                 Token::Str("shape"),
                 Token::Struct {
-                    name: "AxisShape",
+                    name: "Shape",
                     len: 2,
                 },
-                Token::Str("major"),
-                Token::U64(3),
-                Token::Str("minor"),
+                Token::Str("nrows"),
                 Token::U64(2),
+                Token::Str("ncols"),
+                Token::U64(3),
                 Token::StructEnd,
                 Token::Str("data"),
                 Token::Seq { len: Some(6) },
@@ -255,12 +272,12 @@ mod tests {
                     variant: "RowMajor",
                 },
                 Token::Struct {
-                    name: "AxisShape",
+                    name: "Shape",
                     len: 2,
                 },
-                Token::Str("major"),
+                Token::Str("nrows"),
                 Token::U64(2),
-                Token::Str("minor"),
+                Token::Str("ncols"),
                 Token::U64(3),
                 Token::StructEnd,
                 Token::Seq { len: Some(6) },
@@ -291,13 +308,13 @@ mod tests {
                     variant: "ColMajor",
                 },
                 Token::Struct {
-                    name: "AxisShape",
+                    name: "Shape",
                     len: 2,
                 },
-                Token::Str("major"),
-                Token::U64(3),
-                Token::Str("minor"),
+                Token::Str("nrows"),
                 Token::U64(2),
+                Token::Str("ncols"),
+                Token::U64(3),
                 Token::StructEnd,
                 Token::Seq { len: Some(6) },
                 Token::I32(1),
@@ -332,12 +349,12 @@ mod tests {
                 },
                 Token::Str("shape"),
                 Token::Struct {
-                    name: "AxisShape",
+                    name: "Shape",
                     len: 2,
                 },
-                Token::Str("major"),
+                Token::Str("nrows"),
                 Token::U64(2),
-                Token::Str("minor"),
+                Token::Str("ncols"),
                 Token::U64(3),
                 Token::StructEnd,
                 Token::Str("data"),
@@ -371,13 +388,13 @@ mod tests {
                 },
                 Token::Str("shape"),
                 Token::Struct {
-                    name: "AxisShape",
+                    name: "Shape",
                     len: 2,
                 },
-                Token::Str("major"),
-                Token::U64(3),
-                Token::Str("minor"),
+                Token::Str("nrows"),
                 Token::U64(2),
+                Token::Str("ncols"),
+                Token::U64(3),
                 Token::StructEnd,
                 Token::Str("data"),
                 Token::Seq { len: Some(6) },

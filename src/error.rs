@@ -9,7 +9,7 @@ pub enum Error {
     /// Error when the size exceeds [`usize::MAX`].
     SizeOverflow,
 
-    /// Error when the size of the shape does not match the size of the
+    /// Error when the size of the shape does not match the length of the
     /// underlying data.
     SizeMismatch,
 
