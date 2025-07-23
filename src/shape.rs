@@ -207,12 +207,12 @@ impl AsShape for [usize; 2] {
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub(crate) struct AxisShape {
+pub(crate) struct MemoryShape {
     major: usize,
     minor: usize,
 }
 
-impl AxisShape {
+impl MemoryShape {
     pub(crate) fn major(&self) -> usize {
         self.major
     }

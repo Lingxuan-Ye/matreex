@@ -2,7 +2,7 @@ use crate::Matrix;
 use crate::error::Result;
 use crate::index::Index;
 use crate::order::Order;
-use crate::shape::{AsShape, AxisShape, Stride};
+use crate::shape::{AsShape, MemoryShape, Stride};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 use core::num::NonZero;
@@ -73,7 +73,7 @@ impl<T> Matrix<T> {
         // Note that the tail may overlap with other parts of memory, so
         // the execution order matters.
 
-        let new_shape = AxisShape::from_shape(shape, self.order);
+        let new_shape = MemoryShape::from_shape(shape, self.order);
         let new_size = new_shape.size::<T>()?;
         let old_size = self.size();
 
@@ -119,7 +119,7 @@ impl<T> Matrix<T> {
 
         match minor_len_cmp {
             Ordering::Less => unsafe {
-                self.shape = AxisShape::default();
+                self.shape = MemoryShape::default();
                 self.data.set_len(0);
 
                 let to_copy_len = new_shape.minor() * minor_stride;
@@ -239,7 +239,7 @@ impl<T> Matrix<T> {
             },
 
             Ordering::Greater => unsafe {
-                self.shape = AxisShape::default();
+                self.shape = MemoryShape::default();
                 self.data.set_len(0);
 
                 let to_copy_len = old_shape.minor() * minor_stride;
@@ -430,7 +430,7 @@ impl<T> Matrix<T> {
         // Refer to `Matrix::resize` for details.
 
         let order = self.order;
-        let new_shape = AxisShape::from_shape(shape, self.order);
+        let new_shape = MemoryShape::from_shape(shape, self.order);
         let new_size = new_shape.size::<T>()?;
         let old_size = self.size();
         let new_stride = new_shape.stride();
@@ -478,7 +478,7 @@ impl<T> Matrix<T> {
 
         match minor_len_cmp {
             Ordering::Less => unsafe {
-                self.shape = AxisShape::default();
+                self.shape = MemoryShape::default();
                 self.data.set_len(0);
 
                 let to_copy_len = new_shape.minor() * minor_stride;
@@ -610,7 +610,7 @@ impl<T> Matrix<T> {
             },
 
             Ordering::Greater => unsafe {
-                self.shape = AxisShape::default();
+                self.shape = MemoryShape::default();
                 self.data.set_len(0);
 
                 let to_copy_len = old_shape.minor() * minor_stride;

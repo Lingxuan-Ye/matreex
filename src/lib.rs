@@ -98,7 +98,7 @@ pub use self::order::Order;
 pub use self::shape::Shape;
 
 use self::index::AxisIndex;
-use self::shape::{AxisShape, Stride};
+use self::shape::{MemoryShape, Stride};
 use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
@@ -136,7 +136,7 @@ mod testkit;
 #[derive(Clone)]
 pub struct Matrix<T> {
     order: Order,
-    shape: AxisShape,
+    shape: MemoryShape,
     data: Vec<T>,
 }
 
@@ -650,7 +650,7 @@ impl<T> Matrix<T> {
     /// ```
     #[inline]
     pub fn clear(&mut self) -> &mut Self {
-        self.shape = AxisShape::default();
+        self.shape = MemoryShape::default();
         self.data.clear();
         self
     }

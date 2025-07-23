@@ -2,7 +2,7 @@ use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::index::AxisIndex;
 use crate::order::Order;
-use crate::shape::{AxisShape, Shape};
+use crate::shape::{MemoryShape, Shape};
 use alloc::vec::Vec;
 use core::ptr;
 
@@ -583,7 +583,7 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let size = shape.size::<U>()?;
         let mut data = Vec::with_capacity(size);
 

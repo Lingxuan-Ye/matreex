@@ -1,7 +1,7 @@
 use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::order::Order;
-use crate::shape::{AxisShape, Shape};
+use crate::shape::{MemoryShape, Shape};
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
@@ -52,7 +52,7 @@ impl<T, const R: usize, const C: usize> FromRows<[[T; C]; R]> for Matrix<T> {
         let nrows = R;
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let data = value.into_iter().flatten().collect();
         Self { order, shape, data }
     }
@@ -105,7 +105,7 @@ impl<T, const C: usize> FromRows<Box<[[T; C]]>> for Matrix<T> {
         let nrows = value.len();
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let data = value.into_iter().flatten().collect();
         Self { order, shape, data }
     }
@@ -173,7 +173,7 @@ impl<T, const R: usize, const C: usize> TryFromRows<[Box<[T; C]>; R]> for Matrix
         let nrows = R;
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         shape.size::<T>()?;
         let data = value.into_iter().flat_map(|row| row as Box<[T]>).collect();
         Ok(Self { order, shape, data })
@@ -237,7 +237,7 @@ impl<T, const C: usize> TryFromRows<Box<[Box<[T; C]>]>> for Matrix<T> {
         let nrows = value.len();
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         shape.size::<T>()?;
         let data = value.into_iter().flat_map(|row| row as Box<[T]>).collect();
         Ok(Self { order, shape, data })
@@ -301,14 +301,14 @@ impl<T, const R: usize> TryFromRows<[Box<[T]>; R]> for Matrix<T> {
         let order = Order::RowMajor;
         let mut iter = value.into_iter();
         let Some(first) = iter.next() else {
-            let shape = AxisShape::default();
+            let shape = MemoryShape::default();
             let data = Vec::new();
             return Ok(Self { order, shape, data });
         };
         let nrows = R;
         let ncols = first.len();
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
@@ -381,13 +381,13 @@ impl<T> TryFromRows<Box<[Box<[T]>]>> for Matrix<T> {
         let nrows = value.len();
         let mut iter = value.into_iter();
         let Some(first) = iter.next() else {
-            let shape = AxisShape::default();
+            let shape = MemoryShape::default();
             let data = Vec::new();
             return Ok(Self { order, shape, data });
         };
         let ncols = first.len();
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
@@ -459,14 +459,14 @@ impl<T, const R: usize> TryFromRows<[Vec<T>; R]> for Matrix<T> {
         let order = Order::RowMajor;
         let mut iter = value.into_iter();
         let Some(first) = iter.next() else {
-            let shape = AxisShape::default();
+            let shape = MemoryShape::default();
             let data = Vec::new();
             return Ok(Self { order, shape, data });
         };
         let nrows = R;
         let ncols = first.len();
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
@@ -539,13 +539,13 @@ impl<T> TryFromRows<Box<[Vec<T>]>> for Matrix<T> {
         let nrows = value.len();
         let mut iter = value.into_iter();
         let Some(first) = iter.next() else {
-            let shape = AxisShape::default();
+            let shape = MemoryShape::default();
             let data = Vec::new();
             return Ok(Self { order, shape, data });
         };
         let ncols = first.len();
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
@@ -621,7 +621,7 @@ where
         let order = Order::RowMajor;
         let mut iter = iter.into_iter();
         let Some(first) = iter.next() else {
-            let shape = AxisShape::default();
+            let shape = MemoryShape::default();
             let data = Vec::new();
             return Self { order, shape, data };
         };
@@ -640,7 +640,7 @@ where
             size = data.len();
         }
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         Self { order, shape, data }
     }
 }
@@ -656,7 +656,7 @@ mod tests {
         let expected = {
             let order = Order::RowMajor;
             let shape = Shape::new(2, 3);
-            let shape = AxisShape::from_shape(shape, order);
+            let shape = MemoryShape::from_shape(shape, order);
             let data = vec![1, 2, 3, 4, 5, 6];
             Matrix { order, shape, data }
         };
@@ -686,7 +686,7 @@ mod tests {
             let expected = {
                 let order = Order::RowMajor;
                 let shape = Shape::new(2, 3);
-                let shape = AxisShape::from_shape(shape, order);
+                let shape = MemoryShape::from_shape(shape, order);
                 let data = vec![1, 2, 3, 4, 5, 6];
                 Matrix { order, shape, data }
             };
@@ -954,7 +954,7 @@ mod tests {
         let expected = {
             let order = Order::RowMajor;
             let shape = Shape::new(2, 3);
-            let shape = AxisShape::from_shape(shape, order);
+            let shape = MemoryShape::from_shape(shape, order);
             let data = vec![1, 2, 3, 4, 5, 6];
             Matrix { order, shape, data }
         };

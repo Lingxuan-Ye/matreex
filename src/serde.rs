@@ -1,7 +1,7 @@
 use crate::Matrix;
 use crate::error::Error::SizeMismatch;
 use crate::order::Order;
-use crate::shape::{AxisShape, Shape};
+use crate::shape::{MemoryShape, Shape};
 use alloc::vec::Vec;
 use core::fmt;
 use core::marker::PhantomData;
@@ -75,7 +75,7 @@ where
             .next_element()?
             .ok_or_else(|| Error::invalid_length(2, &self))?;
 
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         match shape.size::<T>() {
             Ok(size) if data.len() == size => Ok(Matrix { order, shape, data }),
             _ => Err(Error::custom(SizeMismatch)),
@@ -117,7 +117,7 @@ where
         let shape = shape.ok_or_else(|| Error::missing_field("shape"))?;
         let data = data.ok_or_else(|| Error::missing_field("data"))?;
 
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         match shape.size::<T>() {
             Ok(size) if data.len() == size => Ok(Matrix { order, shape, data }),
             _ => Err(Error::custom(SizeMismatch)),

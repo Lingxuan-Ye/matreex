@@ -3,7 +3,7 @@
 use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::order::Order;
-use crate::shape::{AxisShape, Stride};
+use crate::shape::{MemoryShape, Stride};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -598,7 +598,7 @@ impl AxisIndex {
     pub(crate) fn from_wrapping_index(
         index: WrappingIndex,
         order: Order,
-        shape: AxisShape,
+        shape: MemoryShape,
     ) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (index.row, index.col),
