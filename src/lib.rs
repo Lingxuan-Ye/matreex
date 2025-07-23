@@ -97,8 +97,8 @@ pub use self::index::{Index, WrappingIndex};
 pub use self::order::Order;
 pub use self::shape::Shape;
 
-use self::index::AxisIndex;
-use self::shape::{AxisShape, Stride};
+use self::index::MemoryIndex;
+use self::shape::{MemoryShape, Stride};
 use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
@@ -136,7 +136,7 @@ mod testkit;
 #[derive(Clone)]
 pub struct Matrix<T> {
     order: Order,
-    shape: AxisShape,
+    shape: MemoryShape,
     data: Vec<T>,
 }
 
@@ -299,7 +299,7 @@ impl<T> Matrix<T> {
         for old_index in 0..size {
             unsafe {
                 let src = old_base.add(old_index);
-                let new_index = AxisIndex::from_flattened(old_index, old_stride)
+                let new_index = MemoryIndex::from_flattened(old_index, old_stride)
                     .swap()
                     .to_flattened(new_stride);
                 let dst = new_base.add(new_index);
@@ -650,7 +650,7 @@ impl<T> Matrix<T> {
     /// ```
     #[inline]
     pub fn clear(&mut self) -> &mut Self {
-        self.shape = AxisShape::default();
+        self.shape = MemoryShape::default();
         self.data.clear();
         self
     }

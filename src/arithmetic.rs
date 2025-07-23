@@ -1,8 +1,8 @@
 use crate::Matrix;
 use crate::error::{Error, Result};
-use crate::index::AxisIndex;
+use crate::index::MemoryIndex;
 use crate::order::Order;
-use crate::shape::{AxisShape, Shape};
+use crate::shape::{MemoryShape, Shape};
 use alloc::vec::Vec;
 use core::ptr;
 
@@ -222,7 +222,7 @@ impl<L> Matrix<L> {
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, lhs_stride)
+                    let index = MemoryIndex::from_flattened(index, lhs_stride)
                         .swap()
                         .to_flattened(rhs_stride);
                     let right = unsafe { rhs.data.get_unchecked(index) };
@@ -282,7 +282,7 @@ impl<L> Matrix<L> {
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, lhs_stride)
+                    let index = MemoryIndex::from_flattened(index, lhs_stride)
                         .swap()
                         .to_flattened(rhs_stride);
                     let right = unsafe { rhs.data.get_unchecked(index) };
@@ -347,7 +347,7 @@ impl<L> Matrix<L> {
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, lhs_stride)
+                    let index = MemoryIndex::from_flattened(index, lhs_stride)
                         .swap()
                         .to_flattened(rhs_stride);
                     let right = unsafe { ptr::read(rhs_base.add(index)) };
@@ -413,7 +413,7 @@ impl<L> Matrix<L> {
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = AxisIndex::from_flattened(index, lhs_stride)
+                    let index = MemoryIndex::from_flattened(index, lhs_stride)
                         .swap()
                         .to_flattened(rhs_stride);
                     let right = unsafe { ptr::read(rhs_base.add(index)) };
@@ -465,7 +465,7 @@ impl<L> Matrix<L> {
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = AxisIndex::from_flattened(index, lhs_stride)
+                let index = MemoryIndex::from_flattened(index, lhs_stride)
                     .swap()
                     .to_flattened(rhs_stride);
                 let right = unsafe { rhs.data.get_unchecked(index) };
@@ -521,7 +521,7 @@ impl<L> Matrix<L> {
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = AxisIndex::from_flattened(index, lhs_stride)
+                let index = MemoryIndex::from_flattened(index, lhs_stride)
                     .swap()
                     .to_flattened(rhs_stride);
                 let right = unsafe { ptr::read(rhs_base.add(index)) };
@@ -583,7 +583,7 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let shape = Shape::new(nrows, ncols);
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let size = shape.size::<U>()?;
         let mut data = Vec::with_capacity(size);
 

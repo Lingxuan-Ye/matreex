@@ -2,7 +2,7 @@ use crate::Matrix;
 use crate::error::Result;
 use crate::index::Index;
 use crate::order::Order;
-use crate::shape::{AsShape, AxisShape};
+use crate::shape::{AsShape, MemoryShape};
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -22,7 +22,7 @@ impl<T> Matrix<T> {
     #[inline]
     pub fn new() -> Self {
         let order = Order::default();
-        let shape = AxisShape::default();
+        let shape = MemoryShape::default();
         let data = Vec::new();
         Self { order, shape, data }
     }
@@ -44,7 +44,7 @@ impl<T> Matrix<T> {
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         let order = Order::default();
-        let shape = AxisShape::default();
+        let shape = MemoryShape::default();
         let data = Vec::with_capacity(capacity);
         Self { order, shape, data }
     }
@@ -74,7 +74,7 @@ impl<T> Matrix<T> {
         T: Default,
     {
         let order = Order::default();
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);
         data.resize_with(size, T::default);
@@ -106,7 +106,7 @@ impl<T> Matrix<T> {
         T: Clone,
     {
         let order = Order::default();
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let size = shape.size::<T>()?;
         let data = vec![value; size];
         Ok(Self { order, shape, data })
@@ -143,7 +143,7 @@ impl<T> Matrix<T> {
         F: FnMut(Index) -> T,
     {
         let order = Order::default();
-        let shape = AxisShape::from_shape(shape, order);
+        let shape = MemoryShape::from_shape(shape, order);
         let stride = shape.stride();
         let size = shape.size::<T>()?;
         let mut data = Vec::with_capacity(size);

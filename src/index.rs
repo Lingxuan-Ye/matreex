@@ -3,7 +3,7 @@
 use crate::Matrix;
 use crate::error::{Error, Result};
 use crate::order::Order;
-use crate::shape::{AxisShape, Stride};
+use crate::shape::{MemoryShape, Stride};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -306,7 +306,7 @@ impl Index {
     /// For simplicity and out of trust in loop-invariant code motion,
     /// the order-specific version will not be provided.
     pub(crate) fn from_flattened(index: usize, order: Order, stride: Stride) -> Self {
-        AxisIndex::from_flattened(index, stride).to_index(order)
+        MemoryIndex::from_flattened(index, stride).to_index(order)
     }
 
     /// # Notes
@@ -314,7 +314,7 @@ impl Index {
     /// For simplicity and out of trust in loop-invariant code motion,
     /// the order-specific version will not be provided.
     pub(crate) fn to_flattened(self, order: Order, stride: Stride) -> usize {
-        AxisIndex::from_index(self, order).to_flattened(stride)
+        MemoryIndex::from_index(self, order).to_flattened(stride)
     }
 }
 
@@ -379,25 +379,25 @@ where
 
     #[inline]
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        let index = AxisIndex::from_index(self, matrix.order);
+        let index = MemoryIndex::from_index(self, matrix.order);
         index.get(matrix)
     }
 
     #[inline]
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        let index = AxisIndex::from_index(self, matrix.order);
+        let index = MemoryIndex::from_index(self, matrix.order);
         index.get_mut(matrix)
     }
 
     #[inline]
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        let index = AxisIndex::from_index(self, matrix.order);
+        let index = MemoryIndex::from_index(self, matrix.order);
         unsafe { index.get_unchecked(matrix) }
     }
 
     #[inline]
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        let index = AxisIndex::from_index(self, matrix.order);
+        let index = MemoryIndex::from_index(self, matrix.order);
         unsafe { index.get_unchecked_mut(matrix) }
     }
 }
@@ -525,7 +525,7 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     /// If no panic occurs, the output returned is guaranteed to be valid.
     #[inline]
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        let index = AxisIndex::from_wrapping_index(self, matrix.order, matrix.shape);
+        let index = MemoryIndex::from_wrapping_index(self, matrix.order, matrix.shape);
         unsafe { index.get_unchecked(matrix) }
     }
 
@@ -542,19 +542,19 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     /// If no panic occurs, the output returned is guaranteed to be valid.
     #[inline]
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        let index = AxisIndex::from_wrapping_index(self, matrix.order, matrix.shape);
+        let index = MemoryIndex::from_wrapping_index(self, matrix.order, matrix.shape);
         unsafe { index.get_unchecked_mut(matrix) }
     }
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub(crate) struct AxisIndex {
+pub(crate) struct MemoryIndex {
     pub(crate) major: usize,
     pub(crate) minor: usize,
 }
 
-impl AxisIndex {
+impl MemoryIndex {
     pub(crate) fn swap(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
@@ -598,7 +598,7 @@ impl AxisIndex {
     pub(crate) fn from_wrapping_index(
         index: WrappingIndex,
         order: Order,
-        shape: AxisShape,
+        shape: MemoryShape,
     ) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (index.row, index.col),
@@ -617,7 +617,7 @@ impl AxisIndex {
         Self { major, minor }
     }
 
-    // `AxisIndex::to_wapping_index` is not implemented for two reasons:
+    // `MemoryIndex::to_wapping_index` is not implemented for two reasons:
     //
     // - It is a one-to-many mapping.
     // - It serves no practical purpose.
@@ -636,7 +636,7 @@ impl AxisIndex {
     }
 }
 
-unsafe impl<T> MatrixIndex<T> for AxisIndex {
+unsafe impl<T> MatrixIndex<T> for MemoryIndex {
     type Output = T;
 
     fn is_out_of_bounds(&self, matrix: &Matrix<T>) -> bool {
@@ -655,11 +655,11 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
 }
 
 mod internal {
-    use super::{AsIndex, AxisIndex, WrappingIndex};
+    use super::{AsIndex, MemoryIndex, WrappingIndex};
     pub trait Sealed {}
     impl<I> Sealed for I where I: AsIndex {}
     impl Sealed for WrappingIndex {}
-    impl Sealed for AxisIndex {}
+    impl Sealed for MemoryIndex {}
 }
 
 #[cfg(test)]
