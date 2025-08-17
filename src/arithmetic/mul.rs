@@ -1,8 +1,5 @@
 use crate::Matrix;
 use crate::error::Result;
-use crate::order::Order;
-use crate::shape::{MemoryShape, Shape};
-use alloc::vec::Vec;
 use core::ops::{Add, Mul, MulAssign};
 
 impl<L, R, U> Mul<Matrix<R>> for Matrix<L>
@@ -92,69 +89,21 @@ impl<L> Matrix<L> {
     /// [`Error::ShapeNotConformable`]: crate::error::Error::ShapeNotConformable
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    pub fn multiply<R, U>(mut self, mut rhs: Matrix<R>) -> Result<Matrix<U>>
+    pub fn multiply<R, U>(self, rhs: Matrix<R>) -> Result<Matrix<U>>
     where
         L: Mul<R, Output = U> + Clone,
         R: Clone,
         U: Add<Output = U> + Default,
     {
-        self.ensure_multiplication_like_operation_conformable(&rhs)?;
-
-        let order = self.order;
-        let nrows = self.nrows();
-        let ncols = rhs.ncols();
-        let shape = Shape::new(nrows, ncols);
-        let shape = MemoryShape::from_shape(shape, order);
-        let size = shape.size::<U>()?;
-        let mut data = Vec::with_capacity(size);
-
-        if self.ncols() == 0 {
-            data.resize_with(size, U::default);
-            return Ok(Matrix { order, shape, data });
-        }
-
-        self.set_order(Order::RowMajor);
-        rhs.set_order(Order::ColMajor);
-
-        match order {
-            Order::RowMajor => {
-                for row in 0..nrows {
-                    for col in 0..ncols {
-                        let lhs = unsafe { self.get_nth_major_axis_vector_unchecked(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
-                        let element = unsafe { dot_product(lhs, rhs).unwrap_unchecked() };
-                        data.push(element);
-                    }
-                }
-            }
-
-            Order::ColMajor => {
-                for col in 0..ncols {
-                    for row in 0..nrows {
-                        let lhs = unsafe { self.get_nth_major_axis_vector_unchecked(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
-                        let element = unsafe { dot_product(lhs, rhs).unwrap_unchecked() };
-                        data.push(element);
-                    }
-                }
-            }
-        }
-
-        Ok(Matrix { order, shape, data })
+        self.multiplication_like_operation(rhs, |left_row, right_col| unsafe {
+            left_row
+                .iter()
+                .zip(right_col)
+                .map(|(left, right)| left.clone() * right.clone())
+                .reduce(|sum, product| sum + product)
+                .unwrap_unchecked()
+        })
     }
-}
-
-#[inline(always)]
-fn dot_product<L, R, U>(lhs: &[L], rhs: &[R]) -> Option<U>
-where
-    L: Mul<R, Output = U> + Clone,
-    R: Clone,
-    U: Add<Output = U>,
-{
-    lhs.iter()
-        .zip(rhs)
-        .map(|(left, right)| left.clone() * right.clone())
-        .reduce(|accumulator, product| accumulator + product)
 }
 
 macro_rules! impl_helper {

@@ -555,11 +555,12 @@ impl<L> Matrix<L> {
     /// ```
     /// use matreex::matrix;
     ///
-    /// fn dot_product(lhs: &[i32], rhs: &[i32]) -> i32 {
-    ///     lhs.iter()
-    ///         .zip(rhs)
-    ///         .map(|(x, y)| x * y)
-    ///         .reduce(|acc, p| acc + p)
+    /// fn dot_product(left_row: &[i32], right_col: &[i32]) -> i32 {
+    ///     left_row
+    ///         .iter()
+    ///         .zip(right_col)
+    ///         .map(|(left, right)| left * right)
+    ///         .reduce(|sum, product| sum + product)
     ///         .unwrap()
     /// }
     ///
@@ -1195,11 +1196,12 @@ mod tests {
 
     #[test]
     fn test_multiplication_like_operation() {
-        fn dot_product(lhs: &[i32], rhs: &[i32]) -> i32 {
-            lhs.iter()
-                .zip(rhs)
-                .map(|(x, y)| x * y)
-                .reduce(|acc, p| acc + p)
+        fn dot_product(left_row: &[i32], right_col: &[i32]) -> i32 {
+            left_row
+                .iter()
+                .zip(right_col)
+                .map(|(left, right)| left * right)
+                .reduce(|sum, product| sum + product)
                 .unwrap()
         }
 
