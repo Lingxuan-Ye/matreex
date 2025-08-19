@@ -40,14 +40,11 @@ where
 }
 
 #[derive(Debug)]
-struct MatrixVisitor<T> {
-    marker: PhantomData<T>,
-}
+struct MatrixVisitor<T>(PhantomData<T>);
 
 impl<T> MatrixVisitor<T> {
     fn new() -> Self {
-        let marker = PhantomData;
-        Self { marker }
+        Self(PhantomData)
     }
 }
 
