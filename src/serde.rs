@@ -40,14 +40,11 @@ where
 }
 
 #[derive(Debug)]
-struct MatrixVisitor<T> {
-    marker: PhantomData<T>,
-}
+struct MatrixVisitor<T>(PhantomData<T>);
 
 impl<T> MatrixVisitor<T> {
     fn new() -> Self {
-        let marker = PhantomData;
-        Self { marker }
+        Self(PhantomData)
     }
 }
 
@@ -65,15 +62,29 @@ where
     where
         A: SeqAccess<'de>,
     {
-        let order: Order = seq
-            .next_element()?
-            .ok_or_else(|| Error::invalid_length(0, &self))?;
-        let shape: Shape = seq
-            .next_element()?
-            .ok_or_else(|| Error::invalid_length(1, &self))?;
-        let data: Vec<T> = seq
-            .next_element()?
-            .ok_or_else(|| Error::invalid_length(2, &self))?;
+        let order: Order;
+        let shape: Shape;
+        let data: Vec<T>;
+
+        if seq.size_hint() == Some(2) {
+            order = Order::default();
+            shape = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(0, &self))?;
+            data = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(1, &self))?;
+        } else {
+            order = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(0, &self))?;
+            shape = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(1, &self))?;
+            data = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(2, &self))?;
+        }
 
         let shape = MemoryShape::from_shape(shape, order);
         match shape.size::<T>() {
@@ -175,11 +186,8 @@ mod tests {
     #[test]
     fn test_deserialize_seq() {
         {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::RowMajor);
-
-            let mut tokens = vec![
-                Token::Seq { len: Some(3) },
+            let tokens = vec![
+                Token::Seq { len: None },
                 Token::UnitVariant {
                     name: "Order",
                     variant: "RowMajor",
@@ -193,7 +201,7 @@ mod tests {
                 Token::Str("ncols"),
                 Token::U64(3),
                 Token::StructEnd,
-                Token::Seq { len: Some(6) },
+                Token::Seq { len: None },
                 Token::I32(1),
                 Token::I32(2),
                 Token::I32(3),
@@ -203,19 +211,15 @@ mod tests {
                 Token::SeqEnd,
                 Token::SeqEnd,
             ];
-            assert_de_tokens(&matrix, &tokens);
 
-            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-            tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
+            let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
+            expected.set_order(Order::RowMajor);
+            assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::ColMajor);
-
-            let mut tokens = vec![
-                Token::Seq { len: Some(3) },
+            let tokens = vec![
+                Token::Seq { len: None },
                 Token::UnitVariant {
                     name: "Order",
                     variant: "ColMajor",
@@ -229,7 +233,7 @@ mod tests {
                 Token::Str("ncols"),
                 Token::U64(3),
                 Token::StructEnd,
-                Token::Seq { len: Some(6) },
+                Token::Seq { len: None },
                 Token::I32(1),
                 Token::I32(4),
                 Token::I32(2),
@@ -239,10 +243,61 @@ mod tests {
                 Token::SeqEnd,
                 Token::SeqEnd,
             ];
-            assert_de_tokens(&matrix, &tokens);
 
-            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-            tokens.remove(index);
+            let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
+            expected.set_order(Order::ColMajor);
+            assert_de_tokens(&expected, &tokens);
+        }
+
+        {
+            let tokens = vec![
+                Token::Seq { len: Some(2) },
+                Token::Struct {
+                    name: "Shape",
+                    len: 2,
+                },
+                Token::Str("nrows"),
+                Token::U64(2),
+                Token::Str("ncols"),
+                Token::U64(3),
+                Token::StructEnd,
+                Token::Seq { len: None },
+                Token::I32(1),
+                Token::I32(2),
+                Token::I32(3),
+                Token::I32(4),
+                Token::I32(5),
+                Token::I32(6),
+                Token::SeqEnd,
+                Token::SeqEnd,
+            ];
+
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_de_tokens(&expected, &tokens);
+        }
+
+        {
+            let tokens = vec![
+                Token::Seq { len: Some(2) },
+                Token::Struct {
+                    name: "Shape",
+                    len: 2,
+                },
+                Token::Str("nrows"),
+                Token::U64(2),
+                Token::Str("ncols"),
+                Token::U64(3),
+                Token::StructEnd,
+                Token::Seq { len: None },
+                Token::I32(1),
+                Token::I32(2),
+                Token::I32(3),
+                Token::I32(4),
+                Token::I32(5),
+                Token::SeqEnd,
+                Token::SeqEnd,
+            ];
+
             assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
     }
@@ -250,11 +305,8 @@ mod tests {
     #[test]
     fn test_deserialize_map() {
         {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::RowMajor);
-
-            let mut tokens = vec![
-                Token::Map { len: Some(3) },
+            let tokens = vec![
+                Token::Map { len: None },
                 Token::Str("order"),
                 Token::UnitVariant {
                     name: "Order",
@@ -271,7 +323,7 @@ mod tests {
                 Token::U64(3),
                 Token::StructEnd,
                 Token::Str("data"),
-                Token::Seq { len: Some(6) },
+                Token::Seq { len: None },
                 Token::I32(1),
                 Token::I32(2),
                 Token::I32(3),
@@ -281,19 +333,15 @@ mod tests {
                 Token::SeqEnd,
                 Token::MapEnd,
             ];
-            assert_de_tokens(&matrix, &tokens);
 
-            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-            tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
+            let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
+            expected.set_order(Order::RowMajor);
+            assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::ColMajor);
-
-            let mut tokens = vec![
-                Token::Map { len: Some(3) },
+            let tokens = vec![
+                Token::Map { len: None },
                 Token::Str("order"),
                 Token::UnitVariant {
                     name: "Order",
@@ -310,7 +358,7 @@ mod tests {
                 Token::U64(3),
                 Token::StructEnd,
                 Token::Str("data"),
-                Token::Seq { len: Some(6) },
+                Token::Seq { len: None },
                 Token::I32(1),
                 Token::I32(4),
                 Token::I32(2),
@@ -320,20 +368,15 @@ mod tests {
                 Token::SeqEnd,
                 Token::MapEnd,
             ];
-            assert_de_tokens(&matrix, &tokens);
 
-            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-            tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
+            let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
+            expected.set_order(Order::ColMajor);
+            assert_de_tokens(&expected, &tokens);
         }
 
-        // With default order.
         {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::RowMajor);
-
-            let mut tokens = vec![
-                Token::Map { len: Some(2) },
+            let tokens = vec![
+                Token::Map { len: None },
                 Token::Str("shape"),
                 Token::Struct {
                     name: "Shape",
@@ -345,7 +388,7 @@ mod tests {
                 Token::U64(3),
                 Token::StructEnd,
                 Token::Str("data"),
-                Token::Seq { len: Some(6) },
+                Token::Seq { len: None },
                 Token::I32(1),
                 Token::I32(2),
                 Token::I32(3),
@@ -355,10 +398,35 @@ mod tests {
                 Token::SeqEnd,
                 Token::MapEnd,
             ];
-            assert_de_tokens(&matrix, &tokens);
 
-            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-            tokens.remove(index);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_de_tokens(&expected, &tokens);
+        }
+
+        {
+            let tokens = vec![
+                Token::Map { len: None },
+                Token::Str("shape"),
+                Token::Struct {
+                    name: "Shape",
+                    len: 2,
+                },
+                Token::Str("nrows"),
+                Token::U64(2),
+                Token::Str("ncols"),
+                Token::U64(3),
+                Token::StructEnd,
+                Token::Str("data"),
+                Token::Seq { len: None },
+                Token::I32(1),
+                Token::I32(2),
+                Token::I32(3),
+                Token::I32(4),
+                Token::I32(5),
+                Token::SeqEnd,
+                Token::MapEnd,
+            ];
+
             assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
     }
@@ -366,10 +434,7 @@ mod tests {
     #[test]
     fn test_deserialize_struct() {
         {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::RowMajor);
-
-            let mut tokens = vec![
+            let tokens = vec![
                 Token::Struct {
                     name: "Matrix",
                     len: 3,
@@ -390,7 +455,7 @@ mod tests {
                 Token::U64(3),
                 Token::StructEnd,
                 Token::Str("data"),
-                Token::Seq { len: Some(6) },
+                Token::Seq { len: None },
                 Token::I32(1),
                 Token::I32(2),
                 Token::I32(3),
@@ -400,18 +465,14 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructEnd,
             ];
-            assert_de_tokens(&matrix, &tokens);
 
-            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-            tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
+            let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
+            expected.set_order(Order::RowMajor);
+            assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::ColMajor);
-
-            let mut tokens = vec![
+            let tokens = vec![
                 Token::Struct {
                     name: "Matrix",
                     len: 3,
@@ -432,7 +493,7 @@ mod tests {
                 Token::U64(3),
                 Token::StructEnd,
                 Token::Str("data"),
-                Token::Seq { len: Some(6) },
+                Token::Seq { len: None },
                 Token::I32(1),
                 Token::I32(4),
                 Token::I32(2),
@@ -442,19 +503,14 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructEnd,
             ];
-            assert_de_tokens(&matrix, &tokens);
 
-            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-            tokens.remove(index);
-            assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
+            let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
+            expected.set_order(Order::ColMajor);
+            assert_de_tokens(&expected, &tokens);
         }
 
-        // With default order.
         {
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-            matrix.set_order(Order::RowMajor);
-
-            let mut tokens = vec![
+            let tokens = vec![
                 Token::Struct {
                     name: "Matrix",
                     len: 2,
@@ -470,7 +526,7 @@ mod tests {
                 Token::U64(3),
                 Token::StructEnd,
                 Token::Str("data"),
-                Token::Seq { len: Some(6) },
+                Token::Seq { len: None },
                 Token::I32(1),
                 Token::I32(2),
                 Token::I32(3),
@@ -480,10 +536,38 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructEnd,
             ];
-            assert_de_tokens(&matrix, &tokens);
 
-            let index = tokens.iter().position(|&x| x == Token::I32(6)).unwrap();
-            tokens.remove(index);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_de_tokens(&expected, &tokens);
+        }
+
+        {
+            let tokens = vec![
+                Token::Struct {
+                    name: "Matrix",
+                    len: 2,
+                },
+                Token::Str("shape"),
+                Token::Struct {
+                    name: "Shape",
+                    len: 2,
+                },
+                Token::Str("nrows"),
+                Token::U64(2),
+                Token::Str("ncols"),
+                Token::U64(3),
+                Token::StructEnd,
+                Token::Str("data"),
+                Token::Seq { len: None },
+                Token::I32(1),
+                Token::I32(2),
+                Token::I32(3),
+                Token::I32(4),
+                Token::I32(5),
+                Token::SeqEnd,
+                Token::StructEnd,
+            ];
+
             assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
     }
