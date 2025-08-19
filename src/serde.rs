@@ -62,15 +62,29 @@ where
     where
         A: SeqAccess<'de>,
     {
-        let order: Order = seq
-            .next_element()?
-            .ok_or_else(|| Error::invalid_length(0, &self))?;
-        let shape: Shape = seq
-            .next_element()?
-            .ok_or_else(|| Error::invalid_length(1, &self))?;
-        let data: Vec<T> = seq
-            .next_element()?
-            .ok_or_else(|| Error::invalid_length(2, &self))?;
+        let order: Order;
+        let shape: Shape;
+        let data: Vec<T>;
+
+        if seq.size_hint() == Some(2) {
+            order = Order::default();
+            shape = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(0, &self))?;
+            data = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(1, &self))?;
+        } else {
+            order = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(0, &self))?;
+            shape = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(1, &self))?;
+            data = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(2, &self))?;
+        }
 
         let shape = MemoryShape::from_shape(shape, order);
         match shape.size::<T>() {
