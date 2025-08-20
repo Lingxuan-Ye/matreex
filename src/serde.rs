@@ -35,18 +35,12 @@ where
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_struct("Matrix", FIELDS, MatrixVisitor::new())
+        deserializer.deserialize_struct("Matrix", FIELDS, MatrixVisitor(PhantomData))
     }
 }
 
 #[derive(Debug)]
 struct MatrixVisitor<T>(PhantomData<T>);
-
-impl<T> MatrixVisitor<T> {
-    fn new() -> Self {
-        Self(PhantomData)
-    }
-}
 
 impl<'de, T> Visitor<'de> for MatrixVisitor<T>
 where
@@ -88,8 +82,8 @@ where
 
         let shape = MemoryShape::from_shape(shape, order);
         match shape.size::<T>() {
-            Ok(size) if data.len() == size => Ok(Matrix { order, shape, data }),
-            _ => Err(Error::custom(SizeMismatch)),
+            Ok(size) if data.len() == size => Ok(Self::Value { order, shape, data }),
+            _ => Err(A::Error::custom(SizeMismatch)),
         }
     }
 
@@ -130,8 +124,8 @@ where
 
         let shape = MemoryShape::from_shape(shape, order);
         match shape.size::<T>() {
-            Ok(size) if data.len() == size => Ok(Matrix { order, shape, data }),
-            _ => Err(Error::custom(SizeMismatch)),
+            Ok(size) if data.len() == size => Ok(Self::Value { order, shape, data }),
+            _ => Err(A::Error::custom(SizeMismatch)),
         }
     }
 }
@@ -162,15 +156,15 @@ impl Visitor<'_> for FieldVisitor {
         formatter.write_str("`order`, `shape` or `data`")
     }
 
-    fn visit_str<E>(self, value: &str) -> Result<Field, E>
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
     where
         E: Error,
     {
         match value {
-            "order" => Ok(Field::Order),
-            "shape" => Ok(Field::Shape),
-            "data" => Ok(Field::Data),
-            _ => Err(Error::unknown_field(value, FIELDS)),
+            "order" => Ok(Self::Value::Order),
+            "shape" => Ok(Self::Value::Shape),
+            "data" => Ok(Self::Value::Data),
+            _ => Err(E::unknown_field(value, FIELDS)),
         }
     }
 }
@@ -180,13 +174,89 @@ mod tests {
     use super::*;
     use crate::matrix;
     use alloc::string::ToString;
-    use alloc::vec;
-    use serde_test::{Token, assert_de_tokens, assert_de_tokens_error};
+    use serde_test::{Token, assert_de_tokens, assert_de_tokens_error, assert_ser_tokens};
+
+    #[test]
+    fn test_serialize() {
+        {
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+            matrix.set_order(Order::RowMajor);
+            let tokens = [
+                Token::Struct {
+                    name: "Matrix",
+                    len: 3,
+                },
+                Token::Str("order"),
+                Token::UnitVariant {
+                    name: "Order",
+                    variant: "RowMajor",
+                },
+                Token::Str("shape"),
+                Token::Struct {
+                    name: "Shape",
+                    len: 2,
+                },
+                Token::Str("nrows"),
+                Token::U64(2),
+                Token::Str("ncols"),
+                Token::U64(3),
+                Token::StructEnd,
+                Token::Str("data"),
+                Token::Seq { len: Some(6) },
+                Token::I32(1),
+                Token::I32(2),
+                Token::I32(3),
+                Token::I32(4),
+                Token::I32(5),
+                Token::I32(6),
+                Token::SeqEnd,
+                Token::StructEnd,
+            ];
+            assert_ser_tokens(&matrix, &tokens);
+        }
+
+        {
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+            matrix.set_order(Order::ColMajor);
+            let tokens = [
+                Token::Struct {
+                    name: "Matrix",
+                    len: 3,
+                },
+                Token::Str("order"),
+                Token::UnitVariant {
+                    name: "Order",
+                    variant: "ColMajor",
+                },
+                Token::Str("shape"),
+                Token::Struct {
+                    name: "Shape",
+                    len: 2,
+                },
+                Token::Str("nrows"),
+                Token::U64(2),
+                Token::Str("ncols"),
+                Token::U64(3),
+                Token::StructEnd,
+                Token::Str("data"),
+                Token::Seq { len: Some(6) },
+                Token::I32(1),
+                Token::I32(4),
+                Token::I32(2),
+                Token::I32(5),
+                Token::I32(3),
+                Token::I32(6),
+                Token::SeqEnd,
+                Token::StructEnd,
+            ];
+            assert_ser_tokens(&matrix, &tokens);
+        }
+    }
 
     #[test]
     fn test_deserialize_seq() {
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Seq { len: None },
                 Token::UnitVariant {
                     name: "Order",
@@ -211,14 +281,13 @@ mod tests {
                 Token::SeqEnd,
                 Token::SeqEnd,
             ];
-
             let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
             expected.set_order(Order::RowMajor);
             assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Seq { len: None },
                 Token::UnitVariant {
                     name: "Order",
@@ -243,14 +312,13 @@ mod tests {
                 Token::SeqEnd,
                 Token::SeqEnd,
             ];
-
             let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
             expected.set_order(Order::ColMajor);
             assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Seq { len: Some(2) },
                 Token::Struct {
                     name: "Shape",
@@ -271,13 +339,12 @@ mod tests {
                 Token::SeqEnd,
                 Token::SeqEnd,
             ];
-
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
             assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Seq { len: Some(2) },
                 Token::Struct {
                     name: "Shape",
@@ -297,7 +364,6 @@ mod tests {
                 Token::SeqEnd,
                 Token::SeqEnd,
             ];
-
             assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
     }
@@ -305,7 +371,7 @@ mod tests {
     #[test]
     fn test_deserialize_map() {
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Map { len: None },
                 Token::Str("order"),
                 Token::UnitVariant {
@@ -333,14 +399,13 @@ mod tests {
                 Token::SeqEnd,
                 Token::MapEnd,
             ];
-
             let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
             expected.set_order(Order::RowMajor);
             assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Map { len: None },
                 Token::Str("order"),
                 Token::UnitVariant {
@@ -368,14 +433,13 @@ mod tests {
                 Token::SeqEnd,
                 Token::MapEnd,
             ];
-
             let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
             expected.set_order(Order::ColMajor);
             assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Map { len: None },
                 Token::Str("shape"),
                 Token::Struct {
@@ -398,13 +462,12 @@ mod tests {
                 Token::SeqEnd,
                 Token::MapEnd,
             ];
-
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
             assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Map { len: None },
                 Token::Str("shape"),
                 Token::Struct {
@@ -426,7 +489,6 @@ mod tests {
                 Token::SeqEnd,
                 Token::MapEnd,
             ];
-
             assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
     }
@@ -434,7 +496,7 @@ mod tests {
     #[test]
     fn test_deserialize_struct() {
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Struct {
                     name: "Matrix",
                     len: 3,
@@ -465,14 +527,13 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructEnd,
             ];
-
             let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
             expected.set_order(Order::RowMajor);
             assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Struct {
                     name: "Matrix",
                     len: 3,
@@ -503,14 +564,13 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructEnd,
             ];
-
             let mut expected = matrix![[1, 2, 3], [4, 5, 6]];
             expected.set_order(Order::ColMajor);
             assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Struct {
                     name: "Matrix",
                     len: 2,
@@ -536,13 +596,12 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructEnd,
             ];
-
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
             assert_de_tokens(&expected, &tokens);
         }
 
         {
-            let tokens = vec![
+            let tokens = [
                 Token::Struct {
                     name: "Matrix",
                     len: 2,
@@ -567,7 +626,6 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructEnd,
             ];
-
             assert_de_tokens_error::<Matrix<i32>>(&tokens, &SizeMismatch.to_string());
         }
     }
