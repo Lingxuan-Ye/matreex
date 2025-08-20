@@ -82,8 +82,8 @@ where
 
         let shape = MemoryShape::from_shape(shape, order);
         match shape.size::<T>() {
-            Ok(size) if data.len() == size => Ok(Matrix { order, shape, data }),
-            _ => Err(Error::custom(SizeMismatch)),
+            Ok(size) if data.len() == size => Ok(Self::Value { order, shape, data }),
+            _ => Err(A::Error::custom(SizeMismatch)),
         }
     }
 
@@ -124,8 +124,8 @@ where
 
         let shape = MemoryShape::from_shape(shape, order);
         match shape.size::<T>() {
-            Ok(size) if data.len() == size => Ok(Matrix { order, shape, data }),
-            _ => Err(Error::custom(SizeMismatch)),
+            Ok(size) if data.len() == size => Ok(Self::Value { order, shape, data }),
+            _ => Err(A::Error::custom(SizeMismatch)),
         }
     }
 }
@@ -156,15 +156,15 @@ impl Visitor<'_> for FieldVisitor {
         formatter.write_str("`order`, `shape` or `data`")
     }
 
-    fn visit_str<E>(self, value: &str) -> Result<Field, E>
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
     where
         E: Error,
     {
         match value {
-            "order" => Ok(Field::Order),
-            "shape" => Ok(Field::Shape),
-            "data" => Ok(Field::Data),
-            _ => Err(Error::unknown_field(value, FIELDS)),
+            "order" => Ok(Self::Value::Order),
+            "shape" => Ok(Self::Value::Shape),
+            "data" => Ok(Self::Value::Data),
+            _ => Err(E::unknown_field(value, FIELDS)),
         }
     }
 }
