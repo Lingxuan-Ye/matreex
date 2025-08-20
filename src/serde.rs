@@ -35,18 +35,12 @@ where
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_struct("Matrix", FIELDS, MatrixVisitor::new())
+        deserializer.deserialize_struct("Matrix", FIELDS, MatrixVisitor(PhantomData))
     }
 }
 
 #[derive(Debug)]
 struct MatrixVisitor<T>(PhantomData<T>);
-
-impl<T> MatrixVisitor<T> {
-    fn new() -> Self {
-        Self(PhantomData)
-    }
-}
 
 impl<'de, T> Visitor<'de> for MatrixVisitor<T>
 where
