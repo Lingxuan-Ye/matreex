@@ -595,7 +595,6 @@ impl<T> Matrix<T> {
         let shape = self.shape;
         shape.size::<U>()?;
         let data = self.data.into_iter().map(f).collect();
-
         Ok(Matrix { order, shape, data })
     }
 
@@ -628,7 +627,6 @@ impl<T> Matrix<T> {
         let shape = self.shape;
         shape.size::<U>()?;
         let data = self.data.iter().map(f).collect();
-
         Ok(Matrix { order, shape, data })
     }
 

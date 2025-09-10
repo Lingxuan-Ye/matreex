@@ -100,14 +100,9 @@ impl<T, const C: usize> FromRows<Box<[[T; C]]>> for Matrix<T> {
     /// let matrix = Matrix::from_rows(rows);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
+    #[inline]
     fn from_rows(value: Box<[[T; C]]>) -> Self {
-        let order = Order::RowMajor;
-        let nrows = value.len();
-        let ncols = C;
-        let shape = Shape::new(nrows, ncols);
-        let shape = MemoryShape::from_shape(shape, order);
-        let data = value.into_iter().flatten().collect();
-        Self { order, shape, data }
+        Self::from_rows(value.into_vec())
     }
 }
 
@@ -129,9 +124,14 @@ impl<T, const C: usize> FromRows<Vec<[T; C]>> for Matrix<T> {
     /// let matrix = Matrix::from_rows(rows);
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
-    #[inline]
     fn from_rows(value: Vec<[T; C]>) -> Self {
-        Self::from_rows(value.into_boxed_slice())
+        let order = Order::RowMajor;
+        let nrows = value.len();
+        let ncols = C;
+        let shape = Shape::new(nrows, ncols);
+        let shape = MemoryShape::from_shape(shape, order);
+        let data = value.into_iter().flatten().collect();
+        Self { order, shape, data }
     }
 }
 
@@ -232,15 +232,9 @@ impl<T, const C: usize> TryFromRows<Box<[Box<[T; C]>]>> for Matrix<T> {
     /// let result = Matrix::try_from_rows(rows);
     /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
     /// ```
+    #[inline]
     fn try_from_rows(value: Box<[Box<[T; C]>]>) -> Result<Self> {
-        let order = Order::RowMajor;
-        let nrows = value.len();
-        let ncols = C;
-        let shape = Shape::new(nrows, ncols);
-        let shape = MemoryShape::from_shape(shape, order);
-        shape.size::<T>()?;
-        let data = value.into_iter().flat_map(|row| row as Box<[T]>).collect();
-        Ok(Self { order, shape, data })
+        Self::try_from_rows(value.into_vec())
     }
 }
 
@@ -267,9 +261,15 @@ impl<T, const C: usize> TryFromRows<Vec<Box<[T; C]>>> for Matrix<T> {
     /// let result = Matrix::try_from_rows(rows);
     /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
     /// ```
-    #[inline]
     fn try_from_rows(value: Vec<Box<[T; C]>>) -> Result<Self> {
-        Self::try_from_rows(value.into_boxed_slice())
+        let order = Order::RowMajor;
+        let nrows = value.len();
+        let ncols = C;
+        let shape = Shape::new(nrows, ncols);
+        let shape = MemoryShape::from_shape(shape, order);
+        shape.size::<T>()?;
+        let data = value.into_iter().flat_map(|row| row as Box<[T]>).collect();
+        Ok(Self { order, shape, data })
     }
 }
 
@@ -376,28 +376,9 @@ impl<T> TryFromRows<Box<[Box<[T]>]>> for Matrix<T> {
     /// let result = Matrix::try_from_rows(rows);
     /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
     /// ```
+    #[inline]
     fn try_from_rows(value: Box<[Box<[T]>]>) -> Result<Self> {
-        let order = Order::RowMajor;
-        let nrows = value.len();
-        let mut iter = value.into_iter();
-        let Some(first) = iter.next() else {
-            let shape = MemoryShape::default();
-            let data = Vec::new();
-            return Ok(Self { order, shape, data });
-        };
-        let ncols = first.len();
-        let shape = Shape::new(nrows, ncols);
-        let shape = MemoryShape::from_shape(shape, order);
-        let size = shape.size::<T>()?;
-        let mut data = Vec::with_capacity(size);
-        data.extend(first);
-        for row in iter {
-            if row.len() != ncols {
-                return Err(Error::LengthInconsistent);
-            }
-            data.extend(row);
-        }
-        Ok(Self { order, shape, data })
+        Self::try_from_rows(value.into_vec())
     }
 }
 
@@ -425,9 +406,28 @@ impl<T> TryFromRows<Vec<Box<[T]>>> for Matrix<T> {
     /// let result = Matrix::try_from_rows(rows);
     /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
     /// ```
-    #[inline]
     fn try_from_rows(value: Vec<Box<[T]>>) -> Result<Self> {
-        Self::try_from_rows(value.into_boxed_slice())
+        let order = Order::RowMajor;
+        let nrows = value.len();
+        let mut iter = value.into_iter();
+        let Some(first) = iter.next() else {
+            let shape = MemoryShape::default();
+            let data = Vec::new();
+            return Ok(Self { order, shape, data });
+        };
+        let ncols = first.len();
+        let shape = Shape::new(nrows, ncols);
+        let shape = MemoryShape::from_shape(shape, order);
+        let size = shape.size::<T>()?;
+        let mut data = Vec::with_capacity(size);
+        data.extend(first);
+        for row in iter {
+            if row.len() != ncols {
+                return Err(Error::LengthInconsistent);
+            }
+            data.extend(row);
+        }
+        Ok(Self { order, shape, data })
     }
 }
 
@@ -534,28 +534,9 @@ impl<T> TryFromRows<Box<[Vec<T>]>> for Matrix<T> {
     /// let result = Matrix::try_from_rows(rows);
     /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
     /// ```
+    #[inline]
     fn try_from_rows(value: Box<[Vec<T>]>) -> Result<Self> {
-        let order = Order::RowMajor;
-        let nrows = value.len();
-        let mut iter = value.into_iter();
-        let Some(first) = iter.next() else {
-            let shape = MemoryShape::default();
-            let data = Vec::new();
-            return Ok(Self { order, shape, data });
-        };
-        let ncols = first.len();
-        let shape = Shape::new(nrows, ncols);
-        let shape = MemoryShape::from_shape(shape, order);
-        let size = shape.size::<T>()?;
-        let mut data = Vec::with_capacity(size);
-        data.extend(first);
-        for row in iter {
-            if row.len() != ncols {
-                return Err(Error::LengthInconsistent);
-            }
-            data.extend(row);
-        }
-        Ok(Self { order, shape, data })
+        Self::try_from_rows(value.into_vec())
     }
 }
 
@@ -583,9 +564,28 @@ impl<T> TryFromRows<Vec<Vec<T>>> for Matrix<T> {
     /// let result = Matrix::try_from_rows(rows);
     /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
     /// ```
-    #[inline]
     fn try_from_rows(value: Vec<Vec<T>>) -> Result<Self> {
-        Self::try_from_rows(value.into_boxed_slice())
+        let order = Order::RowMajor;
+        let nrows = value.len();
+        let mut iter = value.into_iter();
+        let Some(first) = iter.next() else {
+            let shape = MemoryShape::default();
+            let data = Vec::new();
+            return Ok(Self { order, shape, data });
+        };
+        let ncols = first.len();
+        let shape = Shape::new(nrows, ncols);
+        let shape = MemoryShape::from_shape(shape, order);
+        let size = shape.size::<T>()?;
+        let mut data = Vec::with_capacity(size);
+        data.extend(first);
+        for row in iter {
+            if row.len() != ncols {
+                return Err(Error::LengthInconsistent);
+            }
+            data.extend(row);
+        }
+        Ok(Self { order, shape, data })
     }
 }
 
