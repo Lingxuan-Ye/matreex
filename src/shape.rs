@@ -255,7 +255,7 @@ impl MemoryShape {
         }
     }
 
-    pub(crate) fn transpose(&mut self) -> &mut Self {
+    pub(crate) fn swap(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
     }
