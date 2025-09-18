@@ -139,7 +139,7 @@ where
 }
 
 /// A helper trait for indexing operations on a [`Matrix<T>`].
-pub trait MatrixIndex<T>: Sized + internal::Sealed {
+pub trait MatrixIndex<T>: Sized {
     /// The output type returned by methods.
     type Output: ?Sized;
 
@@ -647,14 +647,6 @@ impl<T> MatrixIndex<T> for MemoryIndex {
         let index = self.to_flattened(matrix.stride());
         unsafe { matrix.data.get_unchecked_mut(index) }
     }
-}
-
-mod internal {
-    use super::{AsIndex, MemoryIndex, WrappingIndex};
-    pub trait Sealed {}
-    impl<I> Sealed for I where I: AsIndex {}
-    impl Sealed for WrappingIndex {}
-    impl Sealed for MemoryIndex {}
 }
 
 #[cfg(test)]
