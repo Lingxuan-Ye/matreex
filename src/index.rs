@@ -139,6 +139,51 @@ where
 }
 
 /// A helper trait for indexing operations on a [`Matrix<T>`].
+///
+/// # Examples
+///
+/// ```
+/// use matreex::index::MatrixIndex;
+/// use matreex::{Matrix, Result, matrix};
+///
+/// #[derive(Debug, PartialEq)]
+/// struct Rgb(u8, u8, u8);
+///
+/// struct RedIndex(usize, usize);
+///
+/// impl MatrixIndex<Rgb> for RedIndex {
+///     type Output = u8;
+///
+///     fn is_out_of_bounds(&self, matrix: &Matrix<Rgb>) -> bool {
+///         let shape = matrix.shape();
+///         self.0 >= shape.nrows() || self.1 >= shape.ncols()
+///     }
+///
+///     fn get(self, matrix: &Matrix<Rgb>) -> Result<&Self::Output> {
+///         self.ensure_in_bounds(matrix)?;
+///         unsafe { Ok(self.get_unchecked(matrix)) }
+///     }
+///
+///     fn get_mut(self, matrix: &mut Matrix<Rgb>) -> Result<&mut Self::Output> {
+///         self.ensure_in_bounds(matrix)?;
+///         unsafe { Ok(self.get_unchecked_mut(matrix)) }
+///     }
+///
+///     unsafe fn get_unchecked(self, matrix: &Matrix<Rgb>) -> &Self::Output {
+///         let index = (self.0, self.1);
+///         unsafe { &index.get_unchecked(matrix).0 }
+///     }
+///
+///     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<Rgb>) -> &mut Self::Output {
+///         let index = (self.0, self.1);
+///         unsafe { &mut index.get_unchecked_mut(matrix).0 }
+///     }
+/// }
+///
+/// let mut matrix = matrix![[Rgb(1, 2, 3)], [Rgb(4, 5, 6)]];
+/// matrix[RedIndex(0, 0)] -= 1;
+/// assert_eq!(matrix, matrix![[Rgb(0, 2, 3)], [Rgb(4, 5, 6)]]);
+/// ```
 pub trait MatrixIndex<T>: Sized {
     /// The output type returned by methods.
     type Output: ?Sized;
