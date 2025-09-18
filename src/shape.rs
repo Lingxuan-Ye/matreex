@@ -85,7 +85,7 @@ impl Shape {
         AsShape::size(self)
     }
 
-    /// Transposes the shape.
+    /// Swaps the numbers of rows and columns.
     ///
     /// # Examples
     ///
@@ -93,11 +93,11 @@ impl Shape {
     /// use matreex::Shape;
     ///
     /// let mut shape = Shape::new(2, 3);
-    /// shape.transpose();
+    /// shape.swap();
     /// assert_eq!(shape, Shape::new(3, 2));
     /// ```
     #[inline]
-    pub fn transpose(&mut self) -> &mut Self {
+    pub fn swap(&mut self) -> &mut Self {
         (self.nrows, self.ncols) = (self.ncols, self.nrows);
         self
     }
@@ -255,7 +255,7 @@ impl MemoryShape {
         }
     }
 
-    pub(crate) fn transpose(&mut self) -> &mut Self {
+    pub(crate) fn swap(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
     }
@@ -319,13 +319,13 @@ mod tests {
     }
 
     #[test]
-    fn test_shape_transpose() {
+    fn test_shape_swap() {
         let mut shape = Shape::new(2, 3);
-        shape.transpose();
+        shape.swap();
         assert_eq!(shape, Shape::new(3, 2));
 
         let mut shape = Shape::new(3, 2);
-        shape.transpose();
+        shape.swap();
         assert_eq!(shape, Shape::new(2, 3));
     }
 

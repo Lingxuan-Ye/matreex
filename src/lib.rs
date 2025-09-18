@@ -282,7 +282,7 @@ impl<T> Matrix<T> {
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
         if size_of::<T>() == 0 {
-            self.shape.transpose();
+            self.shape.swap();
             return self;
         }
 
@@ -294,7 +294,7 @@ impl<T> Matrix<T> {
         let old_base = self.data.as_ptr();
         let new_base = new_data.as_mut_ptr();
         let old_stride = self.stride();
-        self.shape.transpose();
+        self.shape.swap();
         let new_stride = self.stride();
         for old_index in 0..size {
             unsafe {

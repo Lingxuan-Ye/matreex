@@ -140,25 +140,51 @@ where
 
 /// A helper trait for indexing operations on a [`Matrix<T>`].
 ///
-/// This trait is a poor imitation of [`SliceIndex`].
+/// # Examples
 ///
-/// # Safety
+/// ```
+/// use matreex::index::MatrixIndex;
+/// use matreex::{Matrix, Result, matrix};
 ///
-/// Implementations of this trait have to promise that if any default
-/// implementations of [`get`], [`get_mut`], [`index`] or [`index_mut`]
-/// are used, then [`is_out_of_bounds`] is implemented correctly and
-/// [`ensure_in_bounds`] is not overridden. Failing to do so may result
-/// in an out-of-bounds memory access, leading to *[undefined behavior]*.
+/// #[derive(Debug, PartialEq)]
+/// struct Rgb(u8, u8, u8);
 ///
-/// [`SliceIndex`]: core::slice::SliceIndex
-/// [`is_out_of_bounds`]: MatrixIndex::is_out_of_bounds
-/// [`ensure_in_bounds`]: MatrixIndex::ensure_in_bounds
-/// [`get`]: MatrixIndex::get
-/// [`get_mut`]: MatrixIndex::get_mut
-/// [`index`]: MatrixIndex::index
-/// [`index_mut`]: MatrixIndex::index_mut
-/// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
+/// struct RedIndex(usize, usize);
+///
+/// impl MatrixIndex<Rgb> for RedIndex {
+///     type Output = u8;
+///
+///     fn is_out_of_bounds(&self, matrix: &Matrix<Rgb>) -> bool {
+///         let shape = matrix.shape();
+///         self.0 >= shape.nrows() || self.1 >= shape.ncols()
+///     }
+///
+///     fn get(self, matrix: &Matrix<Rgb>) -> Result<&Self::Output> {
+///         self.ensure_in_bounds(matrix)?;
+///         unsafe { Ok(self.get_unchecked(matrix)) }
+///     }
+///
+///     fn get_mut(self, matrix: &mut Matrix<Rgb>) -> Result<&mut Self::Output> {
+///         self.ensure_in_bounds(matrix)?;
+///         unsafe { Ok(self.get_unchecked_mut(matrix)) }
+///     }
+///
+///     unsafe fn get_unchecked(self, matrix: &Matrix<Rgb>) -> &Self::Output {
+///         let index = (self.0, self.1);
+///         unsafe { &index.get_unchecked(matrix).0 }
+///     }
+///
+///     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<Rgb>) -> &mut Self::Output {
+///         let index = (self.0, self.1);
+///         unsafe { &mut index.get_unchecked_mut(matrix).0 }
+///     }
+/// }
+///
+/// let mut matrix = matrix![[Rgb(1, 2, 3)], [Rgb(4, 5, 6)]];
+/// matrix[RedIndex(0, 0)] -= 1;
+/// assert_eq!(matrix, matrix![[Rgb(0, 2, 3)], [Rgb(4, 5, 6)]]);
+/// ```
+pub trait MatrixIndex<T>: Sized {
     /// The output type returned by methods.
     type Output: ?Sized;
 
@@ -185,11 +211,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if out of bounds.
-    #[inline]
-    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        self.ensure_in_bounds(matrix)?;
-        unsafe { Ok(self.get_unchecked(matrix)) }
-    }
+    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output>;
 
     /// Returns a mutable reference to the output at this location, if in
     /// bounds.
@@ -197,11 +219,7 @@ pub unsafe trait MatrixIndex<T>: Sized + internal::Sealed {
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if out of bounds.
-    #[inline]
-    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        self.ensure_in_bounds(matrix)?;
-        unsafe { Ok(self.get_unchecked_mut(matrix)) }
-    }
+    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output>;
 
     /// Returns a shared reference to the output at this location, without
     /// performing any bounds checking.
@@ -365,7 +383,7 @@ pub trait AsIndex {
     fn col(&self) -> usize;
 }
 
-unsafe impl<T, I> MatrixIndex<T> for I
+impl<T, I> MatrixIndex<T> for I
 where
     I: AsIndex,
 {
@@ -499,7 +517,7 @@ impl WrappingIndex {
     }
 }
 
-unsafe impl<T> MatrixIndex<T> for WrappingIndex {
+impl<T> MatrixIndex<T> for WrappingIndex {
     type Output = T;
 
     /// Returns `true` if the index is out of bounds for the given matrix.
@@ -510,6 +528,18 @@ unsafe impl<T> MatrixIndex<T> for WrappingIndex {
     #[inline]
     fn is_out_of_bounds(&self, matrix: &Matrix<T>) -> bool {
         matrix.is_empty()
+    }
+
+    #[inline]
+    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
+        self.ensure_in_bounds(matrix)?;
+        unsafe { Ok(self.get_unchecked(matrix)) }
+    }
+
+    #[inline]
+    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
+        self.ensure_in_bounds(matrix)?;
+        unsafe { Ok(self.get_unchecked_mut(matrix)) }
     }
 
     /// Returns a shared reference to the output at this location, without
@@ -636,11 +666,21 @@ impl MemoryIndex {
     }
 }
 
-unsafe impl<T> MatrixIndex<T> for MemoryIndex {
+impl<T> MatrixIndex<T> for MemoryIndex {
     type Output = T;
 
     fn is_out_of_bounds(&self, matrix: &Matrix<T>) -> bool {
         self.major >= matrix.major() || self.minor >= matrix.minor()
+    }
+
+    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
+        self.ensure_in_bounds(matrix)?;
+        unsafe { Ok(self.get_unchecked(matrix)) }
+    }
+
+    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
+        self.ensure_in_bounds(matrix)?;
+        unsafe { Ok(self.get_unchecked_mut(matrix)) }
     }
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
@@ -652,14 +692,6 @@ unsafe impl<T> MatrixIndex<T> for MemoryIndex {
         let index = self.to_flattened(matrix.stride());
         unsafe { matrix.data.get_unchecked_mut(index) }
     }
-}
-
-mod internal {
-    use super::{AsIndex, MemoryIndex, WrappingIndex};
-    pub trait Sealed {}
-    impl<I> Sealed for I where I: AsIndex {}
-    impl Sealed for WrappingIndex {}
-    impl Sealed for MemoryIndex {}
 }
 
 #[cfg(test)]
