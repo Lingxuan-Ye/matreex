@@ -54,14 +54,14 @@ mod tests {
         {
             let mut matrix = matrix.clone();
 
-            matrix.set_order_without_rearrangement(Order::RowMajor);
+            matrix.order = Order::RowMajor;
             let row_major_hash = {
                 let mut hasher = DefaultHasher::new();
                 matrix.hash(&mut hasher);
                 hasher.finish()
             };
 
-            matrix.set_order_without_rearrangement(Order::ColMajor);
+            matrix.order = Order::ColMajor;
             let col_major_hash = {
                 let mut hasher = DefaultHasher::new();
                 matrix.hash(&mut hasher);

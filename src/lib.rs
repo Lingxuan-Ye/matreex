@@ -314,6 +314,35 @@ impl<T> Matrix<T> {
         self
     }
 
+    /// Transposes the matrix without rearranging the underlying
+    /// data.
+    ///
+    /// # Notes
+    ///
+    /// As a side effect, the order of the matrix will be switched.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let order = matrix.order();
+    ///
+    /// matrix.transpose_view();
+    /// assert_ne!(matrix.order(), order);
+    /// assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
+    ///
+    /// matrix.transpose_view();
+    /// assert_eq!(matrix.order(), order);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
+    #[inline]
+    pub fn transpose_view(&mut self) -> &mut Self {
+        self.order.switch();
+        self
+    }
+
     /// Switches the order of the matrix.
     ///
     /// # Examples
@@ -339,31 +368,6 @@ impl<T> Matrix<T> {
         self
     }
 
-    /// Switches the order of the matrix without rearranging the underlying
-    /// data. As a result, the matrix appears transposed when accessed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    ///
-    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let order = matrix.order();
-    ///
-    /// matrix.switch_order_without_rearrangement();
-    /// assert_ne!(matrix.order(), order);
-    /// assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
-    ///
-    /// matrix.switch_order_without_rearrangement();
-    /// assert_eq!(matrix.order(), order);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    #[inline]
-    pub fn switch_order_without_rearrangement(&mut self) -> &mut Self {
-        self.order.switch();
-        self
-    }
-
     /// Sets the order of the matrix.
     ///
     /// # Examples
@@ -385,34 +389,6 @@ impl<T> Matrix<T> {
     pub fn set_order(&mut self, order: Order) -> &mut Self {
         if order != self.order {
             self.switch_order();
-        }
-        self
-    }
-
-    /// Sets the order of the matrix without rearranging the underlying
-    /// data. As a result, when the order is changed, the matrix appears
-    /// transposed when accessed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{Order, matrix};
-    ///
-    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// matrix.set_order(Order::RowMajor);
-    ///
-    /// matrix.set_order_without_rearrangement(Order::RowMajor);
-    /// assert_eq!(matrix.order(), Order::RowMajor);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    ///
-    /// matrix.set_order_without_rearrangement(Order::ColMajor);
-    /// assert_eq!(matrix.order(), Order::ColMajor);
-    /// assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
-    /// ```
-    #[inline]
-    pub fn set_order_without_rearrangement(&mut self, order: Order) -> &mut Self {
-        if order != self.order {
-            self.switch_order_without_rearrangement();
         }
         self
     }
@@ -687,6 +663,24 @@ mod tests {
     }
 
     #[test]
+    fn test_transpose_view() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            let order = matrix.order;
+
+            matrix.transpose_view();
+            assert_ne!(matrix.order, order);
+            let expected = matrix![[1, 4], [2, 5], [3, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
+
+            matrix.transpose_view();
+            assert_eq!(matrix.order, order);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
+    }
+
+    #[test]
     fn test_switch_order() {
         // Testing `Matrix::switch_order` in different orders is meaningless
         // due to dependency inversion.
@@ -703,24 +697,6 @@ mod tests {
         assert_eq!(matrix.order, order);
         let expected = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::assert_loose_eq(&matrix, &expected);
-    }
-
-    #[test]
-    fn test_switch_order_without_rearrangement() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
-            let order = matrix.order;
-
-            matrix.switch_order_without_rearrangement();
-            assert_ne!(matrix.order, order);
-            let expected = matrix![[1, 4], [2, 5], [3, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-
-            matrix.switch_order_without_rearrangement();
-            assert_eq!(matrix.order, order);
-            let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-        });
     }
 
     #[test]
@@ -741,37 +717,6 @@ mod tests {
         assert_eq!(matrix.order, order);
         let expected = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::assert_loose_eq(&matrix, &expected);
-    }
-
-    #[test]
-    fn test_set_order_without_rearrangement() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
-            let old_order = matrix.order;
-            let new_order = Order::RowMajor;
-            matrix.set_order_without_rearrangement(new_order);
-            assert_eq!(matrix.order, new_order);
-            let expected = if new_order == old_order {
-                matrix![[1, 2, 3], [4, 5, 6]]
-            } else {
-                matrix![[1, 4], [2, 5], [3, 6]]
-            };
-            testkit::assert_loose_eq(&matrix, &expected);
-        });
-
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
-            let old_order = matrix.order;
-            let new_order = Order::ColMajor;
-            matrix.set_order_without_rearrangement(new_order);
-            assert_eq!(matrix.order, new_order);
-            let expected = if new_order == old_order {
-                matrix![[1, 2, 3], [4, 5, 6]]
-            } else {
-                matrix![[1, 4], [2, 5], [3, 6]]
-            };
-            testkit::assert_loose_eq(&matrix, &expected);
-        });
     }
 
     #[test]
