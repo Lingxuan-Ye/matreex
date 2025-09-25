@@ -389,34 +389,6 @@ impl<T> Matrix<T> {
         self
     }
 
-    /// Sets the order of the matrix without rearranging the underlying
-    /// data. As a result, when the order is changed, the matrix appears
-    /// transposed when accessed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{Order, matrix};
-    ///
-    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// matrix.set_order(Order::RowMajor);
-    ///
-    /// matrix.set_order_without_rearrangement(Order::RowMajor);
-    /// assert_eq!(matrix.order(), Order::RowMajor);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    ///
-    /// matrix.set_order_without_rearrangement(Order::ColMajor);
-    /// assert_eq!(matrix.order(), Order::ColMajor);
-    /// assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
-    /// ```
-    #[inline]
-    pub fn set_order_without_rearrangement(&mut self, order: Order) -> &mut Self {
-        if order != self.order {
-            self.switch_order_without_rearrangement();
-        }
-        self
-    }
-
     /// Shrinks the capacity of the matrix as much as possible.
     ///
     /// # Examples
@@ -741,37 +713,6 @@ mod tests {
         assert_eq!(matrix.order, order);
         let expected = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::assert_loose_eq(&matrix, &expected);
-    }
-
-    #[test]
-    fn test_set_order_without_rearrangement() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
-            let old_order = matrix.order;
-            let new_order = Order::RowMajor;
-            matrix.set_order_without_rearrangement(new_order);
-            assert_eq!(matrix.order, new_order);
-            let expected = if new_order == old_order {
-                matrix![[1, 2, 3], [4, 5, 6]]
-            } else {
-                matrix![[1, 4], [2, 5], [3, 6]]
-            };
-            testkit::assert_loose_eq(&matrix, &expected);
-        });
-
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
-            let old_order = matrix.order;
-            let new_order = Order::ColMajor;
-            matrix.set_order_without_rearrangement(new_order);
-            assert_eq!(matrix.order, new_order);
-            let expected = if new_order == old_order {
-                matrix![[1, 2, 3], [4, 5, 6]]
-            } else {
-                matrix![[1, 4], [2, 5], [3, 6]]
-            };
-            testkit::assert_loose_eq(&matrix, &expected);
-        });
     }
 
     #[test]
