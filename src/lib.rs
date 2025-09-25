@@ -314,31 +314,6 @@ impl<T> Matrix<T> {
         self
     }
 
-    /// Switches the order of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    ///
-    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let order = matrix.order();
-    ///
-    /// matrix.switch_order();
-    /// assert_ne!(matrix.order(), order);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    ///
-    /// matrix.switch_order();
-    /// assert_eq!(matrix.order(), order);
-    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
-    /// ```
-    #[inline]
-    pub fn switch_order(&mut self) -> &mut Self {
-        self.transpose();
-        self.order.switch();
-        self
-    }
-
     /// Transposes the matrix without rearranging the underlying
     /// data.
     ///
@@ -364,6 +339,31 @@ impl<T> Matrix<T> {
     /// ```
     #[inline]
     pub fn transpose_view(&mut self) -> &mut Self {
+        self.order.switch();
+        self
+    }
+
+    /// Switches the order of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let order = matrix.order();
+    ///
+    /// matrix.switch_order();
+    /// assert_ne!(matrix.order(), order);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    ///
+    /// matrix.switch_order();
+    /// assert_eq!(matrix.order(), order);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
+    #[inline]
+    pub fn switch_order(&mut self) -> &mut Self {
+        self.transpose();
         self.order.switch();
         self
     }
@@ -663,6 +663,24 @@ mod tests {
     }
 
     #[test]
+    fn test_transpose_view() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        testkit::for_each_order_unary(matrix, |mut matrix| {
+            let order = matrix.order;
+
+            matrix.transpose_view();
+            assert_ne!(matrix.order, order);
+            let expected = matrix![[1, 4], [2, 5], [3, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
+
+            matrix.transpose_view();
+            assert_eq!(matrix.order, order);
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            testkit::assert_loose_eq(&matrix, &expected);
+        });
+    }
+
+    #[test]
     fn test_switch_order() {
         // Testing `Matrix::switch_order` in different orders is meaningless
         // due to dependency inversion.
@@ -679,24 +697,6 @@ mod tests {
         assert_eq!(matrix.order, order);
         let expected = matrix![[1, 2, 3], [4, 5, 6]];
         testkit::assert_loose_eq(&matrix, &expected);
-    }
-
-    #[test]
-    fn test_transpose_view() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
-            let order = matrix.order;
-
-            matrix.transpose_view();
-            assert_ne!(matrix.order, order);
-            let expected = matrix![[1, 4], [2, 5], [3, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-
-            matrix.transpose_view();
-            assert_eq!(matrix.order, order);
-            let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-        });
     }
 
     #[test]
