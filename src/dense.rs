@@ -23,32 +23,26 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
-    #[inline]
     pub fn shape(&self) -> Shape {
         self.layout.to_shape()
     }
 
-    #[inline]
     pub fn nrows(&self) -> usize {
         self.shape().nrows()
     }
 
-    #[inline]
     pub fn ncols(&self) -> usize {
         self.shape().ncols()
     }
 
-    #[inline]
     pub fn size(&self) -> usize {
         self.data.len()
     }
 
-    #[inline]
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
-    #[inline]
     pub fn capacity(&self) -> usize {
         self.data.capacity()
     }
@@ -102,12 +96,10 @@ where
         self
     }
 
-    #[inline]
     pub fn transpose_view(self) -> Matrix<T, O::Alternate> {
         self.switch_order_no_rearrange()
     }
 
-    #[inline]
     pub fn switch_order(mut self) -> Matrix<T, O::Alternate> {
         self.transpose();
         self.switch_order_no_rearrange()
@@ -119,19 +111,16 @@ where
         Matrix { layout, data }
     }
 
-    #[inline]
     pub fn shrink_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
         self
     }
 
-    #[inline]
     pub fn shrink_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
         self
     }
 
-    #[inline]
     pub fn contains(&self, value: &T) -> bool
     where
         T: PartialEq,
@@ -185,7 +174,6 @@ where
         self
     }
 
-    #[inline]
     pub fn apply<F>(&mut self, f: F) -> &mut Self
     where
         F: FnMut(&mut T),
@@ -212,7 +200,6 @@ where
         Ok(Matrix { layout, data })
     }
 
-    #[inline]
     pub fn clear(&mut self) -> &mut Self {
         self.layout = Layout::default();
         self.data.clear();

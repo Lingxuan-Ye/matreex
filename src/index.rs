@@ -12,7 +12,6 @@ impl Index {
         Self { row, col }
     }
 
-    #[inline]
     pub fn from_wrapping_index<S>(index: WrappingIndex, shape: S) -> Self
     where
         S: AsShape,
@@ -108,7 +107,6 @@ impl WrappingIndex {
         Self { row, col }
     }
 
-    #[inline]
     pub fn to_index<S>(self, shape: S) -> Index
     where
         S: AsShape,
