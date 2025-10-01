@@ -102,17 +102,17 @@ where
         self
     }
 
-    pub fn transpose_view(self) -> Matrix<T, O::Alternate> {
-        self.switch_order_no_rearrange()
+    pub fn into_transposed_no_rearrange(self) -> Matrix<T, O::Alternate> {
+        self.into_alternate_order_no_rearrange()
     }
 
-    pub fn switch_order(mut self) -> Matrix<T, O::Alternate> {
+    pub fn into_alternate_order(mut self) -> Matrix<T, O::Alternate> {
         self.transpose();
-        self.switch_order_no_rearrange()
+        self.into_alternate_order_no_rearrange()
     }
 
-    fn switch_order_no_rearrange(self) -> Matrix<T, O::Alternate> {
-        let layout = self.layout.switch_order();
+    fn into_alternate_order_no_rearrange(self) -> Matrix<T, O::Alternate> {
+        let layout = self.layout.to_alternate_order();
         let data = self.data;
         Matrix { layout, data }
     }

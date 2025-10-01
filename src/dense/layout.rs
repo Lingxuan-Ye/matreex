@@ -101,6 +101,14 @@ where
         }
     }
 
+    pub(super) fn to_alternate_order(self) -> Layout<T, O::Alternate> {
+        Layout::new_unchecked(self.major, self.minor)
+    }
+
+    pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
+        Layout::new(self.major, self.minor)
+    }
+
     pub(super) fn major(&self) -> usize {
         self.major
     }
@@ -120,14 +128,6 @@ where
     pub(super) fn swap(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
-    }
-
-    pub(super) fn switch_order(self) -> Layout<T, O::Alternate> {
-        Layout::new_unchecked(self.major, self.minor)
-    }
-
-    pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
-        Layout::new(self.major, self.minor)
     }
 }
 
