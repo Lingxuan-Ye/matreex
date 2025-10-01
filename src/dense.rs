@@ -8,6 +8,7 @@ use core::cmp;
 use core::ptr;
 
 mod layout;
+mod resize;
 
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct Matrix<T, O = RowMajor>

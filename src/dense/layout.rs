@@ -241,6 +241,22 @@ impl LayoutIndex {
     }
 }
 
+impl Index {
+    pub(super) fn from_flattened<O>(index: usize, stride: Stride) -> Self
+    where
+        O: Order,
+    {
+        LayoutIndex::from_flattened(index, stride).to_index::<O>()
+    }
+
+    pub(super) fn to_flattened<O>(self, stride: Stride) -> usize
+    where
+        O: Order,
+    {
+        LayoutIndex::from_index::<_, O>(self).to_flattened(stride)
+    }
+}
+
 mod internal {
     use super::{ColMajor, RowMajor};
 
