@@ -10,6 +10,7 @@ use core::ptr;
 #[cfg(feature = "parallel")]
 pub mod parallel;
 
+mod fmt;
 mod iter;
 mod layout;
 mod resize;
