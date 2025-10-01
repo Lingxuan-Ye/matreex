@@ -105,6 +105,14 @@ where
         Layout::new_unchecked(self.major, self.minor)
     }
 
+    pub(super) fn to_row_major(self) -> Layout<T, RowMajor> {
+        Layout::new_unchecked(self.major, self.minor)
+    }
+
+    pub(super) fn to_col_major(self) -> Layout<T, ColMajor> {
+        Layout::new_unchecked(self.major, self.minor)
+    }
+
     pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
         Layout::new(self.major, self.minor)
     }

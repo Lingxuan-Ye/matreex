@@ -1,6 +1,6 @@
 pub use self::layout::{ColMajor, RowMajor};
 
-use self::layout::{Layout, LayoutIndex, Order, Stride};
+use self::layout::{Layout, LayoutIndex, Order, OrderKind, Stride};
 use crate::error::Result;
 use crate::shape::Shape;
 use alloc::vec::Vec;
@@ -113,6 +113,24 @@ where
 
     fn into_alternate_order_no_rearrange(self) -> Matrix<T, O::Alternate> {
         let layout = self.layout.to_alternate_order();
+        let data = self.data;
+        Matrix { layout, data }
+    }
+
+    pub fn into_row_major(mut self) -> Matrix<T, RowMajor> {
+        if O::KIND != OrderKind::RowMajor {
+            self.transpose();
+        }
+        let layout = self.layout.to_row_major();
+        let data = self.data;
+        Matrix { layout, data }
+    }
+
+    pub fn into_col_major(mut self) -> Matrix<T, ColMajor> {
+        if O::KIND != OrderKind::ColMajor {
+            self.transpose();
+        }
+        let layout = self.layout.to_col_major();
         let data = self.data;
         Matrix { layout, data }
     }
