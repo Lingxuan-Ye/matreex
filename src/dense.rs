@@ -7,6 +7,9 @@ use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
 
+#[cfg(feature = "parallel")]
+pub mod parallel;
+
 mod iter;
 mod layout;
 mod resize;
