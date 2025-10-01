@@ -7,6 +7,7 @@ use alloc::vec::Vec;
 use core::cmp;
 use core::ptr;
 
+mod iter;
 mod layout;
 mod resize;
 
