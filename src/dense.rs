@@ -11,6 +11,7 @@ use core::ptr;
 #[cfg(feature = "parallel")]
 pub mod parallel;
 
+mod arithmetic;
 mod construct;
 mod fmt;
 mod iter;
