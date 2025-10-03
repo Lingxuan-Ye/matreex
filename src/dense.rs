@@ -5,6 +5,7 @@ use crate::error::Result;
 use crate::shape::Shape;
 use alloc::vec::Vec;
 use core::cmp;
+use core::hash::{Hash, Hasher};
 use core::ptr;
 
 #[cfg(feature = "parallel")]
@@ -16,7 +17,6 @@ mod iter;
 mod layout;
 mod resize;
 
-#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct Matrix<T, O = RowMajor>
 where
     O: Order,
@@ -229,4 +229,47 @@ where
         self.data.clear();
         self
     }
+}
+
+impl<T, O> Clone for Matrix<T, O>
+where
+    T: Clone,
+    O: Order,
+{
+    fn clone(&self) -> Self {
+        let layout = self.layout;
+        let data = self.data.clone();
+        Self { layout, data }
+    }
+}
+
+impl<T, O> Hash for Matrix<T, O>
+where
+    T: Hash,
+    O: Order,
+{
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
+        self.layout.hash(state);
+        self.data.hash(state);
+    }
+}
+
+impl<T, O> PartialEq for Matrix<T, O>
+where
+    T: PartialEq,
+    O: Order,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.layout == other.layout && self.data == other.data
+    }
+}
+
+impl<T, O> Eq for Matrix<T, O>
+where
+    T: PartialEq,
+    O: Order,
+{
 }
