@@ -26,9 +26,8 @@ impl Order for ColMajor {
     const KIND: OrderKind = OrderKind::ColMajor;
 }
 
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub enum OrderKind {
-    #[default]
     RowMajor,
     ColMajor,
 }
