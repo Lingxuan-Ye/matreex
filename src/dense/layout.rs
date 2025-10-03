@@ -35,8 +35,8 @@ pub enum OrderKind {
 
 /// # Invariants
 ///
-/// - `self.major * self.minor <= usize::MAX`
-/// - `self.major * self.minor * size_of::<T>() <= isize:::MAX as usize`
+/// - `self.major() * self.minor() <= usize::MAX`
+/// - `self.major() * self.minor() * size_of::<T>() <= isize:::MAX as usize`
 #[derive(Debug)]
 pub(super) struct Layout<T, O>
 where
@@ -114,7 +114,11 @@ where
     }
 
     pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
-        Layout::new(self.major, self.minor)
+        if self.size().saturating_mul(size_of::<T>()) > isize::MAX as usize {
+            Err(Error::CapacityOverflow)
+        } else {
+            Ok(Layout::new_unchecked(self.major, self.minor))
+        }
     }
 
     pub(super) fn major(&self) -> usize {
