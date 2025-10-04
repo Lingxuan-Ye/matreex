@@ -1,3 +1,5 @@
+//! Matrix shape representations.
+
 use crate::error::{Error, Result};
 
 #[cfg(feature = "serde")]

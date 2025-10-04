@@ -1,9 +1,8 @@
-pub use rayon::prelude::*;
-
 use super::Matrix;
 use super::layout::Order;
 use crate::error::Result;
 use crate::index::Index;
+use rayon::prelude::*;
 
 impl<T, O> Matrix<T, O>
 where

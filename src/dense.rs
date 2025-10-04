@@ -1,6 +1,8 @@
-pub use self::layout::{ColMajor, RowMajor};
+//! Dense matrix implementation.
 
-use self::layout::{Layout, Order, Stride};
+pub use self::layout::{ColMajor, Order, OrderKind, RowMajor};
+
+use self::layout::{Layout, Stride};
 use crate::error::Result;
 use crate::index::Index;
 use crate::shape::Shape;
@@ -8,9 +10,6 @@ use alloc::vec::Vec;
 use core::cmp;
 use core::hash::{Hash, Hasher};
 use core::ptr;
-
-#[cfg(feature = "parallel")]
-pub mod parallel;
 
 mod arithmetic;
 mod construct;
@@ -21,6 +20,9 @@ mod iter;
 mod layout;
 mod resize;
 mod swap;
+
+#[cfg(feature = "parallel")]
+mod parallel;
 
 #[cfg(feature = "serde")]
 mod serde;

@@ -1,3 +1,5 @@
+//! Traits for matrix conversion.
+
 use crate::error::Result;
 
 /// A trait for conversion from a sequence of rows.

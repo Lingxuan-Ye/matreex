@@ -1,3 +1,5 @@
+//! Traits and types for matrix indexing.
+
 use crate::error::{Error, Result};
 use crate::shape::AsShape;
 
