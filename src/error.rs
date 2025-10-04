@@ -9,8 +9,8 @@ pub enum Error {
     /// Error when the size exceeds [`usize::MAX`].
     SizeOverflow,
 
-    /// Error when the size of the shape does not match the length of the
-    /// underlying data.
+    /// Error when the size of the shape does not match the length of
+    /// the underlying data.
     SizeMismatch,
 
     /// Error when attempting to allocate more than [`isize::MAX`] bytes
@@ -22,15 +22,15 @@ pub enum Error {
     /// [The Rustonomicon]: https://doc.rust-lang.org/stable/nomicon/vec/vec-alloc.html#allocating-memory
     CapacityOverflow,
 
-    /// Error when converting to a matrix from rows or columns with
+    /// Error when converting a matrix from rows or columns that have
     /// inconsistent lengths.
     LengthInconsistent,
 
-    /// Error for accessing an index out of bounds.
+    /// Error when the index is out of bounds
     IndexOutOfBounds,
 
-    /// Error when the shapes of two matrices are not conformable for the
-    /// intended operation.
+    /// Error when the shapes of two matrices are not conformable for
+    /// the intended operation.
     ShapeNotConformable,
 }
 
