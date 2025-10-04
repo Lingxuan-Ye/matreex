@@ -2,7 +2,7 @@ use super::super::Matrix;
 use super::super::layout::Order;
 use core::ops::{Sub, SubAssign};
 
-impl<L, R, U, LO, RO> Sub<Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO, U> Sub<Matrix<R, RO>> for Matrix<L, LO>
 where
     L: Sub<R, Output = U>,
     LO: Order,
@@ -18,11 +18,11 @@ where
     }
 }
 
-impl<L, R, U, LO, RO> Sub<&Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO, U> Sub<&Matrix<R, RO>> for Matrix<L, LO>
 where
     L: Sub<R, Output = U>,
-    R: Clone,
     LO: Order,
+    R: Clone,
     RO: Order,
 {
     type Output = Matrix<U, LO>;
@@ -35,7 +35,7 @@ where
     }
 }
 
-impl<L, R, U, LO, RO> Sub<Matrix<R, RO>> for &Matrix<L, LO>
+impl<L, LO, R, RO, U> Sub<Matrix<R, RO>> for &Matrix<L, LO>
 where
     L: Sub<R, Output = U> + Clone,
     LO: Order,
@@ -51,11 +51,11 @@ where
     }
 }
 
-impl<L, R, U, LO, RO> Sub<&Matrix<R, RO>> for &Matrix<L, LO>
+impl<L, LO, R, RO, U> Sub<&Matrix<R, RO>> for &Matrix<L, LO>
 where
     L: Sub<R, Output = U> + Clone,
-    R: Clone,
     LO: Order,
+    R: Clone,
     RO: Order,
 {
     type Output = Matrix<U, LO>;
@@ -68,7 +68,7 @@ where
     }
 }
 
-impl<L, R, LO, RO> SubAssign<Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO> SubAssign<Matrix<R, RO>> for Matrix<L, LO>
 where
     L: SubAssign<R>,
     LO: Order,
@@ -83,11 +83,11 @@ where
     }
 }
 
-impl<L, R, LO, RO> SubAssign<&Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO> SubAssign<&Matrix<R, RO>> for Matrix<L, LO>
 where
     L: SubAssign<R>,
-    R: Clone,
     LO: Order,
+    R: Clone,
     RO: Order,
 {
     fn sub_assign(&mut self, rhs: &Matrix<R, RO>) {

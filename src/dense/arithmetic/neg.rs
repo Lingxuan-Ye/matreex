@@ -2,7 +2,7 @@ use super::super::Matrix;
 use super::super::layout::Order;
 use core::ops::Neg;
 
-impl<T, U, O> Neg for Matrix<T, O>
+impl<T, O, U> Neg for Matrix<T, O>
 where
     T: Neg<Output = U>,
     O: Order,
@@ -17,7 +17,7 @@ where
     }
 }
 
-impl<T, U, O> Neg for &Matrix<T, O>
+impl<T, O, U> Neg for &Matrix<T, O>
 where
     T: Neg<Output = U> + Clone,
     O: Order,

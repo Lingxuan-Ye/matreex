@@ -2,7 +2,7 @@ use super::super::Matrix;
 use super::super::layout::Order;
 use core::ops::{Add, AddAssign};
 
-impl<L, R, U, LO, RO> Add<Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO, U> Add<Matrix<R, RO>> for Matrix<L, LO>
 where
     L: Add<R, Output = U>,
     LO: Order,
@@ -18,11 +18,11 @@ where
     }
 }
 
-impl<L, R, U, LO, RO> Add<&Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO, U> Add<&Matrix<R, RO>> for Matrix<L, LO>
 where
     L: Add<R, Output = U>,
-    R: Clone,
     LO: Order,
+    R: Clone,
     RO: Order,
 {
     type Output = Matrix<U, LO>;
@@ -35,7 +35,7 @@ where
     }
 }
 
-impl<L, R, U, LO, RO> Add<Matrix<R, RO>> for &Matrix<L, LO>
+impl<L, LO, R, RO, U> Add<Matrix<R, RO>> for &Matrix<L, LO>
 where
     L: Add<R, Output = U> + Clone,
     LO: Order,
@@ -51,11 +51,11 @@ where
     }
 }
 
-impl<L, R, U, LO, RO> Add<&Matrix<R, RO>> for &Matrix<L, LO>
+impl<L, LO, R, RO, U> Add<&Matrix<R, RO>> for &Matrix<L, LO>
 where
     L: Add<R, Output = U> + Clone,
-    R: Clone,
     LO: Order,
+    R: Clone,
     RO: Order,
 {
     type Output = Matrix<U, LO>;
@@ -68,7 +68,7 @@ where
     }
 }
 
-impl<L, R, LO, RO> AddAssign<Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO> AddAssign<Matrix<R, RO>> for Matrix<L, LO>
 where
     L: AddAssign<R>,
     LO: Order,
@@ -83,11 +83,11 @@ where
     }
 }
 
-impl<L, R, RO, LO> AddAssign<&Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO> AddAssign<&Matrix<R, RO>> for Matrix<L, LO>
 where
     L: AddAssign<R>,
-    R: Clone,
     LO: Order,
+    R: Clone,
     RO: Order,
 {
     fn add_assign(&mut self, rhs: &Matrix<R, RO>) {

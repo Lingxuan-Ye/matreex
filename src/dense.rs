@@ -209,7 +209,7 @@ where
         self
     }
 
-    pub fn map<U, F>(self, f: F) -> Result<Matrix<U, O>>
+    pub fn map<F, U>(self, f: F) -> Result<Matrix<U, O>>
     where
         F: FnMut(T) -> U,
     {
@@ -218,7 +218,7 @@ where
         Ok(Matrix { layout, data })
     }
 
-    pub fn map_ref<'a, U, F>(&'a self, f: F) -> Result<Matrix<U, O>>
+    pub fn map_ref<'a, F, U>(&'a self, f: F) -> Result<Matrix<U, O>>
     where
         F: FnMut(&'a T) -> U,
     {

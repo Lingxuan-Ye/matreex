@@ -18,22 +18,22 @@ where
         self
     }
 
-    pub fn par_map<U, F>(self, f: F) -> Result<Matrix<U, O>>
+    pub fn par_map<F, U>(self, f: F) -> Result<Matrix<U, O>>
     where
         T: Send,
-        U: Send,
         F: Fn(T) -> U + Sync + Send,
+        U: Send,
     {
         let layout = self.layout.cast()?;
         let data = self.data.into_par_iter().map(f).collect();
         Ok(Matrix { layout, data })
     }
 
-    pub fn par_map_ref<'a, U, F>(&'a self, f: F) -> Result<Matrix<U, O>>
+    pub fn par_map_ref<'a, F, U>(&'a self, f: F) -> Result<Matrix<U, O>>
     where
         T: Sync,
-        U: Send,
         F: Fn(&'a T) -> U + Sync + Send,
+        U: Send,
     {
         let layout = self.layout.cast()?;
         let data = self.data.par_iter().map(f).collect();

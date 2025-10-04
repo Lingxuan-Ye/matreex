@@ -60,20 +60,18 @@ where
     }
 }
 
-impl<L, LO> Matrix<L, LO> where LO: Order {}
-
 impl<L, LO> Matrix<L, LO>
 where
     LO: Order,
 {
-    pub fn elementwise_operation<'a, 'b, R, F, U, RO>(
+    pub fn elementwise_operation<'a, 'b, R, RO, F, U>(
         &'a self,
         rhs: &'b Matrix<R, RO>,
         mut op: F,
     ) -> Result<Matrix<U, LO>>
     where
-        F: FnMut(&'a L, &'b R) -> U,
         RO: Order,
+        F: FnMut(&'a L, &'b R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
@@ -102,14 +100,14 @@ where
         Ok(Matrix { layout, data })
     }
 
-    pub fn elementwise_operation_consume_self<'a, R, F, U, RO>(
+    pub fn elementwise_operation_consume_self<'a, R, RO, F, U>(
         self,
         rhs: &'a Matrix<R, RO>,
         mut op: F,
     ) -> Result<Matrix<U, LO>>
     where
-        F: FnMut(L, &'a R) -> U,
         RO: Order,
+        F: FnMut(L, &'a R) -> U,
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
@@ -138,14 +136,14 @@ where
         Ok(Matrix { layout, data })
     }
 
-    pub fn elementwise_operation_consume_rhs<'a, R, F, U, RO>(
+    pub fn elementwise_operation_consume_rhs<'a, R, RO, F, U>(
         &'a self,
         rhs: Matrix<R, RO>,
         mut op: F,
     ) -> Result<Matrix<U, LO>>
     where
-        F: FnMut(&'a L, R) -> U,
         RO: Order,
+        F: FnMut(&'a L, R) -> U,
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
@@ -177,14 +175,14 @@ where
         Ok(Matrix { layout, data })
     }
 
-    pub fn elementwise_operation_consume_both<R, F, U, RO>(
+    pub fn elementwise_operation_consume_both<R, RO, F, U>(
         self,
         rhs: Matrix<R, RO>,
         mut op: F,
     ) -> Result<Matrix<U, LO>>
     where
-        F: FnMut(L, R) -> U,
         RO: Order,
+        F: FnMut(L, R) -> U,
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
@@ -216,14 +214,14 @@ where
         Ok(Matrix { layout, data })
     }
 
-    pub fn elementwise_operation_assign<'a, R, F, RO>(
+    pub fn elementwise_operation_assign<'a, R, RO, F>(
         &mut self,
         rhs: &'a Matrix<R, RO>,
         mut op: F,
     ) -> Result<&mut Self>
     where
-        F: FnMut(&mut L, &'a R),
         RO: Order,
+        F: FnMut(&mut L, &'a R),
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
@@ -246,14 +244,14 @@ where
         Ok(self)
     }
 
-    pub fn elementwise_operation_assign_consume_rhs<R, F, RO>(
+    pub fn elementwise_operation_assign_consume_rhs<R, RO, F>(
         &mut self,
         rhs: Matrix<R, RO>,
         mut op: F,
     ) -> Result<&mut Self>
     where
-        F: FnMut(&mut L, R),
         RO: Order,
+        F: FnMut(&mut L, R),
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
@@ -295,15 +293,15 @@ impl<L, LO> Matrix<L, LO>
 where
     LO: Order,
 {
-    pub fn multiplication_like_operation<R, F, U, RO>(
+    pub fn multiplication_like_operation<R, RO, F, U>(
         self,
         rhs: Matrix<R, RO>,
         mut op: F,
     ) -> Result<Matrix<U, LO>>
     where
+        RO: Order,
         F: FnMut(&[L], &[R]) -> U,
         U: Default,
-        RO: Order,
     {
         self.ensure_multiplication_like_operation_conformable(&rhs)?;
 

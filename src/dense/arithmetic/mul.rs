@@ -3,13 +3,13 @@ use super::super::layout::Order;
 use crate::error::Result;
 use core::ops::{Add, Mul, MulAssign};
 
-impl<L, R, U, LO, RO> Mul<Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO, U> Mul<Matrix<R, RO>> for Matrix<L, LO>
 where
     L: Mul<R, Output = U> + Clone,
-    R: Clone,
-    U: Add<Output = U> + Default,
     LO: Order,
+    R: Clone,
     RO: Order,
+    U: Add<Output = U> + Default,
 {
     type Output = Matrix<U, LO>;
 
@@ -21,13 +21,13 @@ where
     }
 }
 
-impl<L, R, U, LO, RO> Mul<&Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO, U> Mul<&Matrix<R, RO>> for Matrix<L, LO>
 where
     L: Mul<R, Output = U> + Clone,
-    R: Clone,
-    U: Add<Output = U> + Default,
     LO: Order,
+    R: Clone,
     RO: Order,
+    U: Add<Output = U> + Default,
 {
     type Output = Matrix<U, LO>;
 
@@ -36,13 +36,13 @@ where
     }
 }
 
-impl<L, R, U, LO, RO> Mul<Matrix<R, RO>> for &Matrix<L, LO>
+impl<L, LO, R, RO, U> Mul<Matrix<R, RO>> for &Matrix<L, LO>
 where
     L: Mul<R, Output = U> + Clone,
-    R: Clone,
-    U: Add<Output = U> + Default,
     LO: Order,
+    R: Clone,
     RO: Order,
+    U: Add<Output = U> + Default,
 {
     type Output = Matrix<U, LO>;
 
@@ -51,13 +51,13 @@ where
     }
 }
 
-impl<L, R, U, LO, RO> Mul<&Matrix<R, RO>> for &Matrix<L, LO>
+impl<L, LO, R, RO, U> Mul<&Matrix<R, RO>> for &Matrix<L, LO>
 where
     L: Mul<R, Output = U> + Clone,
-    R: Clone,
-    U: Add<Output = U> + Default,
     LO: Order,
+    R: Clone,
     RO: Order,
+    U: Add<Output = U> + Default,
 {
     type Output = Matrix<U, LO>;
 
@@ -70,12 +70,12 @@ impl<L, LO> Matrix<L, LO>
 where
     LO: Order,
 {
-    pub fn multiply<R, U, RO>(self, rhs: Matrix<R, RO>) -> Result<Matrix<U, LO>>
+    pub fn multiply<R, RO, U>(self, rhs: Matrix<R, RO>) -> Result<Matrix<U, LO>>
     where
         L: Mul<R, Output = U> + Clone,
         R: Clone,
-        U: Add<Output = U> + Default,
         RO: Order,
+        U: Add<Output = U> + Default,
     {
         self.multiplication_like_operation(rhs, |left_row, right_col| unsafe {
             left_row
