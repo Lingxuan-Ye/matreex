@@ -22,6 +22,9 @@ mod layout;
 mod resize;
 mod swap;
 
+#[cfg(feature = "serde")]
+mod serde;
+
 pub struct Matrix<T, O = RowMajor>
 where
     O: Order,

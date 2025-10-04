@@ -4,6 +4,9 @@ use crate::shape::{AsShape, Shape};
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
 
+#[cfg(feature = "serde")]
+mod serde;
+
 #[derive(Debug)]
 pub struct RowMajor;
 

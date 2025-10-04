@@ -1,6 +1,9 @@
 use crate::error::{Error, Result};
 use crate::shape::AsShape;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// A helper trait for indexing operations on a matrix.
 ///
 /// # Safety
@@ -111,6 +114,7 @@ pub unsafe trait MatrixIndex<M>: Sized {
     }
 }
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Index {
     pub row: usize,
@@ -214,6 +218,7 @@ impl AsIndex for [usize; 2] {
     }
 }
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct WrappingIndex {
     pub row: isize,

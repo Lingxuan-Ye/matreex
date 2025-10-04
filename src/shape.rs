@@ -1,5 +1,9 @@
 use crate::error::{Error, Result};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Shape {
     nrows: usize,
