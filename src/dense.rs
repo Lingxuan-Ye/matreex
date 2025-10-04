@@ -14,6 +14,7 @@ pub mod parallel;
 
 mod arithmetic;
 mod construct;
+mod convert;
 mod fmt;
 mod index;
 mod iter;

@@ -89,6 +89,16 @@ where
         }
     }
 
+    pub(super) fn from_shape_unchecked<S>(shape: S) -> Self
+    where
+        S: AsShape,
+    {
+        match O::KIND {
+            OrderKind::RowMajor => Self::new_unchecked(shape.nrows(), shape.ncols()),
+            OrderKind::ColMajor => Self::new_unchecked(shape.ncols(), shape.nrows()),
+        }
+    }
+
     pub(super) fn to_shape(self) -> Shape {
         match O::KIND {
             OrderKind::RowMajor => Shape::new(self.major, self.minor),
