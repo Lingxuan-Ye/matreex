@@ -19,6 +19,7 @@ mod index;
 mod iter;
 mod layout;
 mod resize;
+mod swap;
 
 pub struct Matrix<T, O = RowMajor>
 where
