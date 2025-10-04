@@ -1,5 +1,5 @@
 use super::Matrix;
-use super::layout::{Layout, Order, OrderKind};
+use super::layout::{ColMajor, Layout, Order, OrderKind, RowMajor};
 use crate::error::{Error, Result};
 use crate::index::Index;
 use crate::shape::Shape;
@@ -316,8 +316,8 @@ where
             return Ok(Matrix { layout, data });
         }
 
-        let lhs = self.into_row_major();
-        let rhs = rhs.into_col_major();
+        let lhs = self.with_order::<RowMajor>();
+        let rhs = rhs.with_order::<ColMajor>();
 
         match LO::KIND {
             OrderKind::RowMajor => {

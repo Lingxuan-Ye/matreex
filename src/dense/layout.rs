@@ -11,17 +11,14 @@ pub struct RowMajor;
 pub struct ColMajor;
 
 pub trait Order: Sealed {
-    type Alternate: Order;
     const KIND: OrderKind;
 }
 
 impl Order for RowMajor {
-    type Alternate = ColMajor;
     const KIND: OrderKind = OrderKind::RowMajor;
 }
 
 impl Order for ColMajor {
-    type Alternate = RowMajor;
     const KIND: OrderKind = OrderKind::ColMajor;
 }
 
@@ -99,15 +96,10 @@ where
         }
     }
 
-    pub(super) fn to_alternate_order(self) -> Layout<T, O::Alternate> {
-        Layout::new_unchecked(self.major, self.minor)
-    }
-
-    pub(super) fn to_row_major(self) -> Layout<T, RowMajor> {
-        Layout::new_unchecked(self.major, self.minor)
-    }
-
-    pub(super) fn to_col_major(self) -> Layout<T, ColMajor> {
+    pub(super) fn with_order<P>(self) -> Layout<T, P>
+    where
+        P: Order,
+    {
         Layout::new_unchecked(self.major, self.minor)
     }
 

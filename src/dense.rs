@@ -1,6 +1,6 @@
 pub use self::layout::{ColMajor, RowMajor};
 
-use self::layout::{Layout, Order, OrderKind, Stride};
+use self::layout::{Layout, Order, Stride};
 use crate::error::Result;
 use crate::index::Index;
 use crate::shape::Shape;
@@ -105,35 +105,21 @@ where
         self
     }
 
-    pub fn into_transposed_no_rearrange(self) -> Matrix<T, O::Alternate> {
-        self.into_alternate_order_no_rearrange()
-    }
-
-    pub fn into_alternate_order(mut self) -> Matrix<T, O::Alternate> {
-        self.transpose();
-        self.into_alternate_order_no_rearrange()
-    }
-
-    fn into_alternate_order_no_rearrange(self) -> Matrix<T, O::Alternate> {
-        let layout = self.layout.to_alternate_order();
-        let data = self.data;
-        Matrix { layout, data }
-    }
-
-    pub fn into_row_major(mut self) -> Matrix<T, RowMajor> {
-        if O::KIND != OrderKind::RowMajor {
+    pub fn with_order<P>(mut self) -> Matrix<T, P>
+    where
+        P: Order,
+    {
+        if O::KIND != P::KIND {
             self.transpose();
         }
-        let layout = self.layout.to_row_major();
-        let data = self.data;
-        Matrix { layout, data }
+        self.reinterpret_in_order::<P>()
     }
 
-    pub fn into_col_major(mut self) -> Matrix<T, ColMajor> {
-        if O::KIND != OrderKind::ColMajor {
-            self.transpose();
-        }
-        let layout = self.layout.to_col_major();
+    pub fn reinterpret_in_order<P>(self) -> Matrix<T, P>
+    where
+        P: Order,
+    {
+        let layout = self.layout.with_order::<P>();
         let data = self.data;
         Matrix { layout, data }
     }
@@ -155,46 +141,39 @@ where
         self.data.contains(value)
     }
 
-    pub fn overwrite(&mut self, src: &Self) -> &mut Self
+    pub fn overwrite<P>(&mut self, src: &Matrix<T, P>) -> &mut Self
     where
         T: Clone,
+        P: Order,
     {
         let src_stride = src.stride();
         let dst_stride = self.stride();
-        let major = cmp::min(self.major(), src.major());
-        let minor = cmp::min(self.minor(), src.minor());
 
-        for i in 0..major {
-            let src_lower = i * src_stride.major();
-            let src_upper = src_lower + minor * src_stride.minor();
-            let dst_lower = i * dst_stride.major();
-            let dst_upper = dst_lower + minor * dst_stride.minor();
-            unsafe {
-                let src = src.data.get_unchecked(src_lower..src_upper);
-                let dst = self.data.get_unchecked_mut(dst_lower..dst_upper);
-                dst.clone_from_slice(src);
+        if O::KIND == P::KIND {
+            let major = cmp::min(self.major(), src.major());
+            let minor = cmp::min(self.minor(), src.minor());
+            for i in 0..major {
+                let src_lower = i * src_stride.major();
+                let src_upper = src_lower + minor * src_stride.minor();
+                let dst_lower = i * dst_stride.major();
+                let dst_upper = dst_lower + minor * dst_stride.minor();
+                unsafe {
+                    let src = src.data.get_unchecked(src_lower..src_upper);
+                    let dst = self.data.get_unchecked_mut(dst_lower..dst_upper);
+                    dst.clone_from_slice(src);
+                }
             }
-        }
-
-        self
-    }
-
-    pub fn overwrite_cross_order(&mut self, src: &Matrix<T, O::Alternate>) -> &mut Self
-    where
-        T: Clone,
-    {
-        let src_stride = src.stride();
-        let dst_stride = self.stride();
-        let major = cmp::min(self.major(), src.minor());
-        let minor = cmp::min(self.minor(), src.major());
-
-        for i in 0..major {
-            let dst_lower = i * dst_stride.major();
-            let dst_upper = dst_lower + minor * dst_stride.minor();
-            unsafe {
-                let src = src.data.iter().skip(i).step_by(src_stride.major());
-                let dst = self.data.get_unchecked_mut(dst_lower..dst_upper).iter_mut();
-                dst.zip(src).for_each(|(dst, src)| *dst = src.clone());
+        } else {
+            let major = cmp::min(self.major(), src.minor());
+            let minor = cmp::min(self.minor(), src.major());
+            for i in 0..major {
+                let dst_lower = i * dst_stride.major();
+                let dst_upper = dst_lower + minor * dst_stride.minor();
+                unsafe {
+                    let src = src.data.iter().skip(i).step_by(src_stride.major());
+                    let dst = self.data.get_unchecked_mut(dst_lower..dst_upper).iter_mut();
+                    dst.zip(src).for_each(|(dst, src)| *dst = src.clone());
+                }
             }
         }
 
