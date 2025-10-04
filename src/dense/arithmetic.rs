@@ -1,6 +1,7 @@
 use super::Matrix;
-use super::layout::{Layout, LayoutIndex, Order, OrderKind};
+use super::layout::{Layout, Order, OrderKind};
 use crate::error::{Error, Result};
+use crate::index::Index;
 use crate::shape::Shape;
 use alloc::vec::Vec;
 use core::ptr;
@@ -90,9 +91,8 @@ where
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = LayoutIndex::from_flattened(index, lhs_stride)
-                        .swap()
-                        .to_flattened(rhs_stride);
+                    let index = Index::from_flattened::<LO>(index, lhs_stride)
+                        .to_flattened::<RO>(rhs_stride);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -127,9 +127,8 @@ where
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = LayoutIndex::from_flattened(index, lhs_stride)
-                        .swap()
-                        .to_flattened(rhs_stride);
+                    let index = Index::from_flattened::<LO>(index, lhs_stride)
+                        .to_flattened::<RO>(rhs_stride);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op(left, right)
                 })
@@ -167,9 +166,8 @@ where
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = LayoutIndex::from_flattened(index, lhs_stride)
-                        .swap()
-                        .to_flattened(rhs_stride);
+                    let index = Index::from_flattened::<LO>(index, lhs_stride)
+                        .to_flattened::<RO>(rhs_stride);
                     let right = unsafe { ptr::read(rhs_base.add(index)) };
                     op(left, right)
                 })
@@ -207,9 +205,8 @@ where
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = LayoutIndex::from_flattened(index, lhs_stride)
-                        .swap()
-                        .to_flattened(rhs_stride);
+                    let index = Index::from_flattened::<LO>(index, lhs_stride)
+                        .to_flattened::<RO>(rhs_stride);
                     let right = unsafe { ptr::read(rhs_base.add(index)) };
                     op(left, right)
                 })
@@ -239,9 +236,8 @@ where
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = LayoutIndex::from_flattened(index, lhs_stride)
-                    .swap()
-                    .to_flattened(rhs_stride);
+                let index =
+                    Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
                 let right = unsafe { rhs.data.get_unchecked(index) };
                 op(left, right)
             });
@@ -268,16 +264,13 @@ where
                 .for_each(|(left, right)| op(left, right));
         } else {
             let mut rhs = rhs;
-            unsafe {
-                rhs.data.set_len(0);
-            }
+            unsafe { rhs.data.set_len(0) };
             let rhs_base = rhs.data.as_ptr();
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = LayoutIndex::from_flattened(index, lhs_stride)
-                    .swap()
-                    .to_flattened(rhs_stride);
+                let index =
+                    Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
                 let right = unsafe { ptr::read(rhs_base.add(index)) };
                 op(left, right)
             });

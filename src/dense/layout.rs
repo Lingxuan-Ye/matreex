@@ -1,6 +1,5 @@
 use self::internal::Sealed;
 use crate::error::{Error, Result};
-use crate::index::{AsIndex, Index};
 use crate::shape::{AsShape, Shape};
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
@@ -201,70 +200,6 @@ impl Stride {
 
     pub(super) fn minor(&self) -> usize {
         1
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub(super) struct LayoutIndex {
-    pub(super) major: usize,
-    pub(super) minor: usize,
-}
-
-impl LayoutIndex {
-    fn new(major: usize, minor: usize) -> Self {
-        Self { major, minor }
-    }
-
-    pub(super) fn from_index<I, O>(index: I) -> Self
-    where
-        I: AsIndex,
-        O: Order,
-    {
-        match O::KIND {
-            OrderKind::RowMajor => Self::new(index.row(), index.col()),
-            OrderKind::ColMajor => Self::new(index.col(), index.row()),
-        }
-    }
-
-    pub(super) fn to_index<O>(self) -> Index
-    where
-        O: Order,
-    {
-        match O::KIND {
-            OrderKind::RowMajor => Index::new(self.major, self.minor),
-            OrderKind::ColMajor => Index::new(self.minor, self.major),
-        }
-    }
-
-    pub(super) fn from_flattened(index: usize, stride: Stride) -> Self {
-        let major = index / stride.major();
-        let minor = (index % stride.major()) / stride.minor();
-        Self::new(major, minor)
-    }
-
-    pub(super) fn to_flattened(self, stride: Stride) -> usize {
-        self.major * stride.major() + self.minor * stride.minor()
-    }
-
-    pub(super) fn swap(&mut self) -> &mut Self {
-        (self.major, self.minor) = (self.minor, self.major);
-        self
-    }
-}
-
-impl Index {
-    pub(super) fn from_flattened<O>(index: usize, stride: Stride) -> Self
-    where
-        O: Order,
-    {
-        LayoutIndex::from_flattened(index, stride).to_index::<O>()
-    }
-
-    pub(super) fn to_flattened<O>(self, stride: Stride) -> usize
-    where
-        O: Order,
-    {
-        LayoutIndex::from_index::<_, O>(self).to_flattened(stride)
     }
 }
 

@@ -1,7 +1,8 @@
 pub use self::layout::{ColMajor, RowMajor};
 
-use self::layout::{Layout, LayoutIndex, Order, OrderKind, Stride};
+use self::layout::{Layout, Order, OrderKind, Stride};
 use crate::error::Result;
+use crate::index::Index;
 use crate::shape::Shape;
 use alloc::vec::Vec;
 use core::cmp;
@@ -14,6 +15,7 @@ pub mod parallel;
 mod arithmetic;
 mod construct;
 mod fmt;
+mod index;
 mod iter;
 mod layout;
 mod resize;
@@ -86,13 +88,13 @@ where
         let old_base = self.data.as_ptr();
         let new_base = new_data.as_mut_ptr();
 
-        for old_index in 0..size {
+        for index in 0..size {
             unsafe {
-                let src = old_base.add(old_index);
-                let new_index = LayoutIndex::from_flattened(old_index, old_stride)
+                let src = old_base.add(index);
+                let index = Index::from_flattened::<O>(index, old_stride)
                     .swap()
-                    .to_flattened(new_stride);
-                let dst = new_base.add(new_index);
+                    .to_flattened::<O>(new_stride);
+                let dst = new_base.add(index);
                 ptr::copy_nonoverlapping(src, dst, 1);
             }
         }
@@ -270,12 +272,11 @@ where
         } else if LO::KIND == RO::KIND {
             self.data == other.data
         } else {
-            let left_stride = self.stride();
-            let right_stride = other.stride();
+            let lhs_stride = self.stride();
+            let rhs_stride = other.stride();
             self.data.iter().enumerate().all(|(index, left)| {
-                let index = LayoutIndex::from_flattened(index, left_stride)
-                    .swap()
-                    .to_flattened(right_stride);
+                let index =
+                    Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
                 let right = unsafe { other.data.get_unchecked(index) };
                 left == right
             })
