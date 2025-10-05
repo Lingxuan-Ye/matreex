@@ -16,3 +16,5 @@ pub mod shape;
 
 #[cfg(feature = "parallel")]
 pub mod parallel;
+
+mod macros;
