@@ -1,8 +1,6 @@
 //! Dense matrix implementation.
 
-pub use self::layout::{ColMajor, Order, OrderKind, RowMajor};
-
-use self::layout::{Layout, Stride};
+use self::layout::{ColMajor, Layout, Order, RowMajor, Stride};
 use crate::error::Result;
 use crate::index::Index;
 use crate::shape::Shape;
@@ -11,13 +9,14 @@ use core::cmp;
 use core::hash::{Hash, Hasher};
 use core::ptr;
 
+pub mod layout;
+
 mod arithmetic;
 mod construct;
 mod convert;
 mod fmt;
 mod index;
 mod iter;
-mod layout;
 mod resize;
 mod swap;
 

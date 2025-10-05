@@ -1,3 +1,5 @@
+//! Types for matrix layout.
+
 use self::internal::Sealed;
 use crate::error::{Error, Result};
 use crate::shape::{AsShape, Shape};
