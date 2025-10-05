@@ -10,8 +10,8 @@ where
 {
     pub fn swap<I, J>(&mut self, i: I, j: J) -> Result<&mut Self>
     where
-        I: MatrixIndex<Self, Output = T>,
-        J: MatrixIndex<Self, Output = T>,
+        I: for<'a> MatrixIndex<Self, OutputMut<'a> = &'a mut T>,
+        J: for<'a> MatrixIndex<Self, OutputMut<'a> = &'a mut T>,
     {
         let x = self.get_mut(i)? as *mut T;
         let y = self.get_mut(j)? as *mut T;
