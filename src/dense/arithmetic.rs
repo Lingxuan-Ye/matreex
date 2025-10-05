@@ -158,7 +158,9 @@ where
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();
             let mut rhs = rhs;
-            unsafe { rhs.data.set_len(0) };
+            unsafe {
+                rhs.data.set_len(0);
+            }
             let rhs_base = rhs.data.as_ptr();
             self.data
                 .iter()
@@ -197,7 +199,9 @@ where
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();
             let mut rhs = rhs;
-            unsafe { rhs.data.set_len(0) };
+            unsafe {
+                rhs.data.set_len(0);
+            }
             let rhs_base = rhs.data.as_ptr();
             self.data
                 .into_iter()
@@ -262,7 +266,9 @@ where
                 .for_each(|(left, right)| op(left, right));
         } else {
             let mut rhs = rhs;
-            unsafe { rhs.data.set_len(0) };
+            unsafe {
+                rhs.data.set_len(0);
+            }
             let rhs_base = rhs.data.as_ptr();
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();

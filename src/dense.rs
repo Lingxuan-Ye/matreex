@@ -90,7 +90,9 @@ where
         self.layout.swap();
         let new_stride = self.stride();
         let size = self.size();
-        unsafe { self.data.set_len(0) };
+        unsafe {
+            self.data.set_len(0);
+        }
         let mut new_data = Vec::<T>::with_capacity(size);
         let old_base = self.data.as_ptr();
         let new_base = new_data.as_mut_ptr();
@@ -106,7 +108,9 @@ where
             }
         }
 
-        unsafe { new_data.set_len(size) };
+        unsafe {
+            new_data.set_len(size);
+        }
         self.data = new_data;
 
         self
