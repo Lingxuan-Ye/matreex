@@ -52,16 +52,6 @@ where
     }
 }
 
-impl<T, O, C> TryFromCols<C> for Matrix<T, O>
-where
-    Self: FromCols<C>,
-    O: Order,
-{
-    fn try_from_cols(value: C) -> Result<Self> {
-        Ok(Self::from_cols(value))
-    }
-}
-
 impl<T, O, const R: usize, const C: usize> TryFromCols<[Box<[T; R]>; C]> for Matrix<T, O>
 where
     O: Order,
@@ -244,14 +234,14 @@ where
     }
 }
 
-impl<T, O, V> FromColIterator<T, V> for Matrix<T, O>
+impl<T, O, C> FromColIterator<C, T> for Matrix<T, O>
 where
     O: Order,
-    V: IntoIterator<Item = T>,
+    C: IntoIterator<Item = T>,
 {
-    fn from_col_iter<M>(iter: M) -> Self
+    fn from_col_iter<I>(iter: I) -> Self
     where
-        M: IntoIterator<Item = V>,
+        I: IntoIterator<Item = C>,
     {
         let mut iter = iter.into_iter();
         let Some(first) = iter.next() else {

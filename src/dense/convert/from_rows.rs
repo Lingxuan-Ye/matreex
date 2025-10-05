@@ -52,16 +52,6 @@ where
     }
 }
 
-impl<T, O, R> TryFromRows<R> for Matrix<T, O>
-where
-    Self: FromRows<R>,
-    O: Order,
-{
-    fn try_from_rows(value: R) -> Result<Self> {
-        Ok(Self::from_rows(value))
-    }
-}
-
 impl<T, O, const R: usize, const C: usize> TryFromRows<[Box<[T; C]>; R]> for Matrix<T, O>
 where
     O: Order,
@@ -244,14 +234,14 @@ where
     }
 }
 
-impl<T, O, V> FromRowIterator<T, V> for Matrix<T, O>
+impl<T, O, R> FromRowIterator<R, T> for Matrix<T, O>
 where
     O: Order,
-    V: IntoIterator<Item = T>,
+    R: IntoIterator<Item = T>,
 {
-    fn from_row_iter<M>(iter: M) -> Self
+    fn from_row_iter<I>(iter: I) -> Self
     where
-        M: IntoIterator<Item = V>,
+        I: IntoIterator<Item = R>,
     {
         let mut iter = iter.into_iter();
         let Some(first) = iter.next() else {

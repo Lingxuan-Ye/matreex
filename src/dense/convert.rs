@@ -1,48 +1,30 @@
 use super::Matrix;
 use super::layout::Order;
-use crate::convert::{FromRowIterator, FromRows, TryFromRows};
+use crate::convert::{FromRowIterator, FromRows, IntoRows, TryFromRows};
 use crate::error::{Error, Result};
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
 mod from_cols;
 mod from_rows;
+mod into_cols;
+mod into_rows;
 
-impl<T, O, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T, O>
+impl<T, O, S> From<S> for Matrix<T, O>
 where
     O: Order,
+    Self: FromRows<S>,
 {
-    fn from(value: [[T; C]; R]) -> Self {
+    fn from(value: S) -> Self {
         Self::from_rows(value)
     }
 }
 
-impl<T, O, const R: usize, const C: usize> From<Box<[[T; C]; R]>> for Matrix<T, O>
-where
-    O: Order,
-{
-    fn from(value: Box<[[T; C]; R]>) -> Self {
-        Self::from_rows(value)
-    }
-}
-
-impl<T, O, const C: usize> From<Box<[[T; C]]>> for Matrix<T, O>
-where
-    O: Order,
-{
-    fn from(value: Box<[[T; C]]>) -> Self {
-        Self::from_rows(value)
-    }
-}
-
-impl<T, O, const C: usize> From<Vec<[T; C]>> for Matrix<T, O>
-where
-    O: Order,
-{
-    fn from(value: Vec<[T; C]>) -> Self {
-        Self::from_rows(value)
-    }
-}
+// Cannot implement `TryFrom` for `Matrix: TryFromRows` because of the
+// conflicting blanket implementation paths below:
+//
+// - `FromRows` -> `TryFromRows` -> `TryFrom`
+// - `FromRows` -> `From` -> `Into` -> `TryFrom`
 
 impl<T, O, const R: usize, const C: usize> TryFrom<[Box<[T; C]>; R]> for Matrix<T, O>
 where
@@ -186,5 +168,41 @@ where
         M: IntoIterator<Item = V>,
     {
         Self::from_row_iter(iter)
+    }
+}
+
+impl<T, O> From<Matrix<T, O>> for Box<[Box<[T]>]>
+where
+    O: Order,
+{
+    fn from(value: Matrix<T, O>) -> Self {
+        value.into_rows()
+    }
+}
+
+impl<T, O> From<Matrix<T, O>> for Vec<Box<[T]>>
+where
+    O: Order,
+{
+    fn from(value: Matrix<T, O>) -> Self {
+        value.into_rows()
+    }
+}
+
+impl<T, O> From<Matrix<T, O>> for Box<[Vec<T>]>
+where
+    O: Order,
+{
+    fn from(value: Matrix<T, O>) -> Self {
+        value.into_rows()
+    }
+}
+
+impl<T, O> From<Matrix<T, O>> for Vec<Vec<T>>
+where
+    O: Order,
+{
+    fn from(value: Matrix<T, O>) -> Self {
+        value.into_rows()
     }
 }
