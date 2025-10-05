@@ -27,6 +27,9 @@ mod parallel;
 #[cfg(feature = "serde")]
 mod serde;
 
+pub type RowMajorMatrix<T> = Matrix<T, RowMajor>;
+pub type ColMajorMatrix<T> = Matrix<T, ColMajor>;
+
 pub struct Matrix<T, O = RowMajor>
 where
     O: Order,
