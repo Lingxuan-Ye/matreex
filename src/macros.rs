@@ -1,4 +1,4 @@
-/// Creates a new [`Matrix<T>`] from literal.
+/// Creates a new [`Matrix<T>`] from a literal.
 ///
 /// > I witnessed His decree:
 /// >
@@ -21,39 +21,24 @@
 /// [`matrix!`]: crate::matrix!
 #[macro_export]
 macro_rules! matrix {
-    [] => {{
-        use $crate::dense::Matrix;
+    [] => {
+        $crate::rmatrix![]
+    };
 
-        Matrix::<_>::new()
-    }};
+    [[$elem:expr; $ncols:expr]; $nrows:expr] => {
+        $crate::rmatrix![[$elem; $ncols]; $nrows]
+    };
 
-    [[$elem:expr; $ncols:expr]; $nrows:expr] => {{
-        use $crate::dense::Matrix;
+    [[$($elem:expr),+ $(,)?]; $nrows:expr] => {
+        $crate::rmatrix![[$($elem),+]; $nrows]
+    };
 
-        match Matrix::<_>::with_value(($nrows, $ncols), $elem) {
-            Err(error) => ::core::panic!("{error}"),
-            Ok(matrix) => matrix,
-        }
-    }};
-
-    [[$($elem:expr),+ $(,)?]; $nrows:expr] => {{
-        extern crate alloc;
-
-        use $crate::convert::FromRows;
-        use $crate::dense::Matrix;
-
-        <Matrix<_> as FromRows<_>>::from_rows(alloc::vec![[$($elem),+]; $nrows])
-    }};
-
-    [$($row:expr),+ $(,)?] => {{
-        use $crate::convert::FromRows;
-        use $crate::dense::Matrix;
-
-        <Matrix<_> as FromRows<_>>::from_rows([$($row),+])
-    }};
+    [$($row:expr),+ $(,)?] => {
+        $crate::rmatrix![$($row),+]
+    };
 }
 
-/// Creates a new [`Matrix<T, RowMajor>`] from literal.
+/// Creates a new [`Matrix<T, RowMajor>`] from a literal.
 ///
 /// > And lo, I beheld the elements ride forth,
 /// >
@@ -110,11 +95,16 @@ macro_rules! rmatrix {
     }};
 }
 
-/// Creates a new [`Matrix<T, ColMajor>`] from literal.
+/// Creates a new [`Matrix<T, ColMajor>`] from a literal.
 ///
 /// > And lo, a harbinger of static dispatch appeared,
 /// >
 /// > its ascent shaping the pillars of chaos.
+///
+/// # Notes
+///
+/// The input literal still follows visual intuition, that is, the innermost
+/// arrays represent rows.
 ///
 /// # Examples
 ///
@@ -122,9 +112,9 @@ macro_rules! rmatrix {
 /// use matreex::{ColMajor, Matrix, cmatrix};
 ///
 /// let foo: Matrix<i32, ColMajor> = cmatrix![];
-/// let bar = cmatrix![[0; 2]; 3];
-/// let baz = cmatrix![[1, 2]; 3];
-/// let qux = cmatrix![[1, 4], [2, 5], [3, 6]];
+/// let bar = cmatrix![[0; 3]; 2];
+/// let baz = cmatrix![[1, 2, 3]; 2];
+/// let qux = cmatrix![[1, 2, 3], [4, 5, 6]];
 /// ```
 ///
 /// [`Matrix<T, ColMajor>`]: crate::dense::Matrix
@@ -151,18 +141,18 @@ macro_rules! cmatrix {
     [[$($elem:expr),+ $(,)?]; $ncols:expr] => {{
         extern crate alloc;
 
-        use $crate::convert::FromCols;
+        use $crate::convert::FromRows;
         use $crate::dense::Matrix;
         use $crate::dense::layout::ColMajor;
 
-        <Matrix::<_, ColMajor> as FromCols<_>>::from_cols(alloc::vec![[$($elem),+]; $ncols])
+        <Matrix::<_, ColMajor> as FromRows<_>>::from_rows(alloc::vec![[$($elem),+]; $ncols])
     }};
 
     [$($col:expr),+ $(,)?] => {{
-        use $crate::convert::FromCols;
+        use $crate::convert::FromRows;
         use $crate::dense::Matrix;
         use $crate::dense::layout::ColMajor;
 
-        <Matrix::<_, ColMajor> as FromCols<_>>::from_cols([$($col),+])
+        <Matrix::<_, ColMajor> as FromRows<_>>::from_rows([$($col),+])
     }};
 }
