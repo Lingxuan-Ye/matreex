@@ -374,7 +374,7 @@ where
                 let tail_start_index = 0;
                 let tail_start = self.data.as_mut_ptr();
                 let tail_len = new_size;
-                MemoryRange::new_unchecked(tail_start, tail_len).init_with::<_, O>(
+                MemoryRange::new_unchecked(tail_start, tail_len).init_with::<O, _>(
                     tail_start_index,
                     new_stride,
                     &mut initializer,
@@ -464,7 +464,7 @@ where
                                     .drop_in_place();
                             }
                             let tail_start = base.add(tail_start_index);
-                            MemoryRange::new_unchecked(tail_start, tail_len).init_with::<_, O>(
+                            MemoryRange::new_unchecked(tail_start, tail_len).init_with::<O, _>(
                                 tail_start_index,
                                 new_stride,
                                 &mut initializer,
@@ -487,7 +487,7 @@ where
                                     .drop_in_place();
                             }
                             let tail_start = new_base.add(tail_start_index);
-                            MemoryRange::new_unchecked(tail_start, tail_len).init_with::<_, O>(
+                            MemoryRange::new_unchecked(tail_start, tail_len).init_with::<O, _>(
                                 tail_start_index,
                                 new_stride,
                                 &mut initializer,
@@ -522,7 +522,7 @@ where
                         let tail_start_index = old_size;
                         let tail_start = base.add(tail_start_index);
                         let tail_len = additional;
-                        MemoryRange::new_unchecked(tail_start, tail_len).init_with::<_, O>(
+                        MemoryRange::new_unchecked(tail_start, tail_len).init_with::<O, _>(
                             tail_start_index,
                             new_stride,
                             &mut initializer,
@@ -558,7 +558,7 @@ where
                                 to_init_start_index -= new_stride.major();
                                 let to_init_start = base.add(to_init_start_index);
                                 MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                    .init_with::<_, O>(
+                                    .init_with::<O, _>(
                                         to_init_start_index,
                                         new_stride,
                                         &mut initializer,
@@ -567,7 +567,7 @@ where
                             to_init_start_index -= new_stride.major();
                             let to_init_start = base.add(to_init_start_index);
                             MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                .init_with::<_, O>(
+                                .init_with::<O, _>(
                                     to_init_start_index,
                                     new_stride,
                                     &mut initializer,
@@ -584,7 +584,7 @@ where
                                 to_init_start_index -= new_stride.major();
                                 let to_init_start = new_base.add(to_init_start_index);
                                 MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                    .init_with::<_, O>(
+                                    .init_with::<O, _>(
                                         to_init_start_index,
                                         new_stride,
                                         &mut initializer,
@@ -596,7 +596,7 @@ where
                             to_init_start_index -= new_stride.major();
                             let to_init_start = new_base.add(to_init_start_index);
                             MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                .init_with::<_, O>(
+                                .init_with::<O, _>(
                                     to_init_start_index,
                                     new_stride,
                                     &mut initializer,
@@ -618,7 +618,7 @@ where
                                 to_init_start_index -= new_stride.major();
                                 let to_init_start = base.add(to_init_start_index);
                                 MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                    .init_with::<_, O>(
+                                    .init_with::<O, _>(
                                         to_init_start_index,
                                         new_stride,
                                         &mut initializer,
@@ -627,7 +627,7 @@ where
                             to_init_start_index -= new_stride.major();
                             let to_init_start = base.add(to_init_start_index);
                             MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                .init_with::<_, O>(
+                                .init_with::<O, _>(
                                     to_init_start_index,
                                     new_stride,
                                     &mut initializer,
@@ -645,7 +645,7 @@ where
                                 to_init_start_index -= new_stride.major();
                                 let to_init_start = new_base.add(to_init_start_index);
                                 MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                    .init_with::<_, O>(
+                                    .init_with::<O, _>(
                                         to_init_start_index,
                                         new_stride,
                                         &mut initializer,
@@ -657,7 +657,7 @@ where
                             to_init_start_index -= new_stride.major();
                             let to_init_start = new_base.add(to_init_start_index);
                             MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                .init_with::<_, O>(
+                                .init_with::<O, _>(
                                     to_init_start_index,
                                     new_stride,
                                     &mut initializer,
@@ -673,7 +673,7 @@ where
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
                             let tail_start = base.add(tail_start_index);
-                            MemoryRange::new_unchecked(tail_start, tail_len).init_with::<_, O>(
+                            MemoryRange::new_unchecked(tail_start, tail_len).init_with::<O, _>(
                                 tail_start_index,
                                 new_stride,
                                 &mut initializer,
@@ -687,7 +687,7 @@ where
                                 to_init_start_index -= new_stride.major();
                                 let to_init_start = base.add(to_init_start_index);
                                 MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                    .init_with::<_, O>(
+                                    .init_with::<O, _>(
                                         to_init_start_index,
                                         new_stride,
                                         &mut initializer,
@@ -696,7 +696,7 @@ where
                             to_init_start_index -= new_stride.major();
                             let to_init_start = base.add(to_init_start_index);
                             MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                .init_with::<_, O>(
+                                .init_with::<O, _>(
                                     to_init_start_index,
                                     new_stride,
                                     &mut initializer,
@@ -706,7 +706,7 @@ where
                             let old_base = self.data.as_ptr();
                             let new_base = new_data.as_mut_ptr();
                             let tail_start = new_base.add(tail_start_index);
-                            MemoryRange::new_unchecked(tail_start, tail_len).init_with::<_, O>(
+                            MemoryRange::new_unchecked(tail_start, tail_len).init_with::<O, _>(
                                 tail_start_index,
                                 new_stride,
                                 &mut initializer,
@@ -720,7 +720,7 @@ where
                                 to_init_start_index -= new_stride.major();
                                 let to_init_start = new_base.add(to_init_start_index);
                                 MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                    .init_with::<_, O>(
+                                    .init_with::<O, _>(
                                         to_init_start_index,
                                         new_stride,
                                         &mut initializer,
@@ -732,7 +732,7 @@ where
                             to_init_start_index -= new_stride.major();
                             let to_init_start = new_base.add(to_init_start_index);
                             MemoryRange::new_unchecked(to_init_start, to_init_len)
-                                .init_with::<_, O>(
+                                .init_with::<O, _>(
                                     to_init_start_index,
                                     new_stride,
                                     &mut initializer,
@@ -815,10 +815,10 @@ impl<T> MemoryRange<T> {
     /// the original values will leak. However, this is considered safe.
     ///
     /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
-    unsafe fn init_with<F, O>(self, start_index: usize, new_stride: Stride, initializer: &mut F)
+    unsafe fn init_with<O, F>(self, start_index: usize, new_stride: Stride, initializer: &mut F)
     where
-        F: FnMut(Index) -> T,
         O: Order,
+        F: FnMut(Index) -> T,
     {
         let mut to_init_index = start_index;
         let mut to_init = self.start;

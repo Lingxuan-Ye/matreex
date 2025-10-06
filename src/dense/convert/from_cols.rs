@@ -14,7 +14,7 @@ where
         let nrows = R;
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let layout = Layout::<_, ColMajor>::from_shape_unchecked(shape);
+        let layout = Layout::<T, ColMajor>::from_shape_unchecked(shape);
         let data = value.into_iter().flatten().collect();
         Matrix { layout, data }.with_order()
     }
@@ -46,7 +46,7 @@ where
         let nrows = R;
         let ncols = value.len();
         let shape = Shape::new(nrows, ncols);
-        let layout = Layout::<_, ColMajor>::from_shape_unchecked(shape);
+        let layout = Layout::<T, ColMajor>::from_shape_unchecked(shape);
         let data = value.into_iter().flatten().collect();
         Matrix { layout, data }.with_order()
     }
@@ -60,7 +60,7 @@ where
         let nrows = R;
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let layout = Layout::<_, ColMajor>::from_shape(shape)?;
+        let layout = Layout::<T, ColMajor>::from_shape(shape)?;
         let data = value.into_iter().flat_map(|col| col as Box<[T]>).collect();
         Ok(Matrix { layout, data }.with_order())
     }
@@ -92,7 +92,7 @@ where
         let nrows = R;
         let ncols = value.len();
         let shape = Shape::new(nrows, ncols);
-        let layout = Layout::<_, ColMajor>::from_shape(shape)?;
+        let layout = Layout::<T, ColMajor>::from_shape(shape)?;
         let data = value.into_iter().flat_map(|col| col as Box<[T]>).collect();
         Ok(Matrix { layout, data }.with_order())
     }
@@ -110,7 +110,7 @@ where
         let nrows = first.len();
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<_, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
         for col in iter {
@@ -153,7 +153,7 @@ where
         };
         let nrows = first.len();
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<_, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
         for col in iter {
@@ -178,7 +178,7 @@ where
         let nrows = first.len();
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<_, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
         for col in iter {
@@ -221,7 +221,7 @@ where
         };
         let nrows = first.len();
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<_, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
         for col in iter {
@@ -262,7 +262,7 @@ where
             size = data.len();
         }
         let shape = Shape::new(nrows, ncols);
-        let layout = Layout::<_, ColMajor>::from_shape_unchecked(shape);
+        let layout = Layout::<T, ColMajor>::from_shape_unchecked(shape);
         Matrix { layout, data }.with_order()
     }
 }
