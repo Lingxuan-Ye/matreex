@@ -2,8 +2,8 @@
 
 extern crate alloc;
 
+pub use self::dense::Matrix;
 pub use self::dense::layout::{ColMajor, RowMajor};
-pub use self::dense::{ColMajorMatrix, Matrix, RowMajorMatrix};
 pub use self::error::{Error, Result};
 pub use self::index::{Index, WrappingIndex};
 pub use self::shape::Shape;
