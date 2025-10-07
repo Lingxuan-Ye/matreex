@@ -96,3 +96,141 @@ macro_rules! impl_primitive_scalar_rem {
 }
 
 impl_primitive_scalar_rem! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
+
+#[cfg(test)]
+mod tests {
+    use crate::{dispatch_unary, matrix};
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_primitive_scalar_rem() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let scalar = 2;
+            let expected = matrix![[1, 0, 1], [0, 1, 0]];
+
+            {
+                let matrix = matrix.clone();
+                let output = matrix % scalar;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let matrix = matrix.clone();
+                let output = matrix % &scalar;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let output = &matrix % scalar;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let output = &matrix % &scalar;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let matrix = matrix.map_ref(|x| x).unwrap();
+                let output = matrix % scalar;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let matrix = matrix.map_ref(|x| x).unwrap();
+                let output = matrix % &scalar;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let matrix = matrix.map_ref(|x| x).unwrap();
+                let output = &matrix % scalar;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let matrix = matrix.map_ref(|x| x).unwrap();
+                let output = &matrix % &scalar;
+                assert_eq!(output, expected);
+            }
+        }}
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_primitive_scalar_rem_rev() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let scalar = 2;
+            let expected = matrix![[0, 0, 2], [2, 2, 2]];
+
+            {
+                let matrix = matrix.clone();
+                let output = scalar % matrix;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let matrix = matrix.clone();
+                let output = &scalar % matrix;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let output = scalar % &matrix;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let output = &scalar % &matrix;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let matrix = matrix.map_ref(|x| x).unwrap();
+                let output = scalar % matrix;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let matrix = matrix.map_ref(|x| x).unwrap();
+                let output = &scalar % matrix;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let matrix = matrix.map_ref(|x| x).unwrap();
+                let output = scalar % &matrix;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let matrix = matrix.map_ref(|x| x).unwrap();
+                let output = &scalar % &matrix;
+                assert_eq!(output, expected);
+            }
+        }}
+    }
+
+    #[test]
+    fn test_primitive_scalar_rem_assign() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let scalar = 2;
+            let expected = matrix![[1, 0, 1], [0, 1, 0]];
+
+            {
+                let mut matrix = matrix.clone();
+                matrix %= scalar;
+                assert_eq!(matrix, expected);
+            }
+
+            {
+                let mut matrix = matrix.clone();
+                matrix %= &scalar;
+                assert_eq!(matrix, expected);
+            }
+        }}
+    }
+}

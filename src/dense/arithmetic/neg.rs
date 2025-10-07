@@ -31,3 +31,48 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{dispatch_unary, matrix};
+
+    #[derive(Clone)]
+    struct MockT(i32);
+
+    #[derive(Debug, PartialEq)]
+    struct MockU(i32);
+
+    impl Neg for MockT {
+        type Output = MockU;
+
+        fn neg(self) -> Self::Output {
+            MockU(-self.0)
+        }
+    }
+
+    #[test]
+    fn test_neg() {
+        dispatch_unary! {{
+            let matrix = matrix![
+                [MockT(1), MockT(2), MockT(3)],
+                [MockT(4), MockT(5), MockT(6)],
+            ].with_order::<O>();
+            let expected = matrix![
+                [MockU(-1), MockU(-2), MockU(-3)],
+                [MockU(-4), MockU(-5), MockU(-6)],
+            ];
+
+            {
+                let matrix = matrix.clone();
+                let output = -matrix;
+                assert_eq!(output, expected);
+            }
+
+            {
+                let output = -&matrix;
+                assert_eq!(output, expected);
+            }
+        }}
+    }
+}
