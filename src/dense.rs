@@ -123,10 +123,10 @@ where
         if O::KIND != P::KIND {
             self.transpose();
         }
-        self.reinterpret_in_order::<P>()
+        self.reinterpret::<P>()
     }
 
-    pub fn reinterpret_in_order<P>(self) -> Matrix<T, P>
+    pub fn reinterpret<P>(self) -> Matrix<T, P>
     where
         P: Order,
     {
