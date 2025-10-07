@@ -119,7 +119,7 @@ where
     }
 
     pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
-        if self.size().saturating_mul(size_of::<T>()) > isize::MAX as usize {
+        if self.size().saturating_mul(size_of::<U>()) > isize::MAX as usize {
             Err(Error::CapacityOverflow)
         } else {
             Ok(Layout::new_unchecked(self.major, self.minor))
