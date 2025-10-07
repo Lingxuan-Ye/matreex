@@ -217,3 +217,115 @@ impl WrappingIndex {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::shape::Shape;
+
+    #[test]
+    fn test_index_new() {
+        let index = Index::new(2, 3);
+        assert_eq!(index, Index { row: 2, col: 3 });
+
+        let index = Index::new(3, 2);
+        assert_eq!(index, Index { row: 3, col: 2 });
+    }
+
+    #[test]
+    fn test_index_from_wrapping_index() {
+        let shape = Shape::new(2, 3);
+        for row in (-6..=6).step_by(2) {
+            for col in (-6..=6).step_by(3) {
+                let index = WrappingIndex::new(row, col);
+                let index = Index::from_wrapping_index(index, shape);
+                assert_eq!(index, Index::new(0, 0));
+            }
+        }
+    }
+
+    #[test]
+    fn test_index_swap() {
+        let mut index = Index::new(2, 3);
+        index.swap();
+        assert_eq!(index, Index::new(3, 2));
+
+        let mut index = Index::new(3, 2);
+        index.swap();
+        assert_eq!(index, Index::new(2, 3));
+    }
+
+    #[test]
+    fn test_as_index_row() {
+        let index = Index::new(2, 3);
+        assert_eq!(AsIndex::row(&index), 2);
+
+        let index = Index::new(3, 2);
+        assert_eq!(AsIndex::row(&index), 3);
+
+        let index = (2, 3);
+        assert_eq!(AsIndex::row(&index), 2);
+
+        let index = (3, 2);
+        assert_eq!(AsIndex::row(&index), 3);
+
+        let index = [2, 3];
+        assert_eq!(AsIndex::row(&index), 2);
+
+        let index = [3, 2];
+        assert_eq!(AsIndex::row(&index), 3);
+    }
+
+    #[test]
+    fn test_as_index_col() {
+        let index = Index::new(2, 3);
+        assert_eq!(AsIndex::col(&index), 3);
+
+        let index = Index::new(3, 2);
+        assert_eq!(AsIndex::col(&index), 2);
+
+        let index = (2, 3);
+        assert_eq!(AsIndex::col(&index), 3);
+
+        let index = (3, 2);
+        assert_eq!(AsIndex::col(&index), 2);
+
+        let index = [2, 3];
+        assert_eq!(AsIndex::col(&index), 3);
+
+        let index = [3, 2];
+        assert_eq!(AsIndex::col(&index), 2);
+    }
+
+    #[test]
+    fn test_wrapping_index_new() {
+        let index = WrappingIndex::new(2, 3);
+        assert_eq!(index, WrappingIndex { row: 2, col: 3 });
+
+        let index = WrappingIndex::new(3, 2);
+        assert_eq!(index, WrappingIndex { row: 3, col: 2 });
+    }
+
+    #[test]
+    fn test_wrapping_index_to_index() {
+        let shape = Shape::new(2, 3);
+        for row in (-6..=6).step_by(2) {
+            for col in (-6..=6).step_by(3) {
+                let index = WrappingIndex::new(row, col);
+                let index = index.to_index(shape);
+                assert_eq!(index, Index::new(0, 0));
+            }
+        }
+    }
+
+    #[test]
+    fn test_wrapping_index_swap() {
+        let mut index = WrappingIndex::new(2, 3);
+        index.swap();
+        assert_eq!(index, WrappingIndex::new(3, 2));
+
+        let mut index = WrappingIndex::new(3, 2);
+        index.swap();
+        assert_eq!(index, WrappingIndex::new(2, 3));
+    }
+}
