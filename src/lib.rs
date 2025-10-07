@@ -2,11 +2,11 @@
 
 extern crate alloc;
 
-pub use self::dense::Matrix;
-pub use self::dense::layout::{ColMajor, RowMajor};
 pub use self::error::{Error, Result};
 pub use self::index::{Index, WrappingIndex};
 pub use self::shape::Shape;
+
+use self::dense::layout::RowMajor;
 
 pub mod convert;
 pub mod dense;
@@ -18,3 +18,9 @@ pub mod shape;
 pub mod parallel;
 
 mod macros;
+
+/// An alias for [`dense::Matrix<T, RowMajor>`].
+///
+/// This provides a better experience for type inference than giving the type
+/// parameter for the storage order a default of [`RowMajor`].
+pub type Matrix<T> = self::dense::Matrix<T, RowMajor>;

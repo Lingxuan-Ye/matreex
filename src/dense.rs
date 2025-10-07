@@ -1,6 +1,6 @@
 //! Dense matrix implementation.
 
-use self::layout::{Layout, Order, RowMajor, Stride};
+use self::layout::{Layout, Order, Stride};
 use crate::error::Result;
 use crate::index::Index;
 use crate::shape::Shape;
@@ -27,7 +27,7 @@ mod parallel;
 #[cfg(feature = "serde")]
 mod serde;
 
-pub struct Matrix<T, O = RowMajor>
+pub struct Matrix<T, O>
 where
     O: Order,
 {
