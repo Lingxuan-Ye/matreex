@@ -77,11 +77,11 @@ where
         RO: Order,
         U: Add<Output = U> + Default,
     {
-        self.multiplication_like_operation(rhs, |left_row, right_col| unsafe {
-            left_row
+        self.multiplication_like_operation(rhs, |lhs_row, rhs_col| unsafe {
+            lhs_row
                 .iter()
-                .zip(right_col)
-                .map(|(left, right)| left.clone() * right.clone())
+                .zip(rhs_col)
+                .map(|(lhs, rhs)| lhs.clone() * rhs.clone())
                 .reduce(|sum, product| sum + product)
                 .unwrap_unchecked()
         })

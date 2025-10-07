@@ -80,7 +80,7 @@ where
             self.data
                 .iter()
                 .zip(&rhs.data)
-                .map(|(left, right)| op(left, right))
+                .map(|(lhs, rhs)| op(lhs, rhs))
                 .collect()
         } else {
             let lhs_stride = self.stride();
@@ -88,11 +88,11 @@ where
             self.data
                 .iter()
                 .enumerate()
-                .map(|(index, left)| {
+                .map(|(index, lhs)| {
                     let index = Index::from_flattened::<LO>(index, lhs_stride)
                         .to_flattened::<RO>(rhs_stride);
-                    let right = unsafe { rhs.data.get_unchecked(index) };
-                    op(left, right)
+                    let rhs = unsafe { rhs.data.get_unchecked(index) };
+                    op(lhs, rhs)
                 })
                 .collect()
         };
@@ -116,7 +116,7 @@ where
             self.data
                 .into_iter()
                 .zip(&rhs.data)
-                .map(|(left, right)| op(left, right))
+                .map(|(lhs, rhs)| op(lhs, rhs))
                 .collect()
         } else {
             let lhs_stride = self.stride();
@@ -124,11 +124,11 @@ where
             self.data
                 .into_iter()
                 .enumerate()
-                .map(|(index, left)| {
+                .map(|(index, lhs)| {
                     let index = Index::from_flattened::<LO>(index, lhs_stride)
                         .to_flattened::<RO>(rhs_stride);
-                    let right = unsafe { rhs.data.get_unchecked(index) };
-                    op(left, right)
+                    let rhs = unsafe { rhs.data.get_unchecked(index) };
+                    op(lhs, rhs)
                 })
                 .collect()
         };
@@ -152,7 +152,7 @@ where
             self.data
                 .iter()
                 .zip(rhs.data)
-                .map(|(left, right)| op(left, right))
+                .map(|(lhs, rhs)| op(lhs, rhs))
                 .collect()
         } else {
             let lhs_stride = self.stride();
@@ -165,11 +165,11 @@ where
             self.data
                 .iter()
                 .enumerate()
-                .map(|(index, left)| {
+                .map(|(index, lhs)| {
                     let index = Index::from_flattened::<LO>(index, lhs_stride)
                         .to_flattened::<RO>(rhs_stride);
-                    let right = unsafe { ptr::read(rhs_base.add(index)) };
-                    op(left, right)
+                    let rhs = unsafe { ptr::read(rhs_base.add(index)) };
+                    op(lhs, rhs)
                 })
                 .collect()
         };
@@ -193,7 +193,7 @@ where
             self.data
                 .into_iter()
                 .zip(rhs.data)
-                .map(|(left, right)| op(left, right))
+                .map(|(lhs, rhs)| op(lhs, rhs))
                 .collect()
         } else {
             let lhs_stride = self.stride();
@@ -206,11 +206,11 @@ where
             self.data
                 .into_iter()
                 .enumerate()
-                .map(|(index, left)| {
+                .map(|(index, lhs)| {
                     let index = Index::from_flattened::<LO>(index, lhs_stride)
                         .to_flattened::<RO>(rhs_stride);
-                    let right = unsafe { ptr::read(rhs_base.add(index)) };
-                    op(left, right)
+                    let rhs = unsafe { ptr::read(rhs_base.add(index)) };
+                    op(lhs, rhs)
                 })
                 .collect()
         };
@@ -233,15 +233,15 @@ where
             self.data
                 .iter_mut()
                 .zip(&rhs.data)
-                .for_each(|(left, right)| op(left, right));
+                .for_each(|(lhs, rhs)| op(lhs, rhs));
         } else {
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();
-            self.data.iter_mut().enumerate().for_each(|(index, left)| {
+            self.data.iter_mut().enumerate().for_each(|(index, lhs)| {
                 let index =
                     Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
-                let right = unsafe { rhs.data.get_unchecked(index) };
-                op(left, right)
+                let rhs = unsafe { rhs.data.get_unchecked(index) };
+                op(lhs, rhs)
             });
         }
 
@@ -263,7 +263,7 @@ where
             self.data
                 .iter_mut()
                 .zip(rhs.data)
-                .for_each(|(left, right)| op(left, right));
+                .for_each(|(lhs, rhs)| op(lhs, rhs));
         } else {
             let mut rhs = rhs;
             unsafe {
@@ -272,11 +272,11 @@ where
             let rhs_base = rhs.data.as_ptr();
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();
-            self.data.iter_mut().enumerate().for_each(|(index, left)| {
+            self.data.iter_mut().enumerate().for_each(|(index, lhs)| {
                 let index =
                     Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
-                let right = unsafe { ptr::read(rhs_base.add(index)) };
-                op(left, right)
+                let rhs = unsafe { ptr::read(rhs_base.add(index)) };
+                op(lhs, rhs)
             });
         }
 

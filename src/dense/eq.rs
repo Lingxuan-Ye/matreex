@@ -16,11 +16,11 @@ where
         } else {
             let lhs_stride = self.stride();
             let rhs_stride = other.stride();
-            self.data.iter().enumerate().all(|(index, left)| {
+            self.data.iter().enumerate().all(|(index, lhs)| {
                 let index =
                     Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
-                let right = unsafe { other.data.get_unchecked(index) };
-                left == right
+                let rhs = unsafe { other.data.get_unchecked(index) };
+                lhs == rhs
             })
         }
     }

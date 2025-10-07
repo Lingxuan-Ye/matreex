@@ -11,7 +11,7 @@ where
     type Output = Matrix<U, LO>;
 
     fn sub(self, rhs: Matrix<R, RO>) -> Self::Output {
-        match self.elementwise_operation_consume_both(rhs, |left, right| left - right) {
+        match self.elementwise_operation_consume_both(rhs, |lhs, rhs| lhs - rhs) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -28,7 +28,7 @@ where
     type Output = Matrix<U, LO>;
 
     fn sub(self, rhs: &Matrix<R, RO>) -> Self::Output {
-        match self.elementwise_operation_consume_self(rhs, |left, right| left - right.clone()) {
+        match self.elementwise_operation_consume_self(rhs, |lhs, rhs| lhs - rhs.clone()) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -44,7 +44,7 @@ where
     type Output = Matrix<U, LO>;
 
     fn sub(self, rhs: Matrix<R, RO>) -> Self::Output {
-        match self.elementwise_operation_consume_rhs(rhs, |left, right| left.clone() - right) {
+        match self.elementwise_operation_consume_rhs(rhs, |lhs, rhs| lhs.clone() - rhs) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -61,7 +61,7 @@ where
     type Output = Matrix<U, LO>;
 
     fn sub(self, rhs: &Matrix<R, RO>) -> Self::Output {
-        match self.elementwise_operation(rhs, |left, right| left.clone() - right.clone()) {
+        match self.elementwise_operation(rhs, |lhs, rhs| lhs.clone() - rhs.clone()) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -76,7 +76,7 @@ where
 {
     fn sub_assign(&mut self, rhs: Matrix<R, RO>) {
         if let Err(error) =
-            self.elementwise_operation_assign_consume_rhs(rhs, |left, right| *left -= right)
+            self.elementwise_operation_assign_consume_rhs(rhs, |lhs, rhs| *lhs -= rhs)
         {
             panic!("{error}");
         }
@@ -91,9 +91,7 @@ where
     RO: Order,
 {
     fn sub_assign(&mut self, rhs: &Matrix<R, RO>) {
-        if let Err(error) =
-            self.elementwise_operation_assign(rhs, |left, right| *left -= right.clone())
-        {
+        if let Err(error) = self.elementwise_operation_assign(rhs, |lhs, rhs| *lhs -= rhs.clone()) {
             panic!("{error}");
         }
     }
