@@ -156,3 +156,59 @@ macro_rules! cmatrix {
         <Matrix::<_, ColMajor> as FromRows<_>>::from_rows([$($col),+])
     }};
 }
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! dispatch_unary {
+    { $block:block } => {{
+        use $crate::dense::layout::{ColMajor, RowMajor};
+
+        {
+            type O = RowMajor;
+
+            $block
+        }
+
+        {
+            type O = ColMajor;
+
+            $block
+        }
+    }};
+}
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! dispatch_binary {
+    { $block:block } => {{
+        use $crate::dense::layout::{ColMajor, RowMajor};
+
+        {
+            type LO = RowMajor;
+            type RO = RowMajor;
+
+            $block
+        }
+
+        {
+            type LO = RowMajor;
+            type RO = ColMajor;
+
+            $block
+        }
+
+        {
+            type LO = ColMajor;
+            type RO = RowMajor;
+
+            $block
+        }
+
+        {
+            type LO = ColMajor;
+            type RO = ColMajor;
+
+            $block
+        }
+    }};
+}
