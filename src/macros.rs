@@ -17,7 +17,7 @@
 /// let qux = matrix![[1, 2, 3], [4, 5, 6]];
 /// ```
 ///
-/// [`Matrix<T>`]: crate::dense::Matrix
+/// [`Matrix<T>`]: crate::Matrix
 /// [`matrix!`]: crate::matrix!
 #[macro_export]
 macro_rules! matrix {
@@ -47,9 +47,11 @@ macro_rules! matrix {
 /// # Examples
 ///
 /// ```
-/// use matreex::{Matrix, RowMajor, rmatrix};
+/// use matreex::rmatrix;
+/// use matreex::dense::Matrix;
+/// use matreex::dense::layout::RowMajor;
 ///
-/// let foo: Matrix<i32, RowMajor> = rmatrix![];
+/// let foo: Matrix<u8, RowMajor> = rmatrix![];
 /// let bar = rmatrix![[0; 3]; 2];
 /// let baz = rmatrix![[1, 2, 3]; 2];
 /// let qux = rmatrix![[1, 2, 3], [4, 5, 6]];
@@ -109,9 +111,11 @@ macro_rules! rmatrix {
 /// # Examples
 ///
 /// ```
-/// use matreex::{ColMajor, Matrix, cmatrix};
+/// use matreex::cmatrix;
+/// use matreex::dense::Matrix;
+/// use matreex::dense::layout::ColMajor;
 ///
-/// let foo: Matrix<i32, ColMajor> = cmatrix![];
+/// let foo: Matrix<u8, ColMajor> = cmatrix![];
 /// let bar = cmatrix![[0; 3]; 2];
 /// let baz = cmatrix![[1, 2, 3]; 2];
 /// let qux = cmatrix![[1, 2, 3], [4, 5, 6]];
