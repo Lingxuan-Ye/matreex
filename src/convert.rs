@@ -3,7 +3,7 @@
 use crate::error::Result;
 
 /// A trait for matrix conversion from a sequence of rows.
-pub trait FromRows<S>: Sized {
+pub trait FromRows<S> {
     /// Converts from a sequence of rows.
     fn from_rows(value: S) -> Self;
 }
@@ -15,7 +15,7 @@ pub trait TryFromRows<S>: Sized {
 }
 
 /// A trait for matrix conversion from an iterator over rows.
-pub trait FromRowIterator<R, T>: Sized
+pub trait FromRowIterator<R, T>
 where
     R: IntoIterator<Item = T>,
 {
@@ -35,7 +35,7 @@ where
 }
 
 /// A trait for matrix conversion from a sequence of columns.
-pub trait FromCols<S>: Sized {
+pub trait FromCols<S> {
     /// Converts from a sequence of columns.
     fn from_cols(value: S) -> Self;
 }
@@ -47,7 +47,7 @@ pub trait TryFromCols<S>: Sized {
 }
 
 /// A trait for matrix conversion from an iterator over columns.
-pub trait FromColIterator<C, T>: Sized
+pub trait FromColIterator<C, T>
 where
     C: IntoIterator<Item = T>,
 {
