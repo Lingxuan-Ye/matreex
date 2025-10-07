@@ -92,13 +92,13 @@ where
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T, O>) -> Self::Output<'_> {
         let stride = matrix.stride();
-        let index = Index::from_as_index(self).to_flattened::<O>(stride);
+        let index = Index::new(self.row(), self.col()).to_flattened::<O>(stride);
         unsafe { matrix.data.get_unchecked(index) }
     }
 
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T, O>) -> Self::OutputMut<'_> {
         let stride = matrix.stride();
-        let index = Index::from_as_index(self).to_flattened::<O>(stride);
+        let index = Index::new(self.row(), self.col()).to_flattened::<O>(stride);
         unsafe { matrix.data.get_unchecked_mut(index) }
     }
 }

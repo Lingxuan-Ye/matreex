@@ -109,15 +109,6 @@ impl Index {
         Self { row, col }
     }
 
-    pub fn from_as_index<I>(index: I) -> Self
-    where
-        I: AsIndex,
-    {
-        let row = index.row();
-        let col = index.col();
-        Self { row, col }
-    }
-
     pub fn from_wrapping_index<S>(index: WrappingIndex, shape: S) -> Self
     where
         S: AsShape,
