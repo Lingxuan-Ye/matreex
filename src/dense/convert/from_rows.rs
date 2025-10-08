@@ -15,7 +15,11 @@ where
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
         let layout = Layout::<T, RowMajor>::from_shape_unchecked(shape);
-        let data = value.into_iter().flatten().collect();
+        let size = layout.size();
+        let mut data = Vec::with_capacity(size);
+        for row in value {
+            data.extend(row);
+        }
         Matrix { layout, data }.with_order()
     }
 }
@@ -47,7 +51,11 @@ where
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
         let layout = Layout::<T, RowMajor>::from_shape_unchecked(shape);
-        let data = value.into_iter().flatten().collect();
+        let size = layout.size();
+        let mut data = Vec::with_capacity(size);
+        for row in value {
+            data.extend(row);
+        }
         Matrix { layout, data }.with_order()
     }
 }
@@ -60,8 +68,11 @@ where
         let nrows = R;
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let layout = Layout::<T, RowMajor>::from_shape(shape)?;
-        let data = value.into_iter().flat_map(|row| row as Box<[T]>).collect();
+        let (layout, size) = Layout::<T, RowMajor>::from_shape_with_size(shape)?;
+        let mut data = Vec::with_capacity(size);
+        for row in value {
+            data.extend(row as Box<[T]>);
+        }
         Ok(Matrix { layout, data }.with_order())
     }
 }
@@ -92,8 +103,11 @@ where
         let nrows = value.len();
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let layout = Layout::<T, RowMajor>::from_shape(shape)?;
-        let data = value.into_iter().flat_map(|row| row as Box<[T]>).collect();
+        let (layout, size) = Layout::<T, RowMajor>::from_shape_with_size(shape)?;
+        let mut data = Vec::with_capacity(size);
+        for row in value {
+            data.extend(row as Box<[T]>);
+        }
         Ok(Matrix { layout, data }.with_order())
     }
 }
@@ -357,19 +371,18 @@ mod tests {
             let output = Matrix::<i32, O>::try_from_rows(seq).unwrap();
             assert_eq!(output, expected);
 
-            // Unable to cover.
-            // let seq: [Box<[(); MAX]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
-            // assert!(Matrix::<(), O>::try_from_rows(seq).is_ok());
+            let seq: [Box<[(); MAX]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
+            assert!(Matrix::<(), O>::try_from_rows(seq).is_ok());
 
-            // let seq: Box<[Box<[(); MAX]>; 2]> =
-            //     Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
-            // assert!(Matrix::<(), O>::try_from_rows(seq).is_ok());
+            let seq: Box<[Box<[(); MAX]>; 2]> =
+                Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
+            assert!(Matrix::<(), O>::try_from_rows(seq).is_ok());
 
-            // let seq: Box<[Box<[(); MAX]>]> = Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
-            // assert!(Matrix::<(), O>::try_from_rows(seq).is_ok());
+            let seq: Box<[Box<[(); MAX]>]> = Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
+            assert!(Matrix::<(), O>::try_from_rows(seq).is_ok());
 
-            // let seq: Vec<Box<[(); MAX]>> = vec![Box::new([(); MAX]), Box::new([(); MAX])];
-            // assert!(Matrix::<(), O>::try_from_rows(seq).is_ok());
+            let seq: Vec<Box<[(); MAX]>> = vec![Box::new([(); MAX]), Box::new([(); MAX])];
+            assert!(Matrix::<(), O>::try_from_rows(seq).is_ok());
 
             let seq: [Box<[()]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
             assert!(Matrix::<(), O>::try_from_rows(seq).is_ok());

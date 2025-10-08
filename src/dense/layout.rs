@@ -74,16 +74,6 @@ where
         }
     }
 
-    pub(super) fn from_shape<S>(shape: S) -> Result<Self>
-    where
-        S: AsShape,
-    {
-        match O::KIND {
-            OrderKind::RowMajor => Self::new(shape.nrows(), shape.ncols()),
-            OrderKind::ColMajor => Self::new(shape.ncols(), shape.nrows()),
-        }
-    }
-
     pub(super) fn from_shape_with_size<S>(shape: S) -> Result<(Self, usize)>
     where
         S: AsShape,

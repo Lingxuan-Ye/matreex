@@ -292,19 +292,18 @@ mod tests {
             let output = Matrix::<i32, O>::try_from(seq).unwrap();
             assert_eq!(output, expected);
 
-            // Unable to cover.
-            // let seq: [Box<[(); MAX]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
-            // assert!(Matrix::<(), O>::try_from(seq).is_ok());
+            let seq: [Box<[(); MAX]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
+            assert!(Matrix::<(), O>::try_from(seq).is_ok());
 
-            // let seq: Box<[Box<[(); MAX]>; 2]> =
-            //     Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
-            // assert!(Matrix::<(), O>::try_from(seq).is_ok());
+            let seq: Box<[Box<[(); MAX]>; 2]> =
+                Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
+            assert!(Matrix::<(), O>::try_from(seq).is_ok());
 
-            // let seq: Box<[Box<[(); MAX]>]> = Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
-            // assert!(Matrix::<(), O>::try_from(seq).is_ok());
+            let seq: Box<[Box<[(); MAX]>]> = Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
+            assert!(Matrix::<(), O>::try_from(seq).is_ok());
 
-            // let seq: Vec<Box<[(); MAX]>> = vec![Box::new([(); MAX]), Box::new([(); MAX])];
-            // assert!(Matrix::<(), O>::try_from(seq).is_ok());
+            let seq: Vec<Box<[(); MAX]>> = vec![Box::new([(); MAX]), Box::new([(); MAX])];
+            assert!(Matrix::<(), O>::try_from(seq).is_ok());
 
             let seq: [Box<[()]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
             assert!(Matrix::<(), O>::try_from(seq).is_ok());
