@@ -79,7 +79,7 @@ mod tests {
     #[test]
     fn test_new() {
         dispatch_unary! {{
-            let matrix = Matrix::<u8, O>::new();
+            let matrix = Matrix::<i32, O>::new();
             assert_eq!(matrix.nrows(), 0);
             assert_eq!(matrix.ncols(), 0);
             assert!(matrix.is_empty());
@@ -89,7 +89,7 @@ mod tests {
     #[test]
     fn test_with_capacity() {
         dispatch_unary! {{
-            let matrix = Matrix::<u8, O>::with_capacity(10);
+            let matrix = Matrix::<i32, O>::with_capacity(10);
             assert_eq!(matrix.nrows(), 0);
             assert_eq!(matrix.ncols(), 0);
             assert!(matrix.is_empty());
@@ -101,20 +101,20 @@ mod tests {
     fn test_with_default() {
         dispatch_unary! {{
             let shape = Shape::new(2, 3);
-            let matrix = Matrix::<u8, O>::with_default(shape).unwrap();
+            let matrix = Matrix::<i32, O>::with_default(shape).unwrap();
             let expected = matrix![[0, 0, 0], [0, 0, 0]];
             assert_eq!(&matrix, &expected);
 
             let shape = Shape::new(2, usize::MAX);
-            let error = Matrix::<u8, O>::with_default(shape).unwrap_err();
+            let error = Matrix::<i32, O>::with_default(shape).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
-            let shape = Shape::new(1, isize::MAX as usize + 1);
-            let error = Matrix::<u8, O>::with_default(shape).unwrap_err();
+            let shape = Shape::new(1, usize::MAX);
+            let error = Matrix::<i32, O>::with_default(shape).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
 
             // Unable to cover.
-            // let shape = Shape::new(1, isize::MAX as usize + 1);
+            // let shape = Shape::new(1, usize::MAX);
             // ssert!(Matrix::<(), O>::with_default(shape).is_ok());
         }}
     }
@@ -123,19 +123,19 @@ mod tests {
     fn test_with_value() {
         dispatch_unary! {{
             let shape = Shape::new(2, 3);
-            let matrix = Matrix::<u8, O>::with_value(shape, 0).unwrap();
+            let matrix = Matrix::<i32, O>::with_value(shape, 0).unwrap();
             let expected = matrix![[0, 0, 0], [0, 0, 0]];
             assert_eq!(&matrix, &expected);
 
             let shape = Shape::new(2, usize::MAX);
-            let error = Matrix::<u8, O>::with_value(shape, 0).unwrap_err();
+            let error = Matrix::<i32, O>::with_value(shape, 0).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
-            let shape = Shape::new(1, isize::MAX as usize + 1);
-            let error = Matrix::<u8, O>::with_value(shape, 0).unwrap_err();
+            let shape = Shape::new(1, usize::MAX);
+            let error = Matrix::<i32, O>::with_value(shape, 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
 
-            let shape = Shape::new(1, isize::MAX as usize + 1);
+            let shape = Shape::new(1, usize::MAX);
             assert!(Matrix::<(), O>::with_value(shape, ()).is_ok());
         }}
     }
@@ -164,15 +164,15 @@ mod tests {
             assert_eq!(&matrix, &expected);
 
             let shape = Shape::new(2, usize::MAX);
-            let error = Matrix::<u8, O>::with_initializer(shape, |_| 0).unwrap_err();
+            let error = Matrix::<i32, O>::with_initializer(shape, |_| 0).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
-            let shape = Shape::new(1, isize::MAX as usize+ 1);
-            let error = Matrix::<u8, O>::with_initializer(shape, |_| 0).unwrap_err();
+            let shape = Shape::new(1, usize::MAX);
+            let error = Matrix::<i32, O>::with_initializer(shape, |_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
 
             // Unable to cover.
-            // let shape = Shape::new(1, isize::MAX as usize + 1);
+            // let shape = Shape::new(1, usize::MAX);
             // assert!(Matrix::<(), O>::with_initializer(shape, |_| ()).is_ok());
         }}
     }
@@ -180,7 +180,7 @@ mod tests {
     #[test]
     fn test_default() {
         dispatch_unary! {{
-            let matrix = Matrix::<u8, O>::default();
+            let matrix = Matrix::<i32, O>::default();
             assert_eq!(matrix.nrows(), 0);
             assert_eq!(matrix.ncols(), 0);
             assert!(matrix.is_empty());

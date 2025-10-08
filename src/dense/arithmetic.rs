@@ -442,7 +442,7 @@ mod tests {
             let matrix = matrix![[(); usize::MAX]; 1];
             let scalar = 2;
             let error = matrix
-                .scalar_operation_consume_self(&scalar, |_, _| 0u8)
+                .scalar_operation_consume_self(&scalar, |_, _| 0)
                 .unwrap_err();
             assert_eq!(error, Error::CapacityOverflow)
         }}
@@ -778,21 +778,17 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            let lhs = matrix![[0; 0]; isize::MAX as usize + 1].with_order::<LO>();
-            let rhs = matrix![[0; 2]; 0].with_order::<RO>();
-            // The size of the resulting matrix would be `2 * isize::MAX + 2`,
-            // which is greater than `usize::MAX`.
+            let lhs = matrix![[0; 0]; 2].with_order::<LO>();
+            let rhs = matrix![[0; usize::MAX]; 0].with_order::<RO>();
             let error = lhs
-                .multiplication_like_operation(rhs, |_, _| 0u8)
+                .multiplication_like_operation(rhs, |_, _| 0)
                 .unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
-            let lhs = matrix![[0; 0]; isize::MAX as usize - 1].with_order::<LO>();
-            let rhs = matrix![[0; 2]; 0].with_order::<RO>();
-            // The required capacity of the resulting matrix would be
-            // `2 * isize::MAX - 2`, which is greater than `isize::MAX`.
+            let lhs = matrix![[0; 0]; 1].with_order::<LO>();
+            let rhs = matrix![[0; usize::MAX]; 0].with_order::<RO>();
             let error = lhs
-                .multiplication_like_operation(rhs, |_, _| 0u8)
+                .multiplication_like_operation(rhs, |_, _| 0)
                 .unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}

@@ -51,7 +51,7 @@ macro_rules! matrix {
 /// use matreex::dense::Matrix;
 /// use matreex::dense::layout::RowMajor;
 ///
-/// let foo: Matrix<u8, RowMajor> = rmatrix![];
+/// let foo: Matrix<i32, RowMajor> = rmatrix![];
 /// let bar = rmatrix![[0; 3]; 2];
 /// let baz = rmatrix![[1, 2, 3]; 2];
 /// let qux = rmatrix![[1, 2, 3], [4, 5, 6]];
@@ -115,7 +115,7 @@ macro_rules! rmatrix {
 /// use matreex::dense::Matrix;
 /// use matreex::dense::layout::ColMajor;
 ///
-/// let foo: Matrix<u8, ColMajor> = cmatrix![];
+/// let foo: Matrix<i32, ColMajor> = cmatrix![];
 /// let bar = cmatrix![[0; 3]; 2];
 /// let baz = cmatrix![[1, 2, 3]; 2];
 /// let qux = cmatrix![[1, 2, 3], [4, 5, 6]];

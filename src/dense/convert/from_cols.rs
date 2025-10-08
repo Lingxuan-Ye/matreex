@@ -277,23 +277,23 @@ mod tests {
 
     #[test]
     fn test_from_cols() {
-        let expected = Matrix::<u8, RowMajor>::from_rows([[1, 4], [2, 5], [3, 6]]);
+        let expected = Matrix::<i32, RowMajor>::from_rows([[1, 4], [2, 5], [3, 6]]);
 
         dispatch_unary! {{
-            let seq: [[u8; 3]; 2] = [[1, 2, 3], [4, 5, 6]];
-            let output = Matrix::<u8, O>::from_cols(seq);
+            let seq: [[i32; 3]; 2] = [[1, 2, 3], [4, 5, 6]];
+            let output = Matrix::<i32, O>::from_cols(seq);
             assert_eq!(output, expected);
 
-            let seq: Box<[[u8; 3]; 2]> = Box::new([[1, 2, 3], [4, 5, 6]]);
-            let output = Matrix::<u8, O>::from_cols(seq);
+            let seq: Box<[[i32; 3]; 2]> = Box::new([[1, 2, 3], [4, 5, 6]]);
+            let output = Matrix::<i32, O>::from_cols(seq);
             assert_eq!(output, expected);
 
-            let seq: Box<[[u8; 3]]> = Box::new([[1, 2, 3], [4, 5, 6]]);
-            let output = Matrix::<u8, O>::from_cols(seq);
+            let seq: Box<[[i32; 3]]> = Box::new([[1, 2, 3], [4, 5, 6]]);
+            let output = Matrix::<i32, O>::from_cols(seq);
             assert_eq!(output, expected);
 
-            let seq: Vec<[u8; 3]> = vec![[1, 2, 3], [4, 5, 6]];
-            let output = Matrix::<u8, O>::from_cols(seq);
+            let seq: Vec<[i32; 3]> = vec![[1, 2, 3], [4, 5, 6]];
+            let output = Matrix::<i32, O>::from_cols(seq);
             assert_eq!(output, expected);
         }}
     }
@@ -302,56 +302,55 @@ mod tests {
     fn test_try_from_cols() {
         const MAX: usize = isize::MAX as usize;
 
-        let expected = Matrix::<u8, RowMajor>::from_rows([[1, 4], [2, 5], [3, 6]]);
+        let expected = Matrix::<i32, RowMajor>::from_rows([[1, 4], [2, 5], [3, 6]]);
 
         dispatch_unary! {{
-            let seq: [Box<[u8; 3]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: [Box<[i32; 3]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: Box<[Box<[u8; 3]>; 2]> =
-                Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: Box<[Box<[i32; 3]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: Box<[Box<[u8; 3]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: Box<[Box<[i32; 3]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: Vec<Box<[u8; 3]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: Vec<Box<[i32; 3]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: [Box<[u8]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: [Box<[i32]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: Box<[Box<[u8]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: Box<[Box<[i32]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: Box<[Box<[u8]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: Box<[Box<[i32]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: Vec<Box<[u8]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: [Vec<u8>; 2] = [vec![1, 2, 3], vec![4, 5, 6]];
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: [Vec<i32>; 2] = [vec![1, 2, 3], vec![4, 5, 6]];
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: Box<[Vec<u8>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: Box<[Vec<i32>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: Box<[Vec<u8>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
-            let seq: Vec<Vec<u8>> = vec![vec![1, 2, 3], vec![4, 5, 6]];
-            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            let seq: Vec<Vec<i32>> = vec![vec![1, 2, 3], vec![4, 5, 6]];
+            let output = Matrix::<i32, O>::try_from_cols(seq).unwrap();
             assert_eq!(output, expected);
 
             // Unable to cover.
@@ -460,8 +459,7 @@ mod tests {
             let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
-            let seq: Box<[Vec<()>; 3]> =
-                Box::new([vec![(); MAX], vec![(); MAX], vec![(); MAX]]);
+            let seq: Box<[Vec<()>; 3]> = Box::new([vec![(); MAX], vec![(); MAX], vec![(); MAX]]);
             let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
@@ -522,47 +520,47 @@ mod tests {
             // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
             // assert_eq!(error, Error::CapacityOverflow);
 
-            let seq: [Box<[u8]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5])];
-            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            let seq: [Box<[i32]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5])];
+            let error = Matrix::<i32, O>::try_from_cols(seq).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
-            let seq: Box<[Box<[u8]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5])]);
-            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            let seq: Box<[Box<[i32]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5])]);
+            let error = Matrix::<i32, O>::try_from_cols(seq).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
-            let seq: Box<[Box<[u8]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5])]);
-            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            let seq: Box<[Box<[i32]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5])]);
+            let error = Matrix::<i32, O>::try_from_cols(seq).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
-            let seq: Vec<Box<[u8]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5])];
-            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            let seq: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5])];
+            let error = Matrix::<i32, O>::try_from_cols(seq).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
-            let seq: [Vec<u8>; 2] = [vec![1, 2, 3], vec![4, 5]];
-            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            let seq: [Vec<i32>; 2] = [vec![1, 2, 3], vec![4, 5]];
+            let error = Matrix::<i32, O>::try_from_cols(seq).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
-            let seq: Box<[Vec<u8>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5]]);
-            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            let seq: Box<[Vec<i32>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5]]);
+            let error = Matrix::<i32, O>::try_from_cols(seq).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
-            let seq: Box<[Vec<u8>]> = Box::new([vec![1, 2, 3], vec![4, 5]]);
-            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            let seq: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5]]);
+            let error = Matrix::<i32, O>::try_from_cols(seq).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
 
-            let seq: Vec<Vec<u8>> = vec![vec![1, 2, 3], vec![4, 5]];
-            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            let seq: Vec<Vec<i32>> = vec![vec![1, 2, 3], vec![4, 5]];
+            let error = Matrix::<i32, O>::try_from_cols(seq).unwrap_err();
             assert_eq!(error, Error::LengthInconsistent);
         }}
     }
 
     #[test]
     fn test_from_col_iter() {
-        let expected = Matrix::<u8, RowMajor>::from_rows([[1, 4], [2, 5], [3, 6]]);
+        let expected = Matrix::<i32, RowMajor>::from_rows([[1, 4], [2, 5], [3, 6]]);
 
         dispatch_unary! {{
             let iter = [[1, 2, 3], [4, 5, 6]];
-            let output = Matrix::<u8, O>::from_col_iter(iter);
+            let output = Matrix::<i32, O>::from_col_iter(iter);
             assert_eq!(output, expected);
         }}
     }
@@ -571,13 +569,13 @@ mod tests {
     #[should_panic]
     fn test_from_col_iter_fails_row_major() {
         let iter = [vec![1, 2, 3], vec![4, 5]];
-        Matrix::<u8, RowMajor>::from_col_iter(iter);
+        Matrix::<i32, RowMajor>::from_col_iter(iter);
     }
 
     #[test]
     #[should_panic]
     fn test_from_col_iter_fails_col_major() {
         let iter = [vec![1, 2, 3], vec![4, 5]];
-        Matrix::<u8, ColMajor>::from_col_iter(iter);
+        Matrix::<i32, ColMajor>::from_col_iter(iter);
     }
 }

@@ -338,19 +338,15 @@ mod tests {
             }
 
             {
-                let lhs = matrix![[0u8; 0]; isize::MAX as usize + 1].with_order::<LO>();
-                let rhs = matrix![[0u8; 2]; 0].with_order::<RO>();
-                // The size of the resulting matrix would be `2 * isize::MAX + 2`,
-                // which is greater than `usize::MAX`.
+                let lhs = matrix![[0; 0]; 2].with_order::<LO>();
+                let rhs = matrix![[0; usize::MAX]; 0].with_order::<RO>();
                 let error = lhs.multiply(rhs).unwrap_err();
                 assert_eq!(error, Error::SizeOverflow);
             }
 
             {
-                let lhs = matrix![[0u8; 0]; isize::MAX as usize - 1].with_order::<LO>();
-                let rhs = matrix![[0u8; 2]; 0].with_order::<RO>();
-                // The required capacity of the resulting matrix would be
-                // `2 * isize::MAX - 2`, which is greater than `isize::MAX`.
+                let lhs = matrix![[0; 0]; 1].with_order::<LO>();
+                let rhs = matrix![[0; usize::MAX]; 0].with_order::<RO>();
                 let error = lhs.multiply(rhs).unwrap_err();
                 assert_eq!(error, Error::CapacityOverflow);
             }
