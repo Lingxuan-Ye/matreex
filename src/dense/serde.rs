@@ -141,3 +141,201 @@ impl Visitor<'_> for FieldVisitor {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::dense::layout::{ColMajor, RowMajor};
+    use crate::matrix;
+    use alloc::string::ToString;
+    use serde_test::{Token, assert_de_tokens, assert_de_tokens_error, assert_ser_tokens};
+
+    #[test]
+    fn test_serialize() {
+        let rmatrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<RowMajor>();
+        let cmatrix = matrix![[1, 4], [2, 5], [3, 6]].with_order::<ColMajor>();
+        let tokens = [
+            Token::Struct {
+                name: "Matrix",
+                len: 2,
+            },
+            Token::Str("layout"),
+            Token::Struct {
+                name: "Layout",
+                len: 2,
+            },
+            Token::Str("major"),
+            Token::U64(2),
+            Token::Str("minor"),
+            Token::U64(3),
+            Token::StructEnd,
+            Token::Str("data"),
+            Token::Seq { len: Some(6) },
+            Token::I32(1),
+            Token::I32(2),
+            Token::I32(3),
+            Token::I32(4),
+            Token::I32(5),
+            Token::I32(6),
+            Token::SeqEnd,
+            Token::StructEnd,
+        ];
+        assert_ser_tokens(&rmatrix, &tokens);
+        assert_ser_tokens(&cmatrix, &tokens);
+    }
+
+    #[test]
+    fn test_deserialize_seq() {
+        let tokens = [
+            Token::Seq { len: None },
+            Token::Struct {
+                name: "Layout",
+                len: 2,
+            },
+            Token::Str("major"),
+            Token::U64(2),
+            Token::Str("minor"),
+            Token::U64(3),
+            Token::StructEnd,
+            Token::Seq { len: None },
+            Token::I32(1),
+            Token::I32(2),
+            Token::I32(3),
+            Token::I32(4),
+            Token::I32(5),
+            Token::I32(6),
+            Token::SeqEnd,
+            Token::SeqEnd,
+        ];
+        let rexpected = matrix![[1, 2, 3], [4, 5, 6]].with_order::<RowMajor>();
+        let cexpected = matrix![[1, 4], [2, 5], [3, 6]].with_order::<ColMajor>();
+        assert_de_tokens(&rexpected, &tokens);
+        assert_de_tokens(&cexpected, &tokens);
+
+        let tokens = [
+            Token::Seq { len: None },
+            Token::Struct {
+                name: "Layout",
+                len: 2,
+            },
+            Token::Str("major"),
+            Token::U64(2),
+            Token::Str("minor"),
+            Token::U64(3),
+            Token::StructEnd,
+            Token::Seq { len: None },
+            Token::SeqEnd,
+            Token::SeqEnd,
+        ];
+        assert_de_tokens_error::<Matrix<i32, RowMajor>>(&tokens, &SizeMismatch.to_string());
+        assert_de_tokens_error::<Matrix<i32, ColMajor>>(&tokens, &SizeMismatch.to_string());
+    }
+
+    #[test]
+    fn test_deserialize_map() {
+        let tokens = [
+            Token::Map { len: None },
+            Token::Str("layout"),
+            Token::Struct {
+                name: "Layout",
+                len: 2,
+            },
+            Token::Str("major"),
+            Token::U64(2),
+            Token::Str("minor"),
+            Token::U64(3),
+            Token::StructEnd,
+            Token::Str("data"),
+            Token::Seq { len: None },
+            Token::I32(1),
+            Token::I32(2),
+            Token::I32(3),
+            Token::I32(4),
+            Token::I32(5),
+            Token::I32(6),
+            Token::SeqEnd,
+            Token::MapEnd,
+        ];
+        let rexpected = matrix![[1, 2, 3], [4, 5, 6]].with_order::<RowMajor>();
+        let cexpected = matrix![[1, 4], [2, 5], [3, 6]].with_order::<ColMajor>();
+        assert_de_tokens(&rexpected, &tokens);
+        assert_de_tokens(&cexpected, &tokens);
+
+        let tokens = [
+            Token::Map { len: None },
+            Token::Str("layout"),
+            Token::Struct {
+                name: "Layout",
+                len: 2,
+            },
+            Token::Str("major"),
+            Token::U64(2),
+            Token::Str("minor"),
+            Token::U64(3),
+            Token::StructEnd,
+            Token::Str("data"),
+            Token::Seq { len: None },
+            Token::SeqEnd,
+            Token::MapEnd,
+        ];
+        assert_de_tokens_error::<Matrix<i32, RowMajor>>(&tokens, &SizeMismatch.to_string());
+        assert_de_tokens_error::<Matrix<i32, ColMajor>>(&tokens, &SizeMismatch.to_string());
+    }
+
+    #[test]
+    fn test_deserialize_struct() {
+        let tokens = [
+            Token::Struct {
+                name: "Matrix",
+                len: 2,
+            },
+            Token::Str("layout"),
+            Token::Struct {
+                name: "Layout",
+                len: 2,
+            },
+            Token::Str("major"),
+            Token::U64(2),
+            Token::Str("minor"),
+            Token::U64(3),
+            Token::StructEnd,
+            Token::Str("data"),
+            Token::Seq { len: None },
+            Token::I32(1),
+            Token::I32(2),
+            Token::I32(3),
+            Token::I32(4),
+            Token::I32(5),
+            Token::I32(6),
+            Token::SeqEnd,
+            Token::StructEnd,
+        ];
+        let rexpected = matrix![[1, 2, 3], [4, 5, 6]].with_order::<RowMajor>();
+        let cexpected = matrix![[1, 4], [2, 5], [3, 6]].with_order::<ColMajor>();
+        assert_de_tokens(&rexpected, &tokens);
+        assert_de_tokens(&cexpected, &tokens);
+
+        let tokens = [
+            Token::Struct {
+                name: "Matrix",
+                len: 2,
+            },
+            Token::Str("layout"),
+            Token::Struct {
+                name: "Layout",
+                len: 2,
+            },
+            Token::Str("major"),
+            Token::U64(2),
+            Token::Str("minor"),
+            Token::U64(3),
+            Token::StructEnd,
+            Token::Str("data"),
+            Token::Seq { len: None },
+            Token::SeqEnd,
+            Token::StructEnd,
+        ];
+        assert_de_tokens_error::<Matrix<i32, RowMajor>>(&tokens, &SizeMismatch.to_string());
+        assert_de_tokens_error::<Matrix<i32, ColMajor>>(&tokens, &SizeMismatch.to_string());
+    }
+}
