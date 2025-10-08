@@ -3,6 +3,7 @@ use super::layout::{Layout, Order};
 use crate::error::Result;
 use crate::index::Index;
 use crate::shape::AsShape;
+use alloc::vec;
 use alloc::vec::Vec;
 
 impl<T, O> Matrix<T, O>
@@ -38,7 +39,7 @@ where
         T: Clone,
     {
         let (layout, size) = Layout::from_shape_with_size(shape)?;
-        let data = alloc::vec![value; size];
+        let data = vec![value; size];
         Ok(Self { layout, data })
     }
 
