@@ -244,3 +244,498 @@ impl Index {
         major * stride.major() + minor * stride.minor()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::layout::{ColMajor, RowMajor};
+    use super::*;
+    use crate::error::Error;
+    use crate::{dispatch_unary, matrix};
+
+    #[test]
+    fn test_matrix_get() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+            assert_eq!(matrix.get(Index::new(0, 0)), Ok(&1));
+            assert_eq!(matrix.get(Index::new(0, 1)), Ok(&2));
+            assert_eq!(matrix.get(Index::new(0, 2)), Ok(&3));
+            assert_eq!(matrix.get(Index::new(1, 0)), Ok(&4));
+            assert_eq!(matrix.get(Index::new(1, 1)), Ok(&5));
+            assert_eq!(matrix.get(Index::new(1, 2)), Ok(&6));
+
+            assert_eq!(matrix.get(Index::new(2, 0)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix.get(Index::new(0, 3)), Err(Error::IndexOutOfBounds));
+            assert_eq!(matrix.get(Index::new(2, 3)), Err(Error::IndexOutOfBounds));
+        }}
+    }
+
+    #[test]
+    fn test_matrix_get_mut() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+            *matrix.get_mut(Index::new(0, 0)).unwrap() -= 1;
+            *matrix.get_mut(Index::new(0, 1)).unwrap() -= 2;
+            *matrix.get_mut(Index::new(0, 2)).unwrap() -= 3;
+            *matrix.get_mut(Index::new(1, 0)).unwrap() -= 4;
+            *matrix.get_mut(Index::new(1, 1)).unwrap() -= 5;
+            *matrix.get_mut(Index::new(1, 2)).unwrap() -= 6;
+            let expected = matrix![[0, 0, 0], [0, 0, 0]];
+            assert_eq!(matrix, expected);
+
+            assert_eq!(
+                matrix.get_mut(Index::new(2, 0)),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                matrix.get_mut(Index::new(0, 3)),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                matrix.get_mut(Index::new(2, 3)),
+                Err(Error::IndexOutOfBounds)
+            );
+        }}
+    }
+
+    #[test]
+    fn test_matrix_get_unchecked() {
+        dispatch_unary! {{
+            unsafe {
+                let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+                assert_eq!(matrix.get_unchecked(Index::new(0, 0)), &1);
+                assert_eq!(matrix.get_unchecked(Index::new(0, 1)), &2);
+                assert_eq!(matrix.get_unchecked(Index::new(0, 2)), &3);
+                assert_eq!(matrix.get_unchecked(Index::new(1, 0)), &4);
+                assert_eq!(matrix.get_unchecked(Index::new(1, 1)), &5);
+                assert_eq!(matrix.get_unchecked(Index::new(1, 2)), &6);
+            }
+        }}
+    }
+
+    #[test]
+    fn test_matrix_get_unchecked_mut() {
+        dispatch_unary! {{
+            unsafe {
+                let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+                *matrix.get_unchecked_mut(Index::new(0, 0)) -= 1;
+                *matrix.get_unchecked_mut(Index::new(0, 1)) -= 2;
+                *matrix.get_unchecked_mut(Index::new(0, 2)) -= 3;
+                *matrix.get_unchecked_mut(Index::new(1, 0)) -= 4;
+                *matrix.get_unchecked_mut(Index::new(1, 1)) -= 5;
+                *matrix.get_unchecked_mut(Index::new(1, 2)) -= 6;
+                let expected = matrix![[0, 0, 0], [0, 0, 0]];
+                assert_eq!(matrix, expected);
+            }
+        }}
+    }
+
+    #[test]
+    fn test_matrix_index() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+            assert_eq!(matrix[Index::new(0, 0)], 1);
+            assert_eq!(matrix[Index::new(0, 1)], 2);
+            assert_eq!(matrix[Index::new(0, 2)], 3);
+            assert_eq!(matrix[Index::new(1, 0)], 4);
+            assert_eq!(matrix[Index::new(1, 1)], 5);
+            assert_eq!(matrix[Index::new(1, 2)], 6);
+        }}
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_matrix_index_out_of_bounds_row_major() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<RowMajor>();
+        let _ = matrix[Index::new(2, 3)];
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_matrix_index_out_of_bounds_col_major() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<ColMajor>();
+        let _ = matrix[Index::new(2, 3)];
+    }
+
+    #[test]
+    fn test_matrix_index_mut() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+            matrix[Index::new(0, 0)] -= 1;
+            matrix[Index::new(0, 1)] -= 2;
+            matrix[Index::new(0, 2)] -= 3;
+            matrix[Index::new(1, 0)] -= 4;
+            matrix[Index::new(1, 1)] -= 5;
+            matrix[Index::new(1, 2)] -= 6;
+            let expected = matrix![[0, 0, 0], [0, 0, 0]];
+            assert_eq!(matrix, expected);
+        }}
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_matrix_index_mut_out_of_bounds_row_major() {
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<RowMajor>();
+        matrix[Index::new(2, 3)] += 2;
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_matrix_index_mut_out_of_bounds_col_major() {
+        let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<ColMajor>();
+        matrix[Index::new(2, 3)] += 2;
+    }
+
+    #[test]
+    fn test_as_index_is_out_of_bounds() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+            assert!(!Index::new(0, 0).is_out_of_bounds(&matrix));
+            assert!(!Index::new(0, 1).is_out_of_bounds(&matrix));
+            assert!(!Index::new(0, 2).is_out_of_bounds(&matrix));
+            assert!(!Index::new(1, 0).is_out_of_bounds(&matrix));
+            assert!(!Index::new(1, 1).is_out_of_bounds(&matrix));
+            assert!(!Index::new(1, 2).is_out_of_bounds(&matrix));
+
+            assert!(Index::new(2, 0).is_out_of_bounds(&matrix));
+            assert!(Index::new(0, 3).is_out_of_bounds(&matrix));
+            assert!(Index::new(2, 3).is_out_of_bounds(&matrix));
+        }}
+    }
+
+    #[test]
+    fn test_as_index_ensure_in_bounds() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+            assert!(Index::new(0, 0).ensure_in_bounds(&matrix).is_ok());
+            assert!(Index::new(0, 1).ensure_in_bounds(&matrix).is_ok());
+            assert!(Index::new(0, 2).ensure_in_bounds(&matrix).is_ok());
+            assert!(Index::new(1, 0).ensure_in_bounds(&matrix).is_ok());
+            assert!(Index::new(1, 1).ensure_in_bounds(&matrix).is_ok());
+            assert!(Index::new(1, 2).ensure_in_bounds(&matrix).is_ok());
+
+            assert_eq!(
+                Index::new(2, 0).ensure_in_bounds(&matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                Index::new(0, 3).ensure_in_bounds(&matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                Index::new(2, 3).ensure_in_bounds(&matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+        }}
+    }
+
+    #[test]
+    fn test_as_index_get() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+            assert_eq!(Index::new(0, 0).get(&matrix), Ok(&1));
+            assert_eq!(Index::new(0, 1).get(&matrix), Ok(&2));
+            assert_eq!(Index::new(0, 2).get(&matrix), Ok(&3));
+            assert_eq!(Index::new(1, 0).get(&matrix), Ok(&4));
+            assert_eq!(Index::new(1, 1).get(&matrix), Ok(&5));
+            assert_eq!(Index::new(1, 2).get(&matrix), Ok(&6));
+
+            assert_eq!(Index::new(2, 0).get(&matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!(Index::new(0, 3).get(&matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!(Index::new(2, 3).get(&matrix), Err(Error::IndexOutOfBounds));
+        }}
+    }
+
+    #[test]
+    fn test_as_index_get_mut() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+            *Index::new(0, 0).get_mut(&mut matrix).unwrap() -= 1;
+            *Index::new(0, 1).get_mut(&mut matrix).unwrap() -= 2;
+            *Index::new(0, 2).get_mut(&mut matrix).unwrap() -= 3;
+            *Index::new(1, 0).get_mut(&mut matrix).unwrap() -= 4;
+            *Index::new(1, 1).get_mut(&mut matrix).unwrap() -= 5;
+            *Index::new(1, 2).get_mut(&mut matrix).unwrap() -= 6;
+            let expected = matrix![[0, 0, 0], [0, 0, 0]];
+            assert_eq!(matrix, expected);
+
+            assert_eq!(Index::new(2, 0).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!(Index::new(0, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
+            assert_eq!(Index::new(2, 3).get_mut(&mut matrix), Err(Error::IndexOutOfBounds));
+        }}
+    }
+
+    #[test]
+    fn test_as_index_get_unchecked() {
+        dispatch_unary! {{
+            unsafe {
+                let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+                assert_eq!(Index::new(0, 0).get_unchecked(&matrix), &1);
+                assert_eq!(Index::new(0, 1).get_unchecked(&matrix), &2);
+                assert_eq!(Index::new(0, 2).get_unchecked(&matrix), &3);
+                assert_eq!(Index::new(1, 0).get_unchecked(&matrix), &4);
+                assert_eq!(Index::new(1, 1).get_unchecked(&matrix), &5);
+                assert_eq!(Index::new(1, 2).get_unchecked(&matrix), &6);
+            }
+        }}
+    }
+
+    #[test]
+    fn test_as_index_get_unchecked_mut() {
+        dispatch_unary! {{
+            unsafe {
+                let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+                *Index::new(0, 0).get_unchecked_mut(&mut matrix) -= 1;
+                *Index::new(0, 1).get_unchecked_mut(&mut matrix) -= 2;
+                *Index::new(0, 2).get_unchecked_mut(&mut matrix) -= 3;
+                *Index::new(1, 0).get_unchecked_mut(&mut matrix) -= 4;
+                *Index::new(1, 1).get_unchecked_mut(&mut matrix) -= 5;
+                *Index::new(1, 2).get_unchecked_mut(&mut matrix) -= 6;
+                let expected = matrix![[0, 0, 0], [0, 0, 0]];
+                assert_eq!(matrix, expected);
+            }
+        }}
+    }
+
+    #[test]
+    fn test_wrapping_index_is_out_of_bounds() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            for row in (-6..=6).step_by(2) {
+                for col in (-6..=6).step_by(3) {
+                    assert!(!WrappingIndex::new(row, col).is_out_of_bounds(&matrix));
+                }
+            }
+
+            let matrix = Matrix::<i32, O>::new();
+            for row in (-6..=6).step_by(2) {
+                for col in (-6..=6).step_by(3) {
+                    assert!(WrappingIndex::new(row, col).is_out_of_bounds(&matrix));
+                }
+            }
+        }}
+    }
+
+    #[test]
+    fn test_wrapping_index_ensure_in_bounds() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            for row in (-6..=6).step_by(2) {
+                for col in (-6..=6).step_by(3) {
+                    assert!(
+                        WrappingIndex::new(row, col)
+                            .ensure_in_bounds(&matrix)
+                            .is_ok()
+                    );
+                }
+            }
+
+            let matrix = Matrix::<i32, O>::new();
+            for row in (-6..=6).step_by(2) {
+                for col in (-6..=6).step_by(3) {
+                    assert_eq!(
+                        WrappingIndex::new(row, col).ensure_in_bounds(&matrix),
+                        Err(Error::IndexOutOfBounds)
+                    );
+                }
+            }
+        }}
+    }
+
+    #[test]
+    fn test_wrapping_index_get() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            assert_eq!(WrappingIndex::new(0, 0).get(&matrix), Ok(&1));
+            assert_eq!(WrappingIndex::new(0, 1).get(&matrix), Ok(&2));
+            assert_eq!(WrappingIndex::new(0, 2).get(&matrix), Ok(&3));
+            assert_eq!(WrappingIndex::new(1, 0).get(&matrix), Ok(&4));
+            assert_eq!(WrappingIndex::new(1, 1).get(&matrix), Ok(&5));
+            assert_eq!(WrappingIndex::new(1, 2).get(&matrix), Ok(&6));
+            for row in (-6..=6).step_by(2) {
+                for col in (-6..=6).step_by(3) {
+                    assert_eq!(WrappingIndex::new(row, col).get(&matrix), Ok(&1));
+                }
+            }
+
+            let matrix = Matrix::<i32, O>::new();
+            assert_eq!(
+                WrappingIndex::new(0, 0).get(&matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                WrappingIndex::new(0, 1).get(&matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                WrappingIndex::new(0, 2).get(&matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                WrappingIndex::new(1, 0).get(&matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                WrappingIndex::new(1, 1).get(&matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                WrappingIndex::new(1, 2).get(&matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            for row in (-6..=6).step_by(2) {
+                for col in (-6..=6).step_by(3) {
+                    assert_eq!(
+                        WrappingIndex::new(row, col).get(&matrix),
+                        Err(Error::IndexOutOfBounds)
+                    );
+                }
+            }
+        }}
+    }
+
+    #[test]
+    fn test_wrapping_index_get_mut() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            *WrappingIndex::new(0, 0).get_mut(&mut matrix).unwrap() -= 1;
+            *WrappingIndex::new(0, 1).get_mut(&mut matrix).unwrap() -= 2;
+            *WrappingIndex::new(0, 2).get_mut(&mut matrix).unwrap() -= 3;
+            *WrappingIndex::new(1, 0).get_mut(&mut matrix).unwrap() -= 4;
+            *WrappingIndex::new(1, 1).get_mut(&mut matrix).unwrap() -= 5;
+            *WrappingIndex::new(1, 2).get_mut(&mut matrix).unwrap() -= 6;
+            for row in (-6..=6).step_by(2) {
+                for col in (-6..=6).step_by(3) {
+                    *WrappingIndex::new(row, col).get_mut(&mut matrix).unwrap() -= 1;
+                }
+            }
+            let expected = matrix![[-35, 0, 0], [0, 0, 0]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = Matrix::<i32, O>::new();
+            assert_eq!(
+                WrappingIndex::new(0, 0).get_mut(&mut matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                WrappingIndex::new(0, 1).get_mut(&mut matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                WrappingIndex::new(0, 2).get_mut(&mut matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                WrappingIndex::new(1, 0).get_mut(&mut matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                WrappingIndex::new(1, 1).get_mut(&mut matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            assert_eq!(
+                WrappingIndex::new(1, 2).get_mut(&mut matrix),
+                Err(Error::IndexOutOfBounds)
+            );
+            for row in (-6..=6).step_by(2) {
+                for col in (-6..=6).step_by(3) {
+                    assert_eq!(
+                        WrappingIndex::new(row, col).get_mut(&mut matrix),
+                        Err(Error::IndexOutOfBounds)
+                    );
+                }
+            }
+        }}
+    }
+
+    #[test]
+    fn test_wrapping_index_get_unchecked() {
+        dispatch_unary! {{
+            unsafe {
+                let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+                assert_eq!(WrappingIndex::new(0, 0).get_unchecked(&matrix), &1);
+                assert_eq!(WrappingIndex::new(0, 1).get_unchecked(&matrix), &2);
+                assert_eq!(WrappingIndex::new(0, 2).get_unchecked(&matrix), &3);
+                assert_eq!(WrappingIndex::new(1, 0).get_unchecked(&matrix), &4);
+                assert_eq!(WrappingIndex::new(1, 1).get_unchecked(&matrix), &5);
+                assert_eq!(WrappingIndex::new(1, 2).get_unchecked(&matrix), &6);
+                for row in (-6..=6).step_by(2) {
+                    for col in (-6..=6).step_by(3) {
+                        assert_eq!(WrappingIndex::new(row, col).get_unchecked(&matrix), &1);
+                    }
+                }
+            }
+        }}
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_wrapping_index_get_unchecked_fails_row_major() {
+        unsafe {
+            let matrix = Matrix::<i32, RowMajor>::new();
+            WrappingIndex::new(0, 0).get_unchecked(&matrix);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_wrapping_index_get_unchecked_fails_col_major() {
+        unsafe {
+            let matrix = Matrix::<i32, ColMajor>::new();
+            WrappingIndex::new(0, 0).get_unchecked(&matrix);
+        }
+    }
+
+    #[test]
+    fn test_wrapping_index_get_unchecked_mut() {
+        dispatch_unary! {{
+            unsafe {
+                let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+                *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) -= 1;
+                *WrappingIndex::new(0, 1).get_unchecked_mut(&mut matrix) -= 2;
+                *WrappingIndex::new(0, 2).get_unchecked_mut(&mut matrix) -= 3;
+                *WrappingIndex::new(1, 0).get_unchecked_mut(&mut matrix) -= 4;
+                *WrappingIndex::new(1, 1).get_unchecked_mut(&mut matrix) -= 5;
+                *WrappingIndex::new(1, 2).get_unchecked_mut(&mut matrix) -= 6;
+                for row in (-6..=6).step_by(2) {
+                    for col in (-6..=6).step_by(3) {
+                        *WrappingIndex::new(row, col).get_unchecked_mut(&mut matrix) -= 1;
+                    }
+                }
+                let expected = matrix![[-35, 0, 0], [0, 0, 0]];
+                assert_eq!(matrix, expected);
+            }
+        }}
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_wrapping_index_get_unchecked_mut_fails_row_major() {
+        unsafe {
+            let mut matrix = Matrix::<i32, RowMajor>::new();
+            *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) += 2;
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_wrapping_index_get_unchecked_mut_fails_col_major() {
+        unsafe {
+            let mut matrix = Matrix::<i32, ColMajor>::new();
+            *WrappingIndex::new(0, 0).get_unchecked_mut(&mut matrix) += 2;
+        }
+    }
+}
