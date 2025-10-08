@@ -448,7 +448,6 @@ mod tests {
         }}
     }
 
-
     #[test]
     fn test_scalar_operation_assign() {
         dispatch_unary! {{

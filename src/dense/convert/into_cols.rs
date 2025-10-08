@@ -67,3 +67,36 @@ where
         IntoCols::<Box<[Vec<T>]>>::into_cols(self).into_vec()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::convert::FromRows;
+    use crate::dispatch_unary;
+    use alloc::vec;
+
+    #[test]
+    fn test_into_cols() {
+        dispatch_unary! {{
+            let matrix = Matrix::<u8, O>::from_rows([[1, 4], [2, 5], [3, 6]]);
+            let expected: Box<[Box<[u8]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let output: Box<[Box<[u8]>]> = matrix.into_cols();
+            assert_eq!(output, expected);
+
+            let matrix = Matrix::<u8, O>::from_rows([[1, 4], [2, 5], [3, 6]]);
+            let expected: Vec<Box<[u8]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let output: Vec<Box<[u8]>> = matrix.into_cols();
+            assert_eq!(output, expected);
+
+            let matrix = Matrix::<u8, O>::from_rows([[1, 4], [2, 5], [3, 6]]);
+            let expected: Box<[Vec<u8>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+            let output: Box<[Vec<u8>]> = matrix.into_cols();
+            assert_eq!(output, expected);
+
+            let matrix = Matrix::<u8, O>::from_rows([[1, 4], [2, 5], [3, 6]]);
+            let expected: Vec<Vec<u8>> = vec![vec![1, 2, 3], vec![4, 5, 6]];
+            let output: Vec<Vec<u8>> = matrix.into_cols();
+            assert_eq!(output, expected);
+        }}
+    }
+}

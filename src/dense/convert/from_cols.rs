@@ -266,3 +266,318 @@ where
         Matrix { layout, data }.with_order()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::super::layout::RowMajor;
+    use super::*;
+    use crate::convert::FromRows;
+    use crate::dispatch_unary;
+    use alloc::vec;
+
+    #[test]
+    fn test_from_cols() {
+        let expected = Matrix::<u8, RowMajor>::from_rows([[1, 4], [2, 5], [3, 6]]);
+
+        dispatch_unary! {{
+            let seq: [[u8; 3]; 2] = [[1, 2, 3], [4, 5, 6]];
+            let output = Matrix::<u8, O>::from_cols(seq);
+            assert_eq!(output, expected);
+
+            let seq: Box<[[u8; 3]; 2]> = Box::new([[1, 2, 3], [4, 5, 6]]);
+            let output = Matrix::<u8, O>::from_cols(seq);
+            assert_eq!(output, expected);
+
+            let seq: Box<[[u8; 3]]> = Box::new([[1, 2, 3], [4, 5, 6]]);
+            let output = Matrix::<u8, O>::from_cols(seq);
+            assert_eq!(output, expected);
+
+            let seq: Vec<[u8; 3]> = vec![[1, 2, 3], [4, 5, 6]];
+            let output = Matrix::<u8, O>::from_cols(seq);
+            assert_eq!(output, expected);
+        }}
+    }
+
+    #[test]
+    fn test_try_from_cols() {
+        const MAX: usize = isize::MAX as usize;
+
+        let expected = Matrix::<u8, RowMajor>::from_rows([[1, 4], [2, 5], [3, 6]]);
+
+        dispatch_unary! {{
+            let seq: [Box<[u8; 3]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Box<[Box<[u8; 3]>; 2]> =
+                Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Box<[Box<[u8; 3]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Vec<Box<[u8; 3]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: [Box<[u8]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Box<[Box<[u8]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Box<[Box<[u8]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Vec<Box<[u8]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: [Vec<u8>; 2] = [vec![1, 2, 3], vec![4, 5, 6]];
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Box<[Vec<u8>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Box<[Vec<u8>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Vec<Vec<u8>> = vec![vec![1, 2, 3], vec![4, 5, 6]];
+            let output = Matrix::<u8, O>::try_from_cols(seq).unwrap();
+            assert_eq!(output, expected);
+
+            // Unable to cover.
+            // let seq: [Box<[(); MAX]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
+            // assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            // let seq: Box<[Box<[(); MAX]>; 2]> =
+            //     Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
+            // assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            // let seq: Box<[Box<[(); MAX]>]> = Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
+            // assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            // let seq: Vec<Box<[(); MAX]>> = vec![Box::new([(); MAX]), Box::new([(); MAX])];
+            // assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            let seq: [Box<[()]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
+            assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            let seq: Box<[Box<[()]>; 2]> = Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
+            assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            let seq: Box<[Box<[()]>]> = Box::new([Box::new([(); MAX]), Box::new([(); MAX])]);
+            assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            let seq: Vec<Box<[()]>> = vec![Box::new([(); MAX]), Box::new([(); MAX])];
+            assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            let seq: [Vec<()>; 2] = [vec![(); MAX], vec![(); MAX]];
+            assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            let seq: Box<[Vec<()>; 2]> = Box::new([vec![(); MAX], vec![(); MAX]]);
+            assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            let seq: Box<[Vec<()>]> = Box::new([vec![(); MAX], vec![(); MAX]]);
+            assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            let seq: Vec<Vec<()>> = vec![vec![(); MAX], vec![(); MAX]];
+            assert!(Matrix::<(), O>::try_from_cols(seq).is_ok());
+
+            let seq: [Box<[(); MAX]>; 3] = [
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ];
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Box<[Box<[(); MAX]>; 3]> = Box::new([
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ]);
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Box<[Box<[(); MAX]>]> = Box::new([
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ]);
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Vec<Box<[(); MAX]>> = vec![
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ];
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: [Box<[()]>; 3] = [
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ];
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Box<[Box<[()]>; 3]> = Box::new([
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ]);
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Box<[Box<[()]>]> = Box::new([
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ]);
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Vec<Box<[()]>> = vec![
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+                Box::new([(); MAX]),
+            ];
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: [Vec<()>; 3] = [vec![(); MAX], vec![(); MAX], vec![(); MAX]];
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Box<[Vec<()>; 3]> =
+                Box::new([vec![(); MAX], vec![(); MAX], vec![(); MAX]]);
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Box<[Vec<()>]> = Box::new([vec![(); MAX], vec![(); MAX], vec![(); MAX]]);
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Vec<Vec<()>> = vec![vec![(); MAX], vec![(); MAX], vec![(); MAX]];
+            let error = Matrix::<(), O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            // Unable to cover.
+            // let seq: [Box<[u8; MAX]>; 2] = [Box::new([0; MAX]), Box::new([0; MAX])];
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: Box<[Box<[u8; MAX]>; 2]> = Box::new([Box::new([0; MAX]), Box::new([0; MAX])]);
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: Box<[Box<[u8; MAX]>]> = Box::new([Box::new([0; MAX]), Box::new([0; MAX])]);
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: Vec<Box<[u8; MAX]>> = vec![Box::new([0; MAX]), Box::new([0; MAX])];
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: [Box<[u8]>; 2] = [Box::new([0; MAX]), Box::new([0; MAX])];
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: Box<[Box<[u8]>; 2]> = Box::new([Box::new([0; MAX]), Box::new([0; MAX])]);
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: Box<[Box<[u8]>]> = Box::new([Box::new([0; MAX]), Box::new([0; MAX])]);
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: Vec<Box<[u8]>> = vec![Box::new([0; MAX]), Box::new([0; MAX])];
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: [Vec<u8>; 2] = [vec![0; MAX], vec![0; MAX]];
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: Box<[Vec<u8>; 2]> = Box::new([vec![0; MAX], vec![0; MAX]]);
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: Box<[Vec<u8>]> = Box::new([vec![0; MAX], vec![0; MAX]]);
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            // let seq: Vec<Vec<u8>> = vec![vec![0; MAX], vec![0; MAX]];
+            // let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            // assert_eq!(error, Error::CapacityOverflow);
+
+            let seq: [Box<[u8]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5])];
+            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
+            let seq: Box<[Box<[u8]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5])]);
+            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
+            let seq: Box<[Box<[u8]>; 2]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5])]);
+            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
+            let seq: Vec<Box<[u8]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5])];
+            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
+            let seq: [Vec<u8>; 2] = [vec![1, 2, 3], vec![4, 5]];
+            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
+            let seq: Box<[Vec<u8>; 2]> = Box::new([vec![1, 2, 3], vec![4, 5]]);
+            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
+            let seq: Box<[Vec<u8>]> = Box::new([vec![1, 2, 3], vec![4, 5]]);
+            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+
+            let seq: Vec<Vec<u8>> = vec![vec![1, 2, 3], vec![4, 5]];
+            let error = Matrix::<u8, O>::try_from_cols(seq).unwrap_err();
+            assert_eq!(error, Error::LengthInconsistent);
+        }}
+    }
+
+    #[test]
+    fn test_from_col_iter() {
+        let expected = Matrix::<u8, RowMajor>::from_rows([[1, 4], [2, 5], [3, 6]]);
+
+        dispatch_unary! {{
+            let iter = [[1, 2, 3], [4, 5, 6]];
+            let output = Matrix::<u8, O>::from_col_iter(iter);
+            assert_eq!(output, expected);
+        }}
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_from_col_iter_fails_row_major() {
+        let iter = [vec![1, 2, 3], vec![4, 5]];
+        Matrix::<u8, RowMajor>::from_col_iter(iter);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_from_col_iter_fails_col_major() {
+        let iter = [vec![1, 2, 3], vec![4, 5]];
+        Matrix::<u8, ColMajor>::from_col_iter(iter);
+    }
+}
