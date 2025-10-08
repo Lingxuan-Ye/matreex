@@ -444,7 +444,7 @@ mod tests {
             let error = matrix
                 .scalar_operation_consume_self(&scalar, |_, _| 0)
                 .unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow)
+            assert_eq!(error, Error::CapacityOverflow);
         }}
     }
 
