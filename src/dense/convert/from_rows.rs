@@ -290,11 +290,11 @@ mod tests {
 
     #[test]
     fn test_from_rows() {
-        let expected = {
+        let expected: Matrix<i32, RowMajor> = {
             let shape = Shape::new(2, 3);
             let layout = Layout::from_shape_unchecked(shape);
             let data = vec![1, 2, 3, 4, 5, 6];
-            Matrix::<i32, RowMajor> { layout, data }
+            Matrix { layout, data }
         };
 
         dispatch_unary! {{
