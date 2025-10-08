@@ -91,7 +91,7 @@ where
         f.write_str(constant::whitespace::NEWLINE)?;
 
         for row in 0..nrows {
-            // The first line of the element representation
+            // The first line of the element representation.
             f.write_str(constant::whitespace::INDENT)?;
             f.write_index(row, index_width)?;
             f.write_str(constant::row::INDEX_GAP)?;
