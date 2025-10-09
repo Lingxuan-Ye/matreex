@@ -93,3 +93,211 @@ where
         Ok(self)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::index::{Index, WrappingIndex};
+    use crate::{dispatch_unary, matrix};
+
+    #[test]
+    fn test_swap() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = Index::new(0, 0);
+            let jndex = Index::new(0, 0);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = Index::new(0, 0);
+            let jndex = Index::new(1, 1);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = Index::new(1, 1);
+            let jndex = Index::new(0, 0);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = Index::new(0, 0);
+            let jndex = WrappingIndex::new(0, 0);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = Index::new(0, 0);
+            let jndex = WrappingIndex::new(1, 1);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = Index::new(1, 1);
+            let jndex = WrappingIndex::new(0, 0);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = WrappingIndex::new(0, 0);
+            let jndex = Index::new(0, 0);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = WrappingIndex::new(0, 0);
+            let jndex = Index::new(1, 1);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = WrappingIndex::new(1, 1);
+            let jndex = Index::new(0, 0);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = WrappingIndex::new(0, 0);
+            let jndex = WrappingIndex::new(0, 0);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = WrappingIndex::new(0, 0);
+            let jndex = WrappingIndex::new(1, 1);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let index = WrappingIndex::new(1, 1);
+            let jndex = WrappingIndex::new(0, 0);
+            matrix.swap(index, jndex).unwrap();
+            let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let unchanged = matrix.clone();
+            let index = Index::new(0, 0);
+            let jndex = Index::new(2, 2);
+            let error = matrix.swap(index, jndex).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            assert_eq!(matrix, unchanged);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let unchanged = matrix.clone();
+            let index = Index::new(2, 2);
+            let jndex = Index::new(0, 0);
+            let error = matrix.swap(index, jndex).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            assert_eq!(matrix, unchanged);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let unchanged = matrix.clone();
+            let index = Index::new(2, 2);
+            let jndex = Index::new(3, 3);
+            let error = matrix.swap(index, jndex).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            assert_eq!(matrix, unchanged);
+        }}
+    }
+
+    #[test]
+    fn test_swap_rows() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix.swap_rows(0, 0).unwrap();
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix.swap_rows(0, 1).unwrap();
+            let expected = matrix![[4, 5, 6], [1, 2, 3]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix.swap_rows(1, 0).unwrap();
+            let expected = matrix![[4, 5, 6], [1, 2, 3]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let unchanged = matrix.clone();
+            let error = matrix.swap_rows(0, 2).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            assert_eq!(matrix, unchanged);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let unchanged = matrix.clone();
+            let error = matrix.swap_rows(2, 0).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            assert_eq!(matrix, unchanged);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let unchanged = matrix.clone();
+            let error = matrix.swap_rows(2, 3).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            assert_eq!(matrix, unchanged);
+
+            // Asserts no undefined behavior.
+            let mut matrix = matrix![[0; 0]; 2].with_order::<O>();
+            matrix.swap_rows(0, 1).unwrap();
+            let expected = matrix![[0; 0]; 2];
+            assert_eq!(matrix, expected);
+        }}
+    }
+
+    #[test]
+    fn test_swap_cols() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix.swap_cols(0, 0).unwrap();
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix.swap_cols(0, 1).unwrap();
+            let expected = matrix![[2, 1, 3], [5, 4, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix.swap_cols(1, 0).unwrap();
+            let expected = matrix![[2, 1, 3], [5, 4, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let unchanged = matrix.clone();
+            let error = matrix.swap_cols(0, 3).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            assert_eq!(matrix, unchanged);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let unchanged = matrix.clone();
+            let error = matrix.swap_cols(3, 0).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            assert_eq!(matrix, unchanged);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let unchanged = matrix.clone();
+            let error = matrix.swap_cols(3, 4).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+            assert_eq!(matrix, unchanged);
+
+            // Asserts no undefined behavior.
+            let mut matrix = matrix![[0; 3]; 0].with_order::<O>();
+            matrix.swap_cols(0, 1).unwrap();
+            let expected = matrix![[0; 3]; 0];
+            assert_eq!(matrix, expected);
+        }}
+    }
+}
