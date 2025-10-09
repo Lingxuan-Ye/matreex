@@ -220,12 +220,12 @@ mod tests {
             let lhs = matrix![
                 [MockL(1), MockL(2), MockL(3)],
                 [MockL(4), MockL(5), MockL(6)],
-            ].with_order::<LO>();
+            ].with_order::<O>();
             let rhs = matrix![
                 [MockR(1), MockR(2)],
                 [MockR(3), MockR(4)],
                 [MockR(5), MockR(6)],
-            ].with_order::<RO>();
+            ].with_order::<P>();
             let expected = matrix![[MockU(22), MockU(28)], [MockU(49), MockU(64)]];
 
             {
@@ -261,12 +261,12 @@ mod tests {
                 let lhs = matrix![
                     [MockL(1), MockL(2), MockL(3)],
                     [MockL(4), MockL(5), MockL(6)],
-                ].with_order::<LO>();
+                ].with_order::<O>();
                 let rhs = matrix![
                     [MockR(1), MockR(2)],
                     [MockR(3), MockR(4)],
                     [MockR(5), MockR(6)],
-                ].with_order::<RO>();
+                ].with_order::<P>();
                 let output = lhs.multiply(rhs).unwrap();
                 let expected = matrix![
                     [MockU(22), MockU(28)],
@@ -279,12 +279,12 @@ mod tests {
                 let lhs = matrix![
                     [MockL(1), MockL(2), MockL(3)],
                     [MockL(4), MockL(5), MockL(6)],
-                ].with_order::<LO>();
+                ].with_order::<O>();
                 let rhs = matrix![
                     [MockR(1)],
                     [MockR(2)],
                     [MockR(3)],
-                ].with_order::<RO>();
+                ].with_order::<P>();
                 let output = lhs.multiply(rhs).unwrap();
                 let expected = matrix![
                     [MockU(14)],
@@ -297,12 +297,12 @@ mod tests {
                 let lhs = matrix![
                     [MockL(1), MockL(2), MockL(3)],
                     [MockL(4), MockL(5), MockL(6)],
-                ].with_order::<LO>();
+                ].with_order::<O>();
                 let rhs =  matrix![
                     [MockR(1), MockR(2), MockR(3)],
                     [MockR(4), MockR(5), MockR(6)],
                     [MockR(7), MockR(8), MockR(9)],
-                ].with_order::<RO>();
+                ].with_order::<P>();
                 let output = lhs.multiply(rhs).unwrap();
                 let expected = matrix![
                     [MockU(30), MockU(36), MockU(42)],
@@ -315,11 +315,11 @@ mod tests {
                 let lhs = matrix![
                     [MockL(1), MockL(2), MockL(3)],
                     [MockL(4), MockL(5), MockL(6)],
-                ].with_order::<LO>();
+                ].with_order::<O>();
                 let rhs = matrix![
                     [MockR(1), MockR(2)],
                     [MockR(3), MockR(4)],
-                ].with_order::<RO>();
+                ].with_order::<P>();
                 let error = lhs.multiply(rhs).unwrap_err();
                 assert_eq!(error, Error::ShapeNotConformable);
             }
@@ -328,25 +328,25 @@ mod tests {
                 let lhs = matrix![
                     [MockL(1), MockL(2), MockL(3)],
                     [MockL(4), MockL(5), MockL(6)],
-                ].with_order::<LO>();
+                ].with_order::<O>();
                 let rhs = matrix![
                     [MockR(1), MockR(2), MockR(3)],
                     [MockR(4), MockR(5), MockR(6)],
-                ].with_order::<RO>();
+                ].with_order::<P>();
                 let error = lhs.multiply(rhs).unwrap_err();
                 assert_eq!(error, Error::ShapeNotConformable);
             }
 
             {
-                let lhs = matrix![[0; 0]; 2].with_order::<LO>();
-                let rhs = matrix![[0; usize::MAX]; 0].with_order::<RO>();
+                let lhs = matrix![[0; 0]; 2].with_order::<O>();
+                let rhs = matrix![[0; usize::MAX]; 0].with_order::<P>();
                 let error = lhs.multiply(rhs).unwrap_err();
                 assert_eq!(error, Error::SizeOverflow);
             }
 
             {
-                let lhs = matrix![[0; 0]; 1].with_order::<LO>();
-                let rhs = matrix![[0; usize::MAX]; 0].with_order::<RO>();
+                let lhs = matrix![[0; 0]; 1].with_order::<O>();
+                let rhs = matrix![[0; usize::MAX]; 0].with_order::<P>();
                 let error = lhs.multiply(rhs).unwrap_err();
                 assert_eq!(error, Error::CapacityOverflow);
             }

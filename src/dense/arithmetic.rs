@@ -470,48 +470,48 @@ mod tests {
     #[test]
     fn test_elementwise_operation() {
         dispatch_binary! {{
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             let output = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap();
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(output, expected);
 
             // Misuse but supposed to work.
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let output = {
-                let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+                let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
                 lhs.elementwise_operation(&rhs, |x, _| x).unwrap()
             };
             let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
             assert_eq!(output, expected);
 
             // Misuse but supposed to work.
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             let output = {
-                let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
+                let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
                 lhs.elementwise_operation(&rhs, |_, y| y).unwrap()
             };
             let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
             assert_eq!(output, expected);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2]].with_order::<P>();
             let error = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<P>();
             let error = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
             // Assert no panic from unflattening indices occurs.
-            let lhs = matrix![[0; 0]; 3].with_order::<LO>();
-            let rhs = matrix![[0; 0]; 3].with_order::<RO>();
+            let lhs = matrix![[0; 0]; 3].with_order::<O>();
+            let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation(&rhs, |_, _| ());
 
             // Assert no panic from unflattening indices occurs.
-            let lhs = matrix![[0; 2]; 0].with_order::<LO>();
-            let rhs = matrix![[0; 2]; 0].with_order::<RO>();
+            let lhs = matrix![[0; 2]; 0].with_order::<O>();
+            let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation(&rhs, |_, _| ());
         }}
     }
@@ -519,8 +519,8 @@ mod tests {
     #[test]
     fn test_elementwise_operation_consume_self() {
         dispatch_binary! {{
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             let output = lhs
                 .elementwise_operation_consume_self(&rhs, |x, y| x + y)
                 .unwrap();
@@ -528,36 +528,36 @@ mod tests {
             assert_eq!(output, expected);
 
             // Misuse but supposed to work.
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             let output = lhs
                 .elementwise_operation_consume_self(&rhs, |_, y| y)
                 .unwrap();
             let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
             assert_eq!(output, expected);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2]].with_order::<P>();
             let error = lhs
                 .elementwise_operation_consume_self(&rhs, |x, y| x + y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<P>();
             let error = lhs
                 .elementwise_operation_consume_self(&rhs, |x, y| x + y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
             // Assert no panic from unflattening indices occurs.
-            let lhs = matrix![[0; 0]; 3].with_order::<LO>();
-            let rhs = matrix![[0; 0]; 3].with_order::<RO>();
+            let lhs = matrix![[0; 0]; 3].with_order::<O>();
+            let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_self(&rhs, |_, _| ());
 
             // Assert no panic from unflattening indices occurs.
-            let lhs = matrix![[0; 2]; 0].with_order::<LO>();
-            let rhs = matrix![[0; 2]; 0].with_order::<RO>();
+            let lhs = matrix![[0; 2]; 0].with_order::<O>();
+            let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_self(&rhs, |_, _| ());
         }}
     }
@@ -565,8 +565,8 @@ mod tests {
     #[test]
     fn test_elementwise_operation_consume_rhs() {
         dispatch_binary! {{
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             let output = lhs
                 .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
                 .unwrap();
@@ -574,36 +574,36 @@ mod tests {
             assert_eq!(output, expected);
 
             // Misuse but supposed to work.
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             let output = lhs
                 .elementwise_operation_consume_rhs(rhs, |x, _| x)
                 .unwrap();
             let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
             assert_eq!(output, expected);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2]].with_order::<P>();
             let error = lhs
                 .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<P>();
             let error = lhs
                 .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
             // Assert no panic from unflattening indices occurs.
-            let lhs = matrix![[0; 0]; 3].with_order::<LO>();
-            let rhs = matrix![[0; 0]; 3].with_order::<RO>();
+            let lhs = matrix![[0; 0]; 3].with_order::<O>();
+            let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_rhs(rhs, |_, _| ());
 
             // Assert no panic from unflattening indices occurs.
-            let lhs = matrix![[0; 2]; 0].with_order::<LO>();
-            let rhs = matrix![[0; 2]; 0].with_order::<RO>();
+            let lhs = matrix![[0; 2]; 0].with_order::<O>();
+            let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_rhs(rhs, |_, _| ());
         }}
     }
@@ -611,36 +611,36 @@ mod tests {
     #[test]
     fn test_elementwise_operation_consume_both() {
         dispatch_binary! {{
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             let output = lhs
                 .elementwise_operation_consume_both(rhs, |x, y| x + y)
                 .unwrap();
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(output, expected);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2]].with_order::<P>();
             let error = lhs
                 .elementwise_operation_consume_both(rhs, |x, y| x + y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<P>();
             let error = lhs
                 .elementwise_operation_consume_both(rhs, |x, y| x + y)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
             // Assert no panic from unflattening indices occurs.
-            let lhs = matrix![[0; 0]; 3].with_order::<LO>();
-            let rhs = matrix![[0; 0]; 3].with_order::<RO>();
+            let lhs = matrix![[0; 0]; 3].with_order::<O>();
+            let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_both(rhs, |_, _| ());
 
             // Assert no panic from unflattening indices occurs.
-            let lhs = matrix![[0; 2]; 0].with_order::<LO>();
-            let rhs = matrix![[0; 2]; 0].with_order::<RO>();
+            let lhs = matrix![[0; 2]; 0].with_order::<O>();
+            let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_both(rhs, |_, _| ());
         }}
     }
@@ -648,24 +648,24 @@ mod tests {
     #[test]
     fn test_elementwise_operation_assign() {
         dispatch_binary! {{
-            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)
                 .unwrap();
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(lhs, expected);
 
             // Misuse but supposed to work.
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let mut lhs = lhs.map_ref(|x| x).unwrap();
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             lhs.elementwise_operation_assign(&rhs, |x, y| *x = y)
                 .unwrap();
             let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
             assert_eq!(lhs, expected);
 
-            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2]].with_order::<RO>();
+            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2]].with_order::<P>();
             let unchanged = lhs.clone();
             let error = lhs
                 .elementwise_operation_assign(&rhs, |x, y| *x += y)
@@ -673,8 +673,8 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
             assert_eq!(lhs, unchanged);
 
-            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<RO>();
+            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<P>();
             let unchanged = lhs.clone();
             let error = lhs
                 .elementwise_operation_assign(&rhs, |x, y| *x += y)
@@ -683,13 +683,13 @@ mod tests {
             assert_eq!(lhs, unchanged);
 
             // Assert no panic from unflattening indices occurs.
-            let mut lhs = matrix![[0; 0]; 3].with_order::<LO>();
-            let rhs = matrix![[0; 0]; 3].with_order::<RO>();
+            let mut lhs = matrix![[0; 0]; 3].with_order::<O>();
+            let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation_assign(&rhs, |_, _| ());
 
             // Assert no panic from unflattening indices occurs.
-            let mut lhs = matrix![[0; 2]; 0].with_order::<LO>();
-            let rhs = matrix![[0; 2]; 0].with_order::<RO>();
+            let mut lhs = matrix![[0; 2]; 0].with_order::<O>();
+            let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_assign(&rhs, |_, _| ());
         }}
     }
@@ -697,15 +697,15 @@ mod tests {
     #[test]
     fn test_elementwise_operation_assign_consume_rhs() {
         dispatch_binary! {{
-            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<RO>();
+            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
                 .unwrap();
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(lhs, expected);
 
-            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2]].with_order::<RO>();
+            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2]].with_order::<P>();
             let unchanged = lhs.clone();
             let error = lhs
                 .elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
@@ -713,8 +713,8 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
             assert_eq!(lhs, unchanged);
 
-            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<RO>();
+            let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]].with_order::<P>();
             let unchanged = lhs.clone();
             let error = lhs
                 .elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
@@ -723,13 +723,13 @@ mod tests {
             assert_eq!(lhs, unchanged);
 
             // Assert no panic from unflattening indices occurs.
-            let mut lhs = matrix![[0; 0]; 3].with_order::<LO>();
-            let rhs = matrix![[0; 0]; 3].with_order::<RO>();
+            let mut lhs = matrix![[0; 0]; 3].with_order::<O>();
+            let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());
 
             // Assert no panic from unflattening indices occurs.
-            let mut lhs = matrix![[0; 2]; 0].with_order::<LO>();
-            let rhs = matrix![[0; 2]; 0].with_order::<RO>();
+            let mut lhs = matrix![[0; 2]; 0].with_order::<O>();
+            let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());
         }}
     }
@@ -746,47 +746,47 @@ mod tests {
         }
 
         dispatch_binary! {{
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[1, 2], [3, 4], [5, 6]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[1, 2], [3, 4], [5, 6]].with_order::<P>();
             let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             let expected = matrix![[22, 28], [49, 64]];
             assert_eq!(output, expected);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[1], [2], [3]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[1], [2], [3]].with_order::<P>();
             let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             let expected = matrix![[14], [32]];
             assert_eq!(output, expected);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]].with_order::<P>();
             let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
             let expected = matrix![[30, 36, 42], [66, 81, 96]];
             assert_eq!(output, expected);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[1, 2], [3, 4]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[1, 2], [3, 4]].with_order::<P>();
             let error = lhs
                 .multiplication_like_operation(rhs, dot_product)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<LO>();
-            let rhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<RO>();
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<P>();
             let error = lhs
                 .multiplication_like_operation(rhs, dot_product)
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            let lhs = matrix![[0; 0]; 2].with_order::<LO>();
-            let rhs = matrix![[0; usize::MAX]; 0].with_order::<RO>();
+            let lhs = matrix![[0; 0]; 2].with_order::<O>();
+            let rhs = matrix![[0; usize::MAX]; 0].with_order::<P>();
             let error = lhs
                 .multiplication_like_operation(rhs, |_, _| 0)
                 .unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
-            let lhs = matrix![[0; 0]; 1].with_order::<LO>();
-            let rhs = matrix![[0; usize::MAX]; 0].with_order::<RO>();
+            let lhs = matrix![[0; 0]; 1].with_order::<O>();
+            let rhs = matrix![[0; usize::MAX]; 0].with_order::<P>();
             let error = lhs
                 .multiplication_like_operation(rhs, |_, _| 0)
                 .unwrap_err();

@@ -226,11 +226,11 @@ mod tests {
             let lhs = matrix![
                 [MockL(1), MockL(2), MockL(3)],
                 [MockL(4), MockL(5), MockL(6)],
-            ].with_order::<LO>();
+            ].with_order::<O>();
             let rhs = matrix![
                 [MockR(2), MockR(2), MockR(2)],
                 [MockR(2), MockR(2), MockR(2)],
-            ].with_order::<RO>();
+            ].with_order::<P>();
             let expected = matrix![
                 [MockU(3), MockU(4), MockU(5)],
                 [MockU(6), MockU(7), MockU(8)],
@@ -268,11 +268,11 @@ mod tests {
             let lhs = matrix![
                 [MockL(1), MockL(2), MockL(3)],
                 [MockL(4), MockL(5), MockL(6)],
-            ].with_order::<LO>();
+            ].with_order::<O>();
             let rhs = matrix![
                 [MockR(2), MockR(2), MockR(2)],
                 [MockR(2), MockR(2), MockR(2)],
-            ].with_order::<RO>();
+            ].with_order::<P>();
             let expected = matrix![
                 [MockL(3), MockL(4), MockL(5)],
                 [MockL(6), MockL(7), MockL(8)],

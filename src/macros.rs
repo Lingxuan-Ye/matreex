@@ -188,29 +188,29 @@ macro_rules! dispatch_binary {
         use $crate::dense::layout::{ColMajor, RowMajor};
 
         {
-            type LO = RowMajor;
-            type RO = RowMajor;
+            type O = RowMajor;
+            type P = RowMajor;
 
             $block
         }
 
         {
-            type LO = RowMajor;
-            type RO = ColMajor;
+            type O = RowMajor;
+            type P = ColMajor;
 
             $block
         }
 
         {
-            type LO = ColMajor;
-            type RO = RowMajor;
+            type O = ColMajor;
+            type P = RowMajor;
 
             $block
         }
 
         {
-            type LO = ColMajor;
-            type RO = ColMajor;
+            type O = ColMajor;
+            type P = ColMajor;
 
             $block
         }
