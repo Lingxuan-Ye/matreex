@@ -109,3 +109,150 @@ where
             })
     }
 }
+
+#[cfg(not(miri))]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::error::Error;
+    use crate::{dispatch_unary, matrix};
+
+    #[test]
+    fn test_par_apply() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix.par_apply(|element| *element += 2);
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            assert_eq!(matrix, expected);
+        }}
+    }
+
+    #[test]
+    fn test_par_map() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let output = matrix.par_map(|element| element as f64).unwrap();
+            let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+            assert_eq!(output, expected);
+
+            let matrix = matrix![[(); usize::MAX]; 1].with_order::<O>();
+            let error = matrix.par_map(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
+        }}
+    }
+
+    #[test]
+    fn test_par_map_ref() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let output = matrix.par_map_ref(|element| *element as f64).unwrap();
+            let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+            assert_eq!(output, expected);
+
+            // Map to matrix of references.
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let output = matrix.par_map_ref(|element| element).unwrap();
+            let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
+            assert_eq!(output, expected);
+
+            let matrix = matrix![[(); usize::MAX]; 1].with_order::<O>();
+            let error = matrix.par_map_ref(|_| 0).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
+        }}
+    }
+
+    #[test]
+    fn test_par_iter_elements() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let sum = matrix.par_iter_elements().sum::<i32>();
+            let expected = 21;
+            assert_eq!(sum, expected);
+        }}
+    }
+
+    #[test]
+    fn test_par_iter_elements_mut() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix
+                .par_iter_elements_mut()
+                .for_each(|element| *element += 2);
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            assert_eq!(matrix, expected);
+        }}
+    }
+
+    #[test]
+    fn test_into_par_iter_elements() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let sum = matrix.into_par_iter_elements().sum::<i32>();
+            let expected = 21;
+            assert_eq!(sum, expected);
+        }}
+    }
+
+    #[test]
+    fn test_par_iter_elements_with_index() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix
+                .par_iter_elements_with_index()
+                .for_each(|(index, element)| {
+                    assert_eq!(element, &matrix[index]);
+                });
+
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 0]; 2].with_order::<O>();
+            matrix.par_iter_elements_with_index().for_each(|_| ());
+
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 3]; 0].with_order::<O>();
+            matrix.par_iter_elements_with_index().for_each(|_| ());
+        }}
+    }
+
+    #[test]
+    fn test_par_iter_elements_mut_with_index() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix
+                .par_iter_elements_mut_with_index()
+                .for_each(|(index, element)| {
+                    *element += index.row as i32 + index.col as i32;
+                });
+            let expected = matrix![[1, 3, 5], [5, 7, 9]];
+            assert_eq!(matrix, expected);
+
+            // Assert no panic from unflattening indices occurs.
+            let mut matrix = matrix![[0; 0]; 2].with_order::<O>();
+            matrix.par_iter_elements_mut_with_index().for_each(|_| ());
+
+            // Assert no panic from unflattening indices occurs.
+            let mut matrix = matrix![[0; 3]; 0].with_order::<O>();
+            matrix.par_iter_elements_mut_with_index().for_each(|_| ());
+        }}
+    }
+
+    #[test]
+    fn test_into_par_iter_elements_with_index() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix
+                .clone()
+                .into_par_iter_elements_with_index()
+                .for_each(|(index, element)| {
+                    assert_eq!(element, matrix[index]);
+                });
+
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 0]; 2].with_order::<O>();
+            matrix.into_par_iter_elements_with_index().for_each(|_| ());
+
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 3]; 0].with_order::<O>();
+            matrix.into_par_iter_elements_with_index().for_each(|_| ());
+        }}
+    }
+}

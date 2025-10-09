@@ -219,3 +219,342 @@ where
         self.data.iter_mut().skip(skip).step_by(step).take(take)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{dispatch_unary, matrix};
+
+    #[test]
+    fn test_iter_rows() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let mut rows = matrix.iter_rows();
+
+            let mut row_0 = rows.next().unwrap();
+            assert_eq!(row_0.next(), Some(&1));
+            assert_eq!(row_0.next(), Some(&2));
+            assert_eq!(row_0.next(), Some(&3));
+            assert_eq!(row_0.next(), None);
+
+            let mut row_1 = rows.next_back().unwrap();
+            assert_eq!(row_1.next_back(), Some(&6));
+            assert_eq!(row_1.next_back(), Some(&5));
+            assert_eq!(row_1.next_back(), Some(&4));
+            assert_eq!(row_1.next_back(), None);
+
+            assert!(rows.next().is_none());
+            assert!(rows.next_back().is_none());
+        }}
+    }
+
+    #[test]
+    fn test_iter_cols() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let mut cols = matrix.iter_cols();
+
+            let mut col_0 = cols.next().unwrap();
+            assert_eq!(col_0.next(), Some(&1));
+            assert_eq!(col_0.next(), Some(&4));
+            assert_eq!(col_0.next(), None);
+
+            let mut col_1 = cols.next().unwrap();
+            assert_eq!(col_1.next(), Some(&2));
+            assert_eq!(col_1.next(), Some(&5));
+            assert_eq!(col_1.next(), None);
+
+            let mut col_2 = cols.next_back().unwrap();
+            assert_eq!(col_2.next_back(), Some(&6));
+            assert_eq!(col_2.next_back(), Some(&3));
+            assert_eq!(col_2.next_back(), None);
+
+            assert!(cols.next().is_none());
+            assert!(cols.next_back().is_none());
+        }}
+    }
+
+    #[test]
+    fn test_iter_rows_mut() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let mut count = 0;
+
+            for row in matrix.iter_rows_mut() {
+                for element in row {
+                    count += 1;
+                    *element += count;
+                }
+            }
+            let expected = matrix![[2, 4, 6], [8, 10, 12]];
+            assert_eq!(matrix, expected);
+
+            for row in matrix.iter_rows_mut().rev() {
+                for element in row.rev() {
+                    *element -= count;
+                    count -= 1;
+                }
+            }
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_eq!(matrix, expected);
+        }}
+    }
+
+    #[test]
+    fn test_iter_cols_mut() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let mut count = 0;
+
+            for col in matrix.iter_cols_mut() {
+                for element in col {
+                    count += 1;
+                    *element += count;
+                }
+            }
+            let expected = matrix![[2, 5, 8], [6, 9, 12]];
+            assert_eq!(matrix, expected);
+
+            for col in matrix.iter_cols_mut().rev() {
+                for element in col.rev() {
+                    *element -= count;
+                    count -= 1;
+                }
+            }
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_eq!(matrix, expected);
+        }}
+    }
+
+    #[test]
+    fn test_iter_nth_row() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+            let mut row_0 = matrix.iter_nth_row(0).unwrap();
+            assert_eq!(row_0.next(), Some(&1));
+            assert_eq!(row_0.next(), Some(&2));
+            assert_eq!(row_0.next(), Some(&3));
+            assert_eq!(row_0.next(), None);
+
+            let mut row_1 = matrix.iter_nth_row(1).unwrap();
+            assert_eq!(row_1.next_back(), Some(&6));
+            assert_eq!(row_1.next_back(), Some(&5));
+            assert_eq!(row_1.next_back(), Some(&4));
+            assert_eq!(row_1.next_back(), None);
+
+            assert!(matches!(
+                matrix.iter_nth_row(2),
+                Err(Error::IndexOutOfBounds)
+            ));
+        }}
+    }
+
+    #[test]
+    fn test_iter_nth_col() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
+            let mut col_0 = matrix.iter_nth_col(0).unwrap();
+            assert_eq!(col_0.next(), Some(&1));
+            assert_eq!(col_0.next(), Some(&4));
+            assert_eq!(col_0.next(), None);
+
+            let mut col_1 = matrix.iter_nth_col(1).unwrap();
+            assert_eq!(col_1.next(), Some(&2));
+            assert_eq!(col_1.next(), Some(&5));
+            assert_eq!(col_1.next(), None);
+
+            let mut col_2 = matrix.iter_nth_col(2).unwrap();
+            assert_eq!(col_2.next_back(), Some(&6));
+            assert_eq!(col_2.next_back(), Some(&3));
+            assert_eq!(col_2.next_back(), None);
+
+            assert!(matches!(
+                matrix.iter_nth_col(3),
+                Err(Error::IndexOutOfBounds)
+            ));
+        }}
+    }
+
+    #[test]
+    fn test_iter_nth_row_mut() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let mut count = 0;
+
+            let row_0 = matrix.iter_nth_row_mut(0).unwrap();
+            for element in row_0 {
+                count += 1;
+                *element += count;
+            }
+            let row_1 = matrix.iter_nth_row_mut(1).unwrap();
+            for element in row_1 {
+                count += 1;
+                *element += count;
+            }
+            let expected = matrix![[2, 4, 6], [8, 10, 12]];
+            assert_eq!(matrix, expected);
+
+            let row_1 = matrix.iter_nth_row_mut(1).unwrap();
+            for element in row_1.rev() {
+                *element -= count;
+                count -= 1;
+            }
+            let row_0 = matrix.iter_nth_row_mut(0).unwrap();
+            for element in row_0.rev() {
+                *element -= count;
+                count -= 1;
+            }
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_eq!(matrix, expected);
+
+            assert!(matches!(
+                matrix.iter_nth_row_mut(2),
+                Err(Error::IndexOutOfBounds)
+            ));
+        }}
+    }
+
+    #[test]
+    fn test_iter_nth_col_mut() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let mut count = 0;
+
+            let col_0 = matrix.iter_nth_col_mut(0).unwrap();
+            for element in col_0 {
+                count += 1;
+                *element += count;
+            }
+            let col_1 = matrix.iter_nth_col_mut(1).unwrap();
+            for element in col_1 {
+                count += 1;
+                *element += count;
+            }
+            let col_2 = matrix.iter_nth_col_mut(2).unwrap();
+            for element in col_2 {
+                count += 1;
+                *element += count;
+            }
+            let expected = matrix![[2, 5, 8], [6, 9, 12]];
+            assert_eq!(matrix, expected);
+
+            let col_2 = matrix.iter_nth_col_mut(2).unwrap();
+            for element in col_2.rev() {
+                *element -= count;
+                count -= 1;
+            }
+            let col_1 = matrix.iter_nth_col_mut(1).unwrap();
+            for element in col_1.rev() {
+                *element -= count;
+                count -= 1;
+            }
+            let col_0 = matrix.iter_nth_col_mut(0).unwrap();
+            for element in col_0.rev() {
+                *element -= count;
+                count -= 1;
+            }
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
+            assert_eq!(matrix, expected);
+
+            assert!(matches!(
+                matrix.iter_nth_col_mut(3),
+                Err(Error::IndexOutOfBounds)
+            ));
+        }}
+    }
+
+    #[test]
+    fn test_iter_elements() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let sum = matrix.iter_elements().sum::<i32>();
+            let expected = 21;
+            assert_eq!(sum, expected);
+        }}
+    }
+
+    #[test]
+    fn test_iter_elements_mut() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix.iter_elements_mut().for_each(|element| *element += 2);
+            let expected = matrix![[3, 4, 5], [6, 7, 8]];
+            assert_eq!(matrix, expected);
+        }}
+    }
+
+    #[test]
+    fn test_into_iter_elements() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let sum = matrix.into_iter_elements().sum::<i32>();
+            let expected = 21;
+            assert_eq!(sum, expected);
+        }}
+    }
+
+    #[test]
+    fn test_iter_elements_with_index() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix
+                .iter_elements_with_index()
+                .for_each(|(index, element)| {
+                    assert_eq!(element, &matrix[index]);
+                });
+
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 0]; 2].with_order::<O>();
+            matrix.iter_elements_with_index().for_each(|_| ());
+
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 3]; 0].with_order::<O>();
+            matrix.iter_elements_with_index().for_each(|_| ());
+        }}
+    }
+
+    #[test]
+    fn test_iter_elements_mut_with_index() {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix
+                .iter_elements_mut_with_index()
+                .for_each(|(index, element)| {
+                    *element += index.row as i32 + index.col as i32;
+                });
+            let expected = matrix![[1, 3, 5], [5, 7, 9]];
+            assert_eq!(matrix, expected);
+
+            // Assert no panic from unflattening indices occurs.
+            let mut matrix = matrix![[0; 0]; 2].with_order::<O>();
+            matrix.iter_elements_mut_with_index().for_each(|_| ());
+
+            // Assert no panic from unflattening indices occurs.
+            let mut matrix = matrix![[0; 3]; 0].with_order::<O>();
+            matrix.iter_elements_mut_with_index().for_each(|_| ());
+        }}
+    }
+
+    #[test]
+    fn test_into_iter_elements_with_index() {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            matrix
+                .clone()
+                .into_iter_elements_with_index()
+                .for_each(|(index, element)| {
+                    assert_eq!(element, matrix[index]);
+                });
+
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 0]; 2].with_order::<O>();
+            matrix.into_iter_elements_with_index().for_each(|_| ());
+
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 3]; 0].with_order::<O>();
+            matrix.into_iter_elements_with_index().for_each(|_| ());
+        }}
+    }
+}
