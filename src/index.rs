@@ -6,19 +6,46 @@ use crate::shape::AsShape;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+/// A struct representing a two-dimensional index.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Index {
+    /// The row index.
     pub row: usize,
+
+    /// The column index.
     pub col: usize,
 }
 
 impl Index {
+    /// Creates a new [`Index`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Index;
+    ///
+    /// let index = Index::new(2, 3);
+    /// assert_eq!(index.row, 2);
+    /// assert_eq!(index.col, 3);
+    /// ```
     #[inline]
     pub fn new(row: usize, col: usize) -> Self {
         Self { row, col }
     }
 
+    /// Creates a new [`Index`] from a [`WrappingIndex`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Index, Shape, WrappingIndex};
+    ///
+    /// let index = WrappingIndex::new(-1, 4);
+    /// let shape = Shape::new(2, 3);
+    /// let index = Index::from_wrapping_index(index, shape);
+    /// assert_eq!(index, Index::new(1, 1));
+    /// ```
     pub fn from_wrapping_index<S>(index: WrappingIndex, shape: S) -> Self
     where
         S: AsShape,
@@ -36,6 +63,17 @@ impl Index {
         Self { row, col }
     }
 
+    /// Swaps the row and column indices.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Index;
+    ///
+    /// let mut index = Index::new(2, 3);
+    /// index.swap();
+    /// assert_eq!(index, Index::new(3, 2));
+    /// ```
     #[inline]
     pub fn swap(&mut self) -> &mut Self {
         (self.row, self.col) = (self.col, self.row);
@@ -59,9 +97,34 @@ impl From<[usize; 2]> for Index {
     }
 }
 
+/// A trait for types that provide row and column indices.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::index::AsIndex;
+/// use matreex::matrix;
+///
+/// struct I(usize, usize);
+///
+/// impl AsIndex for I {
+///     fn row(&self) -> usize {
+///         self.0
+///     }
+///
+///     fn col(&self) -> usize {
+///         self.1
+///     }
+/// }
+///
+/// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+/// assert_eq!(matrix[I(1, 1)], 5);
+/// ```
 pub trait AsIndex {
+    /// Returns the row index.
     fn row(&self) -> usize;
 
+    /// Returns the column index.
     fn col(&self) -> usize;
 }
 
@@ -101,19 +164,55 @@ impl AsIndex for [usize; 2] {
     }
 }
 
+/// A struct representing a two-dimensional index that wraps around when
+/// exceeding the valid range.
+///
+/// [`WrappingIndex`] is the only type that performs wrapping indexing.
+/// The design is based on the following considerations:
+/// - Wrapping indexing does not follow standard indexing conventions,
+///   so it should always be used explicitly.
+/// - Both `(isize, isize)` and `[isize; 2]` are not sufficiently
+///   distinguishable from their `usize` counterparts, which would
+///   introduce ambiguity and require explicit type annotations.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct WrappingIndex {
+    /// The row index.
     pub row: isize,
+
+    /// The column index.
     pub col: isize,
 }
 
 impl WrappingIndex {
+    /// Creates a new [`WrappingIndex`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::WrappingIndex;
+    ///
+    /// let index = WrappingIndex::new(2, 3);
+    /// assert_eq!(index.row, 2);
+    /// assert_eq!(index.col, 3);
+    /// ```
     #[inline]
     pub fn new(row: isize, col: isize) -> Self {
         Self { row, col }
     }
 
+    /// Converts this wrapping index to an [`Index`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Index, Shape, WrappingIndex};
+    ///
+    /// let index = WrappingIndex::new(-1, 4);
+    /// let shape = Shape::new(2, 3);
+    /// let index = index.to_index(shape);
+    /// assert_eq!(index, Index::new(1, 1));
+    /// ```
     pub fn to_index<S>(self, shape: S) -> Index
     where
         S: AsShape,
@@ -121,6 +220,17 @@ impl WrappingIndex {
         Index::from_wrapping_index(self, shape)
     }
 
+    /// Swaps the row and column indices.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::WrappingIndex;
+    ///
+    /// let mut index = WrappingIndex::new(2, 3);
+    /// index.swap();
+    /// assert_eq!(index, WrappingIndex::new(3, 2));
+    /// ```
     #[inline]
     pub fn swap(&mut self) -> &mut Self {
         (self.row, self.col) = (self.col, self.row);
