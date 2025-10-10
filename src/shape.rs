@@ -5,6 +5,7 @@ use crate::error::{Error, Result};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+/// A struct representing the shape of a matrix.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Shape {
@@ -13,26 +14,85 @@ pub struct Shape {
 }
 
 impl Shape {
+    /// Creates a new [`Shape`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let shape = Shape::new(2, 3);
+    /// assert_eq!(shape.nrows(), 2);
+    /// assert_eq!(shape.ncols(), 3);
+    /// ```
     #[inline]
     pub fn new(nrows: usize, ncols: usize) -> Self {
         Self { nrows, ncols }
     }
 
+    /// Returns the number of rows.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let shape = Shape::new(2, 3);
+    /// assert_eq!(shape.nrows(), 2);
+    /// ```
     #[inline]
     pub fn nrows(&self) -> usize {
         self.nrows
     }
 
+    /// Returns the number of columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let shape = Shape::new(2, 3);
+    /// assert_eq!(shape.ncols(), 3);
+    /// ```
     #[inline]
     pub fn ncols(&self) -> usize {
         self.ncols
     }
 
+    /// Returns the size.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the size exceeds [`usize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, Shape};
+    ///
+    /// let shape = Shape::new(2, 3);
+    /// assert_eq!(shape.size(), Ok(6));
+    ///
+    /// let shape = Shape::new(2, usize::MAX);
+    /// assert_eq!(shape.size(), Err(Error::SizeOverflow));
+    /// ```
     #[inline]
     pub fn size(&self) -> Result<usize> {
         AsShape::size(self)
     }
 
+    /// Swaps the numbers of rows and columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let mut shape = Shape::new(2, 3);
+    /// shape.swap();
+    /// assert_eq!(shape, Shape::new(3, 2));
+    /// ```
     #[inline]
     pub fn swap(&mut self) -> &mut Self {
         (self.nrows, self.ncols) = (self.ncols, self.nrows);
@@ -56,11 +116,45 @@ impl From<[usize; 2]> for Shape {
     }
 }
 
+/// A trait representing the shape of a matrix.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::{Matrix, matrix};
+/// use matreex::shape::AsShape;
+///
+/// struct S(usize, usize);
+///
+/// impl AsShape for S {
+///     fn nrows(&self) -> usize {
+///         self.0
+///     }
+///
+///     fn ncols(&self) -> usize {
+///         self.1
+///     }
+/// }
+///
+/// let result = Matrix::with_value(S(2, 3), 0);
+/// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
+/// ```
 pub trait AsShape {
+    /// Returns the number of rows.
     fn nrows(&self) -> usize;
 
+    /// Returns the number of columns.
     fn ncols(&self) -> usize;
 
+    /// Returns the size.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the size exceeds [`usize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// Overriding the default implementation is not recommended.
     #[inline]
     fn size(&self) -> Result<usize> {
         self.nrows()
