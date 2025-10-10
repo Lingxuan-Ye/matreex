@@ -6,96 +6,6 @@ use crate::shape::AsShape;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A helper trait for indexing operations on a matrix.
-///
-/// # Notes
-///
-/// Types that implement this trait do not automatically have an implementation
-/// of [`core::ops::Index`]. In addition, some matrix types may not be able to
-/// implement [`core::ops::Index`] (e.g., sparse matrix types).
-///
-/// # Safety
-///
-/// Implementors must ensure that if any default implementation of [`get`] or
-/// [`get_mut`] is used, then [`is_out_of_bounds`] is implemented correctly and
-/// [`ensure_in_bounds`] is not overridden. Failing to do so may result in an
-/// out-of-bounds memory access, leading to *[undefined behavior]*.
-///
-/// [`is_out_of_bounds`]: MatrixIndex::is_out_of_bounds
-/// [`ensure_in_bounds`]: MatrixIndex::ensure_in_bounds
-/// [`get`]: MatrixIndex::get
-/// [`get_mut`]: MatrixIndex::get_mut
-/// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-pub unsafe trait MatrixIndex<M>: Sized {
-    /// The shared output type.
-    type Output<'a>
-    where
-        M: 'a;
-
-    /// The mutable output type.
-    type OutputMut<'a>
-    where
-        M: 'a;
-
-    /// Returns `true` if the index is out of bounds for the given matrix.
-    fn is_out_of_bounds(&self, matrix: &M) -> bool;
-
-    /// Ensures the index is in bounds for the given matrix.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
-    fn ensure_in_bounds(&self, matrix: &M) -> Result<&Self> {
-        if self.is_out_of_bounds(matrix) {
-            Err(Error::IndexOutOfBounds)
-        } else {
-            Ok(self)
-        }
-    }
-
-    /// Returns a shared output at this location.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
-    fn get(self, matrix: &M) -> Result<Self::Output<'_>> {
-        self.ensure_in_bounds(matrix)?;
-        unsafe { Ok(self.get_unchecked(matrix)) }
-    }
-
-    /// Returns a mutable output at this location.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
-    fn get_mut(self, matrix: &mut M) -> Result<Self::OutputMut<'_>> {
-        self.ensure_in_bounds(matrix)?;
-        unsafe { Ok(self.get_unchecked_mut(matrix)) }
-    }
-
-    /// Returns a shared output at this location, without performing any bounds
-    /// checking.
-    ///
-    /// # Safety
-    ///
-    /// Calling this method with an out-of-bounds index is *[undefined behavior]*
-    /// even if the resulting output is not used.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    unsafe fn get_unchecked(self, matrix: &M) -> Self::Output<'_>;
-
-    /// Returns a mutable output at this location, without performing any bounds
-    /// checking.
-    ///
-    /// # Safety
-    ///
-    /// Calling this method with an out-of-bounds index is *[undefined behavior]*
-    /// even if the resulting output is not used.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    unsafe fn get_unchecked_mut(self, matrix: &mut M) -> Self::OutputMut<'_>;
-}
-
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Index {
@@ -216,6 +126,90 @@ impl WrappingIndex {
         (self.row, self.col) = (self.col, self.row);
         self
     }
+}
+
+/// A helper trait for indexing operations on a matrix.
+///
+/// # Safety
+///
+/// Implementors must ensure that if any default implementation of [`get`] or
+/// [`get_mut`] is used, then [`is_out_of_bounds`] is implemented correctly and
+/// [`ensure_in_bounds`] is not overridden. Failing to do so may result in an
+/// out-of-bounds memory access, leading to *[undefined behavior]*.
+///
+/// [`is_out_of_bounds`]: MatrixIndex::is_out_of_bounds
+/// [`ensure_in_bounds`]: MatrixIndex::ensure_in_bounds
+/// [`get`]: MatrixIndex::get
+/// [`get_mut`]: MatrixIndex::get_mut
+/// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+pub unsafe trait MatrixIndex<M>: Sized {
+    /// The shared output type.
+    type Output<'a>
+    where
+        M: 'a;
+
+    /// The mutable output type.
+    type OutputMut<'a>
+    where
+        M: 'a;
+
+    /// Returns `true` if the index is out of bounds for the given matrix.
+    fn is_out_of_bounds(&self, matrix: &M) -> bool;
+
+    /// Ensures the index is in bounds for the given matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    fn ensure_in_bounds(&self, matrix: &M) -> Result<&Self> {
+        if self.is_out_of_bounds(matrix) {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self)
+        }
+    }
+
+    /// Returns a shared output at this location.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    fn get(self, matrix: &M) -> Result<Self::Output<'_>> {
+        self.ensure_in_bounds(matrix)?;
+        unsafe { Ok(self.get_unchecked(matrix)) }
+    }
+
+    /// Returns a mutable output at this location.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    fn get_mut(self, matrix: &mut M) -> Result<Self::OutputMut<'_>> {
+        self.ensure_in_bounds(matrix)?;
+        unsafe { Ok(self.get_unchecked_mut(matrix)) }
+    }
+
+    /// Returns a shared output at this location, without performing any bounds
+    /// checking.
+    ///
+    /// # Safety
+    ///
+    /// Calling this method with an out-of-bounds index is *[undefined behavior]*
+    /// even if the resulting output is not used.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    unsafe fn get_unchecked(self, matrix: &M) -> Self::Output<'_>;
+
+    /// Returns a mutable output at this location, without performing any bounds
+    /// checking.
+    ///
+    /// # Safety
+    ///
+    /// Calling this method with an out-of-bounds index is *[undefined behavior]*
+    /// even if the resulting output is not used.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    unsafe fn get_unchecked_mut(self, matrix: &mut M) -> Self::OutputMut<'_>;
 }
 
 #[cfg(test)]
