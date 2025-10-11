@@ -1,14 +1,11 @@
-//! Describes the shape of a matrix.
+//! Matrix shape representations.
 
 use crate::error::{Error, Result};
-use crate::order::Order;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A struct representing the shape of a [`Matrix<T>`].
-///
-/// [`Matrix<T>`]: crate::Matrix
+/// A struct representing the shape of a matrix.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Shape {
@@ -119,7 +116,7 @@ impl From<[usize; 2]> for Shape {
     }
 }
 
-/// A trait for specifying the shape of a [`Matrix<T>`].
+/// A trait representing the shape of a matrix.
 ///
 /// # Examples
 ///
@@ -142,8 +139,6 @@ impl From<[usize; 2]> for Shape {
 /// let result = Matrix::with_value(S(2, 3), 0);
 /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
 /// ```
-///
-/// [`Matrix<T>`]: crate::Matrix
 pub trait AsShape {
     /// Returns the number of rows.
     fn nrows(&self) -> usize;
@@ -159,8 +154,7 @@ pub trait AsShape {
     ///
     /// # Notes
     ///
-    /// This method has a default implementation, overriding it is not
-    /// recommended.
+    /// Overriding the default implementation is not recommended.
     #[inline]
     fn size(&self) -> Result<usize> {
         self.nrows()
@@ -205,95 +199,6 @@ impl AsShape for [usize; 2] {
     }
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub(crate) struct MemoryShape {
-    major: usize,
-    minor: usize,
-}
-
-impl MemoryShape {
-    pub(crate) fn major(&self) -> usize {
-        self.major
-    }
-
-    pub(crate) fn minor(&self) -> usize {
-        self.minor
-    }
-
-    pub(crate) fn nrows(&self, order: Order) -> usize {
-        match order {
-            Order::RowMajor => self.major,
-            Order::ColMajor => self.minor,
-        }
-    }
-
-    pub(crate) fn ncols(&self, order: Order) -> usize {
-        match order {
-            Order::RowMajor => self.minor,
-            Order::ColMajor => self.major,
-        }
-    }
-
-    pub(crate) fn stride(&self) -> Stride {
-        Stride(self.minor)
-    }
-
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if the size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
-    pub(crate) fn size<T>(&self) -> Result<usize> {
-        let size = self
-            .major
-            .checked_mul(self.minor)
-            .ok_or(Error::SizeOverflow)?;
-        if size_of::<T>().saturating_mul(size) > isize::MAX as usize {
-            Err(Error::CapacityOverflow)
-        } else {
-            Ok(size)
-        }
-    }
-
-    pub(crate) fn swap(&mut self) -> &mut Self {
-        (self.major, self.minor) = (self.minor, self.major);
-        self
-    }
-
-    pub(crate) fn from_shape<S>(shape: S, order: Order) -> Self
-    where
-        S: AsShape,
-    {
-        let (major, minor) = match order {
-            Order::RowMajor => (shape.nrows(), shape.ncols()),
-            Order::ColMajor => (shape.ncols(), shape.nrows()),
-        };
-        Self { major, minor }
-    }
-
-    pub(crate) fn to_shape(self, order: Order) -> Shape {
-        let (nrows, ncols) = match order {
-            Order::RowMajor => (self.major, self.minor),
-            Order::ColMajor => (self.minor, self.major),
-        };
-        Shape { nrows, ncols }
-    }
-}
-
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub(crate) struct Stride(usize);
-
-impl Stride {
-    pub(crate) fn major(&self) -> usize {
-        self.0
-    }
-
-    pub(crate) fn minor(&self) -> usize {
-        1
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -301,11 +206,27 @@ mod tests {
     #[test]
     fn test_shape_new() {
         let shape = Shape::new(2, 3);
+        assert_eq!(shape, Shape { nrows: 2, ncols: 3 });
+
+        let shape: Shape = Shape::new(3, 2);
+        assert_eq!(shape, Shape { nrows: 3, ncols: 2 });
+    }
+
+    #[test]
+    fn test_shape_nrows() {
+        let shape = Shape::new(2, 3);
         assert_eq!(shape.nrows(), 2);
+
+        let shape: Shape = Shape::new(3, 2);
+        assert_eq!(shape.nrows(), 3);
+    }
+
+    #[test]
+    fn test_shape_ncols() {
+        let shape = Shape::new(2, 3);
         assert_eq!(shape.ncols(), 3);
 
-        let shape = Shape::new(3, 2);
-        assert_eq!(shape.nrows(), 3);
+        let shape: Shape = Shape::new(3, 2);
         assert_eq!(shape.ncols(), 2);
     }
 
@@ -315,6 +236,9 @@ mod tests {
         assert_eq!(shape.size(), Ok(6));
 
         let shape = Shape::new(2, usize::MAX);
+        assert_eq!(shape.size(), Err(Error::SizeOverflow));
+
+        let shape = Shape::new(usize::MAX, 3);
         assert_eq!(shape.size(), Err(Error::SizeOverflow));
     }
 
@@ -330,11 +254,74 @@ mod tests {
     }
 
     #[test]
-    fn test_as_shape_size() {
+    fn test_as_shape_nrows() {
+        let shape = Shape::new(2, 3);
+        assert_eq!(AsShape::nrows(&shape), 2);
+
+        let shape = Shape::new(3, 2);
+        assert_eq!(AsShape::nrows(&shape), 3);
+
         let shape = (2, 3);
-        assert_eq!(shape.size(), Ok(6));
+        assert_eq!(AsShape::nrows(&shape), 2);
+
+        let shape = (3, 2);
+        assert_eq!(AsShape::nrows(&shape), 3);
+
+        let shape = [2, 3];
+        assert_eq!(AsShape::nrows(&shape), 2);
+
+        let shape = [3, 2];
+        assert_eq!(AsShape::nrows(&shape), 3);
+    }
+
+    #[test]
+    fn test_as_shape_ncols() {
+        let shape = Shape::new(2, 3);
+        assert_eq!(AsShape::ncols(&shape), 3);
+
+        let shape = Shape::new(3, 2);
+        assert_eq!(AsShape::ncols(&shape), 2);
+
+        let shape = (2, 3);
+        assert_eq!(AsShape::ncols(&shape), 3);
+
+        let shape = (3, 2);
+        assert_eq!(AsShape::ncols(&shape), 2);
+
+        let shape = [2, 3];
+        assert_eq!(AsShape::ncols(&shape), 3);
+
+        let shape = [3, 2];
+        assert_eq!(AsShape::ncols(&shape), 2);
+    }
+
+    #[test]
+    fn test_as_shape_size() {
+        let shape = Shape::new(2, 3);
+        assert_eq!(AsShape::size(&shape), Ok(6));
+
+        let shape = Shape::new(2, usize::MAX);
+        assert_eq!(AsShape::size(&shape), Err(Error::SizeOverflow));
+
+        let shape = Shape::new(usize::MAX, 3);
+        assert_eq!(shape.size(), Err(Error::SizeOverflow));
+
+        let shape = (2, 3);
+        assert_eq!(AsShape::size(&shape), Ok(6));
 
         let shape = (2, usize::MAX);
+        assert_eq!(AsShape::size(&shape), Err(Error::SizeOverflow));
+
+        let shape = (usize::MAX, 3);
+        assert_eq!(shape.size(), Err(Error::SizeOverflow));
+
+        let shape = [2, 3];
+        assert_eq!(AsShape::size(&shape), Ok(6));
+
+        let shape = [2, usize::MAX];
+        assert_eq!(AsShape::size(&shape), Err(Error::SizeOverflow));
+
+        let shape = [usize::MAX, 3];
         assert_eq!(shape.size(), Err(Error::SizeOverflow));
     }
 }

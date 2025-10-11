@@ -1,22 +1,23 @@
-//! Defines iterating operations.
-
 use self::iter_mut::IterVectorsMut;
-use crate::Matrix;
+use super::Matrix;
+use super::layout::{Order, OrderKind};
 use crate::error::{Error, Result};
 use crate::index::Index;
-use crate::order::Order;
 use core::iter::{Skip, StepBy, Take};
 use core::slice::{Iter, IterMut};
 
 mod iter_mut;
 
-/// An iterator that knows its exact length and can yield elements
-/// from both ends.
+/// An iterator that knows its exact length and is able to yield elements from
+/// both ends.
 pub trait ExactSizeDoubleEndedIterator: ExactSizeIterator + DoubleEndedIterator {}
 
 impl<I> ExactSizeDoubleEndedIterator for I where I: ExactSizeIterator + DoubleEndedIterator {}
 
-impl<T> Matrix<T> {
+impl<T, O> Matrix<T, O>
+where
+    O: Order,
+{
     /// Returns an iterator over the rows of the matrix.
     ///
     /// # Examples
@@ -42,14 +43,13 @@ impl<T> Matrix<T> {
     /// assert!(rows.next().is_none());
     /// assert!(rows.next_back().is_none());
     /// ```
-    #[inline]
     pub fn iter_rows(
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &T>>
     {
-        (0..self.nrows()).map(|n| match self.order {
-            Order::RowMajor => self.iter_nth_major_axis_vector_unchecked(n),
-            Order::ColMajor => self.iter_nth_minor_axis_vector_unchecked(n),
+        (0..self.nrows()).map(|n| match O::KIND {
+            OrderKind::RowMajor => self.iter_nth_major_axis_vector_unchecked(n),
+            OrderKind::ColMajor => self.iter_nth_minor_axis_vector_unchecked(n),
         })
     }
 
@@ -81,14 +81,13 @@ impl<T> Matrix<T> {
     /// assert!(cols.next().is_none());
     /// assert!(cols.next_back().is_none());
     /// ```
-    #[inline]
     pub fn iter_cols(
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &T>>
     {
-        (0..self.ncols()).map(|n| match self.order {
-            Order::RowMajor => self.iter_nth_minor_axis_vector_unchecked(n),
-            Order::ColMajor => self.iter_nth_major_axis_vector_unchecked(n),
+        (0..self.ncols()).map(|n| match O::KIND {
+            OrderKind::RowMajor => self.iter_nth_minor_axis_vector_unchecked(n),
+            OrderKind::ColMajor => self.iter_nth_major_axis_vector_unchecked(n),
         })
     }
 
@@ -107,14 +106,13 @@ impl<T> Matrix<T> {
     /// }
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
-    #[inline]
     pub fn iter_rows_mut(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
     {
-        match self.order {
-            Order::RowMajor => IterVectorsMut::over_major_axis(self),
-            Order::ColMajor => IterVectorsMut::over_minor_axis(self),
+        match O::KIND {
+            OrderKind::RowMajor => IterVectorsMut::over_major_axis(self),
+            OrderKind::ColMajor => IterVectorsMut::over_minor_axis(self),
         }
     }
 
@@ -132,15 +130,13 @@ impl<T> Matrix<T> {
     ///     }
     /// }
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
-    /// ```
-    #[inline]
     pub fn iter_cols_mut(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
     {
-        match self.order {
-            Order::RowMajor => IterVectorsMut::over_minor_axis(self),
-            Order::ColMajor => IterVectorsMut::over_major_axis(self),
+        match O::KIND {
+            OrderKind::RowMajor => IterVectorsMut::over_minor_axis(self),
+            OrderKind::ColMajor => IterVectorsMut::over_major_axis(self),
         }
     }
 
@@ -148,8 +144,8 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
-    ///   the number of rows in the matrix.
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
+    ///   of rows in the matrix.
     ///
     /// # Examples
     ///
@@ -174,11 +170,10 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    #[inline]
     pub fn iter_nth_row(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
-        match self.order {
-            Order::RowMajor => self.iter_nth_major_axis_vector(n),
-            Order::ColMajor => self.iter_nth_minor_axis_vector(n),
+        match O::KIND {
+            OrderKind::RowMajor => self.iter_nth_major_axis_vector(n),
+            OrderKind::ColMajor => self.iter_nth_minor_axis_vector(n),
         }
     }
 
@@ -186,8 +181,8 @@ impl<T> Matrix<T> {
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
-    ///   the number of columns in the matrix.
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
+    ///   of columns in the matrix.
     ///
     /// # Examples
     ///
@@ -215,21 +210,20 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    #[inline]
     pub fn iter_nth_col(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
-        match self.order {
-            Order::RowMajor => self.iter_nth_minor_axis_vector(n),
-            Order::ColMajor => self.iter_nth_major_axis_vector(n),
+        match O::KIND {
+            OrderKind::RowMajor => self.iter_nth_minor_axis_vector(n),
+            OrderKind::ColMajor => self.iter_nth_major_axis_vector(n),
         }
     }
 
-    /// Returns an iterator that allows modifying each element of the
-    /// nth row in the matrix.
+    /// Returns an iterator that allows modifying each element of the nth row in
+    /// the matrix.
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
-    ///   the number of rows in the matrix.
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
+    ///   of rows in the matrix.
     ///
     /// # Examples
     ///
@@ -246,24 +240,23 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    #[inline]
     pub fn iter_nth_row_mut(
         &mut self,
         n: usize,
     ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
-        match self.order {
-            Order::RowMajor => self.iter_nth_major_axis_vector_mut(n),
-            Order::ColMajor => self.iter_nth_minor_axis_vector_mut(n),
+        match O::KIND {
+            OrderKind::RowMajor => self.iter_nth_major_axis_vector_mut(n),
+            OrderKind::ColMajor => self.iter_nth_minor_axis_vector_mut(n),
         }
     }
 
-    /// Returns an iterator that allows modifying each element of the
-    /// nth column in the matrix.
+    /// Returns an iterator that allows modifying each element of the nth column in
+    /// the matrix.
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
-    ///   the number of columns in the matrix.
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
+    ///   of columns in the matrix.
     ///
     /// # Examples
     ///
@@ -280,14 +273,13 @@ impl<T> Matrix<T> {
     /// # Ok(())
     /// # }
     /// ```
-    #[inline]
     pub fn iter_nth_col_mut(
         &mut self,
         n: usize,
     ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
-        match self.order {
-            Order::RowMajor => self.iter_nth_minor_axis_vector_mut(n),
-            Order::ColMajor => self.iter_nth_major_axis_vector_mut(n),
+        match O::KIND {
+            OrderKind::RowMajor => self.iter_nth_minor_axis_vector_mut(n),
+            OrderKind::ColMajor => self.iter_nth_major_axis_vector_mut(n),
         }
     }
 
@@ -295,7 +287,7 @@ impl<T> Matrix<T> {
     ///
     /// # Notes
     ///
-    /// Elements are iterated in memory order.
+    /// Elements are iterated in storage order.
     ///
     /// # Examples
     ///
@@ -306,17 +298,15 @@ impl<T> Matrix<T> {
     /// let sum = matrix.iter_elements().sum::<i32>();
     /// assert_eq!(sum, 21);
     /// ```
-    #[inline]
     pub fn iter_elements(&self) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
         self.data.iter()
     }
 
-    /// Returns an iterator that allows modifying each element
-    /// of the matrix.
+    /// Returns an iterator that allows modifying each element of the matrix.
     ///
     /// # Notes
     ///
-    /// Elements are iterated in memory order.
+    /// Elements are iterated in storage order.
     ///
     /// # Examples
     ///
@@ -327,17 +317,16 @@ impl<T> Matrix<T> {
     /// matrix.iter_elements_mut().for_each(|element| *element += 2);
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
-    #[inline]
     pub fn iter_elements_mut(&mut self) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
         self.data.iter_mut()
     }
 
-    /// Creates a consuming iterator, that is, one that moves each
-    /// element out of the matrix.
+    /// Creates a consuming iterator, that is, one that moves each element out of
+    /// the matrix.
     ///
     /// # Notes
     ///
-    /// Elements are iterated in memory order.
+    /// Elements are iterated in storage order.
     ///
     /// # Examples
     ///
@@ -348,17 +337,16 @@ impl<T> Matrix<T> {
     /// let sum = matrix.into_iter_elements().sum::<i32>();
     /// assert_eq!(sum, 21);
     /// ```
-    #[inline]
     pub fn into_iter_elements(self) -> impl ExactSizeDoubleEndedIterator<Item = T> {
         self.data.into_iter()
     }
 
-    /// Returns an iterator over the elements of the matrix along with
-    /// their indices.
+    /// Returns an iterator over the elements of the matrix along with their
+    /// indices.
     ///
     /// # Notes
     ///
-    /// Elements are iterated in memory order.
+    /// Elements are iterated in storage order.
     ///
     /// # Examples
     ///
@@ -375,20 +363,19 @@ impl<T> Matrix<T> {
     pub fn iter_elements_with_index(
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &T)> {
-        let order = self.order;
         let stride = self.stride();
         self.data.iter().enumerate().map(move |(index, element)| {
-            let index = Index::from_flattened(index, order, stride);
+            let index = Index::from_flattened::<O>(index, stride);
             (index, element)
         })
     }
 
-    /// Returns an iterator that allows modifying each element
-    /// of the matrix along with its index.
+    /// Returns an iterator that allows modifying each element of the matrix along
+    /// with its index.
     ///
     /// # Notes
     ///
-    /// Elements are iterated in memory order.
+    /// Elements are iterated in storage order.
     ///
     /// # Examples
     ///
@@ -406,23 +393,22 @@ impl<T> Matrix<T> {
     pub fn iter_elements_mut_with_index(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &mut T)> {
-        let order = self.order;
         let stride = self.stride();
         self.data
             .iter_mut()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Index::from_flattened(index, order, stride);
+                let index = Index::from_flattened::<O>(index, stride);
                 (index, element)
             })
     }
 
-    /// Creates a consuming iterator, that is, one that moves each
-    /// element out of the matrix along with its index.
+    /// Creates a consuming iterator, that is, one that moves each element out of
+    /// the matrix along with its index.
     ///
     /// # Notes
     ///
-    /// Elements are iterated in memory order.
+    /// Elements are iterated in storage order.
     ///
     /// # Examples
     ///
@@ -440,23 +426,22 @@ impl<T> Matrix<T> {
     pub fn into_iter_elements_with_index(
         self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, T)> {
-        let order = self.order;
         let stride = self.stride();
         self.data
             .into_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Index::from_flattened(index, order, stride);
+                let index = Index::from_flattened::<O>(index, stride);
                 (index, element)
             })
     }
 }
 
-impl<T> Matrix<T> {
-    pub(crate) fn iter_nth_major_axis_vector(
-        &self,
-        n: usize,
-    ) -> Result<Take<StepBy<Skip<Iter<'_, T>>>>> {
+impl<T, O> Matrix<T, O>
+where
+    O: Order,
+{
+    fn iter_nth_major_axis_vector(&self, n: usize) -> Result<Take<StepBy<Skip<Iter<'_, T>>>>> {
         if n >= self.major() {
             Err(Error::IndexOutOfBounds)
         } else {
@@ -464,10 +449,7 @@ impl<T> Matrix<T> {
         }
     }
 
-    pub(crate) fn iter_nth_minor_axis_vector(
-        &self,
-        n: usize,
-    ) -> Result<Take<StepBy<Skip<Iter<'_, T>>>>> {
+    fn iter_nth_minor_axis_vector(&self, n: usize) -> Result<Take<StepBy<Skip<Iter<'_, T>>>>> {
         if n >= self.minor() {
             Err(Error::IndexOutOfBounds)
         } else {
@@ -475,7 +457,7 @@ impl<T> Matrix<T> {
         }
     }
 
-    pub(crate) fn iter_nth_major_axis_vector_mut(
+    fn iter_nth_major_axis_vector_mut(
         &mut self,
         n: usize,
     ) -> Result<Take<StepBy<Skip<IterMut<'_, T>>>>> {
@@ -486,7 +468,7 @@ impl<T> Matrix<T> {
         }
     }
 
-    pub(crate) fn iter_nth_minor_axis_vector_mut(
+    fn iter_nth_minor_axis_vector_mut(
         &mut self,
         n: usize,
     ) -> Result<Take<StepBy<Skip<IterMut<'_, T>>>>> {
@@ -497,10 +479,7 @@ impl<T> Matrix<T> {
         }
     }
 
-    pub(crate) fn iter_nth_major_axis_vector_unchecked(
-        &self,
-        n: usize,
-    ) -> Take<StepBy<Skip<Iter<'_, T>>>> {
+    fn iter_nth_major_axis_vector_unchecked(&self, n: usize) -> Take<StepBy<Skip<Iter<'_, T>>>> {
         let stride = self.stride();
         let skip = n * stride.major();
         let step = stride.minor();
@@ -508,10 +487,7 @@ impl<T> Matrix<T> {
         self.data.iter().skip(skip).step_by(step).take(take)
     }
 
-    pub(crate) fn iter_nth_minor_axis_vector_unchecked(
-        &self,
-        n: usize,
-    ) -> Take<StepBy<Skip<Iter<'_, T>>>> {
+    fn iter_nth_minor_axis_vector_unchecked(&self, n: usize) -> Take<StepBy<Skip<Iter<'_, T>>>> {
         let stride = self.stride();
         let skip = n * stride.minor();
         let step = stride.major();
@@ -519,7 +495,7 @@ impl<T> Matrix<T> {
         self.data.iter().skip(skip).step_by(step).take(take)
     }
 
-    pub(crate) fn iter_nth_major_axis_vector_unchecked_mut(
+    fn iter_nth_major_axis_vector_unchecked_mut(
         &mut self,
         n: usize,
     ) -> Take<StepBy<Skip<IterMut<'_, T>>>> {
@@ -530,7 +506,7 @@ impl<T> Matrix<T> {
         self.data.iter_mut().skip(skip).step_by(step).take(take)
     }
 
-    pub(crate) fn iter_nth_minor_axis_vector_unchecked_mut(
+    fn iter_nth_minor_axis_vector_unchecked_mut(
         &mut self,
         n: usize,
     ) -> Take<StepBy<Skip<IterMut<'_, T>>>> {
@@ -545,13 +521,12 @@ impl<T> Matrix<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::matrix;
-    use crate::testkit;
+    use crate::{dispatch_unary, matrix};
 
     #[test]
     fn test_iter_rows() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |matrix| {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let mut rows = matrix.iter_rows();
 
             let mut row_0 = rows.next().unwrap();
@@ -568,13 +543,13 @@ mod tests {
 
             assert!(rows.next().is_none());
             assert!(rows.next_back().is_none());
-        });
+        }}
     }
 
     #[test]
     fn test_iter_cols() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |matrix| {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let mut cols = matrix.iter_cols();
 
             let mut col_0 = cols.next().unwrap();
@@ -594,13 +569,13 @@ mod tests {
 
             assert!(cols.next().is_none());
             assert!(cols.next_back().is_none());
-        });
+        }}
     }
 
     #[test]
     fn test_iter_rows_mut() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let mut count = 0;
 
             for row in matrix.iter_rows_mut() {
@@ -610,7 +585,7 @@ mod tests {
                 }
             }
             let expected = matrix![[2, 4, 6], [8, 10, 12]];
-            testkit::assert_loose_eq(&matrix, &expected);
+            assert_eq!(matrix, expected);
 
             for row in matrix.iter_rows_mut().rev() {
                 for element in row.rev() {
@@ -619,14 +594,14 @@ mod tests {
                 }
             }
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-        });
+            assert_eq!(matrix, expected);
+        }}
     }
 
     #[test]
     fn test_iter_cols_mut() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let mut count = 0;
 
             for col in matrix.iter_cols_mut() {
@@ -636,7 +611,7 @@ mod tests {
                 }
             }
             let expected = matrix![[2, 5, 8], [6, 9, 12]];
-            testkit::assert_loose_eq(&matrix, &expected);
+            assert_eq!(matrix, expected);
 
             for col in matrix.iter_cols_mut().rev() {
                 for element in col.rev() {
@@ -645,14 +620,15 @@ mod tests {
                 }
             }
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
-        });
+            assert_eq!(matrix, expected);
+        }}
     }
 
     #[test]
     fn test_iter_nth_row() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |matrix| {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
             let mut row_0 = matrix.iter_nth_row(0).unwrap();
             assert_eq!(row_0.next(), Some(&1));
             assert_eq!(row_0.next(), Some(&2));
@@ -669,13 +645,14 @@ mod tests {
                 matrix.iter_nth_row(2),
                 Err(Error::IndexOutOfBounds)
             ));
-        });
+        }}
     }
 
     #[test]
     fn test_iter_nth_col() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |matrix| {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+
             let mut col_0 = matrix.iter_nth_col(0).unwrap();
             assert_eq!(col_0.next(), Some(&1));
             assert_eq!(col_0.next(), Some(&4));
@@ -695,13 +672,13 @@ mod tests {
                 matrix.iter_nth_col(3),
                 Err(Error::IndexOutOfBounds)
             ));
-        });
+        }}
     }
 
     #[test]
     fn test_iter_nth_row_mut() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let mut count = 0;
 
             let row_0 = matrix.iter_nth_row_mut(0).unwrap();
@@ -715,7 +692,7 @@ mod tests {
                 *element += count;
             }
             let expected = matrix![[2, 4, 6], [8, 10, 12]];
-            testkit::assert_loose_eq(&matrix, &expected);
+            assert_eq!(matrix, expected);
 
             let row_1 = matrix.iter_nth_row_mut(1).unwrap();
             for element in row_1.rev() {
@@ -728,19 +705,19 @@ mod tests {
                 count -= 1;
             }
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
+            assert_eq!(matrix, expected);
 
             assert!(matches!(
                 matrix.iter_nth_row_mut(2),
                 Err(Error::IndexOutOfBounds)
             ));
-        });
+        }}
     }
 
     #[test]
     fn test_iter_nth_col_mut() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let mut count = 0;
 
             let col_0 = matrix.iter_nth_col_mut(0).unwrap();
@@ -759,7 +736,7 @@ mod tests {
                 *element += count;
             }
             let expected = matrix![[2, 5, 8], [6, 9, 12]];
-            testkit::assert_loose_eq(&matrix, &expected);
+            assert_eq!(matrix, expected);
 
             let col_2 = matrix.iter_nth_col_mut(2).unwrap();
             for element in col_2.rev() {
@@ -777,117 +754,105 @@ mod tests {
                 count -= 1;
             }
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            testkit::assert_loose_eq(&matrix, &expected);
+            assert_eq!(matrix, expected);
 
             assert!(matches!(
                 matrix.iter_nth_col_mut(3),
                 Err(Error::IndexOutOfBounds)
             ));
-        });
+        }}
     }
 
     #[test]
     fn test_iter_elements() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |matrix| {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let sum = matrix.iter_elements().sum::<i32>();
             let expected = 21;
             assert_eq!(sum, expected);
-        });
+        }}
     }
 
     #[test]
     fn test_iter_elements_mut() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             matrix.iter_elements_mut().for_each(|element| *element += 2);
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
-            testkit::assert_loose_eq(&matrix, &expected);
-        });
+            assert_eq!(matrix, expected);
+        }}
     }
 
     #[test]
     fn test_into_iter_elements() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |matrix| {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let sum = matrix.into_iter_elements().sum::<i32>();
             let expected = 21;
             assert_eq!(sum, expected);
-        });
+        }}
     }
 
     #[test]
     fn test_iter_elements_with_index() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |matrix| {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             matrix
                 .iter_elements_with_index()
                 .for_each(|(index, element)| {
                     assert_eq!(element, &matrix[index]);
                 });
-        });
 
-        // Assert no panic from unflattening indices occurs.
-        let matrix = matrix![[0; 0]; 2];
-        testkit::for_each_order_unary(matrix, |matrix| {
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 0]; 2].with_order::<O>();
             matrix.iter_elements_with_index().for_each(|_| ());
-        });
 
-        // Assert no panic from unflattening indices occurs.
-        let matrix = matrix![[0; 3]; 0];
-        testkit::for_each_order_unary(matrix, |matrix| {
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 3]; 0].with_order::<O>();
             matrix.iter_elements_with_index().for_each(|_| ());
-        });
+        }}
     }
 
     #[test]
     fn test_iter_elements_mut_with_index() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
+        dispatch_unary! {{
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             matrix
                 .iter_elements_mut_with_index()
                 .for_each(|(index, element)| {
                     *element += index.row as i32 + index.col as i32;
                 });
             let expected = matrix![[1, 3, 5], [5, 7, 9]];
-            testkit::assert_loose_eq(&matrix, &expected);
-        });
+            assert_eq!(matrix, expected);
 
-        // Assert no panic from unflattening indices occurs.
-        let matrix = matrix![[0; 0]; 2];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
+            // Assert no panic from unflattening indices occurs.
+            let mut matrix = matrix![[0; 0]; 2].with_order::<O>();
             matrix.iter_elements_mut_with_index().for_each(|_| ());
-        });
 
-        // Assert no panic from unflattening indices occurs.
-        let matrix = matrix![[0; 3]; 0];
-        testkit::for_each_order_unary(matrix, |mut matrix| {
+            // Assert no panic from unflattening indices occurs.
+            let mut matrix = matrix![[0; 3]; 0].with_order::<O>();
             matrix.iter_elements_mut_with_index().for_each(|_| ());
-        });
+        }}
     }
 
     #[test]
     fn test_into_iter_elements_with_index() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-        testkit::for_each_order_unary(matrix, |matrix| {
+        dispatch_unary! {{
+            let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             matrix
                 .clone()
                 .into_iter_elements_with_index()
                 .for_each(|(index, element)| {
                     assert_eq!(element, matrix[index]);
                 });
-        });
 
-        // Assert no panic from unflattening indices occurs.
-        let matrix = matrix![[0; 0]; 2];
-        testkit::for_each_order_unary(matrix, |matrix| {
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 0]; 2].with_order::<O>();
             matrix.into_iter_elements_with_index().for_each(|_| ());
-        });
 
-        // Assert no panic from unflattening indices occurs.
-        let matrix = matrix![[0; 3]; 0];
-        testkit::for_each_order_unary(matrix, |matrix| {
+            // Assert no panic from unflattening indices occurs.
+            let matrix = matrix![[0; 3]; 0].with_order::<O>();
             matrix.into_iter_elements_with_index().for_each(|_| ());
-        });
+        }}
     }
 }

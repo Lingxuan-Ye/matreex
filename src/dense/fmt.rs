@@ -1,4 +1,5 @@
-use crate::Matrix;
+use super::Matrix;
+use super::layout::Order;
 use crate::index::Index;
 use alloc::collections::VecDeque;
 use alloc::format;
@@ -34,12 +35,10 @@ mod constant {
     }
 }
 
-// Refactoring the `Debug` and `Display` implementations will NOT
-// be considered a breaking change.
-
-impl<T> fmt::Debug for Matrix<T>
+impl<T, O> fmt::Debug for Matrix<T, O>
 where
     T: fmt::Debug,
+    O: Order,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_empty() {
@@ -48,7 +47,6 @@ where
             return Ok(());
         }
 
-        let order = self.order;
         let stride = self.stride();
         let shape = self.shape();
         let nrows = shape.nrows();
@@ -93,7 +91,7 @@ where
         f.write_str(constant::whitespace::NEWLINE)?;
 
         for row in 0..nrows {
-            // The first line of the element representation
+            // The first line of the element representation.
             f.write_str(constant::whitespace::INDENT)?;
             f.write_index(row, index_width)?;
             f.write_str(constant::row::INDEX_GAP)?;
@@ -102,7 +100,7 @@ where
                 if col != 0 {
                     f.write_str(constant::element::SEPARATOR)?;
                 }
-                let index = Index::new(row, col).to_flattened(order, stride);
+                let index = Index::new(row, col).to_flattened::<O>(stride);
                 f.write_index(index, index_width)?;
                 f.write_str(constant::element::INDEX_GAP)?;
                 match cache[index].next() {
@@ -125,7 +123,7 @@ where
                     if col != 0 {
                         f.write_str(constant::element::SEPARATOR_PADDING)?;
                     }
-                    let index = Index::new(row, col).to_flattened(order, stride);
+                    let index = Index::new(row, col).to_flattened::<O>(stride);
                     f.write_str(&index_padding)?;
                     f.write_str(constant::element::INDEX_GAP)?;
                     match cache[index].next() {
@@ -144,9 +142,10 @@ where
     }
 }
 
-impl<T> fmt::Display for Matrix<T>
+impl<T, O> fmt::Display for Matrix<T, O>
 where
     T: fmt::Display,
+    O: Order,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_empty() {
@@ -155,7 +154,6 @@ where
             return Ok(());
         }
 
-        let order = self.order;
         let stride = self.stride();
         let shape = self.shape();
         let nrows = shape.nrows();
@@ -189,7 +187,7 @@ where
                 if col != 0 {
                     f.write_str(constant::element::SEPARATOR)?;
                 }
-                let index = Index::new(row, col).to_flattened(order, stride);
+                let index = Index::new(row, col).to_flattened::<O>(stride);
                 match cache[index].next() {
                     None if element_width > 0 => f.write_str(&element_padding)?,
                     Some(line) => f.write_element_line(line, element_width)?,
@@ -208,7 +206,7 @@ where
                     if col != 0 {
                         f.write_str(constant::element::SEPARATOR_PADDING)?;
                     }
-                    let index = Index::new(row, col).to_flattened(order, stride);
+                    let index = Index::new(row, col).to_flattened::<O>(stride);
                     match cache[index].next() {
                         None if element_width > 0 => f.write_str(&element_padding)?,
                         Some(line) => f.write_element_line(line, element_width)?,
