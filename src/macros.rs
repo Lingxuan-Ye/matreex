@@ -1,4 +1,4 @@
-/// Creates a new [`Matrix<T>`] from literal.
+/// Creates a new [`Matrix<T>`] from a literal.
 ///
 /// > I witnessed His decree:
 /// >
@@ -21,24 +21,90 @@
 /// [`matrix!`]: crate::matrix!
 #[macro_export]
 macro_rules! matrix {
-    [] => {
-        $crate::Matrix::new()
-    };
+    [] => {{
+        use $crate::Matrix;
 
-    [[$elem:expr; $ncols:expr]; $nrows:expr] => {
-        match $crate::Matrix::with_value(($nrows, $ncols), $elem) {
+        Matrix::<_>::new()
+    }};
+
+    [[$elem:expr; $ncols:expr]; $nrows:expr] => {{
+        use $crate::Matrix;
+
+        match Matrix::<_>::with_value(($nrows, $ncols), $elem) {
             Err(error) => ::core::panic!("{error}"),
             Ok(matrix) => matrix,
         }
-    };
+    }};
 
     [[$($elem:expr),+ $(,)?]; $nrows:expr] => {{
         extern crate alloc;
 
-        <$crate::Matrix<_> as $crate::convert::FromRows<_>>::from_rows(alloc::vec![[$($elem),+]; $nrows])
+        use $crate::Matrix;
+        use $crate::convert::FromRows;
+
+        <Matrix::<_> as FromRows<_>>::from_rows(alloc::vec![[$($elem),+]; $nrows])
     }};
 
-    [$($row:expr),+ $(,)?] => {
-        <$crate::Matrix<_> as $crate::convert::FromRows<_>>::from_rows([$($row),+])
-    };
+    [$($row:expr),+ $(,)?] => {{
+        use $crate::Matrix;
+        use $crate::convert::FromRows;
+
+        <Matrix::<_> as FromRows<_>>::from_rows([$($row),+])
+    }};
+}
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! dispatch_unary {
+    { $block:block } => {{
+        use $crate::dense::layout::{ColMajor, RowMajor};
+
+        {
+            type O = RowMajor;
+
+            $block
+        }
+
+        {
+            type O = ColMajor;
+
+            $block
+        }
+    }};
+}
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! dispatch_binary {
+    { $block:block } => {{
+        use $crate::dense::layout::{ColMajor, RowMajor};
+
+        {
+            type O = RowMajor;
+            type P = RowMajor;
+
+            $block
+        }
+
+        {
+            type O = RowMajor;
+            type P = ColMajor;
+
+            $block
+        }
+
+        {
+            type O = ColMajor;
+            type P = RowMajor;
+
+            $block
+        }
+
+        {
+            type O = ColMajor;
+            type P = ColMajor;
+
+            $block
+        }
+    }};
 }

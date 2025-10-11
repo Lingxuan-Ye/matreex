@@ -1,4 +1,5 @@
-use crate::Matrix;
+use super::super::Matrix;
+use super::super::layout::Order;
 use crate::error::{Error, Result};
 use core::marker::PhantomData;
 use core::num::NonZero;
@@ -35,7 +36,10 @@ unsafe impl<T> Send for IterVectorsMut<'_, T> where T: Send {}
 unsafe impl<T> Sync for IterVectorsMut<'_, T> where T: Sync {}
 
 impl<'a, T> IterVectorsMut<'a, T> {
-    pub(super) fn over_major_axis(matrix: &'a mut Matrix<T>) -> Self {
+    pub(super) fn over_major_axis<O>(matrix: &'a mut Matrix<T, O>) -> Self
+    where
+        O: Order,
+    {
         if matrix.is_empty() {
             return Self::empty();
         }
@@ -53,7 +57,10 @@ impl<'a, T> IterVectorsMut<'a, T> {
         }
     }
 
-    pub(super) fn over_minor_axis(matrix: &'a mut Matrix<T>) -> Self {
+    pub(super) fn over_minor_axis<O>(matrix: &'a mut Matrix<T, O>) -> Self
+    where
+        O: Order,
+    {
         if matrix.is_empty() {
             return Self::empty();
         }
@@ -239,7 +246,10 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// This is an alternative to [`Matrix::iter_nth_major_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
-    pub(super) fn over_major_axis_vector(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
+    pub(super) fn over_major_axis_vector<O>(matrix: &'a mut Matrix<T, O>, n: usize) -> Result<Self>
+    where
+        O: Order,
+    {
         if n >= matrix.major() {
             return Err(Error::IndexOutOfBounds);
         }
@@ -265,7 +275,10 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// This is an alternative to [`Matrix::iter_nth_minor_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
-    pub(super) fn over_minor_axis_vector(matrix: &'a mut Matrix<T>, n: usize) -> Result<Self> {
+    pub(super) fn over_minor_axis_vector<O>(matrix: &'a mut Matrix<T, O>, n: usize) -> Result<Self>
+    where
+        O: Order,
+    {
         if n >= matrix.minor() {
             return Err(Error::IndexOutOfBounds);
         }
