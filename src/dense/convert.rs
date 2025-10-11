@@ -32,6 +32,12 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     fn try_from(value: [Box<[T; C]>; R]) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -43,6 +49,12 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     fn try_from(value: Box<[Box<[T; C]>; R]>) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -54,6 +66,12 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     fn try_from(value: Box<[Box<[T; C]>]>) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -65,6 +83,12 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     fn try_from(value: Vec<Box<[T; C]>>) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -76,6 +100,13 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     fn try_from(value: [Box<[T]>; R]) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -87,6 +118,13 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     fn try_from(value: Box<[Box<[T]>; R]>) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -98,6 +136,13 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     fn try_from(value: Box<[Box<[T]>]>) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -109,6 +154,13 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     fn try_from(value: Vec<Box<[T]>>) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -120,6 +172,13 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     fn try_from(value: [Vec<T>; R]) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -131,6 +190,13 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     fn try_from(value: Box<[Vec<T>; R]>) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -142,6 +208,13 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     fn try_from(value: Box<[Vec<T>]>) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -153,6 +226,13 @@ where
 {
     type Error = Error;
 
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if rows have inconsistent lengths.
     fn try_from(value: Vec<Vec<T>>) -> Result<Self> {
         Self::try_from_rows(value)
     }
@@ -163,6 +243,11 @@ where
     O: Order,
     V: IntoIterator<Item = T>,
 {
+    /// Converts from an iterator over rows.
+    ///
+    /// # Panics
+    ///
+    /// Panics if rows have inconsistent lengths or capacity overflows.
     fn from_iter<M>(iter: M) -> Self
     where
         M: IntoIterator<Item = V>,

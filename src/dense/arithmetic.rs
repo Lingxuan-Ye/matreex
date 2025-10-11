@@ -17,6 +17,22 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
+    /// Performs scalar operation on the matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let scalar = 2;
+    /// let result = matrix.scalar_operation(&scalar, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// ```
     pub fn scalar_operation<'a, 'b, S, F, U>(
         &'a self,
         scalar: &'b S,
@@ -34,6 +50,22 @@ where
         Ok(Matrix { layout, data })
     }
 
+    /// Performs scalar operation on the matrix, consuming `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let scalar = 2;
+    /// let result = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// ```
     pub fn scalar_operation_consume_self<'a, S, F, U>(
         self,
         scalar: &'a S,
@@ -51,6 +83,19 @@ where
         Ok(Matrix { layout, data })
     }
 
+    /// Performs scalar operation on the matrix, assigning the result
+    /// to `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let scalar = 2;
+    /// matrix.scalar_operation_assign(&scalar, |x, y| *x += y);
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// ```
     pub fn scalar_operation_assign<'a, S, F>(&mut self, scalar: &'a S, mut op: F) -> &mut Self
     where
         F: FnMut(&mut T, &'a S),
@@ -64,6 +109,23 @@ impl<L, LO> Matrix<L, LO>
 where
     LO: Order,
 {
+    /// Performs elementwise operation on two matrices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if `self.shape() != rhs.shape()`.
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// ```
     pub fn elementwise_operation<'a, 'b, R, RO, F, U>(
         &'a self,
         rhs: &'b Matrix<R, RO>,
@@ -100,6 +162,23 @@ where
         Ok(Matrix { layout, data })
     }
 
+    /// Performs elementwise operation on two matrices, consuming `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if `self.shape() != rhs.shape()`.
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let result = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// ```
     pub fn elementwise_operation_consume_self<'a, R, RO, F, U>(
         self,
         rhs: &'a Matrix<R, RO>,
@@ -136,6 +215,23 @@ where
         Ok(Matrix { layout, data })
     }
 
+    /// Performs elementwise operation on two matrices, consuming `rhs`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if `self.shape() != rhs.shape()`.
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let result = lhs.elementwise_operation_consume_rhs(rhs, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// ```
     pub fn elementwise_operation_consume_rhs<'a, R, RO, F, U>(
         &'a self,
         rhs: Matrix<R, RO>,
@@ -177,6 +273,24 @@ where
         Ok(Matrix { layout, data })
     }
 
+    /// Performs elementwise operation on two matrices, consuming both `self`
+    /// and `rhs`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if `self.shape() != rhs.shape()`.
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let result = lhs.elementwise_operation_consume_both(rhs, |x, y| x + y);
+    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// ```
     pub fn elementwise_operation_consume_both<R, RO, F, U>(
         self,
         rhs: Matrix<R, RO>,
@@ -218,6 +332,23 @@ where
         Ok(Matrix { layout, data })
     }
 
+    /// Performs elementwise operation on two matrices, assigning the result
+    /// to `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if `self.shape() != rhs.shape()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let _ = lhs.elementwise_operation_assign(&rhs, |x, y| *x += y);
+    /// assert_eq!(lhs, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// ```
     pub fn elementwise_operation_assign<'a, R, RO, F>(
         &mut self,
         rhs: &'a Matrix<R, RO>,
@@ -248,6 +379,23 @@ where
         Ok(self)
     }
 
+    /// Performs elementwise operation on two matrices, consuming `rhs`
+    /// and assigning the result to `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if `self.shape() != rhs.shape()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    /// let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y);
+    /// assert_eq!(lhs, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// ```
     pub fn elementwise_operation_assign_consume_rhs<R, RO, F>(
         &mut self,
         rhs: Matrix<R, RO>,
@@ -283,14 +431,19 @@ where
         Ok(self)
     }
 
+    /// Ensures that two matrices are conformable for elementwise operations.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if `self.shape() != rhs.shape()`.
     fn ensure_elementwise_operation_conformable<R, RO>(&self, rhs: &Matrix<R, RO>) -> Result<&Self>
     where
         RO: Order,
     {
-        if self.shape() == rhs.shape() {
-            Ok(self)
-        } else {
+        if self.shape() != rhs.shape() {
             Err(Error::ShapeNotConformable)
+        } else {
+            Ok(self)
         }
     }
 }
@@ -299,6 +452,38 @@ impl<L, LO> Matrix<L, LO>
 where
     LO: Order,
 {
+    /// Performs multiplication-like operation on two matrices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if `self.ncols() != rhs.nrows()`.
+    /// - [`Error::SizeOverflow`] if the computed size of the output matrix exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Notes
+    ///
+    /// The closure `op` is guaranteed to receive two non-empty, equal-length
+    /// slices. It should always return a valid value derived from them.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// fn dot_product(left_row: &[i32], right_col: &[i32]) -> i32 {
+    ///     left_row
+    ///         .iter()
+    ///         .zip(right_col)
+    ///         .map(|(left, right)| left * right)
+    ///         .reduce(|sum, product| sum + product)
+    ///         .unwrap()
+    /// }
+    ///
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+    /// let result = lhs.multiplication_like_operation(rhs, dot_product);
+    /// assert_eq!(result, Ok(matrix![[12, 12], [30, 30]]));
+    /// ```
     pub fn multiplication_like_operation<R, RO, F, U>(
         self,
         rhs: Matrix<R, RO>,
@@ -352,6 +537,12 @@ where
         Ok(Matrix { layout, data })
     }
 
+    /// Ensures that two matrices are conformable for multiplication-like
+    /// operation.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if `self.ncols() != rhs.nrows()`.
     fn ensure_multiplication_like_operation_conformable<R, RO>(
         &self,
         rhs: &Matrix<R, RO>,
@@ -359,10 +550,10 @@ where
     where
         RO: Order,
     {
-        if self.ncols() == rhs.nrows() {
-            Ok(self)
-        } else {
+        if self.ncols() != rhs.nrows() {
             Err(Error::ShapeNotConformable)
+        } else {
+            Ok(self)
         }
     }
 }
@@ -371,6 +562,11 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline(always)]
     unsafe fn get_nth_major_axis_vector_unchecked(&self, n: usize) -> &[T] {
         let stride = self.stride();

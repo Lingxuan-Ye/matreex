@@ -13,6 +13,16 @@ where
     ///
     /// - [`Error::IndexOutOfBounds`] if out of bounds.
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(matrix.get((1, 1)), Ok(&5));
+    /// assert_eq!(matrix.get((2, 3)), Err(Error::IndexOutOfBounds));
+    /// ```
+    ///
     /// [`Error::IndexOutOfBounds`]: crate::error::Error::IndexOutOfBounds
     pub fn get<I>(&self, index: I) -> Result<I::Output<'_>>
     where
@@ -27,6 +37,16 @@ where
     ///
     /// - [`Error::IndexOutOfBounds`] if out of bounds.
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 5));
+    /// assert_eq!(matrix.get_mut((2, 3)), Err(Error::IndexOutOfBounds));
+    /// ```
+    ///
     /// [`Error::IndexOutOfBounds`]: crate::error::Error::IndexOutOfBounds
     pub fn get_mut<I>(&mut self, index: I) -> Result<I::OutputMut<'_>>
     where
@@ -40,9 +60,18 @@ where
     ///
     /// # Safety
     ///
-    /// Refer to the [`MatrixIndex`] implementation for the index type `I`.
+    /// See the [`MatrixIndex`] implementation for the index type `I`.
     ///
     /// For a safe alternative see [`get`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(unsafe { matrix.get_unchecked((1, 1)) }, &5);
+    /// ```
     ///
     /// [`get`]: Matrix::get
     pub unsafe fn get_unchecked<I>(&self, index: I) -> I::Output<'_>
@@ -57,9 +86,18 @@ where
     ///
     /// # Safety
     ///
-    /// Refer to the [`MatrixIndex`] implementation for the index type `I`.
+    /// See the [`MatrixIndex`] implementation for the index type `I`.
     ///
     /// For a safe alternative see [`get_mut`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(unsafe { matrix.get_unchecked_mut((1, 1)) }, &mut 5);
+    /// ```
     ///
     /// [`get_mut`]: Matrix::get_mut
     pub unsafe fn get_unchecked_mut<I>(&mut self, index: I) -> I::OutputMut<'_>
@@ -218,6 +256,8 @@ where
 }
 
 impl Index {
+    /// Creates a new [`Index`] from a flattened index.
+    ///
     /// # Panics
     ///
     /// Panics if `stride.major() == 0`.
@@ -233,6 +273,7 @@ impl Index {
         }
     }
 
+    /// Converts this index to a flattened index.
     pub(super) fn to_flattened<O>(self, stride: Stride) -> usize
     where
         O: Order,

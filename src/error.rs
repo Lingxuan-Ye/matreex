@@ -1,4 +1,4 @@
-//! Error handling for the crate.
+//! Error handling for this crate.
 
 /// An alias for [`core::result::Result`].
 pub type Result<T> = core::result::Result<T, Error>;
@@ -16,7 +16,7 @@ pub enum Error {
     /// Error when attempting to allocate more than [`isize::MAX`] bytes
     /// of memory.
     ///
-    /// Refer to [`vec`] and *[The Rustonomicon]* for more information.
+    /// See [`vec`] and *[The Rustonomicon]* for more information.
     ///
     /// [`vec`]: mod@alloc::vec
     /// [The Rustonomicon]: https://doc.rust-lang.org/stable/nomicon/vec/vec-alloc.html#allocating-memory

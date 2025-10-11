@@ -12,6 +12,30 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
+    /// Resizes the matrix to the specified shape, filling uninitialized parts with
+    /// the given value.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    ///
+    /// let _ = matrix.resize((2, 2), 0);
+    /// assert_eq!(matrix, matrix![[1, 2], [4, 5]]);
+    ///
+    /// let _ = matrix.resize((3, 3), 0);
+    /// assert_eq!(matrix, matrix![[1, 2, 0], [4, 5, 0], [0, 0, 0]]);
+    /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn resize<S>(&mut self, shape: S, value: T) -> Result<&mut Self>
     where
         S: AsShape,
@@ -352,12 +376,52 @@ where
         Ok(self)
     }
 
+    /// Resizes the matrix to the specified shape, filling uninitialized parts with
+    /// values initialized using their indices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Index, matrix};
+    ///
+    /// let mut matrix = matrix![
+    ///     [Index::new(0, 0), Index::new(0, 1), Index::new(0, 2)],
+    ///     [Index::new(1, 0), Index::new(1, 1), Index::new(1, 2)],
+    /// ];
+    ///
+    /// let _ = matrix.resize_with((2, 2), |index| index);
+    /// assert_eq!(
+    ///     matrix,
+    ///     matrix![
+    ///         [Index::new(0, 0), Index::new(0, 1)],
+    ///         [Index::new(1, 0), Index::new(1, 1)],
+    ///     ]
+    /// );
+    ///
+    /// let _ = matrix.resize_with((3, 3), |index| index);
+    /// assert_eq!(
+    ///     matrix,
+    ///     matrix![
+    ///         [Index::new(0, 0), Index::new(0, 1), Index::new(0, 2)],
+    ///         [Index::new(1, 0), Index::new(1, 1), Index::new(1, 2)],
+    ///         [Index::new(2, 0), Index::new(2, 1), Index::new(2, 2)],
+    ///     ]
+    /// );
+    /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn resize_with<S, F>(&mut self, shape: S, mut initializer: F) -> Result<&mut Self>
     where
         S: AsShape,
         F: FnMut(Index) -> T,
     {
-        // Refer to `Matrix::resize` for details.
+        // See `Matrix::resize` for details.
 
         let old_size = self.size();
         let (new_layout, new_size) = Layout::from_shape_with_size(shape)?;
@@ -850,8 +914,7 @@ impl<T> MemoryRange<T> {
     /// - The entire memory range must be fully initialized.
     /// - `self.start` must be properly aligned, even if `T` has size 0.
     ///
-    /// Refer to [`ptr::drop_in_place`] for more exhaustive safety
-    /// concerns.
+    /// See [`ptr::drop_in_place`] for more exhaustive safety concerns.
     ///
     /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
     unsafe fn drop_in_place(self) {

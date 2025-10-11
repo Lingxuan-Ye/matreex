@@ -210,7 +210,7 @@ where
 
 impl<T, O> Eq for Layout<T, O> where O: Order {}
 
-/// A struct representing the strides of a [`Matrix<T, O>`].
+/// A struct representing the stride of a [`Matrix<T, O>`].
 ///
 /// [`Matrix<T, O>`]: crate::dense::Matrix
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]

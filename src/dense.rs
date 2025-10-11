@@ -27,6 +27,30 @@ mod parallel;
 #[cfg(feature = "serde")]
 mod serde;
 
+/// A struct representing a dense matrix.
+///
+/// # Storage Order
+///
+/// The storage order of a matrix can be either [`RowMajor`] or [`ColMajor`],
+/// which is generally transparent to users. If there is no compelling reason,
+/// it is recommended to use [`RowMajor`] only.
+///
+/// See the documentation of each storage order for more details.
+///
+/// # Serialization and Deserialization
+///
+/// For performance reasons, this struct is serialized as is, i.e., the data
+/// is not folded into a two-dimensional array but exposed directly. Editing
+/// the serialized output is generally not recommended but safe: the unsound
+/// state will be rejected during deserialization.
+///
+/// Notably, it is designed not to store the storage order when serializing.
+/// This is because matrices with different orders are by definition different
+/// types, and deserializing the serialized output of a different type itself
+/// should be considered a logical error.
+///
+/// [`RowMajor`]: crate::dense::layout::RowMajor
+/// [`ColMajor`]: crate::dense::layout::ColMajor
 pub struct Matrix<T, O>
 where
     O: Order,
@@ -39,38 +63,103 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
+    /// Returns the shape of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let shape = matrix.shape();
+    /// assert_eq!(shape.nrows(), 2);
+    /// assert_eq!(shape.ncols(), 3);
+    /// ```
     pub fn shape(&self) -> Shape {
         self.layout.to_shape()
     }
 
+    /// Returns the number of rows in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(matrix.nrows(), 2);
+    /// ```
     pub fn nrows(&self) -> usize {
         self.shape().nrows()
     }
 
+    /// Returns the number of columns in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(matrix.ncols(), 3);
+    /// ```
     pub fn ncols(&self) -> usize {
         self.shape().ncols()
     }
 
+    /// Returns the total number of elements in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert_eq!(matrix.size(), 6);
+    /// ```
     pub fn size(&self) -> usize {
         self.data.len()
     }
 
+    /// Returns `true` if the matrix contains no elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Matrix;
+    ///
+    /// let matrix = Matrix::<i32>::new();
+    /// assert!(matrix.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
+    /// Returns the capacity of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Matrix;
+    ///
+    /// let matrix = Matrix::<i32>::with_capacity(10);
+    /// assert!(matrix.capacity() >= 10);
+    /// ```
     pub fn capacity(&self) -> usize {
         self.data.capacity()
     }
 
+    /// Returns the length of the major axis.
     fn major(&self) -> usize {
         self.layout.major()
     }
 
+    /// Returns the length of the minor axis.
     fn minor(&self) -> usize {
         self.layout.minor()
     }
 
+    /// Returns the stride of the matrix.
     fn stride(&self) -> Stride {
         self.layout.stride()
     }
@@ -80,6 +169,21 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
+    /// Transposes the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    ///
+    /// matrix.transpose();
+    /// assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
+    ///
+    /// matrix.transpose();
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
     pub fn transpose(&mut self) -> &mut Self {
         if size_of::<T>() == 0 {
             self.layout.swap();
@@ -116,6 +220,23 @@ where
         self
     }
 
+    /// Converts to a matrix with the specified storage order, preserving the
+    /// position of each element.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::dense::layout::{ColMajor, RowMajor};
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    ///
+    /// let rmatrix = matrix.clone().with_order::<RowMajor>();
+    /// assert_eq!(rmatrix, matrix);
+    ///
+    /// let cmatrix = matrix.clone().with_order::<ColMajor>();
+    /// assert_eq!(cmatrix, matrix);
+    /// ```
     pub fn with_order<P>(mut self) -> Matrix<T, P>
     where
         P: Order,
@@ -126,6 +247,22 @@ where
         self.reinterpret::<P>()
     }
 
+    /// Reinterprets the matrix in the specified storage order.
+    ///
+    /// If the order is different from the original, the resulting matrix appears
+    /// transposed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::dense::layout::{ColMajor, RowMajor};
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]]
+    ///     .with_order::<RowMajor>()
+    ///     .reinterpret::<ColMajor>();
+    /// assert_eq!(matrix, matrix![[1, 4], [2, 5], [3, 6]]);
+    /// ```
     pub fn reinterpret<P>(self) -> Matrix<T, P>
     where
         P: Order,
@@ -135,16 +272,67 @@ where
         Matrix { layout, data }
     }
 
+    /// Shrinks the capacity of the matrix as much as possible.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Matrix;
+    ///
+    /// let mut matrix = Matrix::with_capacity(10);
+    /// assert!(matrix.capacity() >= 10);
+    ///
+    /// let _ = matrix.resize((2, 3), 0);
+    /// assert!(matrix.capacity() >= 10);
+    ///
+    /// matrix.shrink_to_fit();
+    /// assert!(matrix.capacity() >= 6);
+    /// ```
     pub fn shrink_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
         self
     }
 
+    /// Shrinks the capacity of the matrix with a lower bound.
+    ///
+    /// The capacity will remain at least as large as both the size and the
+    /// supplied value.
+    ///
+    /// If the current capacity is less than the lower limit, this is a no-op.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Matrix;
+    ///
+    /// let mut matrix = Matrix::with_capacity(10);
+    /// assert!(matrix.capacity() >= 10);
+    ///
+    /// let _ = matrix.resize((2, 3), 0);
+    /// assert!(matrix.capacity() >= 10);
+    ///
+    /// matrix.shrink_to(8);
+    /// assert!(matrix.capacity() >= 8);
+    ///
+    /// matrix.shrink_to(4);
+    /// assert!(matrix.capacity() >= 6);
+    /// ```
     pub fn shrink_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
         self
     }
 
+    /// Returns `true` if the matrix contains an element with the given value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// assert!(!matrix.contains(&0));
+    /// assert!(matrix.contains(&5));
+    /// ```
     pub fn contains(&self, value: &T) -> bool
     where
         T: PartialEq,
@@ -152,6 +340,19 @@ where
         self.data.contains(value)
     }
 
+    /// Overwrites the overlapping part of this matrix with `src`, leaving the
+    /// non-overlapping part unchanged.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut dst = matrix![[0, 0, 0], [0, 0, 0]];
+    /// let src = matrix![[1, 1], [1, 1], [1, 1]];
+    /// dst.overwrite(&src);
+    /// assert_eq!(dst, matrix![[1, 1, 0], [1, 1, 0]]);
+    /// ```
     pub fn overwrite<P>(&mut self, src: &Matrix<T, P>) -> &mut Self
     where
         T: Clone,
@@ -191,6 +392,18 @@ where
         self
     }
 
+    /// Applies a closure to each element of the matrix, modifying the matrix in
+    /// place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix.apply(|element| *element += 2);
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// ```
     pub fn apply<F>(&mut self, f: F) -> &mut Self
     where
         F: FnMut(&mut T),
@@ -199,6 +412,24 @@ where
         self
     }
 
+    /// Applies a closure to each element of the matrix, returning a new matrix
+    /// with the results.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let result = matrix.map(|element| element as f64);
+    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
+    /// ```
+    ///
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn map<F, U>(self, f: F) -> Result<Matrix<U, O>>
     where
         F: FnMut(T) -> U,
@@ -208,6 +439,24 @@ where
         Ok(Matrix { layout, data })
     }
 
+    /// Applies a closure to each element of the matrix by reference, returning
+    /// a new matrix with the results.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let result = matrix.map_ref(|element| *element as f64);
+    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
+    /// ```
+    ///
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn map_ref<'a, F, U>(&'a self, f: F) -> Result<Matrix<U, O>>
     where
         F: FnMut(&'a T) -> U,
@@ -217,6 +466,23 @@ where
         Ok(Matrix { layout, data })
     }
 
+    /// Clears the matrix, removing all elements.
+    ///
+    /// Note that this method has no effect on the allocated capacity
+    /// of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix.clear();
+    /// assert_eq!(matrix.nrows(), 0);
+    /// assert_eq!(matrix.ncols(), 0);
+    /// assert!(matrix.is_empty());
+    /// assert!(matrix.capacity() >= 6);
+    /// ```
     pub fn clear(&mut self) -> &mut Self {
         self.layout = Layout::default();
         self.data.clear();

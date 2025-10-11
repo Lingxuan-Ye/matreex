@@ -8,6 +8,18 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
+    /// Applies a closure to each element of the matrix in parallel, modifying the
+    /// matrix in place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix.par_apply(|element| *element += 2);
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// ```
     pub fn par_apply<F>(&mut self, f: F) -> &mut Self
     where
         T: Send,
@@ -17,6 +29,24 @@ where
         self
     }
 
+    /// Applies a closure to each element of the matrix in parallel, returning a new
+    /// matrix with the results.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let result = matrix.par_map(|element| element as f64);
+    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
+    /// ```
+    ///
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn par_map<F, U>(self, f: F) -> Result<Matrix<U, O>>
     where
         T: Send,
@@ -28,6 +58,24 @@ where
         Ok(Matrix { layout, data })
     }
 
+    /// Applies a closure to each element of the matrix in parallel by reference,
+    /// returning a new matrix with the results.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let result = matrix.par_map_ref(|element| *element as f64);
+    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
+    /// ```
+    ///
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn par_map_ref<'a, F, U>(&'a self, f: F) -> Result<Matrix<U, O>>
     where
         T: Sync,
@@ -44,6 +92,18 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
+    /// Returns a parallel iterator over the elements of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use matreex::parallel::*;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let sum = matrix.par_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 21);
+    /// ```
     pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T>
     where
         T: Sync,
@@ -51,6 +111,21 @@ where
         self.data.par_iter()
     }
 
+    /// Returns a parallel iterator that allows modifying each element
+    /// of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use matreex::parallel::*;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix
+    ///     .par_iter_elements_mut()
+    ///     .for_each(|element| *element += 2);
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// ```
     pub fn par_iter_elements_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
     where
         T: Send,
@@ -58,6 +133,19 @@ where
         self.data.par_iter_mut()
     }
 
+    /// Creates a parallel consuming iterator, that is, one that moves each element
+    /// out of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use matreex::parallel::*;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let sum = matrix.into_par_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 21);
+    /// ```
     pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T>
     where
         T: Send,
@@ -65,6 +153,22 @@ where
         self.data.into_par_iter()
     }
 
+    /// Returns a parallel iterator over the elements of the matrix along with their
+    /// indices.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use matreex::parallel::*;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix
+    ///     .par_iter_elements_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         assert_eq!(element, &matrix[index]);
+    ///     });
+    /// ```
     pub fn par_iter_elements_with_index(&self) -> impl ParallelIterator<Item = (Index, &T)>
     where
         T: Sync,
@@ -79,6 +183,23 @@ where
             })
     }
 
+    /// Returns a parallel iterator that allows modifying each element of the matrix
+    /// along with its index.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use matreex::parallel::*;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix
+    ///     .par_iter_elements_mut_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         *element += index.row as i32 + index.col as i32;
+    ///     });
+    /// assert_eq!(matrix, matrix![[1, 3, 5], [5, 7, 9]]);
+    /// ```
     pub fn par_iter_elements_mut_with_index(
         &mut self,
     ) -> impl ParallelIterator<Item = (Index, &mut T)>
@@ -95,6 +216,23 @@ where
             })
     }
 
+    /// Creates a parallel consuming iterator, that is, one that moves each element
+    /// out of the matrix along with its index.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use matreex::parallel::*;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix
+    ///     .clone()
+    ///     .into_par_iter_elements_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         assert_eq!(element, matrix[index]);
+    ///     });
+    /// ```
     pub fn into_par_iter_elements_with_index(self) -> impl ParallelIterator<Item = (Index, T)>
     where
         T: Send,

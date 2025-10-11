@@ -64,6 +64,12 @@ impl<T, O, const R: usize, const C: usize> TryFromCols<[Box<[T; R]>; C]> for Mat
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     fn try_from_cols(value: [Box<[T; R]>; C]) -> Result<Self> {
         let nrows = R;
         let ncols = C;
@@ -81,6 +87,12 @@ impl<T, O, const R: usize, const C: usize> TryFromCols<Box<[Box<[T; R]>; C]>> fo
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     fn try_from_cols(value: Box<[Box<[T; R]>; C]>) -> Result<Self> {
         Self::try_from_cols(value as Box<[Box<[T; R]>]>)
     }
@@ -90,6 +102,12 @@ impl<T, O, const R: usize> TryFromCols<Box<[Box<[T; R]>]>> for Matrix<T, O>
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     fn try_from_cols(value: Box<[Box<[T; R]>]>) -> Result<Self> {
         Self::try_from_cols(value.into_vec())
     }
@@ -99,6 +117,12 @@ impl<T, O, const R: usize> TryFromCols<Vec<Box<[T; R]>>> for Matrix<T, O>
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     fn try_from_cols(value: Vec<Box<[T; R]>>) -> Result<Self> {
         let nrows = R;
         let ncols = value.len();
@@ -116,6 +140,13 @@ impl<T, O, const C: usize> TryFromCols<[Box<[T]>; C]> for Matrix<T, O>
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if columns have inconsistent lengths.
     fn try_from_cols(value: [Box<[T]>; C]) -> Result<Self> {
         let mut iter = value.into_iter();
         let Some(first) = iter.next() else {
@@ -141,6 +172,13 @@ impl<T, O, const C: usize> TryFromCols<Box<[Box<[T]>; C]>> for Matrix<T, O>
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if columns have inconsistent lengths.
     fn try_from_cols(value: Box<[Box<[T]>; C]>) -> Result<Self> {
         Self::try_from_cols(value as Box<[Box<[T]>]>)
     }
@@ -150,6 +188,13 @@ impl<T, O> TryFromCols<Box<[Box<[T]>]>> for Matrix<T, O>
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if columns have inconsistent lengths.
     fn try_from_cols(value: Box<[Box<[T]>]>) -> Result<Self> {
         Self::try_from_cols(value.into_vec())
     }
@@ -159,6 +204,13 @@ impl<T, O> TryFromCols<Vec<Box<[T]>>> for Matrix<T, O>
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if columns have inconsistent lengths.
     fn try_from_cols(value: Vec<Box<[T]>>) -> Result<Self> {
         let ncols = value.len();
         let mut iter = value.into_iter();
@@ -184,6 +236,13 @@ impl<T, O, const C: usize> TryFromCols<[Vec<T>; C]> for Matrix<T, O>
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if columns have inconsistent lengths.
     fn try_from_cols(value: [Vec<T>; C]) -> Result<Self> {
         let mut iter = value.into_iter();
         let Some(first) = iter.next() else {
@@ -209,6 +268,13 @@ impl<T, O, const C: usize> TryFromCols<Box<[Vec<T>; C]>> for Matrix<T, O>
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if columns have inconsistent lengths.
     fn try_from_cols(value: Box<[Vec<T>; C]>) -> Result<Self> {
         Self::try_from_cols(value as Box<[Vec<T>]>)
     }
@@ -218,6 +284,13 @@ impl<T, O> TryFromCols<Box<[Vec<T>]>> for Matrix<T, O>
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if columns have inconsistent lengths.
     fn try_from_cols(value: Box<[Vec<T>]>) -> Result<Self> {
         Self::try_from_cols(value.into_vec())
     }
@@ -227,6 +300,13 @@ impl<T, O> TryFromCols<Vec<Vec<T>>> for Matrix<T, O>
 where
     O: Order,
 {
+    /// Attempts to convert from a sequence of columns.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::LengthInconsistent`] if columns have inconsistent lengths.
     fn try_from_cols(value: Vec<Vec<T>>) -> Result<Self> {
         let ncols = value.len();
         let mut iter = value.into_iter();
@@ -253,6 +333,11 @@ where
     O: Order,
     C: IntoIterator<Item = T>,
 {
+    /// Converts from an iterator over columns.
+    ///
+    /// # Panics
+    ///
+    /// Panics if columns have inconsistent lengths or capacity overflows.
     fn from_col_iter<I>(iter: I) -> Self
     where
         I: IntoIterator<Item = C>,

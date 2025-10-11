@@ -39,11 +39,10 @@ impl Index {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Index, Shape, WrappingIndex};
+    /// use matreex::{Index, WrappingIndex};
     ///
     /// let index = WrappingIndex::new(-1, 4);
-    /// let shape = Shape::new(2, 3);
-    /// let index = Index::from_wrapping_index(index, shape);
+    /// let index = Index::from_wrapping_index(index, (2, 3));
     /// assert_eq!(index, Index::new(1, 1));
     /// ```
     pub fn from_wrapping_index<S>(index: WrappingIndex, shape: S) -> Self
@@ -206,11 +205,9 @@ impl WrappingIndex {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Index, Shape, WrappingIndex};
+    /// use matreex::{Index, WrappingIndex};
     ///
-    /// let index = WrappingIndex::new(-1, 4);
-    /// let shape = Shape::new(2, 3);
-    /// let index = index.to_index(shape);
+    /// let index = WrappingIndex::new(-1, 4).to_index((2, 3));
     /// assert_eq!(index, Index::new(1, 1));
     /// ```
     pub fn to_index<S>(self, shape: S) -> Index

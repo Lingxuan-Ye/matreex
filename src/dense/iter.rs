@@ -8,6 +8,8 @@ use core::slice::{Iter, IterMut};
 
 mod iter_mut;
 
+/// An iterator that knows its exact length and is able to yield elements from
+/// both ends.
 pub trait ExactSizeDoubleEndedIterator: ExactSizeIterator + DoubleEndedIterator {}
 
 impl<I> ExactSizeDoubleEndedIterator for I where I: ExactSizeIterator + DoubleEndedIterator {}
@@ -16,6 +18,31 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
+    /// Returns an iterator over the rows of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let mut rows = matrix.iter_rows();
+    ///
+    /// let mut row_0 = rows.next().unwrap();
+    /// assert_eq!(row_0.next(), Some(&1));
+    /// assert_eq!(row_0.next(), Some(&2));
+    /// assert_eq!(row_0.next(), Some(&3));
+    /// assert_eq!(row_0.next(), None);
+    ///
+    /// let mut row_1 = rows.next_back().unwrap();
+    /// assert_eq!(row_1.next_back(), Some(&6));
+    /// assert_eq!(row_1.next_back(), Some(&5));
+    /// assert_eq!(row_1.next_back(), Some(&4));
+    /// assert_eq!(row_1.next_back(), None);
+    ///
+    /// assert!(rows.next().is_none());
+    /// assert!(rows.next_back().is_none());
+    /// ```
     pub fn iter_rows(
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &T>>
@@ -26,6 +53,34 @@ where
         })
     }
 
+    /// Returns an iterator over the columns of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let mut cols = matrix.iter_cols();
+    ///
+    /// let mut col_0 = cols.next().unwrap();
+    /// assert_eq!(col_0.next(), Some(&1));
+    /// assert_eq!(col_0.next(), Some(&4));
+    /// assert_eq!(col_0.next(), None);
+    ///
+    /// let mut col_1 = cols.next().unwrap();
+    /// assert_eq!(col_1.next(), Some(&2));
+    /// assert_eq!(col_1.next(), Some(&5));
+    /// assert_eq!(col_1.next(), None);
+    ///
+    /// let mut col_2 = cols.next_back().unwrap();
+    /// assert_eq!(col_2.next_back(), Some(&6));
+    /// assert_eq!(col_2.next_back(), Some(&3));
+    /// assert_eq!(col_2.next_back(), None);
+    ///
+    /// assert!(cols.next().is_none());
+    /// assert!(cols.next_back().is_none());
+    /// ```
     pub fn iter_cols(
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &T>>
@@ -36,6 +91,21 @@ where
         })
     }
 
+    /// Returns an iterator that allows modifying each rows of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// for row in matrix.iter_rows_mut() {
+    ///     for element in row {
+    ///         *element += 2;
+    ///     }
+    /// }
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// ```
     pub fn iter_rows_mut(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
@@ -46,6 +116,20 @@ where
         }
     }
 
+    /// Returns an iterator that allows modifying each columns of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// for col in matrix.iter_cols_mut() {
+    ///     for element in col {
+    ///         *element += 2;
+    ///     }
+    /// }
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     pub fn iter_cols_mut(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
@@ -56,6 +140,36 @@ where
         }
     }
 
+    /// Returns an iterator over the elements of the nth row in the matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
+    ///   of rows in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use matreex::Result;
+    /// use matreex::matrix;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    ///
+    /// let mut row_0 = matrix.iter_nth_row(0)?;
+    /// assert_eq!(row_0.next(), Some(&1));
+    /// assert_eq!(row_0.next(), Some(&2));
+    /// assert_eq!(row_0.next(), Some(&3));
+    /// assert_eq!(row_0.next(), None);
+    ///
+    /// let mut row_1 = matrix.iter_nth_row(1)?;
+    /// assert_eq!(row_1.next_back(), Some(&6));
+    /// assert_eq!(row_1.next_back(), Some(&5));
+    /// assert_eq!(row_1.next_back(), Some(&4));
+    /// assert_eq!(row_1.next_back(), None);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn iter_nth_row(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match O::KIND {
             OrderKind::RowMajor => self.iter_nth_major_axis_vector(n),
@@ -63,6 +177,39 @@ where
         }
     }
 
+    /// Returns an iterator over the elements of the nth column in the matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
+    ///   of columns in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use matreex::Result;
+    /// use matreex::matrix;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    ///
+    /// let mut col_0 = matrix.iter_nth_col(0)?;
+    /// assert_eq!(col_0.next(), Some(&1));
+    /// assert_eq!(col_0.next(), Some(&4));
+    /// assert_eq!(col_0.next(), None);
+    ///
+    /// let mut col_1 = matrix.iter_nth_col(1)?;
+    /// assert_eq!(col_1.next(), Some(&2));
+    /// assert_eq!(col_1.next(), Some(&5));
+    /// assert_eq!(col_1.next(), None);
+    ///
+    /// let mut col_2 = matrix.iter_nth_col(2)?;
+    /// assert_eq!(col_2.next_back(), Some(&6));
+    /// assert_eq!(col_2.next_back(), Some(&3));
+    /// assert_eq!(col_2.next_back(), None);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn iter_nth_col(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match O::KIND {
             OrderKind::RowMajor => self.iter_nth_minor_axis_vector(n),
@@ -70,6 +217,29 @@ where
         }
     }
 
+    /// Returns an iterator that allows modifying each element of the nth row in
+    /// the matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
+    ///   of rows in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use matreex::Result;
+    /// use matreex::matrix;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// for element in matrix.iter_nth_row_mut(1)? {
+    ///    *element += 2;
+    /// }
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [6, 7, 8]]);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn iter_nth_row_mut(
         &mut self,
         n: usize,
@@ -80,6 +250,29 @@ where
         }
     }
 
+    /// Returns an iterator that allows modifying each element of the nth column in
+    /// the matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
+    ///   of columns in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use matreex::Result;
+    /// use matreex::matrix;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// for element in matrix.iter_nth_col_mut(1)? {
+    ///    *element += 2;
+    /// }
+    /// assert_eq!(matrix, matrix![[1, 4, 3], [4, 7, 6]]);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn iter_nth_col_mut(
         &mut self,
         n: usize,
@@ -90,18 +283,83 @@ where
         }
     }
 
+    /// Returns an iterator over the elements of the matrix.
+    ///
+    /// # Notes
+    ///
+    /// Elements are iterated in storage order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let sum = matrix.iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 21);
+    /// ```
     pub fn iter_elements(&self) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
         self.data.iter()
     }
 
+    /// Returns an iterator that allows modifying each element of the matrix.
+    ///
+    /// # Notes
+    ///
+    /// Elements are iterated in storage order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix.iter_elements_mut().for_each(|element| *element += 2);
+    /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// ```
     pub fn iter_elements_mut(&mut self) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
         self.data.iter_mut()
     }
 
+    /// Creates a consuming iterator, that is, one that moves each element out of
+    /// the matrix.
+    ///
+    /// # Notes
+    ///
+    /// Elements are iterated in storage order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let sum = matrix.into_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 21);
+    /// ```
     pub fn into_iter_elements(self) -> impl ExactSizeDoubleEndedIterator<Item = T> {
         self.data.into_iter()
     }
 
+    /// Returns an iterator over the elements of the matrix along with their
+    /// indices.
+    ///
+    /// # Notes
+    ///
+    /// Elements are iterated in storage order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix
+    ///     .iter_elements_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         assert_eq!(element, &matrix[index]);
+    ///     });
+    /// ```
     pub fn iter_elements_with_index(
         &self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &T)> {
@@ -112,6 +370,26 @@ where
         })
     }
 
+    /// Returns an iterator that allows modifying each element of the matrix along
+    /// with its index.
+    ///
+    /// # Notes
+    ///
+    /// Elements are iterated in storage order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix
+    ///     .iter_elements_mut_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         *element += index.row as i32 + index.col as i32;
+    ///     });
+    /// assert_eq!(matrix, matrix![[1, 3, 5], [5, 7, 9]]);
+    /// ```
     pub fn iter_elements_mut_with_index(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &mut T)> {
@@ -125,6 +403,26 @@ where
             })
     }
 
+    /// Creates a consuming iterator, that is, one that moves each element out of
+    /// the matrix along with its index.
+    ///
+    /// # Notes
+    ///
+    /// Elements are iterated in storage order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+    /// matrix
+    ///     .clone()
+    ///     .into_iter_elements_with_index()
+    ///     .for_each(|(index, element)| {
+    ///         assert_eq!(element, matrix[index]);
+    ///     });
+    /// ```
     pub fn into_iter_elements_with_index(
         self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, T)> {
