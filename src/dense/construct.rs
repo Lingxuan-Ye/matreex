@@ -30,16 +30,24 @@ where
 
     /// Creates a new, empty [`Matrix<T, O>`] with at least the specified capacity.
     ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
     /// # Examples
     ///
     /// ```
     /// use matreex::Matrix;
+    /// # use matreex::Result;
     ///
-    /// let matrix = Matrix::<i32>::with_capacity(10);
+    /// # fn main() -> Result<()> {
+    /// let matrix = Matrix::<i32>::with_capacity(10)?;
     /// assert_eq!(matrix.nrows(), 0);
     /// assert_eq!(matrix.ncols(), 0);
     /// assert!(matrix.is_empty());
     /// assert!(matrix.capacity() >= 10);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn with_capacity(capacity: usize) -> Result<Self> {
         if capacity > Layout::<T, O>::MAX_CAPACITY {
@@ -67,9 +75,6 @@ where
     /// let result = Matrix::with_default((2, 3));
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     /// ```
-    ///
-    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
-    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_default<S>(shape: S) -> Result<Self>
     where
         S: AsShape,
@@ -97,9 +102,6 @@ where
     /// let result = Matrix::with_value((2, 3), 0);
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     /// ```
-    ///
-    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
-    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_value<S>(shape: S, value: T) -> Result<Self>
     where
         S: AsShape,
@@ -132,9 +134,6 @@ where
     ///     ])
     /// );
     /// ```
-    ///
-    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
-    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_initializer<S, F>(shape: S, mut initializer: F) -> Result<Self>
     where
         S: AsShape,

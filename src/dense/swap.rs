@@ -17,11 +17,15 @@ where
     /// # Examples
     ///
     /// ```
+    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let _ = matrix.swap((0, 0), (1, 1));
+    /// matrix.swap((0, 0), (1, 1))?;
     /// assert_eq!(matrix, matrix![[5, 2, 3], [4, 1, 6]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn swap<I, J>(&mut self, i: I, j: J) -> Result<&mut Self>
     where
@@ -55,11 +59,15 @@ where
     /// # Examples
     ///
     /// ```
+    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let _ = matrix.swap_rows(0, 1);
+    /// matrix.swap_rows(0, 1)?;
     /// assert_eq!(matrix, matrix![[4, 5, 6], [1, 2, 3]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn swap_rows(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         match O::KIND {
@@ -77,11 +85,15 @@ where
     /// # Examples
     ///
     /// ```
+    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let _ = matrix.swap_cols(0, 1);
+    /// matrix.swap_cols(0, 1)?;
     /// assert_eq!(matrix, matrix![[2, 1, 3], [5, 4, 6]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn swap_cols(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         match O::KIND {
