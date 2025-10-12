@@ -1,6 +1,6 @@
 use super::Matrix;
 use super::layout::{Layout, Order};
-use crate::error::{Error, Result};
+use crate::error::Result;
 use crate::index::Index;
 use crate::shape::AsShape;
 use alloc::vec;
@@ -50,13 +50,10 @@ where
     /// # }
     /// ```
     pub fn with_capacity(capacity: usize) -> Result<Self> {
-        if capacity > Layout::<T, O>::MAX_CAPACITY {
-            Err(Error::CapacityOverflow)
-        } else {
-            let layout = Layout::default();
-            let data = Vec::with_capacity(capacity);
-            Ok(Self { layout, data })
-        }
+        Layout::<T, O>::ensure_can_hold(capacity)?;
+        let layout = Layout::default();
+        let data = Vec::with_capacity(capacity);
+        Ok(Self { layout, data })
     }
 
     /// Creates a new [`Matrix<T, O>`] with the specified shape, filling with the
