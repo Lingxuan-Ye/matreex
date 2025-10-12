@@ -342,12 +342,16 @@ where
     /// # Examples
     ///
     /// ```
+    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let _ = lhs.elementwise_operation_assign(&rhs, |x, y| *x += y);
+    /// lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)?;
     /// assert_eq!(lhs, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn elementwise_operation_assign<'a, R, RO, F>(
         &mut self,
@@ -389,12 +393,16 @@ where
     /// # Examples
     ///
     /// ```
+    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
+    /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y);
+    /// lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)?;
     /// assert_eq!(lhs, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn elementwise_operation_assign_consume_rhs<R, RO, F>(
         &mut self,

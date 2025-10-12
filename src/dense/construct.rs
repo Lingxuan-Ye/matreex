@@ -1,6 +1,6 @@
 use super::Matrix;
 use super::layout::{Layout, Order};
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::index::Index;
 use crate::shape::AsShape;
 use alloc::vec;
@@ -30,21 +30,33 @@ where
 
     /// Creates a new, empty [`Matrix<T, O>`] with at least the specified capacity.
     ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
     /// # Examples
     ///
     /// ```
     /// use matreex::Matrix;
+    /// # use matreex::Result;
     ///
-    /// let matrix = Matrix::<i32>::with_capacity(10);
+    /// # fn main() -> Result<()> {
+    /// let matrix = Matrix::<i32>::with_capacity(10)?;
     /// assert_eq!(matrix.nrows(), 0);
     /// assert_eq!(matrix.ncols(), 0);
     /// assert!(matrix.is_empty());
     /// assert!(matrix.capacity() >= 10);
+    /// # Ok(())
+    /// # }
     /// ```
-    pub fn with_capacity(capacity: usize) -> Self {
-        let layout = Layout::default();
-        let data = Vec::with_capacity(capacity);
-        Self { layout, data }
+    pub fn with_capacity(capacity: usize) -> Result<Self> {
+        if capacity > Layout::<T, O>::MAX_CAPACITY {
+            Err(Error::CapacityOverflow)
+        } else {
+            let layout = Layout::default();
+            let data = Vec::with_capacity(capacity);
+            Ok(Self { layout, data })
+        }
     }
 
     /// Creates a new [`Matrix<T, O>`] with the specified shape, filling with the
@@ -63,9 +75,6 @@ where
     /// let result = Matrix::with_default((2, 3));
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     /// ```
-    ///
-    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
-    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_default<S>(shape: S) -> Result<Self>
     where
         S: AsShape,
@@ -93,9 +102,6 @@ where
     /// let result = Matrix::with_value((2, 3), 0);
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     /// ```
-    ///
-    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
-    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_value<S>(shape: S, value: T) -> Result<Self>
     where
         S: AsShape,
@@ -128,9 +134,6 @@ where
     ///     ])
     /// );
     /// ```
-    ///
-    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
-    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_initializer<S, F>(shape: S, mut initializer: F) -> Result<Self>
     where
         S: AsShape,
@@ -178,7 +181,7 @@ mod tests {
     #[test]
     fn test_with_capacity() {
         dispatch_unary! {{
-            let matrix = Matrix::<i32, O>::with_capacity(10);
+            let matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
             assert_eq!(matrix.nrows(), 0);
             assert_eq!(matrix.ncols(), 0);
             assert!(matrix.is_empty());

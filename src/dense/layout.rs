@@ -75,13 +75,19 @@ impl<T, O> Layout<T, O>
 where
     O: Order,
 {
+    pub(super) const MAX_CAPACITY: usize = if size_of::<T>() == 0 {
+        usize::MAX
+    } else {
+        isize::MAX as usize / size_of::<T>()
+    };
+
     fn new(major: usize, minor: usize) -> Result<Self> {
         Self::new_with_size(major, minor).map(|(layout, _)| layout)
     }
 
     fn new_with_size(major: usize, minor: usize) -> Result<(Self, usize)> {
         let size = major.checked_mul(minor).ok_or(Error::SizeOverflow)?;
-        if size.saturating_mul(size_of::<T>()) > isize::MAX as usize {
+        if size > Self::MAX_CAPACITY {
             Err(Error::CapacityOverflow)
         } else {
             Ok((Self::new_unchecked(major, minor), size))
@@ -132,7 +138,7 @@ where
     }
 
     pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
-        if self.size().saturating_mul(size_of::<U>()) > isize::MAX as usize {
+        if self.size() > Layout::<U, O>::MAX_CAPACITY {
             Err(Error::CapacityOverflow)
         } else {
             Ok(Layout::new_unchecked(self.major, self.minor))
@@ -177,12 +183,9 @@ where
     O: Order,
 {
     fn default() -> Self {
-        Self {
-            major: usize::default(),
-            minor: usize::default(),
-            element: PhantomData,
-            order: PhantomData,
-        }
+        let major = usize::default();
+        let minor = usize::default();
+        Self::new_unchecked(major, minor)
     }
 }
 
