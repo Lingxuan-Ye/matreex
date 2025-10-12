@@ -581,7 +581,7 @@ mod tests {
     #[test]
     fn test_capacity() {
         dispatch_unary! {{
-            let matrix = Matrix::<i32, O>::with_capacity(10);
+            let matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
             assert!(matrix.capacity() >= 10);
         }}
     }
@@ -669,7 +669,7 @@ mod tests {
     #[test]
     fn test_shrink_to_fit() {
         dispatch_unary! {{
-            let mut matrix = Matrix::<i32, O>::with_capacity(10);
+            let mut matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
             assert!(matrix.capacity() >= 10);
 
             let shape = Shape::new(2, 3);
@@ -684,7 +684,7 @@ mod tests {
     #[test]
     fn test_shrink_to() {
         dispatch_unary! {{
-            let mut matrix = Matrix::<i32, O>::with_capacity(10);
+            let mut matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
             assert!(matrix.capacity() >= 10);
 
             let shape = Shape::new(2, 3);

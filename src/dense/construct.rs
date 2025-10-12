@@ -182,7 +182,7 @@ mod tests {
     #[test]
     fn test_with_capacity() {
         dispatch_unary! {{
-            let matrix = Matrix::<i32, O>::with_capacity(10);
+            let matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
             assert_eq!(matrix.nrows(), 0);
             assert_eq!(matrix.ncols(), 0);
             assert!(matrix.is_empty());
