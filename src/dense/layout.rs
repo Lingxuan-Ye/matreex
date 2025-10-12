@@ -75,26 +75,17 @@ impl<T, O> Layout<T, O>
 where
     O: Order,
 {
-    pub(super) const MAX_CAPACITY: usize = if size_of::<T>() == 0 {
-        usize::MAX
-    } else {
-        isize::MAX as usize / size_of::<T>()
-    };
-
     fn new(major: usize, minor: usize) -> Result<Self> {
         Self::new_with_size(major, minor).map(|(layout, _)| layout)
     }
 
     fn new_with_size(major: usize, minor: usize) -> Result<(Self, usize)> {
         let size = major.checked_mul(minor).ok_or(Error::SizeOverflow)?;
-        if size > Self::MAX_CAPACITY {
-            Err(Error::CapacityOverflow)
-        } else {
-            Ok((Self::new_unchecked(major, minor), size))
-        }
+        Self::ensure_can_hold(size)?;
+        Ok((Self::new_unchecked(major, minor), size))
     }
 
-    fn new_unchecked(major: usize, minor: usize) -> Self {
+    const fn new_unchecked(major: usize, minor: usize) -> Self {
         Self {
             major,
             minor,
@@ -138,11 +129,8 @@ where
     }
 
     pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
-        if self.size() > Layout::<U, O>::MAX_CAPACITY {
-            Err(Error::CapacityOverflow)
-        } else {
-            Ok(Layout::new_unchecked(self.major, self.minor))
-        }
+        Layout::<U, O>::ensure_can_hold(self.size())?;
+        Ok(Layout::new_unchecked(self.major, self.minor))
     }
 
     pub(super) fn major(&self) -> usize {
@@ -164,6 +152,25 @@ where
     pub(super) fn swap(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
+    }
+}
+
+impl<T, O> Layout<T, O>
+where
+    O: Order,
+{
+    const MAX_CAPACITY: usize = if size_of::<T>() == 0 {
+        usize::MAX
+    } else {
+        isize::MAX as usize / size_of::<T>()
+    };
+
+    pub(super) fn ensure_can_hold(capacity: usize) -> Result<()> {
+        if capacity > Self::MAX_CAPACITY {
+            Err(Error::CapacityOverflow)
+        } else {
+            Ok(())
+        }
     }
 }
 

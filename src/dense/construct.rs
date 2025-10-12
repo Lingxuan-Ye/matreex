@@ -1,6 +1,6 @@
 use super::Matrix;
 use super::layout::{Layout, Order};
-use crate::error::{Error, Result};
+use crate::error::Result;
 use crate::index::Index;
 use crate::shape::AsShape;
 use alloc::vec;
@@ -49,14 +49,13 @@ where
     /// # Ok(())
     /// # }
     /// ```
+    ///
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_capacity(capacity: usize) -> Result<Self> {
-        if capacity > Layout::<T, O>::MAX_CAPACITY {
-            Err(Error::CapacityOverflow)
-        } else {
-            let layout = Layout::default();
-            let data = Vec::with_capacity(capacity);
-            Ok(Self { layout, data })
-        }
+        Layout::<T, O>::ensure_can_hold(capacity)?;
+        let layout = Layout::default();
+        let data = Vec::with_capacity(capacity);
+        Ok(Self { layout, data })
     }
 
     /// Creates a new [`Matrix<T, O>`] with the specified shape, filling with the
@@ -75,6 +74,9 @@ where
     /// let result = Matrix::with_default((2, 3));
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_default<S>(shape: S) -> Result<Self>
     where
         S: AsShape,
@@ -102,6 +104,9 @@ where
     /// let result = Matrix::with_value((2, 3), 0);
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_value<S>(shape: S, value: T) -> Result<Self>
     where
         S: AsShape,
@@ -134,6 +139,9 @@ where
     ///     ])
     /// );
     /// ```
+    ///
+    /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
+    /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_initializer<S, F>(shape: S, mut initializer: F) -> Result<Self>
     where
         S: AsShape,
