@@ -40,16 +40,22 @@ macro_rules! matrix {
         extern crate alloc;
 
         use $crate::Matrix;
-        use $crate::convert::FromRows;
+        use $crate::convert::TryFromRows;
 
-        <Matrix::<_> as FromRows<_>>::from_rows(alloc::vec![[$($elem),+]; $nrows])
+        match <Matrix::<_> as TryFromRows<_>>::try_from_rows(alloc::vec![[$($elem),+]; $nrows]) {
+            Err(error) => ::core::panic!("{error}"),
+            Ok(matrix) => matrix,
+        }
     }};
 
     [$($row:expr),+ $(,)?] => {{
         use $crate::Matrix;
-        use $crate::convert::FromRows;
+        use $crate::convert::TryFromRows;
 
-        <Matrix::<_> as FromRows<_>>::from_rows([$($row),+])
+        match <Matrix::<_> as TryFromRows<_>>::try_from_rows([$($row),+]) {
+            Err(error) => ::core::panic!("{error}"),
+            Ok(matrix) => matrix,
+        }
     }};
 }
 
