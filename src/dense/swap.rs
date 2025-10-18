@@ -12,7 +12,7 @@ where
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    /// - [`Error::IndexOutOfBounds`] if either index is out of bounds.
     ///
     /// # Examples
     ///
@@ -54,7 +54,7 @@ where
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    /// - [`Error::IndexOutOfBounds`] if either index is out of bounds.
     ///
     /// # Examples
     ///
@@ -80,7 +80,7 @@ where
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    /// - [`Error::IndexOutOfBounds`] if either index is out of bounds.
     ///
     /// # Examples
     ///
