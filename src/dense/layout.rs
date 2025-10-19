@@ -159,14 +159,14 @@ impl<T, O> Layout<T, O>
 where
     O: Order,
 {
-    const MAX_CAPACITY: usize = if size_of::<T>() == 0 {
+    const MAX_SIZE: usize = if size_of::<T>() == 0 {
         usize::MAX
     } else {
         isize::MAX as usize / size_of::<T>()
     };
 
-    pub(super) fn ensure_can_hold(capacity: usize) -> Result<()> {
-        if capacity > Self::MAX_CAPACITY {
+    pub(super) fn ensure_can_hold(size: usize) -> Result<()> {
+        if size > Self::MAX_SIZE {
             Err(Error::CapacityOverflow)
         } else {
             Ok(())
