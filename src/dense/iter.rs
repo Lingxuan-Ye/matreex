@@ -18,7 +18,7 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
-    /// Returns an iterator over the rows of the matrix.
+    /// Returns an iterator over the rows.
     ///
     /// # Examples
     ///
@@ -53,7 +53,7 @@ where
         })
     }
 
-    /// Returns an iterator over the columns of the matrix.
+    /// Returns an iterator over the columns.
     ///
     /// # Examples
     ///
@@ -91,7 +91,7 @@ where
         })
     }
 
-    /// Returns an iterator that allows modifying each rows of the matrix.
+    /// Returns an iterator that allows modifying each rows.
     ///
     /// # Examples
     ///
@@ -116,7 +116,7 @@ where
         }
     }
 
-    /// Returns an iterator that allows modifying each columns of the matrix.
+    /// Returns an iterator that allows modifying each columns.
     ///
     /// # Examples
     ///
@@ -140,12 +140,11 @@ where
         }
     }
 
-    /// Returns an iterator over the elements of the nth row in the matrix.
+    /// Returns an iterator over the elements of the nth row.
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
-    ///   of rows in the matrix.
+    /// - [`Error::IndexOutOfBounds`] if the index is out of bounds.
     ///
     /// # Examples
     ///
@@ -177,12 +176,11 @@ where
         }
     }
 
-    /// Returns an iterator over the elements of the nth column in the matrix.
+    /// Returns an iterator over the elements of the nth column.
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
-    ///   of columns in the matrix.
+    /// - [`Error::IndexOutOfBounds`] if the index is out of bounds.
     ///
     /// # Examples
     ///
@@ -217,13 +215,11 @@ where
         }
     }
 
-    /// Returns an iterator that allows modifying each element of the nth row in
-    /// the matrix.
+    /// Returns an iterator that allows modifying each element of the nth row.
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
-    ///   of rows in the matrix.
+    /// - [`Error::IndexOutOfBounds`] if the index is out of bounds.
     ///
     /// # Examples
     ///
@@ -250,13 +246,11 @@ where
         }
     }
 
-    /// Returns an iterator that allows modifying each element of the nth column in
-    /// the matrix.
+    /// Returns an iterator that allows modifying each element of the nth column.
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to the number
-    ///   of columns in the matrix.
+    /// - [`Error::IndexOutOfBounds`] if the index is out of bounds.
     ///
     /// # Examples
     ///
@@ -283,7 +277,7 @@ where
         }
     }
 
-    /// Returns an iterator over the elements of the matrix.
+    /// Returns an iterator over the elements.
     ///
     /// # Notes
     ///
@@ -302,7 +296,7 @@ where
         self.data.iter()
     }
 
-    /// Returns an iterator that allows modifying each element of the matrix.
+    /// Returns an iterator that allows modifying each element.
     ///
     /// # Notes
     ///
@@ -341,8 +335,7 @@ where
         self.data.into_iter()
     }
 
-    /// Returns an iterator over the elements of the matrix along with their
-    /// indices.
+    /// Returns an iterator over the elements along with their indices.
     ///
     /// # Notes
     ///
@@ -370,8 +363,7 @@ where
         })
     }
 
-    /// Returns an iterator that allows modifying each element of the matrix along
-    /// with its index.
+    /// Returns an iterator that allows modifying each element along with its index.
     ///
     /// # Notes
     ///
@@ -441,6 +433,11 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
+    /// Returns an iterator over the elements of the nth major-axis vector.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if the index is out of bounds.
     fn iter_nth_major_axis_vector(&self, n: usize) -> Result<Take<StepBy<Skip<Iter<'_, T>>>>> {
         if n >= self.major() {
             Err(Error::IndexOutOfBounds)
@@ -449,6 +446,11 @@ where
         }
     }
 
+    /// Returns an iterator over the elements of the nth minor-axis vector.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if the index is out of bounds.
     fn iter_nth_minor_axis_vector(&self, n: usize) -> Result<Take<StepBy<Skip<Iter<'_, T>>>>> {
         if n >= self.minor() {
             Err(Error::IndexOutOfBounds)
@@ -457,6 +459,12 @@ where
         }
     }
 
+    /// Returns an iterator that allows modifying each element of the nth major-axis
+    /// vector.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if the index is out of bounds.
     fn iter_nth_major_axis_vector_mut(
         &mut self,
         n: usize,
@@ -468,6 +476,12 @@ where
         }
     }
 
+    /// Returns an iterator that allows modifying each element of the nth minor-axis
+    /// vector.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if the index is out of bounds.
     fn iter_nth_minor_axis_vector_mut(
         &mut self,
         n: usize,
@@ -479,6 +493,8 @@ where
         }
     }
 
+    /// Returns an iterator over the elements of the nth major-axis vector, without
+    /// performing any bounds checking.
     fn iter_nth_major_axis_vector_unchecked(&self, n: usize) -> Take<StepBy<Skip<Iter<'_, T>>>> {
         let stride = self.stride();
         let skip = n * stride.major();
@@ -487,6 +503,8 @@ where
         self.data.iter().skip(skip).step_by(step).take(take)
     }
 
+    /// Returns an iterator over the elements of the nth minor-axis vector, without
+    /// performing any bounds checking.
     fn iter_nth_minor_axis_vector_unchecked(&self, n: usize) -> Take<StepBy<Skip<Iter<'_, T>>>> {
         let stride = self.stride();
         let skip = n * stride.minor();
@@ -495,6 +513,8 @@ where
         self.data.iter().skip(skip).step_by(step).take(take)
     }
 
+    /// Returns an iterator that allows modifying each element of the nth major-axis
+    /// vector, without performing any bounds checking.
     fn iter_nth_major_axis_vector_unchecked_mut(
         &mut self,
         n: usize,
@@ -506,6 +526,8 @@ where
         self.data.iter_mut().skip(skip).step_by(step).take(take)
     }
 
+    /// Returns an iterator that allows modifying each element of the nth minor-axis
+    /// vector, without performing any bounds checking.
     fn iter_nth_minor_axis_vector_unchecked_mut(
         &mut self,
         n: usize,

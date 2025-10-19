@@ -3,12 +3,6 @@
 use crate::error::Result;
 
 /// A trait for matrix conversion from a sequence of rows.
-pub trait FromRows<S> {
-    /// Converts from a sequence of rows.
-    fn from_rows(value: S) -> Self;
-}
-
-/// A trait for fallible matrix conversion from a sequence of rows.
 pub trait TryFromRows<S>: Sized {
     /// Attempts to convert from a sequence of rows.
     fn try_from_rows(value: S) -> Result<Self>;
@@ -25,22 +19,7 @@ where
         I: IntoIterator<Item = R>;
 }
 
-impl<M, S> TryFromRows<S> for M
-where
-    M: FromRows<S>,
-{
-    fn try_from_rows(value: S) -> Result<Self> {
-        Ok(Self::from_rows(value))
-    }
-}
-
 /// A trait for matrix conversion from a sequence of columns.
-pub trait FromCols<S> {
-    /// Converts from a sequence of columns.
-    fn from_cols(value: S) -> Self;
-}
-
-/// A trait for fallible matrix conversion from a sequence of columns.
 pub trait TryFromCols<S>: Sized {
     /// Attempts to convert from a sequence of columns.
     fn try_from_cols(value: S) -> Result<Self>;
@@ -55,15 +34,6 @@ where
     fn from_col_iter<I>(iter: I) -> Self
     where
         I: IntoIterator<Item = C>;
-}
-
-impl<M, S> TryFromCols<S> for M
-where
-    M: FromCols<S>,
-{
-    fn try_from_cols(value: S) -> Result<Self> {
-        Ok(Self::from_cols(value))
-    }
 }
 
 /// A trait for matrix conversion to a sequence of rows.

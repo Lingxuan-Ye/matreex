@@ -1,6 +1,6 @@
 use super::Matrix;
 use super::layout::Order;
-use crate::convert::{FromRowIterator, FromRows, IntoRows, TryFromRows};
+use crate::convert::{FromRowIterator, IntoRows, TryFromRows};
 use crate::error::{Error, Result};
 use alloc::boxed::Box;
 use alloc::vec::Vec;
@@ -10,21 +10,69 @@ mod from_rows;
 mod into_cols;
 mod into_rows;
 
-impl<T, O, S> From<S> for Matrix<T, O>
+impl<T, O, const R: usize, const C: usize> TryFrom<[[T; C]; R]> for Matrix<T, O>
 where
     O: Order,
-    Self: FromRows<S>,
 {
-    fn from(value: S) -> Self {
-        Self::from_rows(value)
+    type Error = Error;
+
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    fn try_from(value: [[T; C]; R]) -> Result<Self> {
+        Self::try_from_rows(value)
     }
 }
 
-// Cannot implement `TryFrom` for `Matrix: TryFromRows` because of the
-// conflicting blanket implementation paths below:
-//
-// - `FromRows` -> `TryFromRows` -> `TryFrom`
-// - `FromRows` -> `From` -> `Into` -> `TryFrom`
+impl<T, O, const R: usize, const C: usize> TryFrom<Box<[[T; C]; R]>> for Matrix<T, O>
+where
+    O: Order,
+{
+    type Error = Error;
+
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    fn try_from(value: Box<[[T; C]; R]>) -> Result<Self> {
+        Self::try_from_rows(value)
+    }
+}
+
+impl<T, O, const C: usize> TryFrom<Box<[[T; C]]>> for Matrix<T, O>
+where
+    O: Order,
+{
+    type Error = Error;
+
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    fn try_from(value: Box<[[T; C]]>) -> Result<Self> {
+        Self::try_from_rows(value)
+    }
+}
+
+impl<T, O, const C: usize> TryFrom<Vec<[T; C]>> for Matrix<T, O>
+where
+    O: Order,
+{
+    type Error = Error;
+
+    /// Attempts to convert from a sequence of rows.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the total number of elements exceeds [`usize::MAX`].
+    fn try_from(value: Vec<[T; C]>) -> Result<Self> {
+        Self::try_from_rows(value)
+    }
+}
 
 impl<T, O, const R: usize, const C: usize> TryFrom<[Box<[T; C]>; R]> for Matrix<T, O>
 where
@@ -300,35 +348,28 @@ mod tests {
     use alloc::vec;
 
     #[test]
-    fn test_from() {
-        let expected = Matrix::<i32, RowMajor>::from_rows([[1, 2, 3], [4, 5, 6]]);
-
-        dispatch_unary! {{
-            let seq: [[i32; 3]; 2] = [[1, 2, 3], [4, 5, 6]];
-            let output = Matrix::<i32, O>::from(seq);
-            assert_eq!(output, expected);
-
-            let seq: Box<[[i32; 3]; 2]> = Box::new([[1, 2, 3], [4, 5, 6]]);
-            let output = Matrix::<i32, O>::from(seq);
-            assert_eq!(output, expected);
-
-            let seq: Box<[[i32; 3]]> = Box::new([[1, 2, 3], [4, 5, 6]]);
-            let output = Matrix::<i32, O>::from(seq);
-            assert_eq!(output, expected);
-
-            let seq: Vec<[i32; 3]> = vec![[1, 2, 3], [4, 5, 6]];
-            let output = Matrix::<i32, O>::from(seq);
-            assert_eq!(output, expected);
-        }}
-    }
-
-    #[test]
     fn test_try_from() {
         const MAX: usize = isize::MAX as usize;
 
-        let expected = Matrix::<i32, RowMajor>::from_rows([[1, 2, 3], [4, 5, 6]]);
+        let expected = Matrix::<i32, RowMajor>::try_from_rows([[1, 2, 3], [4, 5, 6]]).unwrap();
 
         dispatch_unary! {{
+            let seq: [[i32; 3]; 2] = [[1, 2, 3], [4, 5, 6]];
+            let output = Matrix::<i32, O>::try_from(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Box<[[i32; 3]; 2]> = Box::new([[1, 2, 3], [4, 5, 6]]);
+            let output = Matrix::<i32, O>::try_from(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Box<[[i32; 3]]> = Box::new([[1, 2, 3], [4, 5, 6]]);
+            let output = Matrix::<i32, O>::try_from(seq).unwrap();
+            assert_eq!(output, expected);
+
+            let seq: Vec<[i32; 3]> = vec![[1, 2, 3], [4, 5, 6]];
+            let output = Matrix::<i32, O>::try_from(seq).unwrap();
+            assert_eq!(output, expected);
+
             let seq: [Box<[i32; 3]>; 2] = [Box::new([1, 2, 3]), Box::new([4, 5, 6])];
             let output = Matrix::<i32, O>::try_from(seq).unwrap();
             assert_eq!(output, expected);
@@ -377,6 +418,18 @@ mod tests {
             let output = Matrix::<i32, O>::try_from(seq).unwrap();
             assert_eq!(output, expected);
 
+            let seq: [[(); MAX]; 2] = [[(); MAX], [(); MAX]];
+            assert!(Matrix::<(), O>::try_from(seq).is_ok());
+
+            let seq: Box<[[(); MAX]; 2]> = Box::new([[(); MAX], [(); MAX]]);
+            assert!(Matrix::<(), O>::try_from(seq).is_ok());
+
+            let seq: Box<[[(); MAX]]> = Box::new([[(); MAX], [(); MAX]]);
+            assert!(Matrix::<(), O>::try_from(seq).is_ok());
+
+            let seq: Vec<[(); MAX]> = vec![[(); MAX], [(); MAX]];
+            assert!(Matrix::<(), O>::try_from(seq).is_ok());
+
             let seq: [Box<[(); MAX]>; 2] = [Box::new([(); MAX]), Box::new([(); MAX])];
             assert!(Matrix::<(), O>::try_from(seq).is_ok());
 
@@ -413,6 +466,22 @@ mod tests {
 
             let seq: Vec<Vec<()>> = vec![vec![(); MAX], vec![(); MAX]];
             assert!(Matrix::<(), O>::try_from(seq).is_ok());
+
+            let seq: [[(); MAX]; 3] = [[(); MAX], [(); MAX], [(); MAX]];
+            let error = Matrix::<(), O>::try_from(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Box<[[(); MAX]; 3]> = Box::new([[(); MAX], [(); MAX], [(); MAX]]);
+            let error = Matrix::<(), O>::try_from(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Box<[[(); MAX]]> = Box::new([[(); MAX], [(); MAX], [(); MAX]]);
+            let error = Matrix::<(), O>::try_from(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let seq: Vec<[(); MAX]> = vec![[(); MAX], [(); MAX], [(); MAX]];
+            let error = Matrix::<(), O>::try_from(seq).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
 
             let seq: [Box<[(); MAX]>; 3] = [
                 Box::new([(); MAX]),
@@ -579,7 +648,7 @@ mod tests {
 
     #[test]
     fn test_from_iter() {
-        let expected = Matrix::<i32, RowMajor>::from_rows([[1, 2, 3], [4, 5, 6]]);
+        let expected = Matrix::<i32, RowMajor>::try_from_rows([[1, 2, 3], [4, 5, 6]]).unwrap();
 
         dispatch_unary! {{
             let iter = [[1, 2, 3], [4, 5, 6]];
@@ -605,22 +674,22 @@ mod tests {
     #[test]
     fn test_into() {
         dispatch_unary! {{
-            let matrix = Matrix::<i32, O>::from_rows([[1, 2, 3], [4, 5, 6]]);
+            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]]).unwrap();
             let expected: Box<[Box<[i32]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
             let output: Box<[Box<[i32]>]> = matrix.into();
             assert_eq!(output, expected);
 
-            let matrix = Matrix::<i32, O>::from_rows([[1, 2, 3], [4, 5, 6]]);
+            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]]).unwrap();
             let expected: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
             let output: Vec<Box<[i32]>> = matrix.into();
             assert_eq!(output, expected);
 
-            let matrix = Matrix::<i32, O>::from_rows([[1, 2, 3], [4, 5, 6]]);
+            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]]).unwrap();
             let expected: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
             let output: Box<[Vec<i32>]> = matrix.into();
             assert_eq!(output, expected);
 
-            let matrix = Matrix::<i32, O>::from_rows([[1, 2, 3], [4, 5, 6]]);
+            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]]).unwrap();
             let expected: Vec<Vec<i32>> = vec![vec![1, 2, 3], vec![4, 5, 6]];
             let output: Vec<Vec<i32>> = matrix.into();
             assert_eq!(output, expected);

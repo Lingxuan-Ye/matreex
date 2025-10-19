@@ -12,7 +12,7 @@ where
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    /// - [`Error::IndexOutOfBounds`] if either index is out of bounds.
     ///
     /// # Examples
     ///
@@ -54,7 +54,7 @@ where
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    /// - [`Error::IndexOutOfBounds`] if either index is out of bounds.
     ///
     /// # Examples
     ///
@@ -80,7 +80,7 @@ where
     ///
     /// # Errors
     ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    /// - [`Error::IndexOutOfBounds`] if either index is out of bounds.
     ///
     /// # Examples
     ///
@@ -102,6 +102,11 @@ where
         }
     }
 
+    /// Swaps the major-axis vectors at the given indices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if either index is out of bounds.
     fn swap_major_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         if m >= self.major() || n >= self.major() {
             return Err(Error::IndexOutOfBounds);
@@ -124,6 +129,11 @@ where
         Ok(self)
     }
 
+    /// Swaps the minor-axis vectors at the given indices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if either index is out of bounds.
     fn swap_minor_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         if m >= self.minor() || n >= self.minor() {
             return Err(Error::IndexOutOfBounds);
