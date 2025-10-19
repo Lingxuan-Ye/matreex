@@ -570,6 +570,9 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
+    /// Returns a shared reference of the nth major-axis vector, without performing
+    /// any bounds checking.
+    ///
     /// # Safety
     ///
     /// Calling this method when `n >= self.major()` is *[undefined behavior]*.

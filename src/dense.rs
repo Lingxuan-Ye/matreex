@@ -63,7 +63,7 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
-    /// Returns the shape of the matrix.
+    /// Returns the shape.
     ///
     /// # Examples
     ///
@@ -79,7 +79,7 @@ where
         self.layout.to_shape()
     }
 
-    /// Returns the number of rows in the matrix.
+    /// Returns the number of rows.
     ///
     /// # Examples
     ///
@@ -93,7 +93,7 @@ where
         self.shape().nrows()
     }
 
-    /// Returns the number of columns in the matrix.
+    /// Returns the number of columns.
     ///
     /// # Examples
     ///
@@ -107,7 +107,7 @@ where
         self.shape().ncols()
     }
 
-    /// Returns the total number of elements in the matrix.
+    /// Returns the total number of elements.
     ///
     /// # Examples
     ///
@@ -135,7 +135,7 @@ where
         self.data.is_empty()
     }
 
-    /// Returns the capacity of the matrix.
+    /// Returns the capacity.
     ///
     /// # Examples
     ///
@@ -153,17 +153,17 @@ where
         self.data.capacity()
     }
 
-    /// Returns the length of the major axis.
+    /// Returns the major axis length.
     fn major(&self) -> usize {
         self.layout.major()
     }
 
-    /// Returns the length of the minor axis.
+    /// Returns the minor axis length.
     fn minor(&self) -> usize {
         self.layout.minor()
     }
 
-    /// Returns the stride of the matrix.
+    /// Returns the stride.
     fn stride(&self) -> Stride {
         self.layout.stride()
     }
@@ -404,8 +404,7 @@ where
         self
     }
 
-    /// Applies a closure to each element of the matrix, modifying the matrix in
-    /// place.
+    /// Applies a closure to each element, modifying the matrix in place.
     ///
     /// # Examples
     ///
@@ -424,8 +423,9 @@ where
         self
     }
 
-    /// Applies a closure to each element of the matrix, returning a new matrix
-    /// with the results.
+    /// Applies a closure to each element, returning a new matrix with the results.
+    ///
+    /// See [`map_ref`] for a non-consuming version.
     ///
     /// # Errors
     ///
@@ -441,6 +441,7 @@ where
     /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
     ///
+    /// [`map_ref`]: Matrix::map_ref
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn map<F, U>(self, f: F) -> Result<Matrix<U, O>>
     where
@@ -451,8 +452,9 @@ where
         Ok(Matrix { layout, data })
     }
 
-    /// Applies a closure to each element of the matrix by reference, returning
-    /// a new matrix with the results.
+    /// Applies a closure to each element, returning a new matrix with the results.
+    ///
+    /// See [`map`] for a consuming version.
     ///
     /// # Errors
     ///
@@ -468,6 +470,7 @@ where
     /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
     ///
+    /// [`map`]: Matrix::map
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn map_ref<'a, F, U>(&'a self, f: F) -> Result<Matrix<U, O>>
     where

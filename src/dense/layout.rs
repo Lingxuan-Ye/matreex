@@ -75,16 +75,33 @@ impl<T, O> Layout<T, O>
 where
     O: Order,
 {
+    /// Creates a new [`Layout<T, O>`] with the specified axis lengths.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if `major * minor` exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes for the
+    ///   corresponding matrix exceeds [`isize::MAX`].
     fn new(major: usize, minor: usize) -> Result<Self> {
         Self::new_with_size(major, minor).map(|(layout, _)| layout)
     }
 
+    /// Creates a new [`Layout<T, O>`] with the specified axis lengths, returning
+    /// the layout and its size.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if `major * minor` exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes for the
+    ///   corresponding matrix exceeds [`isize::MAX`].
     fn new_with_size(major: usize, minor: usize) -> Result<(Self, usize)> {
         let size = major.checked_mul(minor).ok_or(Error::SizeOverflow)?;
         Self::check_size(size)?;
         Ok((Self::new_unchecked(major, minor), size))
     }
 
+    /// Creates a new [`Layout<T, O>`] with the specified axis lengths, without
+    /// performing any invariant checking.
     const fn new_unchecked(major: usize, minor: usize) -> Self {
         Self {
             major,
@@ -94,6 +111,14 @@ where
         }
     }
 
+    /// Creates a new [`Layout<T, O>`] with the specified shape, returning
+    /// the layout and its size.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if the size of the shape exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes for the
+    ///   corresponding matrix exceeds [`isize::MAX`].
     pub(super) fn from_shape_with_size<S>(shape: S) -> Result<(Self, usize)>
     where
         S: AsShape,
@@ -104,6 +129,8 @@ where
         }
     }
 
+    /// Creates a new [`Layout<T, O>`] with the specified shape, without
+    /// performing any invariant checking.
     pub(super) fn from_shape_unchecked<S>(shape: S) -> Self
     where
         S: AsShape,
@@ -114,6 +141,7 @@ where
         }
     }
 
+    /// Converts this layout to a [`Shape`].
     pub(super) fn to_shape(self) -> Shape {
         match O::KIND {
             OrderKind::RowMajor => Shape::new(self.major, self.minor),
@@ -121,6 +149,7 @@ where
         }
     }
 
+    /// Converts to a layout with the specified storage orde.
     pub(super) fn with_order<P>(self) -> Layout<T, P>
     where
         P: Order,
@@ -128,27 +157,38 @@ where
         Layout::new_unchecked(self.major, self.minor)
     }
 
+    /// Converts to a layout with the specified element type.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes for the
+    ///   corresponding matrix of the returned layout exceeds [`isize::MAX`].
     pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
         Layout::<U, O>::check_size(self.size())?;
         Ok(Layout::new_unchecked(self.major, self.minor))
     }
 
+    /// Returns the major axis length.
     pub(super) fn major(&self) -> usize {
         self.major
     }
 
+    /// Returns the minor axis length.
     pub(super) fn minor(&self) -> usize {
         self.minor
     }
 
+    /// Returns the stride.
     pub(super) fn stride(&self) -> Stride {
         Stride(self.minor)
     }
 
+    /// Returns the size.
     pub(super) fn size(&self) -> usize {
         self.major * self.minor
     }
 
+    /// Swaps the major and minor axes.
     pub(super) fn swap(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
@@ -159,12 +199,19 @@ impl<T, O> Layout<T, O>
 where
     O: Order,
 {
+    /// The maximum layout size.
     const MAX_SIZE: usize = if size_of::<T>() == 0 {
         usize::MAX
     } else {
         isize::MAX as usize / size_of::<T>()
     };
 
+    /// Checks if the given size is valid.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes for a
+    ///   matrix with the given number of elements exceeds [`isize::MAX`].
     pub(super) fn check_size(size: usize) -> Result<()> {
         if size > Self::MAX_SIZE {
             Err(Error::CapacityOverflow)
@@ -227,10 +274,12 @@ impl<T, O> Eq for Layout<T, O> where O: Order {}
 pub(super) struct Stride(usize);
 
 impl Stride {
+    /// Returns the major axis stride.
     pub(super) fn major(&self) -> usize {
         self.0
     }
 
+    /// Returns the minor axis stride.
     pub(super) fn minor(&self) -> usize {
         1
     }

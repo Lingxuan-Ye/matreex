@@ -26,7 +26,7 @@ pub enum Error {
     /// inconsistent lengths.
     LengthInconsistent,
 
-    /// Error when the index is out of bounds
+    /// Error when the index is out of bounds.
     IndexOutOfBounds,
 
     /// Error when the shapes of two matrices are not conformable for

@@ -8,8 +8,8 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
-    /// Applies a closure to each element of the matrix in parallel, modifying the
-    /// matrix in place.
+    /// Applies a closure to each element in parallel, modifying the matrix in
+    /// place.
     ///
     /// # Examples
     ///
@@ -29,8 +29,10 @@ where
         self
     }
 
-    /// Applies a closure to each element of the matrix in parallel, returning a new
-    /// matrix with the results.
+    /// Applies a closure to each element in parallel, returning a new matrix with
+    /// the results.
+    ///
+    /// See [`par_map_ref`] for a non-consuming version.
     ///
     /// # Errors
     ///
@@ -46,6 +48,7 @@ where
     /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
     ///
+    /// [`par_map_ref`]: Matrix::par_map_ref
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn par_map<F, U>(self, f: F) -> Result<Matrix<U, O>>
     where
@@ -58,8 +61,10 @@ where
         Ok(Matrix { layout, data })
     }
 
-    /// Applies a closure to each element of the matrix in parallel by reference,
-    /// returning a new matrix with the results.
+    /// Applies a closure to each element in parallel, returning a new matrix with
+    /// the results.
+    ///
+    /// See [`par_map`] for a consuming version.
     ///
     /// # Errors
     ///
@@ -75,6 +80,7 @@ where
     /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
     /// ```
     ///
+    /// [`par_map`]: Matrix::par_map
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn par_map_ref<'a, F, U>(&'a self, f: F) -> Result<Matrix<U, O>>
     where
@@ -92,7 +98,7 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
-    /// Returns a parallel iterator over the elements of the matrix.
+    /// Returns a parallel iterator over the elements.
     ///
     /// # Examples
     ///
@@ -111,8 +117,7 @@ where
         self.data.par_iter()
     }
 
-    /// Returns a parallel iterator that allows modifying each element
-    /// of the matrix.
+    /// Returns a parallel iterator that allows modifying each element.
     ///
     /// # Examples
     ///
@@ -153,8 +158,7 @@ where
         self.data.into_par_iter()
     }
 
-    /// Returns a parallel iterator over the elements of the matrix along with their
-    /// indices.
+    /// Returns a parallel iterator over the elements along with their indices.
     ///
     /// # Examples
     ///
@@ -183,8 +187,8 @@ where
             })
     }
 
-    /// Returns a parallel iterator that allows modifying each element of the matrix
-    /// along with its index.
+    /// Returns a parallel iterator that allows modifying each element along with
+    /// its index.
     ///
     /// # Examples
     ///
