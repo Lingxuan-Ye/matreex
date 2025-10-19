@@ -81,7 +81,7 @@ where
 
     fn new_with_size(major: usize, minor: usize) -> Result<(Self, usize)> {
         let size = major.checked_mul(minor).ok_or(Error::SizeOverflow)?;
-        Self::ensure_can_hold(size)?;
+        Self::check_size(size)?;
         Ok((Self::new_unchecked(major, minor), size))
     }
 
@@ -129,7 +129,7 @@ where
     }
 
     pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
-        Layout::<U, O>::ensure_can_hold(self.size())?;
+        Layout::<U, O>::check_size(self.size())?;
         Ok(Layout::new_unchecked(self.major, self.minor))
     }
 
@@ -165,7 +165,7 @@ where
         isize::MAX as usize / size_of::<T>()
     };
 
-    pub(super) fn ensure_can_hold(size: usize) -> Result<()> {
+    pub(super) fn check_size(size: usize) -> Result<()> {
         if size > Self::MAX_SIZE {
             Err(Error::CapacityOverflow)
         } else {

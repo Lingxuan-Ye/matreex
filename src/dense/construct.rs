@@ -52,7 +52,7 @@ where
     ///
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
     pub fn with_capacity(capacity: usize) -> Result<Self> {
-        Layout::<T, O>::ensure_can_hold(capacity)?;
+        Layout::<T, O>::check_size(capacity)?;
         let layout = Layout::default();
         let data = Vec::with_capacity(capacity);
         Ok(Self { layout, data })
