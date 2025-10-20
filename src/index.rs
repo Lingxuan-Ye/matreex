@@ -354,6 +354,14 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_index_from_wrapping_index_fails() {
+        let shape = Shape::new(0, 3);
+        let index = WrappingIndex::new(2, 3);
+        Index::from_wrapping_index(index, shape);
+    }
+
+    #[test]
     fn test_index_swap() {
         let mut index = Index::new(2, 3);
         index.swap();
@@ -425,6 +433,14 @@ mod tests {
                 assert_eq!(index, Index::new(0, 0));
             }
         }
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_wrapping_index_to_index_fails() {
+        let shape = Shape::new(0, 3);
+        let index = WrappingIndex::new(2, 3);
+        index.to_index(shape);
     }
 
     #[test]
