@@ -36,6 +36,10 @@ impl Index {
 
     /// Creates a new [`Index`] from a [`WrappingIndex`].
     ///
+    /// # Panics
+    ///
+    /// Panics if `shape.size() == 0`.
+    ///
     /// # Examples
     ///
     /// ```
@@ -201,6 +205,10 @@ impl WrappingIndex {
     }
 
     /// Converts this wrapping index to an [`Index`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if `shape.size() == 0`.
     ///
     /// # Examples
     ///
