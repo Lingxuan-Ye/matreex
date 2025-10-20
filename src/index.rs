@@ -38,7 +38,7 @@ impl Index {
     ///
     /// # Panics
     ///
-    /// Panics if `shape.size() == 0`.
+    /// Panics if `shape.nrows() == 0` or `shape.ncols() == 0`.
     ///
     /// # Examples
     ///
@@ -208,7 +208,7 @@ impl WrappingIndex {
     ///
     /// # Panics
     ///
-    /// Panics if `shape.size() == 0`.
+    /// Panics if `shape.nrows() == 0` or `shape.ncols() == 0`.
     ///
     /// # Examples
     ///
