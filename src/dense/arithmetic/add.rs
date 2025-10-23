@@ -198,7 +198,7 @@ mod tests {
     use crate::{dispatch_binary, dispatch_unary, matrix};
 
     #[derive(Clone, Debug, PartialEq)]
-    pub struct MockL(i32);
+    struct MockL(i32);
 
     #[derive(Clone)]
     struct MockR(i32);

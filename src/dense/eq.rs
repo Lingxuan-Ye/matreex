@@ -41,7 +41,7 @@ mod tests {
     use alloc::vec;
 
     #[derive(Debug)]
-    pub struct MockL(i32);
+    struct MockL(i32);
 
     #[derive(Debug)]
     struct MockR(i32);
