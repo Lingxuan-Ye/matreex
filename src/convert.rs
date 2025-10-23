@@ -9,12 +9,20 @@ pub trait TryFromRows<S>: Sized {
 }
 
 /// A trait for matrix conversion from an iterator over rows.
-pub trait FromRowIterator<R, T>
-where
-    R: IntoIterator<Item = T>,
-{
+pub trait FromRowIterator<R, T> {
     /// Converts from an iterator over rows.
     fn from_row_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = R>;
+}
+
+/// A trait for fallible matrix conversion from an iterator over rows.
+pub trait TryFromRowIterator<R, T>: Sized
+where
+    R: Iterator<Item = T>,
+{
+    /// Attempts to convert from an iterator over rows.
+    fn try_from_row_iter<I>(iter: I) -> Result<Self>
     where
         I: IntoIterator<Item = R>;
 }
@@ -26,12 +34,20 @@ pub trait TryFromCols<S>: Sized {
 }
 
 /// A trait for matrix conversion from an iterator over columns.
-pub trait FromColIterator<C, T>
-where
-    C: IntoIterator<Item = T>,
-{
+pub trait FromColIterator<C, T> {
     /// Converts from an iterator over columns.
     fn from_col_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = C>;
+}
+
+/// A trait for fallible matrix conversion from an iterator over rows.
+pub trait TryFromColIterator<C, T>: Sized
+where
+    C: Iterator<Item = T>,
+{
+    /// Attempts to convert from an iterator over rows.
+    fn try_from_col_iter<I>(iter: I) -> Result<Self>
     where
         I: IntoIterator<Item = C>;
 }
