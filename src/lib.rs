@@ -109,6 +109,9 @@ pub mod parallel;
 
 mod macros;
 
+#[cfg(test)]
+mod mock;
+
 /// An alias for [`dense::Matrix<T, RowMajor>`].
 ///
 /// This provides a better experience for type inference than giving the type

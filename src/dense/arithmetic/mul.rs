@@ -185,34 +185,9 @@ impl_primitive_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize 
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::error::Error;
+    use crate::mock::{MockL, MockR, MockU};
     use crate::{dispatch_binary, dispatch_unary, matrix};
-
-    #[derive(Clone)]
-    struct MockL(i32);
-
-    #[derive(Clone)]
-    struct MockR(i32);
-
-    #[derive(Debug, Default, PartialEq)]
-    struct MockU(i32);
-
-    impl Mul<MockR> for MockL {
-        type Output = MockU;
-
-        fn mul(self, rhs: MockR) -> Self::Output {
-            MockU(self.0 * rhs.0)
-        }
-    }
-
-    impl Add for MockU {
-        type Output = Self;
-
-        fn add(self, rhs: Self) -> Self::Output {
-            Self(self.0 + rhs.0)
-        }
-    }
 
     #[test]
     fn test_mul() {

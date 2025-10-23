@@ -8,8 +8,8 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
-    /// Applies a closure to each element in parallel, modifying the matrix in
-    /// place.
+    /// Applies a closure to each element in parallel, modifying the matrix
+    /// in-place.
     ///
     /// # Examples
     ///

@@ -75,17 +75,6 @@ impl<T, O> Layout<T, O>
 where
     O: Order,
 {
-    /// Creates a new [`Layout<T, O>`] with the specified axis lengths.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeOverflow`] if `major * minor` exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if the required capacity in bytes for the
-    ///   corresponding matrix exceeds [`isize::MAX`].
-    fn new(major: usize, minor: usize) -> Result<Self> {
-        Self::new_with_size(major, minor).map(|(layout, _)| layout)
-    }
-
     /// Creates a new [`Layout<T, O>`] with the specified axis lengths, returning
     /// the layout and its size.
     ///

@@ -37,30 +37,19 @@ where
 mod tests {
     use super::super::layout::{ColMajor, Layout, RowMajor};
     use super::*;
+    use crate::mock::{MockL, MockR};
     use crate::shape::Shape;
     use alloc::vec;
 
-    #[derive(Debug)]
-    pub struct MockL(i32);
-
-    #[derive(Debug)]
-    struct MockR(i32);
-
-    impl PartialEq<MockR> for MockL {
-        fn eq(&self, other: &MockR) -> bool {
-            self.0 == other.0
-        }
-    }
-
     #[test]
     fn test_eq() {
-        let lhs: Matrix<MockL, RowMajor> = {
+        let lhs: Matrix<MockL<i32>, RowMajor> = {
             let shape = Shape::new(2, 3);
             let layout = Layout::from_shape_unchecked(shape);
             let data = vec![MockL(1), MockL(2), MockL(3), MockL(4), MockL(5), MockL(6)];
             Matrix { layout, data }
         };
-        let rhs: Matrix<MockR, RowMajor> = {
+        let rhs: Matrix<MockR<i32>, RowMajor> = {
             let shape = Shape::new(2, 3);
             let layout = Layout::from_shape_unchecked(shape);
             let data = vec![MockR(1), MockR(2), MockR(3), MockR(4), MockR(5), MockR(6)];
@@ -68,13 +57,13 @@ mod tests {
         };
         assert_eq!(lhs, rhs);
 
-        let lhs: Matrix<MockL, RowMajor> = {
+        let lhs: Matrix<MockL<i32>, RowMajor> = {
             let shape = Shape::new(2, 3);
             let layout = Layout::from_shape_unchecked(shape);
             let data = vec![MockL(1), MockL(2), MockL(3), MockL(4), MockL(5), MockL(6)];
             Matrix { layout, data }
         };
-        let rhs: Matrix<MockR, ColMajor> = {
+        let rhs: Matrix<MockR<i32>, ColMajor> = {
             let shape = Shape::new(2, 3);
             let layout = Layout::from_shape_unchecked(shape);
             let data = vec![MockR(1), MockR(4), MockR(2), MockR(5), MockR(3), MockR(6)];
@@ -82,13 +71,13 @@ mod tests {
         };
         assert_eq!(lhs, rhs);
 
-        let lhs: Matrix<MockL, ColMajor> = {
+        let lhs: Matrix<MockL<i32>, ColMajor> = {
             let shape = Shape::new(2, 3);
             let layout = Layout::from_shape_unchecked(shape);
             let data = vec![MockL(1), MockL(4), MockL(2), MockL(5), MockL(3), MockL(6)];
             Matrix { layout, data }
         };
-        let rhs: Matrix<MockR, RowMajor> = {
+        let rhs: Matrix<MockR<i32>, RowMajor> = {
             let shape = Shape::new(2, 3);
             let layout = Layout::from_shape_unchecked(shape);
             let data = vec![MockR(1), MockR(2), MockR(3), MockR(4), MockR(5), MockR(6)];
@@ -96,13 +85,13 @@ mod tests {
         };
         assert_eq!(lhs, rhs);
 
-        let lhs: Matrix<MockL, ColMajor> = {
+        let lhs: Matrix<MockL<i32>, ColMajor> = {
             let shape = Shape::new(2, 3);
             let layout = Layout::from_shape_unchecked(shape);
             let data = vec![MockL(1), MockL(4), MockL(2), MockL(5), MockL(3), MockL(6)];
             Matrix { layout, data }
         };
-        let rhs: Matrix<MockR, ColMajor> = {
+        let rhs: Matrix<MockR<i32>, ColMajor> = {
             let shape = Shape::new(2, 3);
             let layout = Layout::from_shape_unchecked(shape);
             let data = vec![MockR(1), MockR(4), MockR(2), MockR(5), MockR(3), MockR(6)];
