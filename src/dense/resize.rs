@@ -998,7 +998,7 @@ mod tests {
                 } else {
                     let mut matrix =
                         Matrix::<_, O>::with_initializer(old_shape, |index| index).unwrap();
-                    // Ensure the in place path is taken.
+                    // Ensure the in-place path is taken.
                     matrix.data.reserve(new_size - old_size);
                     assert!(new_size <= matrix.capacity());
                     matrix.resize(new_shape, Index::default()).unwrap();
@@ -1101,7 +1101,7 @@ mod tests {
                 } else {
                     let mut matrix =
                         Matrix::<_, O>::with_initializer(old_shape, |index| index).unwrap();
-                    // Ensure the in place path is taken.
+                    // Ensure the in-place path is taken.
                     matrix.data.reserve(new_size - old_size);
                     assert!(new_size <= matrix.capacity());
                     matrix.resize_with(new_shape, |index| index).unwrap();

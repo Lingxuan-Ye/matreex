@@ -404,7 +404,7 @@ where
         self
     }
 
-    /// Applies a closure to each element, modifying the matrix in place.
+    /// Applies a closure to each element, modifying the matrix in-place.
     ///
     /// # Examples
     ///

@@ -2,7 +2,7 @@
 
 use crate::error::Result;
 
-/// A trait for matrix conversion from a sequence of rows.
+/// A trait for fallible matrix conversion from a sequence of rows.
 pub trait TryFromRows<S>: Sized {
     /// Attempts to convert from a sequence of rows.
     fn try_from_rows(value: S) -> Result<Self>;
@@ -19,7 +19,7 @@ where
         I: IntoIterator<Item = R>;
 }
 
-/// A trait for matrix conversion from a sequence of columns.
+/// A trait for fallible matrix conversion from a sequence of columns.
 pub trait TryFromCols<S>: Sized {
     /// Attempts to convert from a sequence of columns.
     fn try_from_cols(value: S) -> Result<Self>;
