@@ -57,7 +57,9 @@ where
             .next_element()?
             .ok_or_else(|| Error::invalid_length(1, &self))?;
 
-        Layout::new(major, minor).map_err(A::Error::custom)
+        Layout::new_with_size(major, minor)
+            .map(|(layout, _)| layout)
+            .map_err(A::Error::custom)
     }
 
     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
@@ -87,7 +89,9 @@ where
         let major = major.ok_or_else(|| Error::missing_field("major"))?;
         let minor = minor.ok_or_else(|| Error::missing_field("minor"))?;
 
-        Layout::new(major, minor).map_err(A::Error::custom)
+        Layout::new_with_size(major, minor)
+            .map(|(layout, _)| layout)
+            .map_err(A::Error::custom)
     }
 }
 
