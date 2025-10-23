@@ -5,6 +5,7 @@ use crate::error::{Error, Result};
 use crate::shape::Shape;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
+use core::mem;
 
 impl<T, O, const R: usize, const C: usize> TryFromRows<[[T; C]; R]> for Matrix<T, O>
 where
@@ -22,6 +23,8 @@ where
         let (layout, size) = Layout::<T, RowMajor>::from_shape_with_size(shape)?;
         let mut data = Vec::with_capacity(size);
         if size_of::<T>() == 0 {
+            // Prevent dropping `T`s, since they are logically moved.
+            mem::forget(value);
             unsafe {
                 data.set_len(size);
             }
@@ -78,6 +81,9 @@ where
         let (layout, size) = Layout::<T, RowMajor>::from_shape_with_size(shape)?;
         let mut data = Vec::with_capacity(size);
         if size_of::<T>() == 0 {
+            // Prevent dropping `T`s, since they are logically moved. Note that this will
+            // not leak, since a zero-sized type vector does not actually allocate.
+            mem::forget(value);
             unsafe {
                 data.set_len(size);
             }
