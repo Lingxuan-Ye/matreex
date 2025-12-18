@@ -64,9 +64,9 @@ where
             .ok_or_else(|| Error::invalid_length(1, &self))?;
 
         if layout.size() != data.len() {
-            Err(A::Error::custom(SizeMismatch))
+            Err(Error::custom(SizeMismatch))
         } else {
-            Ok(Self::Value { layout, data })
+            Ok(Matrix { layout, data })
         }
     }
 
@@ -98,9 +98,9 @@ where
         let data = data.ok_or_else(|| Error::missing_field("data"))?;
 
         if layout.size() != data.len() {
-            Err(A::Error::custom(SizeMismatch))
+            Err(Error::custom(SizeMismatch))
         } else {
-            Ok(Self::Value { layout, data })
+            Ok(Matrix { layout, data })
         }
     }
 }
@@ -135,9 +135,9 @@ impl Visitor<'_> for FieldVisitor {
         E: Error,
     {
         match value {
-            "layout" => Ok(Self::Value::Layout),
-            "data" => Ok(Self::Value::Data),
-            _ => Err(E::unknown_field(value, FIELDS)),
+            "layout" => Ok(Field::Layout),
+            "data" => Ok(Field::Data),
+            _ => Err(Error::unknown_field(value, FIELDS)),
         }
     }
 }
