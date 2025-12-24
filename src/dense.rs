@@ -73,8 +73,8 @@ where
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let shape = matrix.shape();
-    /// assert_eq!(shape.nrows(), 2);
-    /// assert_eq!(shape.ncols(), 3);
+    /// assert_eq!(shape.nrows, 2);
+    /// assert_eq!(shape.ncols, 3);
     /// ```
     pub fn shape(&self) -> Shape {
         self.layout.to_shape()
@@ -91,7 +91,7 @@ where
     /// assert_eq!(matrix.nrows(), 2);
     /// ```
     pub fn nrows(&self) -> usize {
-        self.shape().nrows()
+        self.shape().nrows
     }
 
     /// Returns the number of columns.
@@ -105,7 +105,7 @@ where
     /// assert_eq!(matrix.ncols(), 3);
     /// ```
     pub fn ncols(&self) -> usize {
-        self.shape().ncols()
+        self.shape().ncols
     }
 
     /// Returns the total number of elements.

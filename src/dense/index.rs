@@ -125,7 +125,7 @@ where
 
     fn is_out_of_bounds(&self, matrix: &Matrix<T, O>) -> bool {
         let shape = matrix.shape();
-        self.row() >= shape.nrows() || self.col() >= shape.ncols()
+        self.row() >= shape.nrows || self.col() >= shape.ncols
     }
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T, O>) -> Self::Output<'_> {

@@ -9,8 +9,11 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Shape {
-    nrows: usize,
-    ncols: usize,
+    /// The number of rows.
+    pub nrows: usize,
+
+    /// The number of columns.
+    pub ncols: usize,
 }
 
 impl Shape {
@@ -22,42 +25,12 @@ impl Shape {
     /// use matreex::Shape;
     ///
     /// let shape = Shape::new(2, 3);
-    /// assert_eq!(shape.nrows(), 2);
-    /// assert_eq!(shape.ncols(), 3);
+    /// assert_eq!(shape.nrows, 2);
+    /// assert_eq!(shape.ncols, 3);
     /// ```
     #[inline]
     pub fn new(nrows: usize, ncols: usize) -> Self {
         Self { nrows, ncols }
-    }
-
-    /// Returns the number of rows.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Shape;
-    ///
-    /// let shape = Shape::new(2, 3);
-    /// assert_eq!(shape.nrows(), 2);
-    /// ```
-    #[inline]
-    pub fn nrows(&self) -> usize {
-        self.nrows
-    }
-
-    /// Returns the number of columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Shape;
-    ///
-    /// let shape = Shape::new(2, 3);
-    /// assert_eq!(shape.ncols(), 3);
-    /// ```
-    #[inline]
-    pub fn ncols(&self) -> usize {
-        self.ncols
     }
 
     /// Returns the size.
@@ -210,24 +183,6 @@ mod tests {
 
         let shape: Shape = Shape::new(3, 2);
         assert_eq!(shape, Shape { nrows: 3, ncols: 2 });
-    }
-
-    #[test]
-    fn test_shape_nrows() {
-        let shape = Shape::new(2, 3);
-        assert_eq!(shape.nrows(), 2);
-
-        let shape: Shape = Shape::new(3, 2);
-        assert_eq!(shape.nrows(), 3);
-    }
-
-    #[test]
-    fn test_shape_ncols() {
-        let shape = Shape::new(2, 3);
-        assert_eq!(shape.ncols(), 3);
-
-        let shape: Shape = Shape::new(3, 2);
-        assert_eq!(shape.ncols(), 2);
     }
 
     #[test]

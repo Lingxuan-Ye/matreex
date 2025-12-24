@@ -32,13 +32,13 @@ where
 {
     fn into_cols(self) -> Box<[Vec<T>]> {
         let shape = self.shape();
-        let nrows = shape.nrows();
-        let ncols = shape.ncols();
         let stride = self.stride();
 
         match O::KIND {
             OrderKind::RowMajor => {
-                let mut output: Box<_> = (0..ncols).map(|_| Vec::with_capacity(nrows)).collect();
+                let mut output: Box<_> = (0..shape.ncols)
+                    .map(|_| Vec::with_capacity(shape.nrows))
+                    .collect();
                 self.data
                     .into_iter()
                     .enumerate()
@@ -51,8 +51,8 @@ where
 
             OrderKind::ColMajor => {
                 let mut iter = self.data.into_iter();
-                (0..ncols)
-                    .map(|_| iter.by_ref().take(nrows).collect())
+                (0..shape.ncols)
+                    .map(|_| iter.by_ref().take(shape.nrows).collect())
                     .collect()
             }
         }
