@@ -202,7 +202,7 @@ where
     /// # Safety
     ///
     /// This method is safe, despite being marked `unsafe`. If no panic occurs,
-    /// the output returned is guaranteed to be valid.
+    /// the returned output is guaranteed to be valid.
     unsafe fn get_unchecked(self, matrix: &Matrix<T, O>) -> Self::Output<'_> {
         let shape = matrix.shape();
         let stride = matrix.stride();
@@ -220,7 +220,7 @@ where
     /// # Safety
     ///
     /// This method is safe, despite being marked `unsafe`. If no panic occurs,
-    /// the output returned is guaranteed to be valid.
+    /// the returned output is guaranteed to be valid.
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T, O>) -> Self::OutputMut<'_> {
         let shape = matrix.shape();
         let stride = matrix.stride();
