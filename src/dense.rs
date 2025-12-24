@@ -18,6 +18,7 @@ mod eq;
 mod fmt;
 mod index;
 mod iter;
+mod mem;
 mod resize;
 mod swap;
 
