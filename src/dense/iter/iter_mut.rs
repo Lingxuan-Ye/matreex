@@ -26,7 +26,7 @@ pub(super) struct IterVectorsMut<'a, T> {
     marker: PhantomData<&'a mut T>,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Layout {
     axis_stride: NonZero<usize>,
     vector_stride: NonZero<usize>,

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 /// A struct representing the shape of a matrix.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, Hash, PartialEq, Eq)]
 pub struct Shape {
     /// The number of rows.
     pub nrows: usize,

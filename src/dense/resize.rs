@@ -1166,6 +1166,7 @@ mod tests {
         }}
     }
 
+    #[derive(Debug)]
     struct Count {
         init: usize,
         drop: usize,

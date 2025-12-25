@@ -11,18 +11,19 @@ thread_local! {
     static IN_SCOPE: Cell<bool> = const { Cell::new(false) };
 }
 
+#[derive(Debug)]
 pub(crate) struct Scope(PhantomData<*const ()>);
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct MockZeroSized(());
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct MockL<T>(pub(crate) T);
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct MockR<T>(pub(crate) T);
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct MockT<T>(pub(crate) T);
 
 #[derive(Debug, Default, PartialEq)]
@@ -73,6 +74,14 @@ impl Drop for MockZeroSized {
         if IN_SCOPE.try_with(Cell::get) == Ok(true) {
             let _ = DROP_COUNT.try_with(|cell| cell.update(|count| count + 1));
         }
+    }
+}
+
+impl Add for MockZeroSized {
+    type Output = u8;
+
+    fn add(self, _: Self) -> Self::Output {
+        0
     }
 }
 
