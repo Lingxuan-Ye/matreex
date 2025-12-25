@@ -1,4 +1,5 @@
 use core::iter::FusedIterator;
+use core::marker::PhantomData;
 use core::ptr::NonNull;
 
 /// A struct representing a memory range.
@@ -15,7 +16,10 @@ use core::ptr::NonNull;
 /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
 /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
 #[derive(Debug)]
-pub(super) struct MemRange<T>(NonNull<[T]>);
+pub(super) struct MemRange<T> {
+    range: NonNull<[T]>,
+    marker: PhantomData<*mut T>,
+}
 
 impl<T> MemRange<T> {
     /// Creates a [`MemRange`].
@@ -34,7 +38,9 @@ impl<T> MemRange<T> {
     /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
     pub(super) const unsafe fn new(start: *mut T, len: usize) -> Self {
         let start = unsafe { NonNull::new_unchecked(start) };
-        Self(NonNull::slice_from_raw_parts(start, len))
+        let range = NonNull::slice_from_raw_parts(start, len);
+        let marker = PhantomData;
+        Self { range, marker }
     }
 
     /// Returns a pointer to the start of the memory range.
@@ -43,12 +49,12 @@ impl<T> MemRange<T> {
     /// still inside the provenance of the allocated object, but may have `0` bytes
     /// it can read/write.
     fn start(&self) -> *mut T {
-        self.0.as_ptr() as *mut T
+        self.range.as_ptr() as *mut T
     }
 
     /// Returns the length of the memory range.
     fn len(&self) -> usize {
-        self.0.len()
+        self.range.len()
     }
 
     /// Initializes the memory range with the given value.
@@ -153,7 +159,7 @@ impl<T> MemRange<T> {
     ///
     /// [`ptr::drop_in_place`]: core::ptr::drop_in_place
     pub(super) unsafe fn drop_in_place(self) {
-        unsafe { self.0.drop_in_place() }
+        unsafe { self.range.drop_in_place() }
     }
 }
 
