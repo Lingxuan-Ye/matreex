@@ -9,6 +9,24 @@ impl<L, LO> Matrix<L, LO>
 where
     LO: Order,
 {
+    /// Performs multiplication on two matrices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::ShapeNotConformable`] if `self.ncols() != rhs.nrows()`.
+    /// - [`Error::SizeOverflow`] if the computed size of the output matrix exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
+    /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+    /// let result = lhs.multiply(rhs);
+    /// assert_eq!(result, Ok(matrix![[12, 12], [30, 30]]));
+    /// ```
     pub fn multiply<R, RO, U>(self, rhs: Matrix<R, RO>) -> Result<Matrix<U, LO>>
     where
         L: Mul<R, Output = U> + Clone,
@@ -192,11 +210,10 @@ where
     /// ```
     /// use matreex::matrix;
     ///
-    /// fn dot_product(left_row: &[i32], right_col: &[i32]) -> i32 {
-    ///     left_row
-    ///         .iter()
-    ///         .zip(right_col)
-    ///         .map(|(left, right)| left * right)
+    /// fn dot_product(lhs: &[i32], rhs: &[i32]) -> i32 {
+    ///     lhs.iter()
+    ///         .zip(rhs)
+    ///         .map(|(lhs, rhs)| lhs * rhs)
     ///         .reduce(|sum, product| sum + product)
     ///         .unwrap()
     /// }
