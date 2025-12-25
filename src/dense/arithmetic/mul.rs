@@ -484,15 +484,88 @@ impl_primitive_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::{MockL, MockR, MockU};
+    use crate::mock::{MockL, MockR, MockU, MockZeroSized, Scope};
     use crate::{dispatch_binary, dispatch_unary, matrix};
 
     #[test]
+    fn test_multiply() {
+        #[cfg(miri)]
+        let lens = [0, 1, 2, 3, 5];
+        #[cfg(not(miri))]
+        let lens = [0, 1, 2, 3, 5, 7, 11, 13, 17, 19];
+
+        let mut pairs = Vec::with_capacity(lens.len().pow(3));
+        for inner in lens {
+            for nrows in lens {
+                for ncols in lens {
+                    let lhs_shape = Shape::new(nrows, inner);
+                    let rhs_shape = Shape::new(inner, ncols);
+                    pairs.push((lhs_shape, rhs_shape))
+                }
+            }
+        }
+
+        dispatch_binary! {{
+            for &(lhs_shape, rhs_shape) in &pairs {
+                let lhs = Matrix::<_, O>::with_value(lhs_shape, MockZeroSized::new()).unwrap();
+                let rhs = Matrix::<_, P>::with_value(rhs_shape, MockZeroSized::new()).unwrap();
+                Scope::with(|scope| {
+                    let output = lhs.multiply(rhs).unwrap();
+                    let expected_shape = Shape::new(lhs_shape.nrows, rhs_shape.ncols);
+                    assert_eq!(output.shape(), expected_shape);
+                    let expected_count = Count::expected(lhs_shape, rhs_shape);
+                    assert_eq!(scope.init_count(), expected_count.init);
+                    assert_eq!(scope.drop_count(), expected_count.drop);
+                    assert_eq!(scope.add_count(), expected_count.add);
+                    assert_eq!(scope.mul_count(), expected_count.mul);
+                });
+            }
+
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[1, 2], [3, 4], [5, 6]].with_order::<P>();
+            let output = lhs.multiply(rhs).unwrap();
+            let expected = matrix![[22, 28], [49, 64]];
+            assert_eq!(output, expected);
+
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[1], [2], [3]].with_order::<P>();
+            let output = lhs.multiply(rhs).unwrap();
+            let expected = matrix![[14], [32]];
+            assert_eq!(output, expected);
+
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]].with_order::<P>();
+            let output = lhs.multiply(rhs).unwrap();
+            let expected = matrix![[30, 36, 42], [66, 81, 96]];
+            assert_eq!(output, expected);
+
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[1, 2], [3, 4]].with_order::<P>();
+            let error = lhs.multiply(rhs).unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+
+            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let rhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<P>();
+            let error = lhs.multiply(rhs).unwrap_err();
+            assert_eq!(error, Error::ShapeNotConformable);
+
+            let lhs = matrix![[0; 0]; 2].with_order::<O>();
+            let rhs = matrix![[0; usize::MAX]; 0].with_order::<P>();
+            let error = lhs.multiply(rhs).unwrap_err();
+            assert_eq!(error, Error::SizeOverflow);
+
+            let lhs = matrix![[0; 0]; 1].with_order::<O>();
+            let rhs = matrix![[0; usize::MAX]; 0].with_order::<P>();
+            let error = lhs.multiply(rhs).unwrap_err();
+            assert_eq!(error, Error::CapacityOverflow);
+        }}
+    }
+
+    #[test]
     fn test_multiplication_like_operation() {
-        fn dot_product(lhs_row: &[i32], rhs_col: &[i32]) -> i32 {
-            lhs_row
-                .iter()
-                .zip(rhs_col)
+        fn dot_product(lhs: &[i32], rhs: &[i32]) -> i32 {
+            lhs.iter()
+                .zip(rhs)
                 .map(|(lhs, rhs)| lhs * rhs)
                 .reduce(|sum, product| sum + product)
                 .unwrap()
@@ -534,14 +607,14 @@ mod tests {
             let lhs = matrix![[0; 0]; 2].with_order::<O>();
             let rhs = matrix![[0; usize::MAX]; 0].with_order::<P>();
             let error = lhs
-                .multiplication_like_operation(rhs, |_, _| 0)
+                .multiplication_like_operation(rhs, dot_product)
                 .unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
             let lhs = matrix![[0; 0]; 1].with_order::<O>();
             let rhs = matrix![[0; usize::MAX]; 0].with_order::<P>();
             let error = lhs
-                .multiplication_like_operation(rhs, |_, _| 0)
+                .multiplication_like_operation(rhs, dot_product)
                 .unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
@@ -718,5 +791,56 @@ mod tests {
                 assert_eq!(matrix, expected);
             }
         }}
+    }
+
+    #[derive(Debug)]
+    struct Count {
+        init: usize,
+        drop: usize,
+        add: usize,
+        mul: usize,
+    }
+
+    impl Count {
+        fn expected(lhs_shape: Shape, rhs_shape: Shape) -> Self {
+            assert_eq!(lhs_shape.ncols, rhs_shape.nrows);
+
+            let inner = lhs_shape.ncols;
+            let output_shape = Shape::new(lhs_shape.nrows, rhs_shape.ncols);
+            let lhs_size = lhs_shape.size().unwrap();
+            let rhs_size = rhs_shape.size().unwrap();
+            let output_size = output_shape.size().unwrap();
+
+            let add;
+            let mul;
+            let default;
+            let clone;
+            if output_size == 0 {
+                add = 0;
+                mul = 0;
+                default = 0;
+                clone = 0;
+            } else if inner == 0 {
+                add = 0;
+                mul = 0;
+                default = output_size;
+                clone = 0;
+            } else {
+                add = output_size * (inner - 1);
+                mul = output_size * inner;
+                default = 0;
+                clone = mul * 2 - lhs_size - rhs_size;
+            }
+
+            let init = add + mul + default + clone;
+            let drop = init + lhs_size + rhs_size - output_size;
+
+            Self {
+                init,
+                drop,
+                add,
+                mul,
+            }
+        }
     }
 }
