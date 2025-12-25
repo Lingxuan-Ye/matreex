@@ -1,6 +1,179 @@
 use super::super::Matrix;
-use super::super::layout::Order;
+use super::super::layout::{ColMajor, Layout, Order, OrderKind, RowMajor};
+use crate::error::Result;
+use crate::shape::Shape;
+use alloc::vec::Vec;
 use core::ops::{Add, Mul, MulAssign};
+
+impl<L, LO> Matrix<L, LO>
+where
+    LO: Order,
+{
+    pub fn multiply<R, RO, U>(self, rhs: Matrix<R, RO>) -> Result<Matrix<U, LO>>
+    where
+        L: Mul<R, Output = U> + Clone,
+        R: Clone,
+        RO: Order,
+        U: Add<Output = U> + Default,
+    {
+        self.ensure_multiplication_like_operation_conformable(&rhs)?;
+
+        let nrows = self.nrows();
+        let inner = self.ncols();
+        let ncols = rhs.ncols();
+        let shape = Shape::new(nrows, ncols);
+        let (layout, size) = Layout::from_shape_with_size(shape)?;
+        let mut data = Vec::with_capacity(size);
+
+        if size == 0 {
+            return Ok(Matrix { layout, data });
+        }
+
+        if inner == 0 {
+            data.resize_with(size, U::default);
+            return Ok(Matrix { layout, data });
+        }
+
+        let mut lhs = self.with_order::<RowMajor>();
+        let mut rhs = rhs.with_order::<ColMajor>();
+
+        unsafe {
+            lhs.layout = Layout::default();
+            lhs.data.set_len(0);
+
+            rhs.layout = Layout::default();
+            rhs.data.set_len(0);
+        }
+
+        let lhs_base = lhs.data.as_ptr();
+        let rhs_base = rhs.data.as_ptr();
+
+        match LO::KIND {
+            OrderKind::RowMajor => unsafe {
+                let mut lhs_reset = lhs_base;
+
+                for _ in 1..nrows {
+                    let mut rhs_ptr = rhs_base;
+
+                    for _ in 1..ncols {
+                        let mut lhs_ptr = lhs_reset;
+                        let mut element = (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                        for _ in 1..inner {
+                            lhs_ptr = lhs_ptr.add(1);
+                            rhs_ptr = rhs_ptr.add(1);
+                            element = element + (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                        }
+                        data.push(element);
+                        rhs_ptr = rhs_ptr.add(1);
+                    }
+
+                    {
+                        let mut lhs_ptr = lhs_reset;
+                        let mut element = lhs_ptr.read() * (*rhs_ptr).clone();
+                        for _ in 1..inner {
+                            lhs_ptr = lhs_ptr.add(1);
+                            rhs_ptr = rhs_ptr.add(1);
+                            element = element + lhs_ptr.read() * (*rhs_ptr).clone();
+                        }
+                        data.push(element);
+                    }
+
+                    lhs_reset = lhs_reset.add(inner);
+                }
+
+                {
+                    let mut rhs_ptr = rhs_base;
+
+                    for _ in 1..ncols {
+                        let mut lhs_ptr = lhs_reset;
+                        let mut element = (*lhs_ptr).clone() * rhs_ptr.read();
+                        for _ in 1..inner {
+                            lhs_ptr = lhs_ptr.add(1);
+                            rhs_ptr = rhs_ptr.add(1);
+                            element = element + (*lhs_ptr).clone() * rhs_ptr.read();
+                        }
+                        data.push(element);
+                        rhs_ptr = rhs_ptr.add(1);
+                    }
+
+                    {
+                        let mut lhs_ptr = lhs_reset;
+                        let mut element = lhs_ptr.read() * rhs_ptr.read();
+                        for _ in 1..inner {
+                            lhs_ptr = lhs_ptr.add(1);
+                            rhs_ptr = rhs_ptr.add(1);
+                            element = element + lhs_ptr.read() * rhs_ptr.read();
+                        }
+                        data.push(element);
+                    }
+                }
+            },
+
+            OrderKind::ColMajor => unsafe {
+                let mut rhs_reset = rhs_base;
+
+                for _ in 1..ncols {
+                    let mut lhs_ptr = lhs_base;
+
+                    for _ in 1..nrows {
+                        let mut rhs_ptr = rhs_reset;
+                        let mut element = (*lhs_ptr).clone() * (*rhs_ptr).clone();
+
+                        for _ in 1..inner {
+                            lhs_ptr = lhs_ptr.add(1);
+                            rhs_ptr = rhs_ptr.add(1);
+                            element = element + (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                        }
+                        data.push(element);
+                        lhs_ptr = lhs_ptr.add(1);
+                    }
+
+                    {
+                        let mut rhs_ptr = rhs_reset;
+                        let mut element = (*lhs_ptr).clone() * rhs_ptr.read();
+                        for _ in 1..inner {
+                            lhs_ptr = lhs_ptr.add(1);
+                            rhs_ptr = rhs_ptr.add(1);
+                            element = element + (*lhs_ptr).clone() * rhs_ptr.read();
+                        }
+                        data.push(element);
+                    }
+
+                    rhs_reset = rhs_reset.add(inner);
+                }
+
+                {
+                    let mut lhs_ptr = lhs_base;
+
+                    for _ in 1..nrows {
+                        let mut rhs_ptr = rhs_reset;
+                        let mut element = lhs_ptr.read() * (*rhs_ptr).clone();
+                        for _ in 1..inner {
+                            lhs_ptr = lhs_ptr.add(1);
+                            rhs_ptr = rhs_ptr.add(1);
+                            element = element + lhs_ptr.read() * (*rhs_ptr).clone();
+                        }
+                        data.push(element);
+                        lhs_ptr = lhs_ptr.add(1);
+                    }
+
+                    {
+                        let mut rhs_ptr = rhs_reset;
+                        let mut element = lhs_ptr.read() * rhs_ptr.read();
+                        for _ in 1..inner {
+                            lhs_ptr = lhs_ptr.add(1);
+                            rhs_ptr = rhs_ptr.add(1);
+                            element = element + lhs_ptr.read() * rhs_ptr.read();
+                        }
+                        data.push(element);
+                    }
+                }
+            },
+        }
+
+        Ok(Matrix { layout, data })
+    }
+}
 
 impl<L, LO, R, RO, U> Mul<Matrix<R, RO>> for Matrix<L, LO>
 where
@@ -13,14 +186,7 @@ where
     type Output = Matrix<U, LO>;
 
     fn mul(self, rhs: Matrix<R, RO>) -> Self::Output {
-        match self.multiplication_like_operation(rhs, |lhs_row, rhs_col| unsafe {
-            lhs_row
-                .iter()
-                .zip(rhs_col)
-                .map(|(lhs, rhs)| lhs.clone() * rhs.clone())
-                .reduce(|sum, product| sum + product)
-                .unwrap_unchecked()
-        }) {
+        match self.multiply(rhs) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
