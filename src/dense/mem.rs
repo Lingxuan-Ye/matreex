@@ -1,4 +1,3 @@
-use core::iter::FusedIterator;
 use core::marker::PhantomData;
 use core::ptr::NonNull;
 
@@ -162,61 +161,3 @@ impl<T> MemRange<T> {
         unsafe { self.range.drop_in_place() }
     }
 }
-
-impl<T> IntoIterator for MemRange<T> {
-    type Item = NonNull<T>;
-    type IntoIter = IntoIter<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter(self)
-    }
-}
-
-#[derive(Debug)]
-pub(super) struct IntoIter<T>(MemRange<T>);
-
-impl<T> Iterator for IntoIter<T> {
-    type Item = NonNull<T>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.len() == 0 {
-            return None;
-        }
-
-        let item = self.0.start();
-
-        let start = unsafe { item.add(1) };
-        let len = self.len() - 1;
-        self.0 = unsafe { MemRange::new(start, len) };
-
-        Some(unsafe { NonNull::new_unchecked(item) })
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = self.len();
-        (len, Some(len))
-    }
-}
-
-impl<T> ExactSizeIterator for IntoIter<T> {
-    fn len(&self) -> usize {
-        self.0.len()
-    }
-}
-
-impl<T> DoubleEndedIterator for IntoIter<T> {
-    fn next_back(&mut self) -> Option<Self::Item> {
-        if self.len() == 0 {
-            return None;
-        }
-
-        let start = self.0.start();
-        let len = self.len() - 1;
-        self.0 = unsafe { MemRange::new(start, len) };
-
-        let item = unsafe { start.add(len) };
-        Some(unsafe { NonNull::new_unchecked(item) })
-    }
-}
-
-impl<T> FusedIterator for IntoIter<T> {}
