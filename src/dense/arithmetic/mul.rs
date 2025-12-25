@@ -18,8 +18,8 @@ where
     {
         self.ensure_multiplication_like_operation_conformable(&rhs)?;
 
-        let nrows = self.nrows();
         let inner = self.ncols();
+        let nrows = self.nrows();
         let ncols = rhs.ncols();
         let shape = Shape::new(nrows, ncols);
         let (layout, size) = Layout::from_shape_with_size(shape)?;
@@ -218,13 +218,18 @@ where
     {
         self.ensure_multiplication_like_operation_conformable(&rhs)?;
 
+        let inner = self.ncols();
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let shape = Shape::new(nrows, ncols);
         let (layout, size) = Layout::from_shape_with_size(shape)?;
         let mut data = Vec::with_capacity(size);
 
-        if self.ncols() == 0 {
+        if size == 0 {
+            return Ok(Matrix { layout, data });
+        }
+
+        if inner == 0 {
             data.resize_with(size, U::default);
             return Ok(Matrix { layout, data });
         }
@@ -235,8 +240,8 @@ where
         match LO::KIND {
             OrderKind::RowMajor => {
                 for row in 0..nrows {
+                    let lhs = unsafe { lhs.get_nth_major_axis_vector_unchecked(row) };
                     for col in 0..ncols {
-                        let lhs = unsafe { lhs.get_nth_major_axis_vector_unchecked(row) };
                         let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
                         let element = op(lhs, rhs);
                         data.push(element);
@@ -246,9 +251,9 @@ where
 
             OrderKind::ColMajor => {
                 for col in 0..ncols {
+                    let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
                     for row in 0..nrows {
                         let lhs = unsafe { lhs.get_nth_major_axis_vector_unchecked(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
                         let element = op(lhs, rhs);
                         data.push(element);
                     }
