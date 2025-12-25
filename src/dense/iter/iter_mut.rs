@@ -1,6 +1,7 @@
 use super::super::Matrix;
 use super::super::layout::Order;
 use crate::error::{Error, Result};
+use core::iter::FusedIterator;
 use core::marker::PhantomData;
 use core::num::NonZero;
 use core::ptr::{NonNull, without_provenance_mut};
@@ -25,7 +26,7 @@ pub(super) struct IterVectorsMut<'a, T> {
     marker: PhantomData<&'a mut T>,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Layout {
     axis_stride: NonZero<usize>,
     vector_stride: NonZero<usize>,
@@ -154,7 +155,7 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         let layout = self.layout?;
 
-        let result = unsafe {
+        let item = unsafe {
             IterNthVectorMut::assemble(self.lower, layout.vector_stride, layout.vector_length)
         };
 
@@ -171,7 +172,7 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
             };
         }
 
-        Some(result)
+        Some(item)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -199,7 +200,7 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         let layout = self.layout?;
 
-        let result = unsafe {
+        let item = unsafe {
             IterNthVectorMut::assemble(self.upper, layout.vector_stride, layout.vector_length)
         };
 
@@ -216,9 +217,11 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
             };
         }
 
-        Some(result)
+        Some(item)
     }
 }
+
+impl<T> FusedIterator for IterVectorsMut<'_, T> {}
 
 /// # Design Details
 ///
@@ -361,7 +364,7 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         let stride = self.stride?.get();
 
-        let result = if size_of::<T>() == 0 {
+        let item = if size_of::<T>() == 0 {
             unsafe { NonNull::dangling().as_mut() }
         } else {
             unsafe { self.lower.as_mut() }
@@ -379,7 +382,7 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
             };
         }
 
-        Some(result)
+        Some(item)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -407,7 +410,7 @@ impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         let stride = self.stride?.get();
 
-        let result = if size_of::<T>() == 0 {
+        let item = if size_of::<T>() == 0 {
             unsafe { NonNull::dangling().as_mut() }
         } else {
             unsafe { self.upper.as_mut() }
@@ -425,6 +428,8 @@ impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
             };
         }
 
-        Some(result)
+        Some(item)
     }
 }
+
+impl<T> FusedIterator for IterNthVectorMut<'_, T> {}

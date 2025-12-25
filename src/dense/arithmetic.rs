@@ -1,9 +1,7 @@
 use super::Matrix;
-use super::layout::{ColMajor, Layout, Order, OrderKind, RowMajor};
+use super::layout::Order;
 use crate::error::{Error, Result};
 use crate::index::Index;
-use crate::shape::Shape;
-use alloc::vec::Vec;
 use core::ptr;
 
 mod add;
@@ -456,137 +454,6 @@ where
     }
 }
 
-impl<L, LO> Matrix<L, LO>
-where
-    LO: Order,
-{
-    /// Performs multiplication-like operation on two matrices.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::ShapeNotConformable`] if `self.ncols() != rhs.nrows()`.
-    /// - [`Error::SizeOverflow`] if the computed size of the output matrix exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
-    ///
-    /// # Notes
-    ///
-    /// The closure `op` is guaranteed to receive two non-empty, equal-length
-    /// slices. It should always return a valid value derived from them.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    ///
-    /// fn dot_product(left_row: &[i32], right_col: &[i32]) -> i32 {
-    ///     left_row
-    ///         .iter()
-    ///         .zip(right_col)
-    ///         .map(|(left, right)| left * right)
-    ///         .reduce(|sum, product| sum + product)
-    ///         .unwrap()
-    /// }
-    ///
-    /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-    /// let result = lhs.multiplication_like_operation(rhs, dot_product);
-    /// assert_eq!(result, Ok(matrix![[12, 12], [30, 30]]));
-    /// ```
-    pub fn multiplication_like_operation<R, RO, F, U>(
-        self,
-        rhs: Matrix<R, RO>,
-        mut op: F,
-    ) -> Result<Matrix<U, LO>>
-    where
-        RO: Order,
-        F: FnMut(&[L], &[R]) -> U,
-        U: Default,
-    {
-        self.ensure_multiplication_like_operation_conformable(&rhs)?;
-
-        let nrows = self.nrows();
-        let ncols = rhs.ncols();
-        let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::from_shape_with_size(shape)?;
-        let mut data = Vec::with_capacity(size);
-
-        if self.ncols() == 0 {
-            data.resize_with(size, U::default);
-            return Ok(Matrix { layout, data });
-        }
-
-        let lhs = self.with_order::<RowMajor>();
-        let rhs = rhs.with_order::<ColMajor>();
-
-        match LO::KIND {
-            OrderKind::RowMajor => {
-                for row in 0..nrows {
-                    for col in 0..ncols {
-                        let lhs = unsafe { lhs.get_nth_major_axis_vector_unchecked(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
-                        let element = op(lhs, rhs);
-                        data.push(element);
-                    }
-                }
-            }
-
-            OrderKind::ColMajor => {
-                for col in 0..ncols {
-                    for row in 0..nrows {
-                        let lhs = unsafe { lhs.get_nth_major_axis_vector_unchecked(row) };
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
-                        let element = op(lhs, rhs);
-                        data.push(element);
-                    }
-                }
-            }
-        }
-
-        Ok(Matrix { layout, data })
-    }
-
-    /// Ensures that two matrices are conformable for multiplication-like
-    /// operation.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::ShapeNotConformable`] if `self.ncols() != rhs.nrows()`.
-    fn ensure_multiplication_like_operation_conformable<R, RO>(
-        &self,
-        rhs: &Matrix<R, RO>,
-    ) -> Result<&Self>
-    where
-        RO: Order,
-    {
-        if self.ncols() != rhs.nrows() {
-            Err(Error::ShapeNotConformable)
-        } else {
-            Ok(self)
-        }
-    }
-}
-
-impl<T, O> Matrix<T, O>
-where
-    O: Order,
-{
-    /// Returns a shared reference of the nth major-axis vector, without performing
-    /// any bounds checking.
-    ///
-    /// # Safety
-    ///
-    /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    #[inline(always)]
-    unsafe fn get_nth_major_axis_vector_unchecked(&self, n: usize) -> &[T] {
-        let stride = self.stride();
-        let lower = n * stride.major();
-        let upper = lower + stride.major();
-        unsafe { self.data.get_unchecked(lower..upper) }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -938,66 +805,6 @@ mod tests {
             let mut lhs = matrix![[0; 2]; 0].with_order::<O>();
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());
-        }}
-    }
-
-    #[test]
-    fn test_multiplication_like_operation() {
-        fn dot_product(lhs_row: &[i32], rhs_col: &[i32]) -> i32 {
-            lhs_row
-                .iter()
-                .zip(rhs_col)
-                .map(|(lhs, rhs)| lhs * rhs)
-                .reduce(|sum, product| sum + product)
-                .unwrap()
-        }
-
-        dispatch_binary! {{
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let rhs = matrix![[1, 2], [3, 4], [5, 6]].with_order::<P>();
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            let expected = matrix![[22, 28], [49, 64]];
-            assert_eq!(output, expected);
-
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let rhs = matrix![[1], [2], [3]].with_order::<P>();
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            let expected = matrix![[14], [32]];
-            assert_eq!(output, expected);
-
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]].with_order::<P>();
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
-            let expected = matrix![[30, 36, 42], [66, 81, 96]];
-            assert_eq!(output, expected);
-
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let rhs = matrix![[1, 2], [3, 4]].with_order::<P>();
-            let error = lhs
-                .multiplication_like_operation(rhs, dot_product)
-                .unwrap_err();
-            assert_eq!(error, Error::ShapeNotConformable);
-
-            let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let rhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<P>();
-            let error = lhs
-                .multiplication_like_operation(rhs, dot_product)
-                .unwrap_err();
-            assert_eq!(error, Error::ShapeNotConformable);
-
-            let lhs = matrix![[0; 0]; 2].with_order::<O>();
-            let rhs = matrix![[0; usize::MAX]; 0].with_order::<P>();
-            let error = lhs
-                .multiplication_like_operation(rhs, |_, _| 0)
-                .unwrap_err();
-            assert_eq!(error, Error::SizeOverflow);
-
-            let lhs = matrix![[0; 0]; 1].with_order::<O>();
-            let rhs = matrix![[0; usize::MAX]; 0].with_order::<P>();
-            let error = lhs
-                .multiplication_like_operation(rhs, |_, _| 0)
-                .unwrap_err();
-            assert_eq!(error, Error::CapacityOverflow);
         }}
     }
 }

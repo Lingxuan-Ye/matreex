@@ -58,7 +58,7 @@ where
         Ok(Self { layout, data })
     }
 
-    /// Creates a new [`Matrix<T, O>`] with the specified shape, filling with the
+    /// Creates a new [`Matrix<T, O>`] with the specified shape, filled with the
     /// default value.
     ///
     /// # Errors
@@ -88,7 +88,7 @@ where
         Ok(Self { layout, data })
     }
 
-    /// Creates a new [`Matrix<T, O>`] with the specified shape, filling with the
+    /// Creates a new [`Matrix<T, O>`] with the specified shape, filled with the
     /// given value.
     ///
     /// # Errors
@@ -117,8 +117,8 @@ where
         Ok(Self { layout, data })
     }
 
-    /// Creates a new [`Matrix<T, O>`] with the specified shape, filling with values
-    /// initialized using their indices.
+    /// Creates a new [`Matrix<T, O>`] with the specified shape, filled with values
+    /// generated based on their corresponding indices.
     ///
     /// # Errors
     ///

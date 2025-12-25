@@ -2,7 +2,7 @@ use super::Matrix;
 use super::layout::Order;
 use crate::index::Index;
 
-impl<L, R, LO, RO> PartialEq<Matrix<R, RO>> for Matrix<L, LO>
+impl<L, LO, R, RO> PartialEq<Matrix<R, RO>> for Matrix<L, LO>
 where
     L: PartialEq<R>,
     LO: Order,

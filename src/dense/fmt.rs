@@ -49,8 +49,6 @@ where
 
         let stride = self.stride();
         let shape = self.shape();
-        let nrows = shape.nrows();
-        let ncols = shape.ncols();
         let size = self.size();
         let index_width = size.to_string().chars().count();
         let mut element_width = 0;
@@ -78,7 +76,7 @@ where
         f.write_str(&index_padding)?;
         f.write_str(constant::row::INDEX_GAP)?;
         f.write_str(constant::row::DELIMITER_PADDING)?;
-        for col in 0..ncols {
+        for col in 0..shape.ncols {
             if col != 0 {
                 f.write_str(constant::element::SEPARATOR_PADDING)?;
             }
@@ -90,13 +88,13 @@ where
         f.write_str(constant::row::SEPARATOR_PADDING)?;
         f.write_str(constant::whitespace::NEWLINE)?;
 
-        for row in 0..nrows {
+        for row in 0..shape.nrows {
             // The first line of the element representation.
             f.write_str(constant::whitespace::INDENT)?;
             f.write_index(row, index_width)?;
             f.write_str(constant::row::INDEX_GAP)?;
             f.write_str(constant::row::DELIMITER_LEFT)?;
-            for col in 0..ncols {
+            for col in 0..shape.ncols {
                 if col != 0 {
                     f.write_str(constant::element::SEPARATOR)?;
                 }
@@ -119,7 +117,7 @@ where
                 f.write_str(&index_padding)?;
                 f.write_str(constant::row::INDEX_GAP)?;
                 f.write_str(constant::row::DELIMITER_PADDING)?;
-                for col in 0..ncols {
+                for col in 0..shape.ncols {
                     if col != 0 {
                         f.write_str(constant::element::SEPARATOR_PADDING)?;
                     }
@@ -156,8 +154,6 @@ where
 
         let stride = self.stride();
         let shape = self.shape();
-        let nrows = shape.nrows();
-        let ncols = shape.ncols();
         let size = self.size();
         let mut element_width = 0;
         let mut element_hight = 0;
@@ -179,11 +175,11 @@ where
         f.write_str(constant::matrix::DELIMITER_LEFT)?;
         f.write_str(constant::whitespace::NEWLINE)?;
 
-        for row in 0..nrows {
+        for row in 0..shape.nrows {
             // The first line of the element representation.
             f.write_str(constant::whitespace::INDENT)?;
             f.write_str(constant::row::DELIMITER_LEFT)?;
-            for col in 0..ncols {
+            for col in 0..shape.ncols {
                 if col != 0 {
                     f.write_str(constant::element::SEPARATOR)?;
                 }
@@ -202,7 +198,7 @@ where
             for _ in 1..element_hight {
                 f.write_str(constant::whitespace::INDENT)?;
                 f.write_str(constant::row::DELIMITER_PADDING)?;
-                for col in 0..ncols {
+                for col in 0..shape.ncols {
                     if col != 0 {
                         f.write_str(constant::element::SEPARATOR_PADDING)?;
                     }

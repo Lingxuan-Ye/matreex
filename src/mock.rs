@@ -6,23 +6,28 @@ use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 use std::thread_local;
 
 thread_local! {
+    static IN_SCOPE: Cell<bool> = const { Cell::new(false) };
+
     static INIT_COUNT: Cell<usize> = const { Cell::new(0) };
     static DROP_COUNT: Cell<usize> = const { Cell::new(0) };
-    static IN_SCOPE: Cell<bool> = const { Cell::new(false) };
+
+    static ADD_COUNT: Cell<usize> = const { Cell::new(0) };
+    static MUL_COUNT: Cell<usize> = const { Cell::new(0) };
 }
 
+#[derive(Debug)]
 pub(crate) struct Scope(PhantomData<*const ()>);
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct MockZeroSized(());
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct MockL<T>(pub(crate) T);
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct MockR<T>(pub(crate) T);
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct MockT<T>(pub(crate) T);
 
 #[derive(Debug, Default, PartialEq)]
@@ -39,9 +44,13 @@ impl Scope {
 
         f(&Self(PhantomData));
 
+        IN_SCOPE.set(false);
+
         INIT_COUNT.set(0);
         DROP_COUNT.set(0);
-        IN_SCOPE.set(false);
+
+        ADD_COUNT.set(0);
+        MUL_COUNT.set(0);
     }
 
     pub(crate) fn init_count(&self) -> usize {
@@ -51,6 +60,14 @@ impl Scope {
     pub(crate) fn drop_count(&self) -> usize {
         DROP_COUNT.get()
     }
+
+    pub(crate) fn add_count(&self) -> usize {
+        ADD_COUNT.get()
+    }
+
+    pub(crate) fn mul_count(&self) -> usize {
+        MUL_COUNT.get()
+    }
 }
 
 impl MockZeroSized {
@@ -59,6 +76,12 @@ impl MockZeroSized {
             INIT_COUNT.with(|cell| cell.update(|count| count + 1));
         }
         Self(())
+    }
+}
+
+impl Default for MockZeroSized {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -73,6 +96,28 @@ impl Drop for MockZeroSized {
         if IN_SCOPE.try_with(Cell::get) == Ok(true) {
             let _ = DROP_COUNT.try_with(|cell| cell.update(|count| count + 1));
         }
+    }
+}
+
+impl Add for MockZeroSized {
+    type Output = Self;
+
+    fn add(self, _: Self) -> Self::Output {
+        if IN_SCOPE.get() {
+            ADD_COUNT.with(|cell| cell.update(|count| count + 1));
+        }
+        Self::new()
+    }
+}
+
+impl Mul for MockZeroSized {
+    type Output = Self;
+
+    fn mul(self, _: Self) -> Self::Output {
+        if IN_SCOPE.get() {
+            MUL_COUNT.with(|cell| cell.update(|count| count + 1));
+        }
+        Self::new()
     }
 }
 
