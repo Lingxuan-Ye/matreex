@@ -30,7 +30,7 @@ macro_rules! matrix {
     [[$elem:expr; $ncols:expr]; $nrows:expr] => {{
         use $crate::Matrix;
 
-        match Matrix::<_>::with_value(($nrows, $ncols), $elem) {
+        match Matrix::<_>::from_value(($nrows, $ncols), $elem) {
             Err(error) => ::core::panic!("{error}"),
             Ok(matrix) => matrix,
         }
