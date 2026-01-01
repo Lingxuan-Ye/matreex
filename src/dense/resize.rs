@@ -411,7 +411,7 @@ where
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    pub fn resize_with<S, F>(&mut self, shape: S, mut initializer: F) -> Result<&mut Self>
+    pub fn resize_with<S, F>(&mut self, shape: S, mut f: F) -> Result<&mut Self>
     where
         S: AsShape,
         F: FnMut(Index) -> T,
@@ -438,7 +438,7 @@ where
                 MemRange::new(tail_start, tail_len).init_with(|offset| {
                     let index = tail_start_index + offset;
                     let index = Index::from_flattened::<O>(index, new_stride);
-                    initializer(index)
+                    f(index)
                 });
                 self.layout = new_layout;
                 self.data.set_len(new_size);
@@ -523,7 +523,7 @@ where
                             MemRange::new(tail_start, tail_len).init_with(|offset| {
                                 let index = tail_start_index + offset;
                                 let index = Index::from_flattened::<O>(index, new_stride);
-                                initializer(index)
+                                f(index)
                             });
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
@@ -545,7 +545,7 @@ where
                             MemRange::new(tail_start, tail_len).init_with(|offset| {
                                 let index = tail_start_index + offset;
                                 let index = Index::from_flattened::<O>(index, new_stride);
-                                initializer(index)
+                                f(index)
                             });
                             self.data = new_data;
                         }
@@ -580,7 +580,7 @@ where
                         MemRange::new(tail_start, tail_len).init_with(|offset| {
                             let index = tail_start_index + offset;
                             let index = Index::from_flattened::<O>(index, new_stride);
-                            initializer(index)
+                            f(index)
                         });
                         self.layout = new_layout;
                         self.data.set_len(new_size);
@@ -615,7 +615,7 @@ where
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
                                     let index = Index::from_flattened::<O>(index, new_stride);
-                                    initializer(index)
+                                    f(index)
                                 });
                             }
                             to_init_start_index -= new_stride.major();
@@ -623,7 +623,7 @@ where
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
                                 let index = Index::from_flattened::<O>(index, new_stride);
-                                initializer(index)
+                                f(index)
                             });
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
@@ -639,7 +639,7 @@ where
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
                                     let index = Index::from_flattened::<O>(index, new_stride);
-                                    initializer(index)
+                                    f(index)
                                 });
                             }
                             src = src.sub(old_stride.major());
@@ -650,7 +650,7 @@ where
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
                                 let index = Index::from_flattened::<O>(index, new_stride);
-                                initializer(index)
+                                f(index)
                             });
                             self.data = new_data;
                         }
@@ -671,7 +671,7 @@ where
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
                                     let index = Index::from_flattened::<O>(index, new_stride);
-                                    initializer(index)
+                                    f(index)
                                 });
                             }
                             to_init_start_index -= new_stride.major();
@@ -679,7 +679,7 @@ where
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
                                 let index = Index::from_flattened::<O>(index, new_stride);
-                                initializer(index)
+                                f(index)
                             });
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
@@ -696,7 +696,7 @@ where
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
                                     let index = Index::from_flattened::<O>(index, new_stride);
-                                    initializer(index)
+                                    f(index)
                                 });
                             }
                             src = src.sub(old_stride.major());
@@ -707,7 +707,7 @@ where
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
                                 let index = Index::from_flattened::<O>(index, new_stride);
-                                initializer(index)
+                                f(index)
                             });
                             self.data = new_data;
                         }
@@ -723,7 +723,7 @@ where
                             MemRange::new(tail_start, tail_len).init_with(|offset| {
                                 let index = tail_start_index + offset;
                                 let index = Index::from_flattened::<O>(index, new_stride);
-                                initializer(index)
+                                f(index)
                             });
                             let mut src = base.add(old_size);
                             let mut dst = tail_start;
@@ -736,7 +736,7 @@ where
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
                                     let index = Index::from_flattened::<O>(index, new_stride);
-                                    initializer(index)
+                                    f(index)
                                 });
                             }
                             to_init_start_index -= new_stride.major();
@@ -744,7 +744,7 @@ where
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
                                 let index = Index::from_flattened::<O>(index, new_stride);
-                                initializer(index)
+                                f(index)
                             });
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
@@ -754,7 +754,7 @@ where
                             MemRange::new(tail_start, tail_len).init_with(|offset| {
                                 let index = tail_start_index + offset;
                                 let index = Index::from_flattened::<O>(index, new_stride);
-                                initializer(index)
+                                f(index)
                             });
                             let mut src = old_base.add(old_size);
                             let mut dst = tail_start;
@@ -767,7 +767,7 @@ where
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
                                     let index = Index::from_flattened::<O>(index, new_stride);
-                                    initializer(index)
+                                    f(index)
                                 });
                             }
                             src = src.sub(old_stride.major());
@@ -778,7 +778,7 @@ where
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
                                 let index = Index::from_flattened::<O>(index, new_stride);
-                                initializer(index)
+                                f(index)
                             });
                             self.data = new_data;
                         }
@@ -883,7 +883,7 @@ impl<T> MemRange<T> {
     ///
     /// If any part of the memory range has already been initialized, the original
     /// values will leak. However, this is considered safe.
-    fn init_with<F>(&mut self, mut initializer: F)
+    fn init_with<F>(&mut self, mut f: F)
     where
         F: FnMut(usize) -> T,
     {
@@ -891,7 +891,7 @@ impl<T> MemRange<T> {
 
         for offset in 0..self.len() {
             unsafe {
-                let value = initializer(offset);
+                let value = f(offset);
                 to_init.write(value);
                 to_init = to_init.add(1);
             }
