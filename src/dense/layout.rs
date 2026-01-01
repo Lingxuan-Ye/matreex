@@ -5,6 +5,7 @@ use crate::error::{Error, Result};
 use crate::shape::{AsShape, Shape};
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
+use core::panic::{RefUnwindSafe, UnwindSafe};
 
 #[cfg(feature = "serde")]
 mod serde;
@@ -32,7 +33,7 @@ pub struct ColMajor;
 /// The allowed orders are:
 /// - [`RowMajor`]
 /// - [`ColMajor`]
-pub trait Order: Sealed {
+pub trait Order: Sealed + Send + Sync + Unpin + UnwindSafe + RefUnwindSafe /* + Freeze */ {
     #[doc(hidden)]
     const KIND: OrderKind;
 }
