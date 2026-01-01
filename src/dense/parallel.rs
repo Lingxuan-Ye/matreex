@@ -23,7 +23,7 @@ where
     pub fn par_apply<F>(&mut self, f: F) -> &mut Self
     where
         T: Send,
-        F: Fn(&mut T) + Sync + Send,
+        F: Fn(&mut T) + Send + Sync,
     {
         self.data.par_iter_mut().for_each(f);
         self
@@ -53,7 +53,7 @@ where
     pub fn par_map<F, U>(self, f: F) -> Result<Matrix<U, O>>
     where
         T: Send,
-        F: Fn(T) -> U + Sync + Send,
+        F: Fn(T) -> U + Send + Sync,
         U: Send,
     {
         let layout = self.layout.cast()?;
@@ -85,7 +85,7 @@ where
     pub fn par_map_ref<'a, F, U>(&'a self, f: F) -> Result<Matrix<U, O>>
     where
         T: Sync,
-        F: Fn(&'a T) -> U + Sync + Send,
+        F: Fn(&'a T) -> U + Send + Sync,
         U: Send,
     {
         let layout = self.layout.cast()?;
