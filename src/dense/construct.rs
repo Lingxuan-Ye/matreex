@@ -71,13 +71,13 @@ where
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let result = Matrix::with_default((2, 3));
+    /// let result = Matrix::from_default((2, 3));
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     /// ```
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    pub fn with_default<S>(shape: S) -> Result<Self>
+    pub fn from_default<S>(shape: S) -> Result<Self>
     where
         S: AsShape,
         T: Default,
@@ -101,13 +101,13 @@ where
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let result = Matrix::with_value((2, 3), 0);
+    /// let result = Matrix::from_value((2, 3), 0);
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     /// ```
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    pub fn with_value<S>(shape: S, value: T) -> Result<Self>
+    pub fn from_value<S>(shape: S, value: T) -> Result<Self>
     where
         S: AsShape,
         T: Clone,
@@ -130,7 +130,7 @@ where
     /// ```
     /// use matreex::{Index, Matrix, matrix};
     ///
-    /// let result = Matrix::with_initializer((2, 3), |index| index);
+    /// let result = Matrix::from_fn((2, 3), |index| index);
     /// assert_eq!(
     ///     result,
     ///     Ok(matrix![
@@ -142,7 +142,7 @@ where
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
-    pub fn with_initializer<S, F>(shape: S, mut initializer: F) -> Result<Self>
+    pub fn from_fn<S, F>(shape: S, mut f: F) -> Result<Self>
     where
         S: AsShape,
         F: FnMut(Index) -> T,
@@ -152,7 +152,7 @@ where
         let mut data = Vec::with_capacity(size);
         for index in 0..size {
             let index = Index::from_flattened::<O>(index, stride);
-            let element = initializer(index);
+            let element = f(index);
             data.push(element);
         }
         Ok(Self { layout, data })
@@ -198,53 +198,53 @@ mod tests {
     }
 
     #[test]
-    fn test_with_default() {
+    fn test_from_default() {
         dispatch_unary! {{
             let shape = Shape::new(2, 3);
-            let matrix = Matrix::<i32, O>::with_default(shape).unwrap();
+            let matrix = Matrix::<i32, O>::from_default(shape).unwrap();
             let expected = matrix![[0, 0, 0], [0, 0, 0]];
             assert_eq!(&matrix, &expected);
 
             let shape = Shape::new(2, usize::MAX);
-            let error = Matrix::<i32, O>::with_default(shape).unwrap_err();
+            let error = Matrix::<i32, O>::from_default(shape).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
             let shape = Shape::new(1, usize::MAX);
-            let error = Matrix::<i32, O>::with_default(shape).unwrap_err();
+            let error = Matrix::<i32, O>::from_default(shape).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
 
             // Unable to cover.
             // let shape = Shape::new(1, usize::MAX);
-            // ssert!(Matrix::<(), O>::with_default(shape).is_ok());
+            // ssert!(Matrix::<(), O>::from_default(shape).is_ok());
         }}
     }
 
     #[test]
-    fn test_with_value() {
+    fn test_from_value() {
         dispatch_unary! {{
             let shape = Shape::new(2, 3);
-            let matrix = Matrix::<i32, O>::with_value(shape, 0).unwrap();
+            let matrix = Matrix::<i32, O>::from_value(shape, 0).unwrap();
             let expected = matrix![[0, 0, 0], [0, 0, 0]];
             assert_eq!(&matrix, &expected);
 
             let shape = Shape::new(2, usize::MAX);
-            let error = Matrix::<i32, O>::with_value(shape, 0).unwrap_err();
+            let error = Matrix::<i32, O>::from_value(shape, 0).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
             let shape = Shape::new(1, usize::MAX);
-            let error = Matrix::<i32, O>::with_value(shape, 0).unwrap_err();
+            let error = Matrix::<i32, O>::from_value(shape, 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
 
             let shape = Shape::new(1, usize::MAX);
-            assert!(Matrix::<(), O>::with_value(shape, ()).is_ok());
+            assert!(Matrix::<(), O>::from_value(shape, ()).is_ok());
         }}
     }
 
     #[test]
-    fn test_with_initializer() {
+    fn test_from_fn() {
         dispatch_unary! {{
             let shape = Shape::new(2, 3);
-            let matrix = Matrix::<Index, O>::with_initializer(shape, |index| index).unwrap();
+            let matrix = Matrix::<Index, O>::from_fn(shape, |index| index).unwrap();
             let expected = matrix![
                 [Index::new(0, 0), Index::new(0, 1), Index::new(0, 2)],
                 [Index::new(1, 0), Index::new(1, 1), Index::new(1, 2)],
@@ -253,27 +253,27 @@ mod tests {
 
             // Assert no panic from unflattening indices occurs.
             let shape = Shape::new(2, 0);
-            let matrix = Matrix::<Index, O>::with_initializer(shape, |index| index).unwrap();
+            let matrix = Matrix::<Index, O>::from_fn(shape, |index| index).unwrap();
             let expected = matrix![[Index::default(); 0]; 2];
             assert_eq!(&matrix, &expected);
 
             // Assert no panic from unflattening indices occurs.
             let shape = Shape::new(0, 3);
-            let matrix = Matrix::<Index, O>::with_initializer(shape, |index| index).unwrap();
+            let matrix = Matrix::<Index, O>::from_fn(shape, |index| index).unwrap();
             let expected = matrix![[Index::default(); 3]; 0];
             assert_eq!(&matrix, &expected);
 
             let shape = Shape::new(2, usize::MAX);
-            let error = Matrix::<i32, O>::with_initializer(shape, |_| 0).unwrap_err();
+            let error = Matrix::<i32, O>::from_fn(shape, |_| 0).unwrap_err();
             assert_eq!(error, Error::SizeOverflow);
 
             let shape = Shape::new(1, usize::MAX);
-            let error = Matrix::<i32, O>::with_initializer(shape, |_| 0).unwrap_err();
+            let error = Matrix::<i32, O>::from_fn(shape, |_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
 
             // Unable to cover.
             // let shape = Shape::new(1, usize::MAX);
-            // assert!(Matrix::<(), O>::with_initializer(shape, |_| ()).is_ok());
+            // assert!(Matrix::<(), O>::from_fn(shape, |_| ()).is_ok());
         }}
     }
 

@@ -109,7 +109,7 @@ impl From<[usize; 2]> for Shape {
 ///     }
 /// }
 ///
-/// let result = Matrix::with_value(S(2, 3), 0);
+/// let result = Matrix::from_value(S(2, 3), 0);
 /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
 /// ```
 pub trait AsShape {

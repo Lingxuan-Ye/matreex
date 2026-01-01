@@ -984,7 +984,7 @@ mod tests {
         dispatch_unary! {{
             for &(old_shape, new_shape) in &pairs {
                 let mut matrix =
-                    Matrix::<_, O>::with_value(old_shape, MockZeroSized::new()).unwrap();
+                    Matrix::<_, O>::from_value(old_shape, MockZeroSized::new()).unwrap();
                 Scope::with(|scope| {
                     matrix.resize(new_shape, MockZeroSized::new()).unwrap();
                     let expected_count = Count::expected(old_shape, new_shape);
@@ -999,16 +999,15 @@ mod tests {
                     }
                 });
                 let expected =
-                    Matrix::<_, RowMajor>::with_value(new_shape, MockZeroSized::new()).unwrap();
+                    Matrix::<_, RowMajor>::from_value(new_shape, MockZeroSized::new()).unwrap();
                 assert_eq!(matrix, expected);
 
                 let old_size = old_shape.size().unwrap();
                 let new_size = new_shape.size().unwrap();
                 if new_size <= old_size {
-                    let mut matrix =
-                        Matrix::<_, O>::with_initializer(old_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
                     matrix.resize(new_shape, Index::default()).unwrap();
-                    let expected = Matrix::<_, RowMajor>::with_initializer(new_shape, |index| {
+                    let expected = Matrix::<_, RowMajor>::from_fn(new_shape, |index| {
                         if index.row < old_shape.nrows() && index.col < old_shape.ncols() {
                             index
                         } else {
@@ -1018,13 +1017,12 @@ mod tests {
                     .unwrap();
                     assert_eq!(matrix, expected);
                 } else {
-                    let mut matrix =
-                        Matrix::<_, O>::with_initializer(old_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
                     // Ensure the in-place path is taken.
                     matrix.data.reserve(new_size - old_size);
                     assert!(new_size <= matrix.capacity());
                     matrix.resize(new_shape, Index::default()).unwrap();
-                    let expected = Matrix::<_, RowMajor>::with_initializer(new_shape, |index| {
+                    let expected = Matrix::<_, RowMajor>::from_fn(new_shape, |index| {
                         if index.row < old_shape.nrows() && index.col < old_shape.ncols() {
                             index
                         } else {
@@ -1034,13 +1032,12 @@ mod tests {
                     .unwrap();
                     assert_eq!(matrix, expected);
 
-                    let mut matrix =
-                        Matrix::<_, O>::with_initializer(old_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
                     // Ensure the reallocation path is taken.
                     matrix.data.shrink_to_fit();
                     assert!(new_size > matrix.capacity());
                     matrix.resize(new_shape, Index::default()).unwrap();
-                    let expected = Matrix::<_, RowMajor>::with_initializer(new_shape, |index| {
+                    let expected = Matrix::<_, RowMajor>::from_fn(new_shape, |index| {
                         if index.row < old_shape.nrows() && index.col < old_shape.ncols() {
                             index
                         } else {
@@ -1098,7 +1095,7 @@ mod tests {
         dispatch_unary! {{
             for &(old_shape, new_shape) in &pairs {
                 let mut matrix =
-                    Matrix::<_, O>::with_value(old_shape, MockZeroSized::new()).unwrap();
+                    Matrix::<_, O>::from_value(old_shape, MockZeroSized::new()).unwrap();
                 Scope::with(|scope| {
                     matrix
                         .resize_with(new_shape, |_| MockZeroSized::new())
@@ -1108,37 +1105,34 @@ mod tests {
                     assert_eq!(scope.drop_count(), expected_count.drop);
                 });
                 let expected =
-                    Matrix::<_, RowMajor>::with_value(new_shape, MockZeroSized::new()).unwrap();
+                    Matrix::<_, RowMajor>::from_value(new_shape, MockZeroSized::new()).unwrap();
                 assert_eq!(matrix, expected);
 
                 let old_size = old_shape.size().unwrap();
                 let new_size = new_shape.size().unwrap();
                 if new_size <= old_size {
-                    let mut matrix =
-                        Matrix::<_, O>::with_initializer(old_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
                     matrix.resize_with(new_shape, |index| index).unwrap();
                     let expected =
-                        Matrix::<_, RowMajor>::with_initializer(new_shape, |index| index).unwrap();
+                        Matrix::<_, RowMajor>::from_fn(new_shape, |index| index).unwrap();
                     assert_eq!(matrix, expected);
                 } else {
-                    let mut matrix =
-                        Matrix::<_, O>::with_initializer(old_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
                     // Ensure the in-place path is taken.
                     matrix.data.reserve(new_size - old_size);
                     assert!(new_size <= matrix.capacity());
                     matrix.resize_with(new_shape, |index| index).unwrap();
                     let expected =
-                        Matrix::<_, RowMajor>::with_initializer(new_shape, |index| index).unwrap();
+                        Matrix::<_, RowMajor>::from_fn(new_shape, |index| index).unwrap();
                     assert_eq!(matrix, expected);
 
-                    let mut matrix =
-                        Matrix::<_, O>::with_initializer(old_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
                     // Ensure the reallocation path is taken.
                     matrix.data.shrink_to_fit();
                     assert!(new_size > matrix.capacity());
                     matrix.resize_with(new_shape, |index| index).unwrap();
                     let expected =
-                        Matrix::<_, RowMajor>::with_initializer(new_shape, |index| index).unwrap();
+                        Matrix::<_, RowMajor>::from_fn(new_shape, |index| index).unwrap();
                     assert_eq!(matrix, expected);
                 }
             }

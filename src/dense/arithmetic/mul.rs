@@ -507,8 +507,8 @@ mod tests {
 
         dispatch_binary! {{
             for &(lhs_shape, rhs_shape) in &pairs {
-                let lhs = Matrix::<_, O>::with_value(lhs_shape, MockZeroSized::new()).unwrap();
-                let rhs = Matrix::<_, P>::with_value(rhs_shape, MockZeroSized::new()).unwrap();
+                let lhs = Matrix::<_, O>::from_value(lhs_shape, MockZeroSized::new()).unwrap();
+                let rhs = Matrix::<_, P>::from_value(rhs_shape, MockZeroSized::new()).unwrap();
                 Scope::with(|scope| {
                     let output = lhs.multiply(rhs).unwrap();
                     let expected_shape = Shape::new(lhs_shape.nrows, rhs_shape.ncols);
