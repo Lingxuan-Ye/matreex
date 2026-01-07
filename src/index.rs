@@ -172,6 +172,7 @@ impl AsIndex for [usize; 2] {
 ///
 /// [`WrappingIndex`] is the only type that performs wrapping indexing.
 /// The design is based on the following considerations:
+///
 /// - Wrapping indexing does not follow standard indexing conventions,
 ///   so it should always be used explicitly.
 /// - Both `(isize, isize)` and `[isize; 2]` are not sufficiently

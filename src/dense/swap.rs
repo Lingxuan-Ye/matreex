@@ -35,16 +35,13 @@ where
         let x = self.get_mut(i)? as *mut T;
         let y = self.get_mut(j)? as *mut T;
 
-        if x == y {
-            return Ok(self);
-        }
-
-        let base = self.data.as_mut_ptr();
-        let x = base.with_addr(x.addr());
-        let y = base.with_addr(y.addr());
-
-        unsafe {
-            ptr::swap_nonoverlapping(x, y, 1);
+        if x != y {
+            let base = self.data.as_mut_ptr();
+            let x = base.with_addr(x.addr());
+            let y = base.with_addr(y.addr());
+            unsafe {
+                ptr::swap_nonoverlapping(x, y, 1);
+            }
         }
 
         Ok(self)
