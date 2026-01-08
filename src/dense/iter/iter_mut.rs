@@ -4,33 +4,28 @@ use crate::error::{Error, Result};
 use core::iter::FusedIterator;
 use core::marker::PhantomData;
 use core::num::NonZero;
-use core::ptr::{NonNull, without_provenance_mut};
+use core::ptr;
+use core::ptr::NonNull;
 
-/// # Design Details
-///
-/// To maintain consistency with [`IterNthVectorMut`], `upper`
-/// must point **to** (not one vector past) the exact vector that
-/// [`DoubleEndedIterator::next_back`] would return. In this case,
-/// comparing pointers to determine whether an iterator is empty
-/// is unsound, because pointers may offset outside the allocated
-/// object in the final iteration. Therefore, an additional state
-/// is needed to track whether the iterator is empty. This state
-/// can be stored in either `lower`, `upper`, or `layout` as an
-/// `Option` discriminant to avoid spatial overhead. Here `layout`
-/// is chosen for simplicity.
 #[derive(Debug)]
 pub(super) struct IterVectorsMut<'a, T> {
     lower: NonNull<T>,
     upper: NonNull<T>,
-    layout: Option<Layout>,
+    layout: Layout,
     marker: PhantomData<&'a mut T>,
 }
 
-#[derive(Debug, Clone, Copy)]
-struct Layout {
-    axis_stride: NonZero<usize>,
-    vector_stride: NonZero<usize>,
-    vector_length: NonZero<usize>,
+#[derive(Debug)]
+enum Layout {
+    Empty {
+        iter_length: usize,
+    },
+
+    NonEmpty {
+        axis_stride: NonZero<usize>,
+        vector_length: NonZero<usize>,
+        vector_stride: NonZero<usize>,
+    },
 }
 
 unsafe impl<T> Send for IterVectorsMut<'_, T> where T: Send {}
@@ -42,19 +37,19 @@ impl<'a, T> IterVectorsMut<'a, T> {
         O: Order,
     {
         if matrix.is_empty() {
-            return Self::empty();
+            return Self::empty(matrix.major());
         }
 
         let matrix_stride = matrix.stride();
 
         unsafe {
             let base = NonNull::new_unchecked(matrix.data.as_mut_ptr());
-            let axis_stride = NonZero::new_unchecked(matrix_stride.major());
             let axis_length = NonZero::new_unchecked(matrix.major());
-            let vector_stride = NonZero::new_unchecked(matrix_stride.minor());
+            let axis_stride = NonZero::new_unchecked(matrix_stride.major());
             let vector_length = NonZero::new_unchecked(matrix.minor());
+            let vector_stride = NonZero::new_unchecked(matrix_stride.minor());
 
-            Self::assemble(base, axis_stride, axis_length, vector_stride, vector_length)
+            Self::non_empty(base, axis_length, axis_stride, vector_length, vector_stride)
         }
     }
 
@@ -63,40 +58,35 @@ impl<'a, T> IterVectorsMut<'a, T> {
         O: Order,
     {
         if matrix.is_empty() {
-            return Self::empty();
+            return Self::empty(matrix.minor());
         }
 
         let matrix_stride = matrix.stride();
 
         unsafe {
             let base = NonNull::new_unchecked(matrix.data.as_mut_ptr());
-            let axis_stride = NonZero::new_unchecked(matrix_stride.minor());
             let axis_length = NonZero::new_unchecked(matrix.minor());
-            let vector_stride = NonZero::new_unchecked(matrix_stride.major());
+            let axis_stride = NonZero::new_unchecked(matrix_stride.minor());
             let vector_length = NonZero::new_unchecked(matrix.major());
+            let vector_stride = NonZero::new_unchecked(matrix_stride.major());
 
-            Self::assemble(base, axis_stride, axis_length, vector_stride, vector_length)
+            Self::non_empty(base, axis_length, axis_stride, vector_length, vector_stride)
         }
     }
 
     /// # Safety
     ///
-    /// This returns a detached iterator whose lifetime is not bound to
-    /// any matrix. However, it is safe.
-    fn empty() -> Self {
+    /// This returns a detached iterator whose lifetime is not tied to any
+    /// matrix. However, it is safe.
+    fn empty(iter_length: usize) -> Self {
         Self {
             lower: NonNull::dangling(),
             upper: NonNull::dangling(),
-            layout: None,
+            layout: Layout::Empty { iter_length },
             marker: PhantomData,
         }
     }
 
-    /// This is a helper function that abstracts some repetitive code,
-    /// while exposing certain `unsafe` operations that were previously
-    /// well-encapsulated. As its signature implies, this function only
-    /// accepts non-empty matrices.
-    ///
     /// # Safety
     ///
     /// To iterate over the vectors of a matrix, `base` must point to the
@@ -104,41 +94,41 @@ impl<'a, T> IterVectorsMut<'a, T> {
     /// be one of the following sets of values in their [`NonZero`] form:
     ///
     /// - For iterating over the major axis:
-    ///   - `axis_stride`: `matrix.stride().major()`
     ///   - `axis_length`: `matrix.major()`
-    ///   - `vector_stride`: `matrix.stride().minor()` (i.e., `1`)
+    ///   - `axis_stride`: `matrix.stride().major()`
     ///   - `vector_length`: `matrix.minor()`
+    ///   - `vector_stride`: `matrix.stride().minor()` (i.e., `1`)
     ///
     /// - For iterating over the minor axis:
-    ///   - `axis_stride`: `matrix.stride().minor()` (i.e., `1`)
     ///   - `axis_length`: `matrix.minor()`
-    ///   - `vector_stride`: `matrix.stride().major()`
+    ///   - `axis_stride`: `matrix.stride().minor()` (i.e., `1`)
     ///   - `vector_length`: `matrix.major()`
+    ///   - `vector_stride`: `matrix.stride().major()`
     ///
-    /// This returns a detached iterator whose lifetime is not bound to
-    /// any matrix. The returned iterator is valid only if the matrix
-    /// remains in scope.
-    unsafe fn assemble(
+    /// This returns a detached iterator whose lifetime is not tied to any
+    /// matrix. The returned iterator is valid only if the matrix remains
+    /// in scope.
+    unsafe fn non_empty(
         base: NonNull<T>,
-        axis_stride: NonZero<usize>,
         axis_length: NonZero<usize>,
-        vector_stride: NonZero<usize>,
+        axis_stride: NonZero<usize>,
         vector_length: NonZero<usize>,
+        vector_stride: NonZero<usize>,
     ) -> Self {
         let lower = base;
-        let offset = axis_stride.get() * (axis_length.get() - 1);
+        let offset = (axis_length.get() - 1) * axis_stride.get();
         let upper = if size_of::<T>() == 0 {
             let addr = lower.addr().get() + offset;
-            let ptr = without_provenance_mut(addr);
+            let ptr = ptr::without_provenance_mut(addr);
             unsafe { NonNull::new_unchecked(ptr) }
         } else {
             unsafe { lower.add(offset) }
         };
-        let layout = Some(Layout {
+        let layout = Layout::NonEmpty {
             axis_stride,
-            vector_stride,
             vector_length,
-        });
+            vector_stride,
+        };
 
         Self {
             lower,
@@ -153,26 +143,45 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
     type Item = IterNthVectorMut<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let layout = self.layout?;
+        match self.layout {
+            Layout::Empty { mut iter_length } => {
+                if iter_length == 0 {
+                    return None;
+                }
 
-        let item = unsafe {
-            IterNthVectorMut::assemble(self.lower, layout.vector_stride, layout.vector_length)
-        };
+                iter_length -= 1;
+                self.layout = Layout::Empty { iter_length };
 
-        if self.lower == self.upper {
-            self.layout = None;
-        } else {
-            let stride = layout.axis_stride.get();
-            self.lower = if size_of::<T>() == 0 {
-                let addr = self.lower.addr().get() + stride;
-                let ptr = without_provenance_mut(addr);
-                unsafe { NonNull::new_unchecked(ptr) }
-            } else {
-                unsafe { self.lower.add(stride) }
-            };
+                Some(IterNthVectorMut::empty())
+            }
+
+            Layout::NonEmpty {
+                axis_stride,
+                vector_length,
+                vector_stride,
+            } => {
+                let item = unsafe {
+                    IterNthVectorMut::non_empty(self.lower, vector_length, vector_stride)
+                };
+
+                if self.lower == self.upper {
+                    let iter_length = 0;
+                    self.layout = Layout::Empty { iter_length };
+                    return Some(item);
+                }
+
+                let stride = axis_stride.get();
+                self.lower = if size_of::<T>() == 0 {
+                    let addr = self.lower.addr().get() + stride;
+                    let ptr = ptr::without_provenance_mut(addr);
+                    unsafe { NonNull::new_unchecked(ptr) }
+                } else {
+                    unsafe { self.lower.add(stride) }
+                };
+
+                Some(item)
+            }
         }
-
-        Some(item)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -184,13 +193,13 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
 impl<T> ExactSizeIterator for IterVectorsMut<'_, T> {
     fn len(&self) -> usize {
         match self.layout {
-            None => 0,
-            Some(layout) => {
+            Layout::Empty { iter_length } => iter_length,
+            Layout::NonEmpty { axis_stride, .. } => {
                 let upper = self.upper.addr().get();
                 let lower = self.lower.addr().get();
-                let stride = layout.axis_stride.get();
-                let elem_size = size_of::<T>();
-                1 + (upper - lower) / (stride * if elem_size == 0 { 1 } else { elem_size })
+                let element_size = size_of::<T>();
+                let stride = axis_stride.get();
+                1 + (upper - lower) / (if element_size == 0 { 1 } else { element_size } * stride)
             }
         }
     }
@@ -198,42 +207,50 @@ impl<T> ExactSizeIterator for IterVectorsMut<'_, T> {
 
 impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        let layout = self.layout?;
+        match self.layout {
+            Layout::Empty { mut iter_length } => {
+                if iter_length == 0 {
+                    return None;
+                }
 
-        let item = unsafe {
-            IterNthVectorMut::assemble(self.upper, layout.vector_stride, layout.vector_length)
-        };
+                iter_length -= 1;
+                self.layout = Layout::Empty { iter_length };
 
-        if self.lower == self.upper {
-            self.layout = None;
-        } else {
-            let stride = layout.axis_stride.get();
-            self.upper = if size_of::<T>() == 0 {
-                let addr = self.upper.addr().get() - stride;
-                let ptr = without_provenance_mut(addr);
-                unsafe { NonNull::new_unchecked(ptr) }
-            } else {
-                unsafe { self.upper.sub(stride) }
-            };
+                Some(IterNthVectorMut::empty())
+            }
+
+            Layout::NonEmpty {
+                axis_stride,
+                vector_length,
+                vector_stride,
+            } => {
+                let item = unsafe {
+                    IterNthVectorMut::non_empty(self.upper, vector_length, vector_stride)
+                };
+
+                if self.lower == self.upper {
+                    let iter_length = 0;
+                    self.layout = Layout::Empty { iter_length };
+                    return Some(item);
+                }
+
+                let stride = axis_stride.get();
+                self.upper = if size_of::<T>() == 0 {
+                    let addr = self.upper.addr().get() - stride;
+                    let ptr = ptr::without_provenance_mut(addr);
+                    unsafe { NonNull::new_unchecked(ptr) }
+                } else {
+                    unsafe { self.upper.sub(stride) }
+                };
+
+                Some(item)
+            }
         }
-
-        Some(item)
     }
 }
 
 impl<T> FusedIterator for IterVectorsMut<'_, T> {}
 
-/// # Design Details
-///
-/// To prevent pointers from exceeding their provenance, `upper` must
-/// point **to** (not `stride` elements past) the exact element that
-/// [`DoubleEndedIterator::next_back`] would return. In this case,
-/// comparing pointers to determine whether an iterator is empty is
-/// unsound, because pointers may offset outside the allocated object
-/// in the final iteration. Therefore, an additional state is needed
-/// to track whether the iterator is empty. This state can be stored
-/// in either `lower`, `upper`, or `stride` as an `Option` discriminant
-/// to avoid spatial overhead. Here `stride` is chosen for simplicity.
 #[derive(Debug)]
 pub(super) struct IterNthVectorMut<'a, T> {
     lower: NonNull<T>,
@@ -269,10 +286,10 @@ impl<'a, T> IterNthVectorMut<'a, T> {
             let offset = n * matrix_stride.major();
             unsafe { base.add(offset) }
         };
-        let stride = unsafe { NonZero::new_unchecked(matrix_stride.minor()) };
         let length = unsafe { NonZero::new_unchecked(matrix.minor()) };
+        let stride = unsafe { NonZero::new_unchecked(matrix_stride.minor()) };
 
-        unsafe { Ok(Self::assemble(lower, stride, length)) }
+        unsafe { Ok(Self::non_empty(lower, length, stride)) }
     }
 
     /// This is an alternative to [`Matrix::iter_nth_minor_axis_vector_mut`],
@@ -298,16 +315,16 @@ impl<'a, T> IterNthVectorMut<'a, T> {
             let offset = n * matrix_stride.minor();
             unsafe { base.add(offset) }
         };
-        let stride = unsafe { NonZero::new_unchecked(matrix_stride.major()) };
         let length = unsafe { NonZero::new_unchecked(matrix.major()) };
+        let stride = unsafe { NonZero::new_unchecked(matrix_stride.major()) };
 
-        unsafe { Ok(Self::assemble(lower, stride, length)) }
+        unsafe { Ok(Self::non_empty(lower, length, stride)) }
     }
 
     /// # Safety
     ///
-    /// This returns a detached iterator whose lifetime is not bound to
-    /// any matrix. However, it is safe.
+    /// This returns a detached iterator whose lifetime is not tied to any
+    /// matrix. However, it is safe.
     fn empty() -> Self {
         Self {
             lower: NonNull::dangling(),
@@ -317,11 +334,6 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         }
     }
 
-    /// This is a helper function that abstracts some repetitive code,
-    /// while exposing certain `unsafe` operations that were previously
-    /// well-encapsulated. As its signature implies, this function only
-    /// accepts non-empty vectors.
-    ///
     /// # Safety
     ///
     /// To iterate over the nth vector of a matrix, `lower` must point to
@@ -329,21 +341,21 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// of the following sets of values in their [`NonZero`] form:
     ///
     /// - For iterating over a major axis vector:
-    ///   - `stride`: `matrix.stride().minor()` (i.e., `1`)
     ///   - `length`: `matrix.minor()`
+    ///   - `stride`: `matrix.stride().minor()` (i.e., `1`)
     ///
     /// - For iterating over a minor axis vector:
-    ///   - `stride`: `matrix.stride().major()`
     ///   - `length`: `matrix.major()`
+    ///   - `stride`: `matrix.stride().major()`
     ///
-    /// This returns a detached iterator whose lifetime is not bound to
-    /// any matrix. The returned iterator is valid only if the matrix
-    /// remains in scope.
-    unsafe fn assemble(lower: NonNull<T>, stride: NonZero<usize>, length: NonZero<usize>) -> Self {
-        let offset = stride.get() * (length.get() - 1);
+    /// This returns a detached iterator whose lifetime is not tied to any
+    /// matrix. The returned iterator is valid only if the matrix remains
+    /// in scope.
+    unsafe fn non_empty(lower: NonNull<T>, length: NonZero<usize>, stride: NonZero<usize>) -> Self {
+        let offset = (length.get() - 1) * stride.get();
         let upper = if size_of::<T>() == 0 {
             let addr = lower.addr().get() + offset;
-            let ptr = without_provenance_mut(addr);
+            let ptr = ptr::without_provenance_mut(addr);
             unsafe { NonNull::new_unchecked(ptr) }
         } else {
             unsafe { lower.add(offset) }
@@ -365,6 +377,7 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
         let stride = self.stride?.get();
 
         let item = if size_of::<T>() == 0 {
+            // `self.lower` may not be properly aligned.
             unsafe { NonNull::dangling().as_mut() }
         } else {
             unsafe { self.lower.as_mut() }
@@ -372,15 +385,16 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
 
         if self.lower == self.upper {
             self.stride = None;
-        } else {
-            self.lower = if size_of::<T>() == 0 {
-                let addr = self.lower.addr().get() + stride;
-                let ptr = without_provenance_mut(addr);
-                unsafe { NonNull::new_unchecked(ptr) }
-            } else {
-                unsafe { self.lower.add(stride) }
-            };
+            return Some(item);
         }
+
+        self.lower = if size_of::<T>() == 0 {
+            let addr = self.lower.addr().get() + stride;
+            let ptr = ptr::without_provenance_mut(addr);
+            unsafe { NonNull::new_unchecked(ptr) }
+        } else {
+            unsafe { self.lower.add(stride) }
+        };
 
         Some(item)
     }
@@ -398,9 +412,9 @@ impl<T> ExactSizeIterator for IterNthVectorMut<'_, T> {
             Some(stride) => {
                 let upper = self.upper.addr().get();
                 let lower = self.lower.addr().get();
+                let element_size = size_of::<T>();
                 let stride = stride.get();
-                let elem_size = size_of::<T>();
-                1 + (upper - lower) / (stride * if elem_size == 0 { 1 } else { elem_size })
+                1 + (upper - lower) / (if element_size == 0 { 1 } else { element_size } * stride)
             }
         }
     }
@@ -411,6 +425,7 @@ impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
         let stride = self.stride?.get();
 
         let item = if size_of::<T>() == 0 {
+            // `self.upper` may not be properly aligned.
             unsafe { NonNull::dangling().as_mut() }
         } else {
             unsafe { self.upper.as_mut() }
@@ -418,15 +433,16 @@ impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
 
         if self.lower == self.upper {
             self.stride = None;
-        } else {
-            self.upper = if size_of::<T>() == 0 {
-                let addr = self.upper.addr().get() - stride;
-                let ptr = without_provenance_mut(addr);
-                unsafe { NonNull::new_unchecked(ptr) }
-            } else {
-                unsafe { self.upper.sub(stride) }
-            };
+            return Some(item);
         }
+
+        self.upper = if size_of::<T>() == 0 {
+            let addr = self.upper.addr().get() - stride;
+            let ptr = ptr::without_provenance_mut(addr);
+            unsafe { NonNull::new_unchecked(ptr) }
+        } else {
+            unsafe { self.upper.sub(stride) }
+        };
 
         Some(item)
     }
