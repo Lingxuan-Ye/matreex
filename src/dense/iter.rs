@@ -622,6 +622,12 @@ mod tests {
             }
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
             assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[0; 0]; 2].with_order::<O>();
+            assert_eq!(matrix.iter_rows_mut().count(), 2);
+
+            let mut matrix = matrix![[0; 3]; 0].with_order::<O>();
+            assert_eq!(matrix.iter_rows_mut().count(), 0);
         }}
     }
 
@@ -648,6 +654,12 @@ mod tests {
             }
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
             assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[0; 0]; 2].with_order::<O>();
+            assert_eq!(matrix.iter_cols_mut().count(), 0);
+
+            let mut matrix = matrix![[0; 3]; 0].with_order::<O>();
+            assert_eq!(matrix.iter_cols_mut().count(), 3);
         }}
     }
 
