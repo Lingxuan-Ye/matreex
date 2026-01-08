@@ -31,6 +31,7 @@ pub struct ColMajor;
 /// A sealed trait restricting allowed storage orders.
 ///
 /// The allowed orders are:
+///
 /// - [`RowMajor`]
 /// - [`ColMajor`]
 pub trait Order: Sealed + Send + Sync + Unpin + UnwindSafe + RefUnwindSafe /* + Freeze */ {
