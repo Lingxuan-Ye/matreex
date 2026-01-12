@@ -277,10 +277,8 @@ impl Stride {
 }
 
 mod internal {
-    use super::{ColMajor, RowMajor};
-
     pub trait Sealed {}
 
-    impl Sealed for RowMajor {}
-    impl Sealed for ColMajor {}
+    impl Sealed for super::RowMajor {}
+    impl Sealed for super::ColMajor {}
 }
