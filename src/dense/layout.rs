@@ -212,7 +212,11 @@ where
     }
 }
 
-impl<T, O> Copy for Layout<T, O> where O: Order {}
+unsafe impl<T, O> Send for Layout<T, O> where O: Order {}
+unsafe impl<T, O> Sync for Layout<T, O> where O: Order {}
+impl<T, O> Unpin for Layout<T, O> where O: Order {}
+impl<T, O> UnwindSafe for Layout<T, O> where O: Order {}
+impl<T, O> RefUnwindSafe for Layout<T, O> where O: Order {}
 
 impl<T, O> Clone for Layout<T, O>
 where
@@ -222,6 +226,8 @@ where
         *self
     }
 }
+
+impl<T, O> Copy for Layout<T, O> where O: Order {}
 
 impl<T, O> Default for Layout<T, O>
 where
