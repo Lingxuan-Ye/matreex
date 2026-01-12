@@ -34,7 +34,7 @@ pub struct ColMajor;
 ///
 /// - [`RowMajor`]
 /// - [`ColMajor`]
-pub trait Order: Sealed + Send + Sync + Unpin + UnwindSafe + RefUnwindSafe /* + Freeze */ {
+pub trait Order: Sealed {
     #[doc(hidden)]
     const KIND: OrderKind;
 }
