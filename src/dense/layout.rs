@@ -34,7 +34,7 @@ pub struct ColMajor;
 ///
 /// - [`RowMajor`]
 /// - [`ColMajor`]
-pub trait Order: Sealed + Send + Sync + Unpin + UnwindSafe + RefUnwindSafe /* + Freeze */ {
+pub trait Order: Sealed {
     #[doc(hidden)]
     const KIND: OrderKind;
 }
@@ -212,7 +212,11 @@ where
     }
 }
 
-impl<T, O> Copy for Layout<T, O> where O: Order {}
+unsafe impl<T, O> Send for Layout<T, O> where O: Order {}
+unsafe impl<T, O> Sync for Layout<T, O> where O: Order {}
+impl<T, O> Unpin for Layout<T, O> where O: Order {}
+impl<T, O> UnwindSafe for Layout<T, O> where O: Order {}
+impl<T, O> RefUnwindSafe for Layout<T, O> where O: Order {}
 
 impl<T, O> Clone for Layout<T, O>
 where
@@ -222,6 +226,8 @@ where
         *self
     }
 }
+
+impl<T, O> Copy for Layout<T, O> where O: Order {}
 
 impl<T, O> Default for Layout<T, O>
 where
@@ -277,10 +283,8 @@ impl Stride {
 }
 
 mod internal {
-    use super::{ColMajor, RowMajor};
-
     pub trait Sealed {}
 
-    impl Sealed for RowMajor {}
-    impl Sealed for ColMajor {}
+    impl Sealed for super::RowMajor {}
+    impl Sealed for super::ColMajor {}
 }
