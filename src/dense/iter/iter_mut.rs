@@ -528,6 +528,24 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
     where
         F: FnMut(B, Self::Item) -> B,
     {
+        if size_of::<T>() == 0 {
+            let mut len = self.len();
+            if len == 0 {
+                return init;
+            }
+            let mut acc = init;
+            let mut ptr = NonNull::dangling();
+            loop {
+                let item = unsafe { ptr.as_mut() };
+                acc = f(acc, item);
+                if len == 1 {
+                    break;
+                }
+                len = unsafe { len.unchecked_sub(1) };
+            }
+            return acc;
+        }
+
         let mut len = self.len();
         if len == 0 {
             return init;
@@ -626,6 +644,24 @@ impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
     where
         F: FnMut(B, Self::Item) -> B,
     {
+        if size_of::<T>() == 0 {
+            let mut len = self.len();
+            if len == 0 {
+                return init;
+            }
+            let mut acc = init;
+            let mut ptr = NonNull::dangling();
+            loop {
+                let item = unsafe { ptr.as_mut() };
+                acc = f(acc, item);
+                if len == 1 {
+                    break;
+                }
+                len = unsafe { len.unchecked_sub(1) };
+            }
+            return acc;
+        }
+
         let mut len = self.len();
         if len == 0 {
             return init;
