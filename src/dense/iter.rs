@@ -745,6 +745,10 @@ mod tests {
                 matrix.iter_nth_row_mut(2),
                 Err(Error::IndexOutOfBounds)
             ));
+
+            let mut matrix = matrix![[0; 0]; 2].with_order::<O>();
+            let mut row_0 = matrix.iter_nth_row_mut(0).unwrap();
+            assert_eq!(row_0.next(), None);
         }}
     }
 
@@ -794,6 +798,10 @@ mod tests {
                 matrix.iter_nth_col_mut(3),
                 Err(Error::IndexOutOfBounds)
             ));
+
+            let mut matrix = matrix![[0; 3]; 0].with_order::<O>();
+            let mut col_0 = matrix.iter_nth_col_mut(0).unwrap();
+            assert_eq!(col_0.next(), None);
         }}
     }
 
