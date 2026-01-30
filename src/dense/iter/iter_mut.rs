@@ -684,3 +684,1520 @@ impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
 }
 
 impl<T> FusedIterator for IterNthVectorMut<'_, T> {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Matrix;
+    use crate::index::Index;
+    use crate::shape::Shape;
+
+    // In order not to bloat the test cases, only row-major matrices are tested.
+    // In addition, there is a degree of abstraction leakage in this module that
+    // mixes layout-level details with row/column semantics; that is, the major
+    // axis is always treated as the row axis and the minor axis as the column
+    // axis. This mainly involves variable names.
+
+    #[test]
+    fn test_iter_vectors_mut_next() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert_eq!(iter.len(), 2);
+
+            let vector_0 = iter.next().unwrap();
+            for (minor, element) in vector_0.enumerate() {
+                *element = Index::new(0, minor);
+            }
+            assert_eq!(iter.len(), 1);
+
+            let vector_1 = iter.next().unwrap();
+            for (minor, element) in vector_1.enumerate() {
+                *element = Index::new(1, minor);
+            }
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next().is_none());
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert_eq!(iter.len(), 3);
+
+            let vector_0 = iter.next().unwrap();
+            for (major, element) in vector_0.enumerate() {
+                *element = Index::new(major, 0);
+            }
+            assert_eq!(iter.len(), 2);
+
+            let vector_1 = iter.next().unwrap();
+            for (major, element) in vector_1.enumerate() {
+                *element = Index::new(major, 1);
+            }
+            assert_eq!(iter.len(), 1);
+
+            let vector_2 = iter.next().unwrap();
+            for (major, element) in vector_2.enumerate() {
+                *element = Index::new(major, 2);
+            }
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next().is_none());
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert_eq!(iter.len(), 2);
+
+            let vector_0 = iter.next().unwrap();
+            let mut minor = 0;
+            for _ in vector_0 {
+                minor += 1;
+            }
+            assert_eq!(minor, 3);
+            assert_eq!(iter.len(), 1);
+
+            let vector_1 = iter.next().unwrap();
+            let mut minor = 0;
+            for _ in vector_1 {
+                minor += 1;
+            }
+            assert_eq!(minor, 3);
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next().is_none());
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert_eq!(iter.len(), 3);
+
+            let vector_0 = iter.next().unwrap();
+            let mut major = 0;
+            for _ in vector_0 {
+                major += 1;
+            }
+            assert_eq!(major, 2);
+            assert_eq!(iter.len(), 2);
+
+            let vector_1 = iter.next().unwrap();
+            let mut major = 0;
+            for _ in vector_1 {
+                major += 1;
+            }
+            assert_eq!(major, 2);
+            assert_eq!(iter.len(), 1);
+
+            let vector_2 = iter.next().unwrap();
+            let mut major = 0;
+            for _ in vector_2 {
+                major += 1;
+            }
+            assert_eq!(major, 2);
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next().is_none());
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert_eq!(iter.len(), 2);
+
+            let vector_0 = iter.next().unwrap();
+            let mut minor = 0;
+            for _ in vector_0 {
+                minor += 1;
+            }
+            assert_eq!(minor, 0);
+            assert_eq!(iter.len(), 1);
+
+            let vector_1 = iter.next().unwrap();
+            let mut minor = 0;
+            for _ in vector_1 {
+                minor += 1;
+            }
+            assert_eq!(minor, 0);
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next().is_none());
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert_eq!(iter.len(), 3);
+
+            let vector_0 = iter.next().unwrap();
+            let mut major = 0;
+            for _ in vector_0 {
+                major += 1;
+            }
+            assert_eq!(major, 0);
+            assert_eq!(iter.len(), 2);
+
+            let vector_1 = iter.next().unwrap();
+            let mut major = 0;
+            for _ in vector_1 {
+                major += 1;
+            }
+            assert_eq!(major, 0);
+            assert_eq!(iter.len(), 1);
+
+            let vector_2 = iter.next().unwrap();
+            let mut major = 0;
+            for _ in vector_2 {
+                major += 1;
+            }
+            assert_eq!(major, 0);
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next().is_none());
+        }
+    }
+
+    #[test]
+    fn test_iter_vectors_mut_nth() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+                let vector = iter.nth(major).unwrap();
+                for (minor, element) in vector.enumerate() {
+                    *element = Index::new(major, minor);
+                }
+            }
+
+            let major = matrix.major();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert!(iter.nth(major).is_none());
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+                let vector = iter.nth(minor).unwrap();
+                for (major, element) in vector.enumerate() {
+                    *element = Index::new(major, minor);
+                }
+            }
+
+            let minor = matrix.minor();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert!(iter.nth(minor).is_none());
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+                let vector = iter.nth(major).unwrap();
+                let mut minor = 0;
+                for _ in vector {
+                    minor += 1;
+                }
+                assert_eq!(minor, 3);
+            }
+
+            let major = matrix.major();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert!(iter.nth(major).is_none());
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+                let vector = iter.nth(minor).unwrap();
+                let mut major = 0;
+                for _ in vector {
+                    major += 1;
+                }
+                assert_eq!(major, 2);
+            }
+
+            let minor = matrix.minor();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert!(iter.nth(minor).is_none());
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+                let vector = iter.nth(major).unwrap();
+                let mut minor = 0;
+                for _ in vector {
+                    minor += 1;
+                }
+                assert_eq!(minor, 0);
+            }
+
+            let major = matrix.major();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert!(iter.nth(major).is_none());
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+                let vector = iter.nth(minor).unwrap();
+                let mut major = 0;
+                for _ in vector {
+                    major += 1;
+                }
+                assert_eq!(major, 0);
+            }
+
+            let minor = matrix.minor();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert!(iter.nth(minor).is_none());
+        }
+    }
+
+    #[test]
+    fn test_iter_vectors_mut_fold() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let iter = IterVectorsMut::over_major_axis(&mut matrix);
+
+            let mut major = 0;
+            iter.fold((), |_, vector| {
+                for (minor, element) in vector.enumerate() {
+                    *element = Index::new(major, minor);
+                }
+                major += 1;
+            });
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let iter = IterVectorsMut::over_minor_axis(&mut matrix);
+
+            let mut minor = 0;
+            iter.fold((), |_, vector| {
+                for (major, element) in vector.enumerate() {
+                    *element = Index::new(major, minor);
+                }
+                minor += 1;
+            });
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+            let iter = IterVectorsMut::over_major_axis(&mut matrix);
+
+            let mut major = 0;
+            iter.fold((), |_, vector| {
+                let mut minor = 0;
+                for _ in vector {
+                    minor += 1;
+                }
+                assert_eq!(minor, 3);
+                major += 1;
+            });
+            assert_eq!(major, 2);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+            let iter = IterVectorsMut::over_minor_axis(&mut matrix);
+
+            let mut minor = 0;
+            iter.fold((), |_, vector| {
+                let mut major = 0;
+                for _ in vector {
+                    major += 1;
+                }
+                assert_eq!(major, 2);
+                minor += 1;
+            });
+            assert_eq!(minor, 3);
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+            let iter = IterVectorsMut::over_major_axis(&mut matrix);
+
+            let mut major = 0;
+            iter.fold((), |_, vector| {
+                let mut minor = 0;
+                for _ in vector {
+                    minor += 1;
+                }
+                assert_eq!(minor, 0);
+                major += 1;
+            });
+            assert_eq!(major, 2);
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+            let iter = IterVectorsMut::over_minor_axis(&mut matrix);
+
+            let mut minor = 0;
+            iter.fold((), |_, vector| {
+                let mut major = 0;
+                for _ in vector {
+                    major += 1;
+                }
+                assert_eq!(major, 0);
+                minor += 1;
+            });
+            assert_eq!(minor, 3);
+        }
+    }
+
+    #[test]
+    fn test_iter_vectors_mut_next_back() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert_eq!(iter.len(), 2);
+
+            let vector_1 = iter.next_back().unwrap();
+            for (minor, element) in vector_1.enumerate() {
+                *element = Index::new(1, minor);
+            }
+            assert_eq!(iter.len(), 1);
+
+            let vector_0 = iter.next_back().unwrap();
+            for (minor, element) in vector_0.enumerate() {
+                *element = Index::new(0, minor);
+            }
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next_back().is_none());
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert_eq!(iter.len(), 3);
+
+            let vector_2 = iter.next_back().unwrap();
+            for (major, element) in vector_2.enumerate() {
+                *element = Index::new(major, 2);
+            }
+            assert_eq!(iter.len(), 2);
+
+            let vector_1 = iter.next_back().unwrap();
+            for (major, element) in vector_1.enumerate() {
+                *element = Index::new(major, 1);
+            }
+            assert_eq!(iter.len(), 1);
+
+            let vector_0 = iter.next_back().unwrap();
+            for (major, element) in vector_0.enumerate() {
+                *element = Index::new(major, 0);
+            }
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next_back().is_none());
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert_eq!(iter.len(), 2);
+
+            let vector_1 = iter.next_back().unwrap();
+            let mut minor = 0;
+            for _ in vector_1 {
+                minor += 1;
+            }
+            assert_eq!(minor, 3);
+            assert_eq!(iter.len(), 1);
+
+            let vector_1 = iter.next_back().unwrap();
+            let mut minor = 0;
+            for _ in vector_1 {
+                minor += 1;
+            }
+            assert_eq!(minor, 3);
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next_back().is_none());
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert_eq!(iter.len(), 3);
+
+            let vector_2 = iter.next_back().unwrap();
+            let mut major = 0;
+            for _ in vector_2 {
+                major += 1;
+            }
+            assert_eq!(major, 2);
+            assert_eq!(iter.len(), 2);
+
+            let vector_1 = iter.next_back().unwrap();
+            let mut major = 0;
+            for _ in vector_1 {
+                major += 1;
+            }
+            assert_eq!(major, 2);
+            assert_eq!(iter.len(), 1);
+
+            let vector_0 = iter.next_back().unwrap();
+            let mut major = 0;
+            for _ in vector_0 {
+                major += 1;
+            }
+            assert_eq!(major, 2);
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next_back().is_none());
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert_eq!(iter.len(), 2);
+
+            let vector_1 = iter.next_back().unwrap();
+            let mut minor = 0;
+            for _ in vector_1 {
+                minor += 1;
+            }
+            assert_eq!(minor, 0);
+            assert_eq!(iter.len(), 1);
+
+            let vector_0 = iter.next_back().unwrap();
+            let mut minor = 0;
+            for _ in vector_0 {
+                minor += 1;
+            }
+            assert_eq!(minor, 0);
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next_back().is_none());
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert_eq!(iter.len(), 3);
+
+            let vector_2 = iter.next_back().unwrap();
+            let mut major = 0;
+            for _ in vector_2 {
+                major += 1;
+            }
+            assert_eq!(major, 0);
+            assert_eq!(iter.len(), 2);
+
+            let vector_1 = iter.next_back().unwrap();
+            let mut major = 0;
+            for _ in vector_1 {
+                major += 1;
+            }
+            assert_eq!(major, 0);
+            assert_eq!(iter.len(), 1);
+
+            let vector_0 = iter.next_back().unwrap();
+            let mut major = 0;
+            for _ in vector_0 {
+                major += 1;
+            }
+            assert_eq!(major, 0);
+            assert_eq!(iter.len(), 0);
+
+            assert!(iter.next_back().is_none());
+        }
+    }
+
+    #[test]
+    fn test_iter_vectors_mut_nth_back() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let layout = matrix.layout;
+
+            for major in 0..layout.major() {
+                let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+                let vector = iter.nth_back(layout.major() - 1 - major).unwrap();
+                for (minor, element) in vector.enumerate() {
+                    *element = Index::new(major, minor);
+                }
+            }
+
+            let major = matrix.major();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert!(iter.nth_back(major).is_none());
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let layout = matrix.layout;
+
+            for minor in 0..layout.minor() {
+                let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+                let vector = iter.nth_back(layout.minor() - 1 - minor).unwrap();
+                for (major, element) in vector.enumerate() {
+                    *element = Index::new(major, minor);
+                }
+            }
+
+            let minor = layout.minor();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert!(iter.nth_back(minor).is_none());
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+                let vector = iter.nth_back(major).unwrap();
+                let mut minor = 0;
+                for _ in vector {
+                    minor += 1;
+                }
+                assert_eq!(minor, 3);
+            }
+
+            let major = matrix.major();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert!(iter.nth_back(major).is_none());
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+                let vector = iter.nth_back(minor).unwrap();
+                let mut major = 0;
+                for _ in vector {
+                    major += 1;
+                }
+                assert_eq!(major, 2);
+            }
+
+            let minor = matrix.minor();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert!(iter.nth_back(minor).is_none());
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+                let vector = iter.nth_back(major).unwrap();
+                let mut minor = 0;
+                for _ in vector {
+                    minor += 1;
+                }
+                assert_eq!(minor, 0);
+            }
+
+            let major = matrix.major();
+            let mut iter = IterVectorsMut::over_major_axis(&mut matrix);
+            assert!(iter.nth_back(major).is_none());
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+                let vector = iter.nth_back(minor).unwrap();
+                let mut major = 0;
+                for _ in vector {
+                    major += 1;
+                }
+                assert_eq!(major, 0);
+            }
+
+            let minor = matrix.minor();
+            let mut iter = IterVectorsMut::over_minor_axis(&mut matrix);
+            assert!(iter.nth_back(minor).is_none());
+        }
+    }
+
+    #[test]
+    fn test_iter_vectors_mut_rfold() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let layout = matrix.layout;
+            let iter = IterVectorsMut::over_major_axis(&mut matrix);
+
+            let mut major = layout.major() - 1;
+            iter.rfold((), |_, vector| {
+                for (minor, element) in vector.enumerate() {
+                    *element = Index::new(major, minor);
+                }
+                major = major.saturating_sub(1);
+            });
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let layout = matrix.layout;
+            let iter = IterVectorsMut::over_minor_axis(&mut matrix);
+
+            let mut minor = layout.minor() - 1;
+            iter.rfold((), |_, vector| {
+                for (major, element) in vector.enumerate() {
+                    *element = Index::new(major, minor);
+                }
+                minor = minor.saturating_sub(1);
+            });
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+            let iter = IterVectorsMut::over_major_axis(&mut matrix);
+
+            let mut major = 0;
+            iter.rfold((), |_, vector| {
+                let mut minor = 0;
+                for _ in vector {
+                    minor += 1;
+                }
+                assert_eq!(minor, 3);
+                major += 1;
+            });
+            assert_eq!(major, 2);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+            let iter = IterVectorsMut::over_minor_axis(&mut matrix);
+
+            let mut minor = 0;
+            iter.rfold((), |_, vector| {
+                let mut major = 0;
+                for _ in vector {
+                    major += 1;
+                }
+                assert_eq!(major, 2);
+                minor += 1;
+            });
+            assert_eq!(minor, 3);
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+            let iter = IterVectorsMut::over_major_axis(&mut matrix);
+
+            let mut major = 0;
+            iter.rfold((), |_, vector| {
+                let mut minor = 0;
+                for _ in vector {
+                    minor += 1;
+                }
+                assert_eq!(minor, 0);
+                major += 1;
+            });
+            assert_eq!(major, 2);
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+            let iter = IterVectorsMut::over_minor_axis(&mut matrix);
+
+            let mut minor = 0;
+            iter.rfold((), |_, vector| {
+                let mut major = 0;
+                for _ in vector {
+                    major += 1;
+                }
+                assert_eq!(major, 0);
+                minor += 1;
+            });
+            assert_eq!(minor, 3);
+        }
+    }
+
+    #[test]
+    fn test_iter_nth_vector_mut_next() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert_eq!(iter.len(), 3);
+
+                let element_0 = iter.next().unwrap();
+                *element_0 = Index::new(major, 0);
+                assert_eq!(iter.len(), 2);
+
+                let element_1 = iter.next().unwrap();
+                *element_1 = Index::new(major, 1);
+                assert_eq!(iter.len(), 1);
+
+                let element_2 = iter.next().unwrap();
+                *element_2 = Index::new(major, 2);
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next().is_none());
+            }
+
+            let major = matrix.major();
+            let error = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert_eq!(iter.len(), 2);
+
+                let element_0 = iter.next().unwrap();
+                *element_0 = Index::new(0, minor);
+                assert_eq!(iter.len(), 1);
+
+                let element_1 = iter.next().unwrap();
+                *element_1 = Index::new(1, minor);
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next().is_none());
+            }
+
+            let minor = matrix.minor();
+            let error = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert_eq!(iter.len(), 3);
+
+                assert!(iter.next().is_some());
+                assert_eq!(iter.len(), 2);
+
+                assert!(iter.next().is_some());
+                assert_eq!(iter.len(), 1);
+
+                assert!(iter.next().is_some());
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next().is_none());
+            }
+
+            let major = matrix.major();
+            let error = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert_eq!(iter.len(), 2);
+
+                assert!(iter.next().is_some());
+                assert_eq!(iter.len(), 1);
+
+                assert!(iter.next().is_some());
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next().is_none());
+            }
+
+            let minor = matrix.minor();
+            let error = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next().is_none());
+            }
+
+            let major = matrix.major();
+            let error = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next().is_none());
+            }
+
+            let minor = matrix.minor();
+            let error = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+        }
+    }
+
+    #[test]
+    #[allow(clippy::iter_nth_zero)]
+    fn test_iter_nth_vector_mut_nth() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                for minor in 0..matrix.minor() {
+                    let mut iter =
+                        IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                    let element = iter.nth(minor).unwrap();
+                    *element = Index::new(major, minor);
+                }
+
+                let minor = matrix.minor();
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert!(iter.nth(minor).is_none());
+            }
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                for major in 0..matrix.major() {
+                    let mut iter =
+                        IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                    let element = iter.nth(major).unwrap();
+                    *element = Index::new(major, minor);
+                }
+
+                let major = matrix.major();
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert!(iter.nth(major).is_none());
+            }
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                for minor in 0..matrix.minor() {
+                    let mut iter =
+                        IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                    assert!(iter.nth(minor).is_some());
+                }
+
+                let minor = matrix.minor();
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert!(iter.nth(minor).is_none());
+            }
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                for major in 0..matrix.major() {
+                    let mut iter =
+                        IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                    assert!(iter.nth(major).is_some());
+                }
+
+                let major = matrix.major();
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert!(iter.nth(major).is_none());
+            }
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert!(iter.nth(0).is_none());
+            }
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert!(iter.nth(0).is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn test_iter_nth_vector_mut_fold() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let iter = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+
+                let mut minor = 0;
+                iter.fold((), |_, element| {
+                    *element = Index::new(major, minor);
+                    minor += 1;
+                });
+            }
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let iter = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+
+                let mut major = 0;
+                iter.fold((), |_, element| {
+                    *element = Index::new(major, minor);
+                    major += 1;
+                });
+            }
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let iter = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+
+                let mut minor = 0;
+                iter.fold((), |_, _| {
+                    minor += 1;
+                });
+                assert_eq!(minor, 3);
+            }
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let iter = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+
+                let mut major = 0;
+                iter.fold((), |_, _| {
+                    major += 1;
+                });
+                assert_eq!(major, 2);
+            }
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let iter = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+
+                let mut minor = 0;
+                iter.fold((), |_, _| {
+                    minor += 1;
+                });
+                assert_eq!(minor, 0);
+            }
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let iter = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+
+                let mut major = 0;
+                iter.fold((), |_, _| {
+                    major += 1;
+                });
+                assert_eq!(major, 0);
+            }
+        }
+    }
+
+    #[test]
+    fn test_iter_nth_vector_mut_next_back() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert_eq!(iter.len(), 3);
+
+                let element_0 = iter.next_back().unwrap();
+                *element_0 = Index::new(major, 2);
+                assert_eq!(iter.len(), 2);
+
+                let element_1 = iter.next_back().unwrap();
+                *element_1 = Index::new(major, 1);
+                assert_eq!(iter.len(), 1);
+
+                let element_2 = iter.next_back().unwrap();
+                *element_2 = Index::new(major, 0);
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next_back().is_none());
+            }
+
+            let major = matrix.major();
+            let error = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert_eq!(iter.len(), 2);
+
+                let element_0 = iter.next_back().unwrap();
+                *element_0 = Index::new(1, minor);
+                assert_eq!(iter.len(), 1);
+
+                let element_1 = iter.next_back().unwrap();
+                *element_1 = Index::new(0, minor);
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next_back().is_none());
+            }
+
+            let minor = matrix.minor();
+            let error = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert_eq!(iter.len(), 3);
+
+                assert!(iter.next_back().is_some());
+                assert_eq!(iter.len(), 2);
+
+                assert!(iter.next_back().is_some());
+                assert_eq!(iter.len(), 1);
+
+                assert!(iter.next_back().is_some());
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next_back().is_none());
+            }
+
+            let major = matrix.major();
+            let error = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert_eq!(iter.len(), 2);
+
+                assert!(iter.next_back().is_some());
+                assert_eq!(iter.len(), 1);
+
+                assert!(iter.next_back().is_some());
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next_back().is_none());
+            }
+
+            let minor = matrix.minor();
+            let error = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next_back().is_none());
+            }
+
+            let major = matrix.major();
+            let error = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert_eq!(iter.len(), 0);
+
+                assert!(iter.next_back().is_none());
+            }
+
+            let minor = matrix.minor();
+            let error = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap_err();
+            assert_eq!(error, Error::IndexOutOfBounds);
+        }
+    }
+
+    #[test]
+    fn test_iter_nth_vector_mut_nth_back() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let layout = matrix.layout;
+
+            for major in 0..layout.major() {
+                for minor in 0..layout.minor() {
+                    let mut iter =
+                        IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                    let element = iter.nth_back(layout.minor() - 1 - minor).unwrap();
+                    *element = Index::new(major, minor);
+                }
+
+                let minor = layout.minor();
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert!(iter.nth_back(minor).is_none());
+            }
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let layout = matrix.layout;
+
+            for minor in 0..layout.minor() {
+                for major in 0..layout.major() {
+                    let mut iter =
+                        IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                    let element = iter.nth_back(layout.major() - 1 - major).unwrap();
+                    *element = Index::new(major, minor);
+                }
+
+                let major = layout.major();
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert!(iter.nth_back(major).is_none());
+            }
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                for minor in 0..matrix.minor() {
+                    let mut iter =
+                        IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                    assert!(iter.nth_back(minor).is_some());
+                }
+
+                let minor = matrix.minor();
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert!(iter.nth_back(minor).is_none());
+            }
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                for major in 0..matrix.major() {
+                    let mut iter =
+                        IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                    assert!(iter.nth_back(major).is_some());
+                }
+
+                let major = matrix.major();
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert!(iter.nth_back(major).is_none());
+            }
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let mut iter =
+                    IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+                assert!(iter.nth_back(0).is_none());
+            }
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let mut iter =
+                    IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+                assert!(iter.nth_back(0).is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn test_iter_nth_vector_mut_rfold() {
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let layout = matrix.layout;
+
+            for major in 0..layout.major() {
+                let iter = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+
+                let mut minor = layout.minor() - 1;
+                iter.rfold((), |_, element| {
+                    *element = Index::new(major, minor);
+                    minor = minor.saturating_sub(1);
+                });
+            }
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::from_default(shape).unwrap();
+            let layout = matrix.layout;
+
+            for minor in 0..layout.minor() {
+                let iter = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+
+                let mut major = layout.major() - 1;
+                iter.rfold((), |_, element| {
+                    *element = Index::new(major, minor);
+                    major = major.saturating_sub(1);
+                });
+            }
+
+            let expected = Matrix::from_fn(shape, |index| index).unwrap();
+            assert_eq!(matrix, expected);
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let iter = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+
+                let mut minor = 0;
+                iter.rfold((), |_, _| {
+                    minor += 1;
+                });
+                assert_eq!(minor, 3);
+            }
+        }
+
+        {
+            let shape = Shape::new(2, 3);
+            let mut matrix = Matrix::<()>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let iter = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+
+                let mut major = 0;
+                iter.rfold((), |_, _| {
+                    major += 1;
+                });
+                assert_eq!(major, 2);
+            }
+        }
+
+        {
+            let shape = Shape::new(2, 0);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for major in 0..matrix.major() {
+                let iter = IterNthVectorMut::over_major_axis_vector(&mut matrix, major).unwrap();
+
+                let mut minor = 0;
+                iter.rfold((), |_, _| {
+                    minor += 1;
+                });
+                assert_eq!(minor, 0);
+            }
+        }
+
+        {
+            let shape = Shape::new(0, 3);
+            let mut matrix = Matrix::<i32>::from_default(shape).unwrap();
+
+            for minor in 0..matrix.minor() {
+                let iter = IterNthVectorMut::over_minor_axis_vector(&mut matrix, minor).unwrap();
+
+                let mut major = 0;
+                iter.rfold((), |_, _| {
+                    major += 1;
+                });
+                assert_eq!(major, 0);
+            }
+        }
+    }
+}
