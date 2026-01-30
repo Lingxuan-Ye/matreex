@@ -111,6 +111,79 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
         let len = self.len();
         (len, Some(len))
     }
+
+    fn count(self) -> usize {
+        self.len()
+    }
+
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        if size_of::<T>() == 0 || self.vector_len == 0 {
+            let mut len = self.end_or_len.addr();
+            if n >= len {
+                self.end_or_len = ptr::without_provenance_mut(0);
+                return None;
+            }
+            len = unsafe { len.unchecked_sub(n).unchecked_sub(1) };
+            self.end_or_len = ptr::without_provenance_mut(len);
+            let ptr = NonNull::dangling();
+            // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
+            // the upper bound of `len`, which cannot be `0` here.
+            let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
+            return Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) });
+        }
+
+        let start = self.ptr.addr().get();
+        let end = self.end_or_len.addr();
+        let stride = unsafe { size_of::<T>().unchecked_mul(self.axis_stride) };
+        let offset = n.checked_mul(stride)?;
+        let addr = start.checked_add(offset)?;
+        if addr > end {
+            self.end_or_len = ptr::null_mut();
+            return None;
+        }
+        let addr = unsafe { NonZero::new_unchecked(addr) };
+        let ptr = self.ptr.with_addr(addr);
+        if addr.get() == end {
+            self.end_or_len = ptr::null_mut();
+        } else {
+            let offset = stride;
+            self.ptr = unsafe { ptr.byte_add(offset) };
+        }
+        // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
+        // `0` only if `self.end_or_len` is null, which is unreachable here.
+        let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
+        Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) })
+    }
+
+    fn last(mut self) -> Option<Self::Item> {
+        self.next_back()
+    }
+
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        F: FnMut(B, Self::Item) -> B,
+    {
+        let mut len = self.len();
+        if len == 0 {
+            return init;
+        }
+        let mut acc = init;
+        let mut ptr = self.ptr;
+        let offset = self.axis_stride;
+        loop {
+            // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
+            // `0` only if `self.end_or_len` is null, which is unreachable here.
+            let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
+            let item = unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) };
+            acc = f(acc, item);
+            if len == 1 {
+                break;
+            }
+            len = unsafe { len.unchecked_sub(1) };
+            ptr = unsafe { ptr.add(offset) };
+        }
+        acc
+    }
 }
 
 impl<T> ExactSizeIterator for IterVectorsMut<'_, T> {
@@ -160,6 +233,72 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
         // `0` only if `self.end_or_len` is null, which is unreachable here.
         let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
         Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) })
+    }
+
+    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+        if size_of::<T>() == 0 || self.vector_len == 0 {
+            let mut len = self.end_or_len.addr();
+            if n >= len {
+                self.end_or_len = ptr::without_provenance_mut(0);
+                return None;
+            }
+            len = unsafe { len.unchecked_sub(n).unchecked_sub(1) };
+            self.end_or_len = ptr::without_provenance_mut(len);
+            let ptr = NonNull::dangling();
+            // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
+            // the upper bound of `len`, which cannot be `0` here.
+            let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
+            return Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) });
+        }
+
+        let start = self.ptr.addr().get();
+        let end = self.end_or_len.addr();
+        let stride = unsafe { size_of::<T>().unchecked_mul(self.axis_stride) };
+        let offset = n.checked_mul(stride)?;
+        let addr = end.checked_sub(offset)?;
+        if addr < start {
+            self.end_or_len = ptr::null_mut();
+            return None;
+        }
+        let addr = unsafe { NonZero::new_unchecked(addr) };
+        let ptr = self.ptr.with_addr(addr);
+        if addr.get() == start {
+            self.end_or_len = ptr::null_mut();
+        } else {
+            let offset = stride;
+            self.ptr = unsafe { ptr.byte_sub(offset) };
+        }
+        // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
+        // `0` only if `self.end_or_len` is null, which is unreachable here.
+        let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
+        Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) })
+    }
+
+    fn rfold<B, F>(self, init: B, mut f: F) -> B
+    where
+        F: FnMut(B, Self::Item) -> B,
+    {
+        let mut len = self.len();
+        if len == 0 {
+            return init;
+        }
+        let mut acc = init;
+        // SAFETY: `self.end_or_len` is not null since `len > 0`.
+        let mut ptr = unsafe { NonNull::new_unchecked(self.end_or_len) };
+        let offset = self.axis_stride;
+        loop {
+            // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
+            // `0` only if `self.end_or_len` is null, which is unreachable here.
+            let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
+            let item = unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) };
+            acc = f(acc, item);
+            if len == 1 {
+                break;
+            }
+            len = unsafe { len.unchecked_sub(1) };
+            ptr = unsafe { ptr.sub(offset) };
+        }
+        acc
     }
 }
 
@@ -302,6 +441,69 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
         let len = self.len();
         (len, Some(len))
     }
+
+    fn count(self) -> usize {
+        self.len()
+    }
+
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        if size_of::<T>() == 0 {
+            let mut len = self.end_or_len.addr();
+            if n >= len {
+                self.end_or_len = ptr::without_provenance_mut(0);
+                return None;
+            }
+            len = unsafe { len.unchecked_sub(n).unchecked_sub(1) };
+            self.end_or_len = ptr::without_provenance_mut(len);
+            return Some(unsafe { NonNull::dangling().as_mut() });
+        }
+
+        let start = self.ptr.addr().get();
+        let end = self.end_or_len.addr();
+        let stride = unsafe { size_of::<T>().unchecked_mul(self.stride.get()) };
+        let offset = n.checked_mul(stride)?;
+        let addr = start.checked_add(offset)?;
+        if addr > end {
+            self.end_or_len = ptr::null_mut();
+            return None;
+        }
+        let addr = unsafe { NonZero::new_unchecked(addr) };
+        let mut ptr = self.ptr.with_addr(addr);
+        if addr.get() == end {
+            self.end_or_len = ptr::null_mut();
+        } else {
+            let offset = stride;
+            self.ptr = unsafe { ptr.byte_add(offset) };
+        }
+        Some(unsafe { ptr.as_mut() })
+    }
+
+    fn last(mut self) -> Option<Self::Item> {
+        self.next_back()
+    }
+
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        F: FnMut(B, Self::Item) -> B,
+    {
+        let mut len = self.len();
+        if len == 0 {
+            return init;
+        }
+        let mut acc = init;
+        let mut ptr = self.ptr;
+        let offset = self.stride.get();
+        loop {
+            let item = unsafe { ptr.as_mut() };
+            acc = f(acc, item);
+            if len == 1 {
+                break;
+            }
+            len = unsafe { len.unchecked_sub(1) };
+            ptr = unsafe { ptr.add(offset) };
+        }
+        acc
+    }
 }
 
 impl<T> ExactSizeIterator for IterNthVectorMut<'_, T> {
@@ -344,6 +546,62 @@ impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
             self.end_or_len = unsafe { self.end_or_len.sub(offset) };
         }
         Some(unsafe { ptr.as_mut() })
+    }
+
+    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+        if size_of::<T>() == 0 {
+            let mut len = self.end_or_len.addr();
+            if n >= len {
+                self.end_or_len = ptr::without_provenance_mut(0);
+                return None;
+            }
+            len = unsafe { len.unchecked_sub(n).unchecked_sub(1) };
+            self.end_or_len = ptr::without_provenance_mut(len);
+            return Some(unsafe { NonNull::dangling().as_mut() });
+        }
+
+        let start = self.ptr.addr().get();
+        let end = self.end_or_len.addr();
+        let stride = unsafe { size_of::<T>().unchecked_mul(self.stride.get()) };
+        let offset = n.checked_mul(stride)?;
+        let addr = end.checked_sub(offset)?;
+        if addr < start {
+            self.end_or_len = ptr::null_mut();
+            return None;
+        }
+        let addr = unsafe { NonZero::new_unchecked(addr) };
+        let mut ptr = self.ptr.with_addr(addr);
+        if addr.get() == start {
+            self.end_or_len = ptr::null_mut();
+        } else {
+            let offset = stride;
+            self.ptr = unsafe { ptr.byte_sub(offset) };
+        }
+        Some(unsafe { ptr.as_mut() })
+    }
+
+    fn rfold<B, F>(self, init: B, mut f: F) -> B
+    where
+        F: FnMut(B, Self::Item) -> B,
+    {
+        let mut len = self.len();
+        if len == 0 {
+            return init;
+        }
+        let mut acc = init;
+        // SAFETY: `self.end_or_len` is not null since `len > 0`.
+        let mut ptr = unsafe { NonNull::new_unchecked(self.end_or_len) };
+        let offset = self.stride.get();
+        loop {
+            let item = unsafe { ptr.as_mut() };
+            acc = f(acc, item);
+            if len == 1 {
+                break;
+            }
+            len = unsafe { len.unchecked_sub(1) };
+            ptr = unsafe { ptr.sub(offset) };
+        }
+        acc
     }
 }
 
