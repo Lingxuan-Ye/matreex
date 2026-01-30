@@ -163,6 +163,27 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
     where
         F: FnMut(B, Self::Item) -> B,
     {
+        if size_of::<T>() == 0 || self.vector_len == 0 {
+            let mut len = self.end_or_len.addr();
+            if len == 0 {
+                return init;
+            }
+            let mut acc = init;
+            let ptr = NonNull::dangling();
+            loop {
+                // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
+                // `0` only if `self.end_or_len` is null, which is unreachable here.
+                let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
+                let item = unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) };
+                acc = f(acc, item);
+                if len == 1 {
+                    break;
+                }
+                len = unsafe { len.unchecked_sub(1) };
+            }
+            return acc;
+        }
+
         let mut len = self.len();
         if len == 0 {
             return init;
@@ -278,6 +299,27 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
     where
         F: FnMut(B, Self::Item) -> B,
     {
+        if size_of::<T>() == 0 || self.vector_len == 0 {
+            let mut len = self.end_or_len.addr();
+            if len == 0 {
+                return init;
+            }
+            let mut acc = init;
+            let ptr = NonNull::dangling();
+            loop {
+                // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
+                // `0` only if `self.end_or_len` is null, which is unreachable here.
+                let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
+                let item = unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) };
+                acc = f(acc, item);
+                if len == 1 {
+                    break;
+                }
+                len = unsafe { len.unchecked_sub(1) };
+            }
+            return acc;
+        }
+
         let mut len = self.len();
         if len == 0 {
             return init;
