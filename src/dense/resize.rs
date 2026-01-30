@@ -801,9 +801,9 @@ where
 ///
 /// # Invariants
 ///
-/// - The memory range must be contained within a single allocated object.
-/// - The memory range must be [valid] for both reads and writes.
-/// - The memory range must be properly aligned, even if `T` has size 0.
+/// - The memory range is contained within a single allocated object.
+/// - The memory range is [valid] for both reads and writes.
+/// - The memory range is properly aligned, even if `T` is zero-sized.
 ///
 /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
 /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety

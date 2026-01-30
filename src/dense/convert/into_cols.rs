@@ -79,23 +79,23 @@ mod tests {
     fn test_into_cols() {
         dispatch_unary! {{
             let matrix = Matrix::<i32, O>::try_from_rows([[1, 4], [2, 5], [3, 6]]).unwrap();
-            let expected: Box<[Box<[i32]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
             let output: Box<[Box<[i32]>]> = matrix.into_cols();
+            let expected: Box<[Box<[i32]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
             assert_eq!(output, expected);
 
             let matrix = Matrix::<i32, O>::try_from_rows([[1, 4], [2, 5], [3, 6]]).unwrap();
-            let expected: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
             let output: Vec<Box<[i32]>> = matrix.into_cols();
+            let expected: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
             assert_eq!(output, expected);
 
             let matrix = Matrix::<i32, O>::try_from_rows([[1, 4], [2, 5], [3, 6]]).unwrap();
-            let expected: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
             let output: Box<[Vec<i32>]> = matrix.into_cols();
+            let expected: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
             assert_eq!(output, expected);
 
             let matrix = Matrix::<i32, O>::try_from_rows([[1, 4], [2, 5], [3, 6]]).unwrap();
-            let expected: Vec<Vec<i32>> = vec![vec![1, 2, 3], vec![4, 5, 6]];
             let output: Vec<Vec<i32>> = matrix.into_cols();
+            let expected: Vec<Vec<i32>> = vec![vec![1, 2, 3], vec![4, 5, 6]];
             assert_eq!(output, expected);
         }}
     }
