@@ -696,7 +696,7 @@ mod tests {
     // In addition, there is a degree of abstraction leakage in this module that
     // mixes layout-level details with row/column semantics; that is, the major
     // axis is always treated as the row axis and the minor axis as the column
-    // axis. This mainly involves variable names.
+    // axis.
 
     #[test]
     fn test_iter_vectors_mut_next() {
