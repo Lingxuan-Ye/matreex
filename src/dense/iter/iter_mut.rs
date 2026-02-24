@@ -210,8 +210,7 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
 impl<T> ExactSizeIterator for IterVectorsMut<'_, T> {
     fn len(&self) -> usize {
         if size_of::<T>() == 0 || self.vector_len == 0 {
-            let len = self.end_or_len.addr();
-            return len;
+            return self.end_or_len.addr();
         }
 
         if self.end_or_len.is_null() {
@@ -569,8 +568,7 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
 impl<T> ExactSizeIterator for IterNthVectorMut<'_, T> {
     fn len(&self) -> usize {
         if size_of::<T>() == 0 {
-            let len = self.end_or_len.addr();
-            return len;
+            return self.end_or_len.addr();
         }
 
         if self.end_or_len.is_null() {
@@ -696,7 +694,7 @@ mod tests {
     // In addition, there is a degree of abstraction leakage in this module that
     // mixes layout-level details with row/column semantics; that is, the major
     // axis is always treated as the row axis and the minor axis as the column
-    // axis. This mainly involves variable names.
+    // axis.
 
     #[test]
     fn test_iter_vectors_mut_next() {
