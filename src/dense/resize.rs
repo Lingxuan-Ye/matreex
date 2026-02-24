@@ -5,8 +5,7 @@ use crate::index::Index;
 use crate::shape::AsShape;
 use alloc::vec::Vec;
 use core::cmp::Ordering;
-use core::marker::PhantomData;
-use core::ptr::NonNull;
+use core::ptr;
 
 impl<T, O> Matrix<T, O>
 where
@@ -808,10 +807,7 @@ where
 /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
 /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
 #[derive(Debug)]
-struct MemRange<T> {
-    range: NonNull<[T]>,
-    marker: PhantomData<*mut T>,
-}
+struct MemRange<T>(*mut [T]);
 
 impl<T> MemRange<T> {
     /// Creates a [`MemRange`].
@@ -829,10 +825,7 @@ impl<T> MemRange<T> {
     ///
     /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
     const unsafe fn new(start: *mut T, len: usize) -> Self {
-        let start = unsafe { NonNull::new_unchecked(start) };
-        let range = NonNull::slice_from_raw_parts(start, len);
-        let marker = PhantomData;
-        Self { range, marker }
+        Self(ptr::slice_from_raw_parts_mut(start, len))
     }
 
     /// Returns a pointer to the start of the memory range.
@@ -841,12 +834,12 @@ impl<T> MemRange<T> {
     /// still inside the provenance of the allocated object, but may have `0` bytes
     /// it can read/write.
     const fn start(&self) -> *mut T {
-        self.range.as_ptr() as *mut T
+        self.0.cast()
     }
 
     /// Returns the length of the memory range.
     const fn len(&self) -> usize {
-        self.range.len()
+        self.0.len()
     }
 
     /// Initializes the memory range with the given value.
@@ -949,7 +942,7 @@ impl<T> MemRange<T> {
     ///
     /// [`ptr::drop_in_place`]: core::ptr::drop_in_place
     unsafe fn drop_in_place(self) {
-        unsafe { self.range.drop_in_place() }
+        unsafe { self.0.drop_in_place() }
     }
 }
 
