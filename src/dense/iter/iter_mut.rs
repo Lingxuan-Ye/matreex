@@ -78,11 +78,7 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if size_of::<T>() == 0 || self.vector_len == 0 {
-            let mut len = self.end_or_len.addr();
-            if len == 0 {
-                return None;
-            }
-            len = unsafe { len.unchecked_sub(1) };
+            let len = self.end_or_len.addr().checked_sub(1)?;
             self.end_or_len = ptr::without_provenance_mut(len);
             let ptr = NonNull::dangling();
             // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
@@ -229,11 +225,7 @@ impl<T> ExactSizeIterator for IterVectorsMut<'_, T> {
 impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if size_of::<T>() == 0 || self.vector_len == 0 {
-            let mut len = self.end_or_len.addr();
-            if len == 0 {
-                return None;
-            }
-            len = unsafe { len.unchecked_sub(1) };
+            let len = self.end_or_len.addr().checked_sub(1)?;
             self.end_or_len = ptr::without_provenance_mut(len);
             let ptr = NonNull::dangling();
             // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
@@ -456,11 +448,7 @@ impl<'a, T> Iterator for IterNthVectorMut<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if size_of::<T>() == 0 {
-            let mut len = self.end_or_len.addr();
-            if len == 0 {
-                return None;
-            }
-            len = unsafe { len.unchecked_sub(1) };
+            let len = self.end_or_len.addr().checked_sub(1)?;
             self.end_or_len = ptr::without_provenance_mut(len);
             return Some(unsafe { NonNull::dangling().as_mut() });
         }
@@ -587,11 +575,7 @@ impl<T> ExactSizeIterator for IterNthVectorMut<'_, T> {
 impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if size_of::<T>() == 0 {
-            let mut len = self.end_or_len.addr();
-            if len == 0 {
-                return None;
-            }
-            len = unsafe { len.unchecked_sub(1) };
+            let len = self.end_or_len.addr().checked_sub(1)?;
             self.end_or_len = ptr::without_provenance_mut(len);
             return Some(unsafe { NonNull::dangling().as_mut() });
         }
