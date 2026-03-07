@@ -221,7 +221,7 @@ impl<T> ExactSizeIterator for IterVectorsMut<'_, T> {
         let end = self.end_or_len.addr();
         let stride = self.axis_stride;
         unsafe {
-            ((end.unchecked_sub(start)) / (size_of::<T>().unchecked_mul(stride))).unchecked_add(1)
+            (end.unchecked_sub(start) / size_of::<T>().unchecked_mul(stride)).unchecked_add(1)
         }
     }
 }
@@ -579,7 +579,7 @@ impl<T> ExactSizeIterator for IterNthVectorMut<'_, T> {
         let end = self.end_or_len.addr();
         let stride = self.stride.get();
         unsafe {
-            ((end.unchecked_sub(start)) / (size_of::<T>().unchecked_mul(stride))).unchecked_add(1)
+            (end.unchecked_sub(start) / size_of::<T>().unchecked_mul(stride)).unchecked_add(1)
         }
     }
 }
