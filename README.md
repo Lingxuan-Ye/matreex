@@ -10,7 +10,7 @@ A simple matrix implementation.
 
 First, we need to import `matrix!`.
 
-```
+```rust
 use matreex::matrix;
 ```
 

@@ -54,7 +54,7 @@ where
         let mut element_width = 0;
         let mut element_hight = 0;
         let mut cache = Vec::with_capacity(size);
-        for element in self.data.iter() {
+        for element in &self.data {
             let lines = Lines::from_debug(element);
             let width = lines.width();
             if width > element_width {
@@ -158,7 +158,7 @@ where
         let mut element_width = 0;
         let mut element_hight = 0;
         let mut cache = Vec::with_capacity(size);
-        for element in self.data.iter() {
+        for element in &self.data {
             let lines = Lines::from_display(element);
             let width = lines.width();
             if width > element_width {

@@ -10,7 +10,7 @@ where
     type Output = Matrix<U, O>;
 
     fn neg(self) -> Self::Output {
-        match self.map(|element| element.neg()) {
+        match self.map(T::neg) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }

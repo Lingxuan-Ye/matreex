@@ -1,5 +1,5 @@
 use super::Matrix;
-use super::layout::{Order, OrderKind};
+use super::layout::{Order, OrderKind, Stride};
 use crate::error::{Error, Result};
 use crate::index::MatrixIndex;
 use core::ptr;
@@ -113,13 +113,13 @@ where
 
         let base = self.data.as_mut_ptr();
         let stride = self.stride();
-        let index = m * stride.major();
-        let jndex = n * stride.major();
+        let index = m * stride.major;
+        let jndex = n * stride.major;
 
         unsafe {
             let x = base.add(index);
             let y = base.add(jndex);
-            let count = self.minor() * stride.minor();
+            let count = self.minor() * Stride::MINOR;
             ptr::swap_nonoverlapping(x, y, count);
         }
 
@@ -140,17 +140,17 @@ where
 
         let base = self.data.as_mut_ptr();
         let stride = self.stride();
-        let index = m * stride.minor();
-        let jndex = n * stride.minor();
+        let index = m * Stride::MINOR;
+        let jndex = n * Stride::MINOR;
 
         unsafe {
             let mut x = base.add(index);
             let mut y = base.add(jndex);
-            ptr::swap_nonoverlapping(x, y, stride.minor());
+            ptr::swap_nonoverlapping(x, y, Stride::MINOR);
             for _ in 1..self.major() {
-                x = x.add(stride.major());
-                y = y.add(stride.major());
-                ptr::swap_nonoverlapping(x, y, stride.minor());
+                x = x.add(stride.major);
+                y = y.add(stride.major);
+                ptr::swap_nonoverlapping(x, y, Stride::MINOR);
             }
         }
 

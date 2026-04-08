@@ -362,7 +362,7 @@ mod tests {
             matrix
                 .par_iter_elements_mut_with_index()
                 .for_each(|(index, element)| {
-                    *element += index.row as i32 + index.col as i32;
+                    *element += index.row + index.col;
                 });
             let expected = matrix![[1, 3, 5], [5, 7, 9]];
             assert_eq!(matrix, expected);

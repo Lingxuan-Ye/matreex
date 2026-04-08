@@ -172,6 +172,21 @@ impl AsShape for [usize; 2] {
     }
 }
 
+impl<S> AsShape for &S
+where
+    S: AsShape,
+{
+    #[inline]
+    fn nrows(&self) -> usize {
+        (*self).nrows()
+    }
+
+    #[inline]
+    fn ncols(&self) -> usize {
+        (*self).ncols()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
