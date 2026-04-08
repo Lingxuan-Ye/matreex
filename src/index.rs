@@ -167,6 +167,21 @@ impl AsIndex for [usize; 2] {
     }
 }
 
+impl<I> AsIndex for &I
+where
+    I: AsIndex,
+{
+    #[inline]
+    fn row(&self) -> usize {
+        (*self).row()
+    }
+
+    #[inline]
+    fn col(&self) -> usize {
+        (*self).col()
+    }
+}
+
 /// A struct representing a two-dimensional index that wraps around when
 /// exceeding the valid range.
 ///
