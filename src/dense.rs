@@ -370,17 +370,14 @@ where
         T: Clone,
         P: Order,
     {
-        let src_stride = src.stride();
-        let dst_stride = self.stride();
-
         if O::KIND == P::KIND {
             let major = cmp::min(self.major(), src.major());
             let minor = cmp::min(self.minor(), src.minor());
             for i in 0..major {
-                let src_lower = i * src_stride.major();
-                let src_upper = src_lower + minor * src_stride.minor();
-                let dst_lower = i * dst_stride.major();
-                let dst_upper = dst_lower + minor * dst_stride.minor();
+                let src_lower = i * src.stride().major;
+                let src_upper = src_lower + minor * Stride::MINOR;
+                let dst_lower = i * self.stride().major;
+                let dst_upper = dst_lower + minor * Stride::MINOR;
                 unsafe {
                     let src = src.data.get_unchecked(src_lower..src_upper);
                     let dst = self.data.get_unchecked_mut(dst_lower..dst_upper);
@@ -391,10 +388,10 @@ where
             let major = cmp::min(self.major(), src.minor());
             let minor = cmp::min(self.minor(), src.major());
             for i in 0..major {
-                let dst_lower = i * dst_stride.major();
-                let dst_upper = dst_lower + minor * dst_stride.minor();
+                let dst_lower = i * self.stride().major;
+                let dst_upper = dst_lower + minor * Stride::MINOR;
                 unsafe {
-                    let src = src.data.iter().skip(i).step_by(src_stride.major());
+                    let src = src.data.iter().skip(i).step_by(src.stride().major);
                     let dst = self.data.get_unchecked_mut(dst_lower..dst_upper).iter_mut();
                     dst.zip(src).for_each(|(dst, src)| *dst = src.clone());
                 }

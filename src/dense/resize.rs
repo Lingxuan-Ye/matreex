@@ -1,5 +1,5 @@
 use super::Matrix;
-use super::layout::{Layout, Order};
+use super::layout::{Layout, Order, Stride};
 use crate::error::Result;
 use crate::index::Index;
 use crate::shape::AsShape;
@@ -61,12 +61,12 @@ where
         // dropped in the context of resizing. In particular:
         //
         // - If `new_layout.major() < old_layout.major()`, the tail refers to the range
-        //   from `new_layout.major() * old_stride.major()` to `old_size` and needs to
-        //   be dropped.
+        //   from `new_layout.major() * old_stride.major` to `old_size` and needs to be
+        //   dropped.
         // - If `new_layout.major() == old_layout.major()`, the tail does not exist.
         // - If `new_layout.major() > old_layout.major()`, the tail refers to the range
-        //   from `old_layout.major() * new_stride.major()` to `new_size` and needs to
-        //   be initialized.
+        //   from `old_layout.major() * new_stride.major` to `new_size` and needs to be
+        //   initialized.
         //
         // Note that the tail may overlap with other parts of memory, so the execution
         // order matters.
@@ -75,7 +75,6 @@ where
         let (new_layout, new_size) = Layout::from_shape_with_size(shape)?;
         let old_stride = old_layout.stride();
         let new_stride = new_layout.stride();
-        let minor_stride = old_stride.minor();
 
         match (old_size, new_size) {
             (0, 0) => {
@@ -118,8 +117,8 @@ where
                 self.layout = Layout::default();
                 self.data.set_len(0);
 
-                let to_copy_len = new_layout.minor() * minor_stride;
-                let to_drop_len = (old_layout.minor() - new_layout.minor()) * minor_stride;
+                let to_copy_len = new_layout.minor() * Stride::MINOR;
+                let to_drop_len = (old_layout.minor() - new_layout.minor()) * Stride::MINOR;
 
                 match major_len_cmp {
                     Ordering::Less => {
@@ -129,13 +128,13 @@ where
                         let to_drop_start = src.add(to_copy_len);
                         MemRange::new(to_drop_start, to_drop_len).drop_in_place();
                         for _ in 1..new_layout.major() {
-                            src = src.add(old_stride.major());
-                            dst = dst.add(new_stride.major());
+                            src = src.add(old_stride.major);
+                            dst = dst.add(new_stride.major);
                             MemRange::new(src, to_copy_len).copy_to(dst);
                             let to_drop_start = src.add(to_copy_len);
                             MemRange::new(to_drop_start, to_drop_len).drop_in_place();
                         }
-                        let tail_start_index = new_layout.major() * old_stride.major();
+                        let tail_start_index = new_layout.major() * old_stride.major;
                         let tail_start = base.add(tail_start_index);
                         let tail_len = old_size - tail_start_index;
                         MemRange::new(tail_start, tail_len).drop_in_place();
@@ -148,8 +147,8 @@ where
                         let to_drop_start = src.add(to_copy_len);
                         MemRange::new(to_drop_start, to_drop_len).drop_in_place();
                         for _ in 1..new_layout.major() {
-                            src = src.add(old_stride.major());
-                            dst = dst.add(new_stride.major());
+                            src = src.add(old_stride.major);
+                            dst = dst.add(new_stride.major);
                             MemRange::new(src, to_copy_len).copy_to(dst);
                             let to_drop_start = src.add(to_copy_len);
                             MemRange::new(to_drop_start, to_drop_len).drop_in_place();
@@ -157,7 +156,7 @@ where
                     }
 
                     Ordering::Greater => {
-                        let tail_start_index = old_layout.major() * new_stride.major();
+                        let tail_start_index = old_layout.major() * new_stride.major;
                         let tail_len = new_size - tail_start_index;
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
@@ -166,8 +165,8 @@ where
                             let to_drop_start = src.add(to_copy_len);
                             MemRange::new(to_drop_start, to_drop_len).drop_in_place();
                             for _ in 1..old_layout.major() {
-                                src = src.add(old_stride.major());
-                                dst = dst.add(new_stride.major());
+                                src = src.add(old_stride.major);
+                                dst = dst.add(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to(dst);
                                 let to_drop_start = src.add(to_copy_len);
                                 MemRange::new(to_drop_start, to_drop_len).drop_in_place();
@@ -187,8 +186,8 @@ where
                             let to_drop_start = src.add(to_copy_len);
                             MemRange::new(to_drop_start, to_drop_len).drop_in_place();
                             for _ in 1..old_layout.major() {
-                                src = src.add(old_stride.major());
-                                dst = dst.add(new_stride.major());
+                                src = src.add(old_stride.major);
+                                dst = dst.add(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
                                 let to_drop_start = src.add(to_copy_len);
                                 MemRange::new(to_drop_start, to_drop_len).drop_in_place();
@@ -236,13 +235,13 @@ where
                 self.layout = Layout::default();
                 self.data.set_len(0);
 
-                let to_copy_len = old_layout.minor() * minor_stride;
-                let to_init_len = (new_layout.minor() - old_layout.minor()) * minor_stride;
+                let to_copy_len = old_layout.minor() * Stride::MINOR;
+                let to_init_len = (new_layout.minor() - old_layout.minor()) * Stride::MINOR;
 
                 match major_len_cmp {
                     Ordering::Less => {
                         let base = self.data.as_mut_ptr();
-                        let tail_start_index = new_layout.major() * old_stride.major();
+                        let tail_start_index = new_layout.major() * old_stride.major;
                         let tail_start = base.add(tail_start_index);
                         let tail_len = old_size - tail_start_index;
                         MemRange::new(tail_start, tail_len).drop_in_place();
@@ -250,8 +249,8 @@ where
                             let mut src = tail_start;
                             let mut dst = base.add(new_size);
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to(dst);
                                 let to_init_start = dst.add(to_copy_len);
                                 MemRange::new(to_init_start, to_init_len).init(value.clone());
@@ -264,14 +263,14 @@ where
                             let mut src = tail_start;
                             let mut dst = new_base.add(new_size);
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
                                 let to_init_start = dst.add(to_copy_len);
                                 MemRange::new(to_init_start, to_init_len).init(value.clone());
                             }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
+                            src = src.sub(old_stride.major);
+                            dst = dst.sub(new_stride.major);
                             MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
                             let to_init_start = dst.add(to_copy_len);
                             MemRange::new(to_init_start, to_init_len).init(value);
@@ -285,8 +284,8 @@ where
                             let mut src = base.add(old_size);
                             let mut dst = base.add(new_size);
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to(dst);
                                 let to_init_start = dst.add(to_copy_len);
                                 MemRange::new(to_init_start, to_init_len).init(value.clone());
@@ -300,14 +299,14 @@ where
                             let mut src = old_base.add(old_size);
                             let mut dst = new_base.add(new_size);
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
                                 let to_init_start = dst.add(to_copy_len);
                                 MemRange::new(to_init_start, to_init_len).init(value.clone());
                             }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
+                            src = src.sub(old_stride.major);
+                            dst = dst.sub(new_stride.major);
                             MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
                             let to_init_start = dst.add(to_copy_len);
                             MemRange::new(to_init_start, to_init_len).init(value);
@@ -316,7 +315,7 @@ where
                     }
 
                     Ordering::Greater => {
-                        let tail_start_index = old_layout.major() * new_stride.major();
+                        let tail_start_index = old_layout.major() * new_stride.major;
                         let tail_len = new_size - tail_start_index;
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
@@ -325,8 +324,8 @@ where
                             let mut src = base.add(old_size);
                             let mut dst = tail_start;
                             for _ in 1..old_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to(dst);
                                 let to_init_start = dst.add(to_copy_len);
                                 MemRange::new(to_init_start, to_init_len).init(value.clone());
@@ -342,14 +341,14 @@ where
                             let mut src = old_base.add(old_size);
                             let mut dst = tail_start;
                             for _ in 1..old_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
                                 let to_init_start = dst.add(to_copy_len);
                                 MemRange::new(to_init_start, to_init_len).init(value.clone());
                             }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
+                            src = src.sub(old_stride.major);
+                            dst = dst.sub(new_stride.major);
                             MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
                             let to_init_start = dst.add(to_copy_len);
                             MemRange::new(to_init_start, to_init_len).init(value);
@@ -421,7 +420,6 @@ where
         let (new_layout, new_size) = Layout::from_shape_with_size(shape)?;
         let old_stride = old_layout.stride();
         let new_stride = new_layout.stride();
-        let minor_stride = old_stride.minor();
 
         match (old_size, new_size) {
             (0, 0) => {
@@ -464,8 +462,8 @@ where
                 self.layout = Layout::default();
                 self.data.set_len(0);
 
-                let to_copy_len = new_layout.minor() * minor_stride;
-                let to_drop_len = (old_layout.minor() - new_layout.minor()) * minor_stride;
+                let to_copy_len = new_layout.minor() * Stride::MINOR;
+                let to_drop_len = (old_layout.minor() - new_layout.minor()) * Stride::MINOR;
 
                 match major_len_cmp {
                     Ordering::Less => {
@@ -475,13 +473,13 @@ where
                         let to_drop_start = src.add(to_copy_len);
                         MemRange::new(to_drop_start, to_drop_len).drop_in_place();
                         for _ in 1..new_layout.major() {
-                            src = src.add(old_stride.major());
-                            dst = dst.add(new_stride.major());
+                            src = src.add(old_stride.major);
+                            dst = dst.add(new_stride.major);
                             MemRange::new(src, to_copy_len).copy_to(dst);
                             let to_drop_start = src.add(to_copy_len);
                             MemRange::new(to_drop_start, to_drop_len).drop_in_place();
                         }
-                        let tail_start_index = new_layout.major() * old_stride.major();
+                        let tail_start_index = new_layout.major() * old_stride.major;
                         let tail_start = base.add(tail_start_index);
                         let tail_len = old_size - tail_start_index;
                         MemRange::new(tail_start, tail_len).drop_in_place();
@@ -494,8 +492,8 @@ where
                         let to_drop_start = src.add(to_copy_len);
                         MemRange::new(to_drop_start, to_drop_len).drop_in_place();
                         for _ in 1..new_layout.major() {
-                            src = src.add(old_stride.major());
-                            dst = dst.add(new_stride.major());
+                            src = src.add(old_stride.major);
+                            dst = dst.add(new_stride.major);
                             MemRange::new(src, to_copy_len).copy_to(dst);
                             let to_drop_start = src.add(to_copy_len);
                             MemRange::new(to_drop_start, to_drop_len).drop_in_place();
@@ -503,7 +501,7 @@ where
                     }
 
                     Ordering::Greater => {
-                        let tail_start_index = old_layout.major() * new_stride.major();
+                        let tail_start_index = old_layout.major() * new_stride.major;
                         let tail_len = new_size - tail_start_index;
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
@@ -512,8 +510,8 @@ where
                             let to_drop_start = src.add(to_copy_len);
                             MemRange::new(to_drop_start, to_drop_len).drop_in_place();
                             for _ in 1..old_layout.major() {
-                                src = src.add(old_stride.major());
-                                dst = dst.add(new_stride.major());
+                                src = src.add(old_stride.major);
+                                dst = dst.add(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to(dst);
                                 let to_drop_start = src.add(to_copy_len);
                                 MemRange::new(to_drop_start, to_drop_len).drop_in_place();
@@ -534,8 +532,8 @@ where
                             let to_drop_start = src.add(to_copy_len);
                             MemRange::new(to_drop_start, to_drop_len).drop_in_place();
                             for _ in 1..old_layout.major() {
-                                src = src.add(old_stride.major());
-                                dst = dst.add(new_stride.major());
+                                src = src.add(old_stride.major);
+                                dst = dst.add(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
                                 let to_drop_start = src.add(to_copy_len);
                                 MemRange::new(to_drop_start, to_drop_len).drop_in_place();
@@ -591,13 +589,13 @@ where
                 self.layout = Layout::default();
                 self.data.set_len(0);
 
-                let to_copy_len = old_layout.minor() * minor_stride;
-                let to_init_len = (new_layout.minor() - old_layout.minor()) * minor_stride;
+                let to_copy_len = old_layout.minor() * Stride::MINOR;
+                let to_init_len = (new_layout.minor() - old_layout.minor()) * Stride::MINOR;
 
                 match major_len_cmp {
                     Ordering::Less => {
                         let base = self.data.as_mut_ptr();
-                        let tail_start_index = new_layout.major() * old_stride.major();
+                        let tail_start_index = new_layout.major() * old_stride.major;
                         let tail_start = base.add(tail_start_index);
                         let tail_len = old_size - tail_start_index;
                         MemRange::new(tail_start, tail_len).drop_in_place();
@@ -606,10 +604,10 @@ where
                             let mut src = tail_start;
                             let mut dst = base.add(new_size);
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to(dst);
-                                to_init_start_index -= new_stride.major();
+                                to_init_start_index -= new_stride.major;
                                 let to_init_start = base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
@@ -617,7 +615,7 @@ where
                                     f(index)
                                 });
                             }
-                            to_init_start_index -= new_stride.major();
+                            to_init_start_index -= new_stride.major;
                             let to_init_start = base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
@@ -630,10 +628,10 @@ where
                             let mut src = tail_start;
                             let mut dst = new_base.add(new_size);
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                to_init_start_index -= new_stride.major();
+                                to_init_start_index -= new_stride.major;
                                 let to_init_start = new_base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
@@ -641,10 +639,10 @@ where
                                     f(index)
                                 });
                             }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
+                            src = src.sub(old_stride.major);
+                            dst = dst.sub(new_stride.major);
                             MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            to_init_start_index -= new_stride.major();
+                            to_init_start_index -= new_stride.major;
                             let to_init_start = new_base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
@@ -662,10 +660,10 @@ where
                             let mut src = base.add(old_size);
                             let mut dst = base.add(new_size);
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to(dst);
-                                to_init_start_index -= new_stride.major();
+                                to_init_start_index -= new_stride.major;
                                 let to_init_start = base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
@@ -673,7 +671,7 @@ where
                                     f(index)
                                 });
                             }
-                            to_init_start_index -= new_stride.major();
+                            to_init_start_index -= new_stride.major;
                             let to_init_start = base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
@@ -687,10 +685,10 @@ where
                             let mut src = old_base.add(old_size);
                             let mut dst = new_base.add(new_size);
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                to_init_start_index -= new_stride.major();
+                                to_init_start_index -= new_stride.major;
                                 let to_init_start = new_base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
@@ -698,10 +696,10 @@ where
                                     f(index)
                                 });
                             }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
+                            src = src.sub(old_stride.major);
+                            dst = dst.sub(new_stride.major);
                             MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            to_init_start_index -= new_stride.major();
+                            to_init_start_index -= new_stride.major;
                             let to_init_start = new_base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
@@ -713,7 +711,7 @@ where
                     }
 
                     Ordering::Greater => {
-                        let tail_start_index = old_layout.major() * new_stride.major();
+                        let tail_start_index = old_layout.major() * new_stride.major;
                         let tail_len = new_size - tail_start_index;
                         let mut to_init_start_index = tail_start_index + to_copy_len;
                         if new_size <= self.capacity() {
@@ -727,10 +725,10 @@ where
                             let mut src = base.add(old_size);
                             let mut dst = tail_start;
                             for _ in 1..old_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to(dst);
-                                to_init_start_index -= new_stride.major();
+                                to_init_start_index -= new_stride.major;
                                 let to_init_start = base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
@@ -738,7 +736,7 @@ where
                                     f(index)
                                 });
                             }
-                            to_init_start_index -= new_stride.major();
+                            to_init_start_index -= new_stride.major;
                             let to_init_start = base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
@@ -758,10 +756,10 @@ where
                             let mut src = old_base.add(old_size);
                             let mut dst = tail_start;
                             for _ in 1..old_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
+                                src = src.sub(old_stride.major);
+                                dst = dst.sub(new_stride.major);
                                 MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                to_init_start_index -= new_stride.major();
+                                to_init_start_index -= new_stride.major;
                                 let to_init_start = new_base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
@@ -769,10 +767,10 @@ where
                                     f(index)
                                 });
                             }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
+                            src = src.sub(old_stride.major);
+                            dst = dst.sub(new_stride.major);
                             MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            to_init_start_index -= new_stride.major();
+                            to_init_start_index -= new_stride.major;
                             let to_init_start = new_base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
