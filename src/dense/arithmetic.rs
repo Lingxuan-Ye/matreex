@@ -374,7 +374,7 @@ where
                 let index =
                     Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
                 let rhs = unsafe { rhs.data.get_unchecked(index) };
-                op(lhs, rhs)
+                op(lhs, rhs);
             });
         }
 
@@ -430,7 +430,7 @@ where
                 let index =
                     Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
                 let rhs = unsafe { ptr::read(rhs_base.add(index)) };
-                op(lhs, rhs)
+                op(lhs, rhs);
             });
         }
 

@@ -314,7 +314,6 @@ where
     /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
     ///
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    #[inline(always)]
     unsafe fn get_nth_major_axis_vector_unchecked(&self, n: usize) -> &[T] {
         let stride = self.stride();
         let lower = n * stride.major();
@@ -500,7 +499,7 @@ mod tests {
                 for ncols in lens {
                     let lhs_shape = Shape::new(nrows, inner);
                     let rhs_shape = Shape::new(inner, ncols);
-                    pairs.push((lhs_shape, rhs_shape))
+                    pairs.push((lhs_shape, rhs_shape));
                 }
             }
         }

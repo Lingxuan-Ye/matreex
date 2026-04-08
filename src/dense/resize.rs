@@ -968,7 +968,7 @@ mod tests {
                     for new_ncols in lens {
                         let old_shape = Shape::new(old_nrows, old_ncols);
                         let new_shape = Shape::new(new_nrows, new_ncols);
-                        pairs.push((old_shape, new_shape))
+                        pairs.push((old_shape, new_shape));
                     }
                 }
             }
@@ -1079,7 +1079,7 @@ mod tests {
                     for new_ncols in lens {
                         let old_shape = Shape::new(old_nrows, old_ncols);
                         let new_shape = Shape::new(new_nrows, new_ncols);
-                        pairs.push((old_shape, new_shape))
+                        pairs.push((old_shape, new_shape));
                     }
                 }
             }

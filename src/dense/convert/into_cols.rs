@@ -12,7 +12,7 @@ where
     fn into_cols(self) -> Box<[Box<[T]>]> {
         IntoCols::<Box<[Vec<T>]>>::into_cols(self)
             .into_iter()
-            .map(|col| col.into_boxed_slice())
+            .map(Vec::into_boxed_slice)
             .collect()
     }
 }
@@ -44,7 +44,7 @@ where
                     .enumerate()
                     .for_each(|(index, element)| unsafe {
                         let index = Index::from_flattened::<O>(index, stride);
-                        output.get_unchecked_mut(index.col).push(element)
+                        output.get_unchecked_mut(index.col).push(element);
                     });
                 output
             }

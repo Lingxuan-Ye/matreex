@@ -390,9 +390,7 @@ where
         for col in iter {
             // Could panic if capacity overflows.
             data.extend(col);
-            if data.len() - size != nrows {
-                panic!("{}", Error::LengthInconsistent);
-            }
+            assert!(data.len() - size == nrows, "{}", Error::LengthInconsistent);
             ncols += 1;
             size = data.len();
         }

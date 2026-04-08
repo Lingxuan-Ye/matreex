@@ -38,9 +38,7 @@ impl Scope {
     where
         F: FnOnce(&Scope),
     {
-        if IN_SCOPE.replace(true) {
-            panic!("nested scope is not allowed");
-        }
+        assert!(!IN_SCOPE.replace(true), "nested scope is not allowed");
 
         f(&Self(PhantomData));
 
