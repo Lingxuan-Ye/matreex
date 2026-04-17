@@ -4,16 +4,45 @@ use crate::convert::IntoRows;
 use crate::index::Index;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
+use core::mem::MaybeUninit;
 
 impl<T, O> IntoRows<Box<[Box<[T]>]>> for Matrix<T, O>
 where
     O: Order,
 {
     fn into_rows(self) -> Box<[Box<[T]>]> {
-        IntoRows::<Box<[Vec<T>]>>::into_rows(self)
-            .into_iter()
-            .map(Vec::into_boxed_slice)
-            .collect()
+        let shape = self.shape();
+
+        match O::KIND {
+            OrderKind::RowMajor => {
+                let mut iter = self.data.into_iter();
+                (0..shape.nrows)
+                    .map(|_| iter.by_ref().take(shape.ncols).collect())
+                    .collect()
+            }
+
+            OrderKind::ColMajor => {
+                let mut output: Box<[Box<[MaybeUninit<T>]>]> = (0..shape.nrows)
+                    .map(|_| Box::new_uninit_slice(shape.ncols))
+                    .collect();
+                let mut index = Index::new(0, 0);
+                for element in self.data {
+                    if index.row == shape.nrows {
+                        index.row = 0;
+                        index.col += 1;
+                    }
+                    unsafe {
+                        output
+                            .get_unchecked_mut(index.row)
+                            .get_unchecked_mut(index.col)
+                            .write(element);
+                    }
+                    index.row += 1;
+                }
+                let ptr = Box::into_raw(output) as *mut [Box<[T]>];
+                unsafe { Box::from_raw(ptr) }
+            }
+        }
     }
 }
 
@@ -32,7 +61,6 @@ where
 {
     fn into_rows(self) -> Box<[Vec<T>]> {
         let shape = self.shape();
-        let stride = self.stride();
 
         match O::KIND {
             OrderKind::RowMajor => {
@@ -43,16 +71,29 @@ where
             }
 
             OrderKind::ColMajor => {
-                let mut output: Box<_> = (0..shape.nrows)
+                let mut output: Box<[Vec<T>]> = (0..shape.nrows)
                     .map(|_| Vec::with_capacity(shape.ncols))
                     .collect();
-                self.data
-                    .into_iter()
-                    .enumerate()
-                    .for_each(|(index, element)| unsafe {
-                        let index = Index::from_flattened::<O>(index, stride);
-                        output.get_unchecked_mut(index.row).push(element);
-                    });
+                let mut index = Index::new(0, 0);
+                for element in self.data {
+                    if index.row == shape.nrows {
+                        index.row = 0;
+                        index.col += 1;
+                    }
+                    unsafe {
+                        output
+                            .get_unchecked_mut(index.row)
+                            .as_mut_ptr()
+                            .add(index.col)
+                            .write(element);
+                    }
+                    index.row += 1;
+                }
+                for row in &mut output {
+                    unsafe {
+                        row.set_len(shape.ncols);
+                    }
+                }
                 output
             }
         }
