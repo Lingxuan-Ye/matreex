@@ -265,8 +265,8 @@ impl Index {
     where
         O: Order,
     {
-        let major = index / stride.major;
-        let minor = (index % stride.major) / Stride::MINOR;
+        let major = index / stride.major();
+        let minor = (index % stride.major()) / stride.minor();
         match O::KIND {
             OrderKind::RowMajor => Self::new(major, minor),
             OrderKind::ColMajor => Self::new(minor, major),
@@ -282,7 +282,7 @@ impl Index {
             OrderKind::RowMajor => (self.row, self.col),
             OrderKind::ColMajor => (self.col, self.row),
         };
-        major * stride.major + minor * Stride::MINOR
+        major * stride.major() + minor * stride.minor()
     }
 }
 

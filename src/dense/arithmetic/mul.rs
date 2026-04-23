@@ -316,8 +316,8 @@ where
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     unsafe fn get_nth_major_axis_vector_unchecked(&self, n: usize) -> &[T] {
         let stride = self.stride();
-        let lower = n * stride.major;
-        let upper = lower + stride.major;
+        let lower = n * stride.major();
+        let upper = lower + stride.major();
         unsafe { self.data.get_unchecked(lower..upper) }
     }
 }

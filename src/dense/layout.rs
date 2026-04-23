@@ -171,7 +171,7 @@ where
 
     /// Returns the stride.
     pub(super) fn stride(&self) -> Stride {
-        Stride { major: self.minor }
+        Stride(self.minor)
     }
 
     /// Returns the size.
@@ -268,14 +268,18 @@ impl<T, O> Eq for Layout<T, O> where O: Order {}
 ///
 /// [`Matrix<T, O>`]: crate::dense::Matrix
 #[derive(Debug, Clone, Copy, Default, Hash, PartialEq, Eq)]
-pub(super) struct Stride {
-    /// The major axis stride.
-    pub(super) major: usize,
-}
+pub(super) struct Stride(usize);
 
 impl Stride {
-    /// The minor axis stride.
-    pub(super) const MINOR: usize = 1;
+    /// Returns the major axis stride.
+    pub(super) fn major(&self) -> usize {
+        self.0
+    }
+
+    /// Returns the minor axis stride.
+    pub(super) fn minor(&self) -> usize {
+        1
+    }
 }
 
 mod internal {
