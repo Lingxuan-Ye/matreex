@@ -1,6 +1,6 @@
 use self::iter_mut::IterVectorsMut;
 use super::Matrix;
-use super::layout::{Order, OrderKind, Stride};
+use super::layout::{Order, OrderKind};
 use crate::error::{Error, Result};
 use crate::index::Index;
 use core::iter::{Skip, StepBy, Take};
@@ -496,8 +496,9 @@ where
     /// Returns an iterator over the elements of the nth major-axis vector, without
     /// performing any bounds checking.
     fn iter_nth_major_axis_vector_unchecked(&self, n: usize) -> Take<StepBy<Skip<Iter<'_, T>>>> {
-        let skip = n * self.stride().major;
-        let step = Stride::MINOR;
+        let stride = self.stride();
+        let skip = n * stride.major();
+        let step = stride.minor();
         let take = self.minor();
         self.data.iter().skip(skip).step_by(step).take(take)
     }
@@ -505,8 +506,9 @@ where
     /// Returns an iterator over the elements of the nth minor-axis vector, without
     /// performing any bounds checking.
     fn iter_nth_minor_axis_vector_unchecked(&self, n: usize) -> Take<StepBy<Skip<Iter<'_, T>>>> {
-        let skip = n * Stride::MINOR;
-        let step = self.stride().major;
+        let stride = self.stride();
+        let skip = n * stride.minor();
+        let step = stride.major();
         let take = self.major();
         self.data.iter().skip(skip).step_by(step).take(take)
     }
@@ -517,8 +519,9 @@ where
         &mut self,
         n: usize,
     ) -> Take<StepBy<Skip<IterMut<'_, T>>>> {
-        let skip = n * self.stride().major;
-        let step = Stride::MINOR;
+        let stride = self.stride();
+        let skip = n * stride.major();
+        let step = stride.minor();
         let take = self.minor();
         self.data.iter_mut().skip(skip).step_by(step).take(take)
     }
@@ -529,8 +532,9 @@ where
         &mut self,
         n: usize,
     ) -> Take<StepBy<Skip<IterMut<'_, T>>>> {
-        let skip = n * Stride::MINOR;
-        let step = self.stride().major;
+        let stride = self.stride();
+        let skip = n * stride.minor();
+        let step = stride.major();
         let take = self.major();
         self.data.iter_mut().skip(skip).step_by(step).take(take)
     }

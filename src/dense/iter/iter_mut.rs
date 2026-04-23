@@ -1,5 +1,5 @@
 use super::super::Matrix;
-use super::super::layout::{Order, Stride};
+use super::super::layout::Order;
 use crate::error::{Error, Result};
 use core::iter::FusedIterator;
 use core::marker::PhantomData;
@@ -23,10 +23,11 @@ impl<'a, T> IterVectorsMut<'a, T> {
         O: Order,
     {
         let base = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let matrix_stride = matrix.stride();
         let axis_len = matrix.major();
-        let axis_stride = matrix.stride().major;
+        let axis_stride = matrix_stride.major();
         let vector_len = matrix.minor();
-        let vector_stride = Stride::MINOR;
+        let vector_stride = matrix_stride.minor();
         unsafe { Self::new(base, axis_len, axis_stride, vector_len, vector_stride) }
     }
 
@@ -35,10 +36,11 @@ impl<'a, T> IterVectorsMut<'a, T> {
         O: Order,
     {
         let base = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let matrix_stride = matrix.stride();
         let axis_len = matrix.minor();
-        let axis_stride = Stride::MINOR;
+        let axis_stride = matrix_stride.minor();
         let vector_len = matrix.major();
-        let vector_stride = matrix.stride().major;
+        let vector_stride = matrix_stride.major();
         unsafe { Self::new(base, axis_len, axis_stride, vector_len, vector_stride) }
     }
 
@@ -350,10 +352,11 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         O: Order,
     {
         let base = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let matrix_stride = matrix.stride();
         let axis_len = matrix.major();
-        let axis_stride = matrix.stride().major;
+        let axis_stride = matrix_stride.major();
         let vector_len = matrix.minor();
-        let vector_stride = Stride::MINOR;
+        let vector_stride = matrix_stride.minor();
 
         if n >= axis_len {
             return Err(Error::IndexOutOfBounds);
@@ -386,10 +389,11 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         O: Order,
     {
         let base = unsafe { NonNull::new_unchecked(matrix.data.as_mut_ptr()) };
+        let matrix_stride = matrix.stride();
         let axis_len = matrix.minor();
-        let axis_stride = Stride::MINOR;
+        let axis_stride = matrix_stride.minor();
         let vector_len = matrix.major();
-        let vector_stride = matrix.stride().major;
+        let vector_stride = matrix_stride.major();
 
         if n >= axis_len {
             return Err(Error::IndexOutOfBounds);
