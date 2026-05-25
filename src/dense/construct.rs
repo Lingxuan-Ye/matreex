@@ -82,7 +82,7 @@ where
         S: AsShape,
         T: Default,
     {
-        let (layout, size) = Layout::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
         data.resize_with(size, T::default);
         Ok(Self { layout, data })
@@ -112,7 +112,7 @@ where
         S: AsShape,
         T: Clone,
     {
-        let (layout, size) = Layout::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::from_shape(shape)?;
         let data = vec![value; size];
         Ok(Self { layout, data })
     }
@@ -147,7 +147,7 @@ where
         S: AsShape,
         F: FnMut(Index) -> T,
     {
-        let (layout, size) = Layout::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::from_shape(shape)?;
         let stride = layout.stride();
         let mut data = Vec::with_capacity(size);
         for index in 0..size {

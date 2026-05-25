@@ -57,7 +57,7 @@ where
             .next_element()?
             .ok_or_else(|| Error::invalid_length(1, &self))?;
 
-        Layout::new_with_size(major, minor)
+        Layout::new(major, minor)
             .map(|(layout, _)| layout)
             .map_err(A::Error::custom)
     }
@@ -89,7 +89,7 @@ where
         let major = major.ok_or_else(|| Error::missing_field("major"))?;
         let minor = minor.ok_or_else(|| Error::missing_field("minor"))?;
 
-        Layout::new_with_size(major, minor)
+        Layout::new(major, minor)
             .map(|(layout, _)| layout)
             .map_err(A::Error::custom)
     }
