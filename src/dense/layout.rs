@@ -234,9 +234,7 @@ where
     O: Order,
 {
     fn default() -> Self {
-        let major = usize::default();
-        let minor = usize::default();
-        Self::new_unchecked(major, minor)
+        Self::new_unchecked(0, 0)
     }
 }
 
