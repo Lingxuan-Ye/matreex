@@ -85,7 +85,7 @@ where
     /// - [`Error::SizeOverflow`] if `major * minor` exceeds [`usize::MAX`].
     /// - [`Error::CapacityOverflow`] if the required capacity in bytes for the
     ///   corresponding matrix exceeds [`isize::MAX`].
-    fn new_with_size(major: usize, minor: usize) -> Result<(Self, usize)> {
+    fn new(major: usize, minor: usize) -> Result<(Self, usize)> {
         let size = major.checked_mul(minor).ok_or(Error::SizeOverflow)?;
         Self::check_size(size)?;
         Ok((Self::new_unchecked(major, minor), size))
@@ -115,8 +115,8 @@ where
         S: AsShape,
     {
         match O::KIND {
-            OrderKind::RowMajor => Self::new_with_size(shape.nrows(), shape.ncols()),
-            OrderKind::ColMajor => Self::new_with_size(shape.ncols(), shape.nrows()),
+            OrderKind::RowMajor => Self::new(shape.nrows(), shape.ncols()),
+            OrderKind::ColMajor => Self::new(shape.ncols(), shape.nrows()),
         }
     }
 
