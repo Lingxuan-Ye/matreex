@@ -20,7 +20,7 @@ where
         let nrows = R;
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
         if size_of::<T>() == 0 {
             // Prevent dropping `T`s, since they are logically moved.
@@ -78,7 +78,7 @@ where
         let nrows = R;
         let ncols = value.len();
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
         if size_of::<T>() == 0 {
             // Prevent dropping `T`s, since they are logically moved. Note that this will
@@ -110,7 +110,7 @@ where
         let nrows = R;
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
         for col in value {
             data.extend(col as Box<[T]>);
@@ -163,7 +163,7 @@ where
         let nrows = R;
         let ncols = value.len();
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
         for col in value {
             data.extend(col as Box<[T]>);
@@ -191,7 +191,7 @@ where
         let nrows = first.len();
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
         for col in iter {
@@ -255,7 +255,7 @@ where
         };
         let nrows = first.len();
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
         for col in iter {
@@ -287,7 +287,7 @@ where
         let nrows = first.len();
         let ncols = C;
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
         for col in iter {
@@ -351,7 +351,7 @@ where
         };
         let nrows = first.len();
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::<T, ColMajor>::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::<T, ColMajor>::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
         data.extend(first);
         for col in iter {

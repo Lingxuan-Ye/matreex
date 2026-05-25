@@ -72,7 +72,7 @@ where
         // order matters.
 
         let (old_layout, old_size) = (self.layout, self.size());
-        let (new_layout, new_size) = Layout::from_shape_with_size(shape)?;
+        let (new_layout, new_size) = Layout::from_shape(shape)?;
         let old_stride = old_layout.stride();
         let new_stride = new_layout.stride();
         let minor_stride = old_stride.minor();
@@ -418,7 +418,7 @@ where
         // See `Matrix::resize` for details.
 
         let (old_layout, old_size) = (self.layout, self.size());
-        let (new_layout, new_size) = Layout::from_shape_with_size(shape)?;
+        let (new_layout, new_size) = Layout::from_shape(shape)?;
         let old_stride = old_layout.stride();
         let new_stride = new_layout.stride();
         let minor_stride = old_stride.minor();

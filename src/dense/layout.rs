@@ -110,7 +110,7 @@ where
     /// - [`Error::SizeOverflow`] if the size of the shape exceeds [`usize::MAX`].
     /// - [`Error::CapacityOverflow`] if the required capacity in bytes for the
     ///   corresponding matrix exceeds [`isize::MAX`].
-    pub(super) fn from_shape_with_size<S>(shape: S) -> Result<(Self, usize)>
+    pub(super) fn from_shape<S>(shape: S) -> Result<(Self, usize)>
     where
         S: AsShape,
     {

@@ -40,7 +40,7 @@ where
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
 
         if size == 0 {
@@ -239,7 +239,7 @@ where
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let shape = Shape::new(nrows, ncols);
-        let (layout, size) = Layout::from_shape_with_size(shape)?;
+        let (layout, size) = Layout::from_shape(shape)?;
         let mut data = Vec::with_capacity(size);
 
         if size == 0 {
