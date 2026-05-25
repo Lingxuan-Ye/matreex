@@ -824,7 +824,7 @@ impl<T> MemRange<T> {
     ///   bytes must be [valid] for both reads and writes.
     ///
     /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
-    const unsafe fn new(start: *mut T, len: usize) -> Self {
+    unsafe fn new(start: *mut T, len: usize) -> Self {
         Self(ptr::slice_from_raw_parts_mut(start, len))
     }
 
@@ -833,12 +833,12 @@ impl<T> MemRange<T> {
     /// Note that if the length of the memory range is `0`, the returned pointer is
     /// still inside the provenance of the allocated object, but may have `0` bytes
     /// it can read/write.
-    const fn start(&self) -> *mut T {
+    fn start(&self) -> *mut T {
         self.0.cast()
     }
 
     /// Returns the length of the memory range.
-    const fn len(&self) -> usize {
+    fn len(&self) -> usize {
         self.0.len()
     }
 
@@ -907,7 +907,7 @@ impl<T> MemRange<T> {
     /// with destination is considered uninitialized.
     ///
     /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
-    const unsafe fn copy_to(self, dst: *mut T) {
+    unsafe fn copy_to(self, dst: *mut T) {
         let src = self.start();
         let count = self.len();
         unsafe { src.copy_to(dst, count) }
@@ -926,7 +926,7 @@ impl<T> MemRange<T> {
     ///   size of `self.len() * size_of::<T>()` bytes.
     ///
     /// If `T` is not [`Copy`], the memory range of source is consider uninitialized.
-    const unsafe fn copy_to_nonoverlapping(self, dst: *mut T) {
+    unsafe fn copy_to_nonoverlapping(self, dst: *mut T) {
         let src = self.start();
         let count = self.len();
         unsafe { src.copy_to_nonoverlapping(dst, count) }

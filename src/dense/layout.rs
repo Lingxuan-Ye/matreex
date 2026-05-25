@@ -93,7 +93,7 @@ where
 
     /// Creates a new [`Layout<T, O>`] with the specified axis lengths, without
     /// performing any invariant checking.
-    const fn new_unchecked(major: usize, minor: usize) -> Self {
+    fn new_unchecked(major: usize, minor: usize) -> Self {
         Self {
             major,
             minor,
