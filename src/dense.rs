@@ -5,7 +5,6 @@ use crate::error::Result;
 use crate::index::Index;
 use crate::shape::Shape;
 use alloc::vec::Vec;
-use core::cmp;
 use core::hash::{Hash, Hasher};
 use core::ptr;
 
@@ -378,8 +377,8 @@ where
         let dst_stride = self.stride();
 
         if O::KIND == P::KIND {
-            let major = cmp::min(self.major(), src.major());
-            let minor = cmp::min(self.minor(), src.minor());
+            let major = usize::min(self.major(), src.major());
+            let minor = usize::min(self.minor(), src.minor());
             for i in 0..major {
                 let src_lower = i * src_stride.major();
                 let src_upper = src_lower + minor * src_stride.minor();
@@ -392,8 +391,8 @@ where
                 }
             }
         } else {
-            let major = cmp::min(self.major(), src.minor());
-            let minor = cmp::min(self.minor(), src.major());
+            let major = usize::min(self.major(), src.minor());
+            let minor = usize::min(self.minor(), src.major());
             for i in 0..major {
                 let dst_lower = i * dst_stride.major();
                 let dst_upper = dst_lower + minor * dst_stride.minor();
