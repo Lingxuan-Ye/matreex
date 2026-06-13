@@ -1,9 +1,10 @@
 use super::Matrix;
 use super::layout::Order;
 use crate::index::Index;
+use alloc::boxed::Box;
 use alloc::collections::VecDeque;
 use alloc::format;
-use alloc::string::{String, ToString};
+use alloc::string::ToString;
 use alloc::vec::Vec;
 use core::fmt;
 
@@ -101,7 +102,7 @@ where
                 f.write_str(element::INDEX_GAP)?;
                 match cache[index].next() {
                     None if element_width > 0 => f.write_str(&element_padding)?,
-                    Some(line) => f.write_element_line(line, element_width)?,
+                    Some(line) => f.write_element_line(&line, element_width)?,
                     _ => (),
                 }
             }
@@ -124,7 +125,7 @@ where
                     f.write_str(element::INDEX_GAP)?;
                     match cache[index].next() {
                         None if element_width > 0 => f.write_str(&element_padding)?,
-                        Some(line) => f.write_element_line(line, element_width)?,
+                        Some(line) => f.write_element_line(&line, element_width)?,
                         _ => (),
                     }
                 }
@@ -184,7 +185,7 @@ where
                 let index = Index::new(row, col).to_flattened::<O>(stride);
                 match cache[index].next() {
                     None if element_width > 0 => f.write_str(&element_padding)?,
-                    Some(line) => f.write_element_line(line, element_width)?,
+                    Some(line) => f.write_element_line(&line, element_width)?,
                     _ => (),
                 }
             }
@@ -203,7 +204,7 @@ where
                     let index = Index::new(row, col).to_flattened::<O>(stride);
                     match cache[index].next() {
                         None if element_width > 0 => f.write_str(&element_padding)?,
-                        Some(line) => f.write_element_line(line, element_width)?,
+                        Some(line) => f.write_element_line(&line, element_width)?,
                         _ => (),
                     }
                 }
@@ -218,21 +219,21 @@ where
 }
 
 #[derive(Debug)]
-struct Lines(VecDeque<String>);
+struct Lines(VecDeque<Box<str>>);
 
 impl Lines {
     fn from_debug<T>(element: T) -> Self
     where
         T: fmt::Debug,
     {
-        Self(format!("{element:?}").lines().map(String::from).collect())
+        Self(format!("{element:?}").lines().map(Box::from).collect())
     }
 
     fn from_display<T>(element: T) -> Self
     where
         T: fmt::Display,
     {
-        Self(format!("{element}").lines().map(String::from).collect())
+        Self(format!("{element}").lines().map(Box::from).collect())
     }
 
     fn width(&self) -> usize {
@@ -249,7 +250,7 @@ impl Lines {
 }
 
 impl Iterator for Lines {
-    type Item = String;
+    type Item = Box<str>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.pop_front()
@@ -270,7 +271,7 @@ impl ExactSizeIterator for Lines {
 trait Write {
     fn write_index(&mut self, index: usize, width: usize) -> fmt::Result;
 
-    fn write_element_line(&mut self, line: String, width: usize) -> fmt::Result;
+    fn write_element_line(&mut self, line: &str, width: usize) -> fmt::Result;
 }
 
 impl<T> Write for T
@@ -290,7 +291,7 @@ where
         write!(self, "{styled}")
     }
 
-    fn write_element_line(&mut self, line: String, width: usize) -> fmt::Result {
+    fn write_element_line(&mut self, line: &str, width: usize) -> fmt::Result {
         write!(self, "{line:<width$}")
     }
 }
