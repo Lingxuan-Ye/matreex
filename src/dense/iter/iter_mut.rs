@@ -335,6 +335,8 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
     }
 }
 
+impl<T> FusedIterator for IterVectorsMut<'_, T> {}
+
 #[derive(Debug)]
 pub(super) struct IterNthVectorMut<'a, T> {
     ptr: NonNull<T>,
