@@ -597,11 +597,13 @@ mod tests {
     }
 
     #[test]
-    fn test_capacity() {
+    fn test_capacity() -> Result<()> {
         dispatch_unary! {{
-            let matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
+            let matrix = Matrix::<i32, O>::with_capacity(10)?;
             assert!(matrix.capacity() >= 10);
         }}
+
+        Ok(())
     }
 
     #[test]
@@ -685,28 +687,30 @@ mod tests {
     }
 
     #[test]
-    fn test_shrink_to_fit() {
+    fn test_shrink_to_fit() -> Result<()> {
         dispatch_unary! {{
-            let mut matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
+            let mut matrix = Matrix::<i32, O>::with_capacity(10)?;
             assert!(matrix.capacity() >= 10);
 
             let shape = Shape::new(2, 3);
-            matrix.resize(shape, 0).unwrap();
+            matrix.resize(shape, 0)?;
             assert!(matrix.capacity() >= 10);
 
             matrix.shrink_to_fit();
             assert!(matrix.capacity() >= 6);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_shrink_to() {
+    fn test_shrink_to() -> Result<()> {
         dispatch_unary! {{
-            let mut matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
+            let mut matrix = Matrix::<i32, O>::with_capacity(10)?;
             assert!(matrix.capacity() >= 10);
 
             let shape = Shape::new(2, 3);
-            matrix.resize(shape, 0).unwrap();
+            matrix.resize(shape, 0)?;
             assert!(matrix.capacity() >= 10);
 
             matrix.shrink_to(8);
@@ -715,6 +719,8 @@ mod tests {
             matrix.shrink_to(4);
             assert!(matrix.capacity() >= 6);
         }}
+
+        Ok(())
     }
 
     #[test]
@@ -777,10 +783,10 @@ mod tests {
     }
 
     #[test]
-    fn test_map() {
+    fn test_map() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let output = matrix.map(|element| element as f64).unwrap();
+            let output = matrix.map(|element| element as f64)?;
             let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
             assert_eq!(output, expected);
 
@@ -788,19 +794,21 @@ mod tests {
             let error = matrix.map(|_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_map_ref() {
+    fn test_map_ref() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let output = matrix.map_ref(|element| *element as f64).unwrap();
+            let output = matrix.map_ref(|element| *element as f64)?;
             let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
             assert_eq!(output, expected);
 
             // Map to matrix of references.
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let output = matrix.map_ref(|element| element).unwrap();
+            let output = matrix.map_ref(|element| element)?;
             let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
             assert_eq!(output, expected);
 
@@ -808,6 +816,8 @@ mod tests {
             let error = matrix.map_ref(|_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
+
+        Ok(())
     }
 
     #[test]

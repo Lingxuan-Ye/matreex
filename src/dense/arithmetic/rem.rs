@@ -99,11 +99,12 @@ impl_primitive_scalar_rem! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize 
 
 #[cfg(test)]
 mod tests {
+    use crate::error::Result;
     use crate::{dispatch_unary, matrix};
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn test_primitive_scalar_rem() {
+    fn test_primitive_scalar_rem() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let scalar = 2;
@@ -132,34 +133,36 @@ mod tests {
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = matrix % scalar;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = matrix % &scalar;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &matrix % scalar;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &matrix % &scalar;
                 assert_eq!(output, expected);
             }
         }}
+
+        Ok(())
     }
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn test_primitive_scalar_rem_rev() {
+    fn test_primitive_scalar_rem_rev() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let scalar = 2;
@@ -188,29 +191,31 @@ mod tests {
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = scalar % matrix;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &scalar % matrix;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = scalar % &matrix;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &scalar % &matrix;
                 assert_eq!(output, expected);
             }
         }}
+
+        Ok(())
     }
 
     #[test]

@@ -955,7 +955,7 @@ mod tests {
     use crate::shape::Shape;
 
     #[test]
-    fn test_resize() {
+    fn test_resize() -> Result<()> {
         #[cfg(miri)]
         let lens = [0, 1, 2, 3, 5];
         #[cfg(not(miri))]
@@ -976,8 +976,7 @@ mod tests {
 
         dispatch_unary! {{
             for &(old_shape, new_shape) in &pairs {
-                let mut matrix =
-                    Matrix::<_, O>::from_value(old_shape, MockZeroSized::new()).unwrap();
+                let mut matrix = Matrix::<_, O>::from_value(old_shape, MockZeroSized::new())?;
                 Scope::with(|scope| {
                     matrix.resize(new_shape, MockZeroSized::new()).unwrap();
                     let expected_count = Count::expected(old_shape, new_shape);
@@ -991,53 +990,49 @@ mod tests {
                         assert_eq!(scope.drop_count(), expected_count.drop);
                     }
                 });
-                let expected =
-                    Matrix::<_, RowMajor>::from_value(new_shape, MockZeroSized::new()).unwrap();
+                let expected = Matrix::<_, RowMajor>::from_value(new_shape, MockZeroSized::new())?;
                 assert_eq!(matrix, expected);
 
-                let old_size = old_shape.size().unwrap();
-                let new_size = new_shape.size().unwrap();
+                let old_size = old_shape.size()?;
+                let new_size = new_shape.size()?;
                 if new_size <= old_size {
-                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
-                    matrix.resize(new_shape, Index::default()).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index)?;
+                    matrix.resize(new_shape, Index::default())?;
                     let expected = Matrix::<_, RowMajor>::from_fn(new_shape, |index| {
                         if index.row < old_shape.nrows() && index.col < old_shape.ncols() {
                             index
                         } else {
                             Index::default()
                         }
-                    })
-                    .unwrap();
+                    })?;
                     assert_eq!(matrix, expected);
                 } else {
-                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index)?;
                     // Ensure the in-place path is taken.
                     matrix.data.reserve(new_size - old_size);
                     assert!(new_size <= matrix.capacity());
-                    matrix.resize(new_shape, Index::default()).unwrap();
+                    matrix.resize(new_shape, Index::default())?;
                     let expected = Matrix::<_, RowMajor>::from_fn(new_shape, |index| {
                         if index.row < old_shape.nrows() && index.col < old_shape.ncols() {
                             index
                         } else {
                             Index::default()
                         }
-                    })
-                    .unwrap();
+                    })?;
                     assert_eq!(matrix, expected);
 
-                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index)?;
                     // Ensure the reallocation path is taken.
                     matrix.data.shrink_to_fit();
                     assert!(new_size > matrix.capacity());
-                    matrix.resize(new_shape, Index::default()).unwrap();
+                    matrix.resize(new_shape, Index::default())?;
                     let expected = Matrix::<_, RowMajor>::from_fn(new_shape, |index| {
                         if index.row < old_shape.nrows() && index.col < old_shape.ncols() {
                             index
                         } else {
                             Index::default()
                         }
-                    })
-                    .unwrap();
+                    })?;
                     assert_eq!(matrix, expected);
                 }
             }
@@ -1063,10 +1058,12 @@ mod tests {
             // assert!(matrix.resize(new_shape, ()).is_ok());
             // assert_eq!(matrix, unchanged);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_resize_with() {
+    fn test_resize_with() -> Result<()> {
         #[cfg(miri)]
         let lens = [0, 1, 2, 3, 5];
         #[cfg(not(miri))]
@@ -1087,8 +1084,7 @@ mod tests {
 
         dispatch_unary! {{
             for &(old_shape, new_shape) in &pairs {
-                let mut matrix =
-                    Matrix::<_, O>::from_value(old_shape, MockZeroSized::new()).unwrap();
+                let mut matrix = Matrix::<_, O>::from_value(old_shape, MockZeroSized::new())?;
                 Scope::with(|scope| {
                     matrix
                         .resize_with(new_shape, |_| MockZeroSized::new())
@@ -1097,35 +1093,31 @@ mod tests {
                     assert_eq!(scope.init_count(), expected_count.init);
                     assert_eq!(scope.drop_count(), expected_count.drop);
                 });
-                let expected =
-                    Matrix::<_, RowMajor>::from_value(new_shape, MockZeroSized::new()).unwrap();
+                let expected = Matrix::<_, RowMajor>::from_value(new_shape, MockZeroSized::new())?;
                 assert_eq!(matrix, expected);
 
-                let old_size = old_shape.size().unwrap();
-                let new_size = new_shape.size().unwrap();
+                let old_size = old_shape.size()?;
+                let new_size = new_shape.size()?;
                 if new_size <= old_size {
-                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
-                    matrix.resize_with(new_shape, |index| index).unwrap();
-                    let expected =
-                        Matrix::<_, RowMajor>::from_fn(new_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index)?;
+                    matrix.resize_with(new_shape, |index| index)?;
+                    let expected = Matrix::<_, RowMajor>::from_fn(new_shape, |index| index)?;
                     assert_eq!(matrix, expected);
                 } else {
-                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index)?;
                     // Ensure the in-place path is taken.
                     matrix.data.reserve(new_size - old_size);
                     assert!(new_size <= matrix.capacity());
-                    matrix.resize_with(new_shape, |index| index).unwrap();
-                    let expected =
-                        Matrix::<_, RowMajor>::from_fn(new_shape, |index| index).unwrap();
+                    matrix.resize_with(new_shape, |index| index)?;
+                    let expected = Matrix::<_, RowMajor>::from_fn(new_shape, |index| index)?;
                     assert_eq!(matrix, expected);
 
-                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index).unwrap();
+                    let mut matrix = Matrix::<_, O>::from_fn(old_shape, |index| index)?;
                     // Ensure the reallocation path is taken.
                     matrix.data.shrink_to_fit();
                     assert!(new_size > matrix.capacity());
-                    matrix.resize_with(new_shape, |index| index).unwrap();
-                    let expected =
-                        Matrix::<_, RowMajor>::from_fn(new_shape, |index| index).unwrap();
+                    matrix.resize_with(new_shape, |index| index)?;
+                    let expected = Matrix::<_, RowMajor>::from_fn(new_shape, |index| index)?;
                     assert_eq!(matrix, expected);
                 }
             }
@@ -1151,6 +1143,8 @@ mod tests {
             // assert!(matrix.resize_with(new_shape, |_| ()).is_ok());
             // assert_eq!(matrix, unchanged);
         }}
+
+        Ok(())
     }
 
     #[derive(Debug)]

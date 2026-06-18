@@ -487,7 +487,7 @@ mod tests {
     use crate::{dispatch_binary, dispatch_unary, matrix};
 
     #[test]
-    fn test_multiply() {
+    fn test_multiply() -> Result<()> {
         #[cfg(miri)]
         let lens = [0, 1, 2, 3, 5];
         #[cfg(not(miri))]
@@ -506,8 +506,8 @@ mod tests {
 
         dispatch_binary! {{
             for &(lhs_shape, rhs_shape) in &pairs {
-                let lhs = Matrix::<_, O>::from_value(lhs_shape, MockZeroSized::new()).unwrap();
-                let rhs = Matrix::<_, P>::from_value(rhs_shape, MockZeroSized::new()).unwrap();
+                let lhs = Matrix::<_, O>::from_value(lhs_shape, MockZeroSized::new())?;
+                let rhs = Matrix::<_, P>::from_value(rhs_shape, MockZeroSized::new())?;
                 Scope::with(|scope| {
                     let output = lhs.multiply(rhs).unwrap();
                     let expected_shape = Shape::new(lhs_shape.nrows, rhs_shape.ncols);
@@ -522,19 +522,19 @@ mod tests {
 
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1, 2], [3, 4], [5, 6]].with_order::<P>();
-            let output = lhs.multiply(rhs).unwrap();
+            let output = lhs.multiply(rhs)?;
             let expected = matrix![[22, 28], [49, 64]];
             assert_eq!(output, expected);
 
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1], [2], [3]].with_order::<P>();
-            let output = lhs.multiply(rhs).unwrap();
+            let output = lhs.multiply(rhs)?;
             let expected = matrix![[14], [32]];
             assert_eq!(output, expected);
 
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]].with_order::<P>();
-            let output = lhs.multiply(rhs).unwrap();
+            let output = lhs.multiply(rhs)?;
             let expected = matrix![[30, 36, 42], [66, 81, 96]];
             assert_eq!(output, expected);
 
@@ -558,10 +558,12 @@ mod tests {
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_multiplication_like_operation() {
+    fn test_multiplication_like_operation() -> Result<()> {
         fn dot_product(lhs: &[i32], rhs: &[i32]) -> i32 {
             lhs.iter()
                 .zip(rhs)
@@ -573,19 +575,19 @@ mod tests {
         dispatch_binary! {{
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1, 2], [3, 4], [5, 6]].with_order::<P>();
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
+            let output = lhs.multiplication_like_operation(rhs, dot_product)?;
             let expected = matrix![[22, 28], [49, 64]];
             assert_eq!(output, expected);
 
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1], [2], [3]].with_order::<P>();
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
+            let output = lhs.multiplication_like_operation(rhs, dot_product)?;
             let expected = matrix![[14], [32]];
             assert_eq!(output, expected);
 
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]].with_order::<P>();
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
+            let output = lhs.multiplication_like_operation(rhs, dot_product)?;
             let expected = matrix![[30, 36, 42], [66, 81, 96]];
             assert_eq!(output, expected);
 
@@ -617,6 +619,8 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
+
+        Ok(())
     }
 
     #[test]
@@ -661,7 +665,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn test_primitive_scalar_mul() {
+    fn test_primitive_scalar_mul() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let scalar = 2;
@@ -690,34 +694,36 @@ mod tests {
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = matrix * scalar;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = matrix * &scalar;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &matrix * scalar;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &matrix * &scalar;
                 assert_eq!(output, expected);
             }
         }}
+
+        Ok(())
     }
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn test_primitive_scalar_mul_rev() {
+    fn test_primitive_scalar_mul_rev() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let scalar = 2;
@@ -746,29 +752,31 @@ mod tests {
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = scalar * matrix;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &scalar * matrix;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = scalar * &matrix;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &scalar * &matrix;
                 assert_eq!(output, expected);
             }
         }}
+
+        Ok(())
     }
 
     #[test]
