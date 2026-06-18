@@ -135,7 +135,7 @@ where
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
-        let layout = self.layout.cast::<U>()?;
+        let layout = self.layout.cast()?;
         let data = if LO::KIND == RO::KIND {
             self.data
                 .iter()
@@ -188,7 +188,7 @@ where
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
-        let layout = self.layout.cast::<U>()?;
+        let layout = self.layout.cast()?;
         let data = if LO::KIND == RO::KIND {
             self.data
                 .into_iter()
@@ -241,7 +241,7 @@ where
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
-        let layout = self.layout.cast::<U>()?;
+        let layout = self.layout.cast()?;
         let data = if LO::KIND == RO::KIND {
             self.data
                 .iter()
@@ -300,7 +300,7 @@ where
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
-        let layout = self.layout.cast::<U>()?;
+        let layout = self.layout.cast()?;
         let data = if LO::KIND == RO::KIND {
             self.data
                 .into_iter()
