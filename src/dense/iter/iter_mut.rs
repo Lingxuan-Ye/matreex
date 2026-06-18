@@ -57,7 +57,7 @@ impl<'a, T> IterVectorsMut<'a, T> {
             ptr::null_mut()
         } else {
             let offset = unsafe { axis_len.unchecked_sub(1).unchecked_mul(axis_stride) };
-            unsafe { base.as_ptr().add(offset) }
+            unsafe { base.add(offset).as_ptr() }
         };
         Self {
             ptr: base,
@@ -81,8 +81,6 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
             let len = self.end_or_len.addr().checked_sub(1)?;
             self.end_or_len = ptr::without_provenance_mut(len);
             let ptr = NonNull::dangling();
-            // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-            // the upper bound of `len`, which cannot be `0` here.
             let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
             return Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) });
         }
@@ -97,8 +95,6 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
             let offset = self.axis_stride;
             self.ptr = unsafe { self.ptr.add(offset) };
         }
-        // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-        // `0` only if `self.end_or_len` is null, which is unreachable here.
         let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
         Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) })
     }
@@ -122,8 +118,6 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
             len = unsafe { len.unchecked_sub(n).unchecked_sub(1) };
             self.end_or_len = ptr::without_provenance_mut(len);
             let ptr = NonNull::dangling();
-            // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-            // the upper bound of `len`, which cannot be `0` here.
             let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
             return Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) });
         }
@@ -145,8 +139,6 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
             let offset = stride;
             self.ptr = unsafe { ptr.byte_add(offset) };
         }
-        // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-        // `0` only if `self.end_or_len` is null, which is unreachable here.
         let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
         Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) })
     }
@@ -167,8 +159,6 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
             let mut acc = init;
             let ptr = NonNull::dangling();
             loop {
-                // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-                // `0` only if `self.end_or_len` is null, which is unreachable here.
                 let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
                 let item = unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) };
                 acc = f(acc, item);
@@ -188,8 +178,6 @@ impl<'a, T> Iterator for IterVectorsMut<'a, T> {
         let mut ptr = self.ptr;
         let offset = self.axis_stride;
         loop {
-            // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-            // `0` only if `self.end_or_len` is null, which is unreachable here.
             let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
             let item = unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) };
             acc = f(acc, item);
@@ -228,8 +216,6 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
             let len = self.end_or_len.addr().checked_sub(1)?;
             self.end_or_len = ptr::without_provenance_mut(len);
             let ptr = NonNull::dangling();
-            // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-            // the upper bound of `len`, which cannot be `0` here.
             let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
             return Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) });
         }
@@ -241,8 +227,6 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
             let offset = self.axis_stride;
             self.end_or_len = unsafe { self.end_or_len.sub(offset) };
         }
-        // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-        // `0` only if `self.end_or_len` is null, which is unreachable here.
         let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
         Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) })
     }
@@ -257,8 +241,6 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
             len = unsafe { len.unchecked_sub(n).unchecked_sub(1) };
             self.end_or_len = ptr::without_provenance_mut(len);
             let ptr = NonNull::dangling();
-            // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-            // the upper bound of `len`, which cannot be `0` here.
             let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
             return Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) });
         }
@@ -278,10 +260,8 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
             self.end_or_len = ptr::null_mut();
         } else {
             let offset = stride;
-            self.ptr = unsafe { ptr.byte_sub(offset) };
+            self.end_or_len = unsafe { ptr.byte_sub(offset).as_ptr() };
         }
-        // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-        // `0` only if `self.end_or_len` is null, which is unreachable here.
         let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
         Some(unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) })
     }
@@ -298,8 +278,6 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
             let mut acc = init;
             let ptr = NonNull::dangling();
             loop {
-                // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-                // `0` only if `self.end_or_len` is null, which is unreachable here.
                 let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
                 let item = unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) };
                 acc = f(acc, item);
@@ -316,12 +294,9 @@ impl<T> DoubleEndedIterator for IterVectorsMut<'_, T> {
             return init;
         }
         let mut acc = init;
-        // SAFETY: `self.end_or_len` is not null since `len > 0`.
         let mut ptr = unsafe { NonNull::new_unchecked(self.end_or_len) };
         let offset = self.axis_stride;
         loop {
-            // SAFETY: `self.vector_stride` is either `axis_len` or `1`, and `axis_len` is
-            // `0` only if `self.end_or_len` is null, which is unreachable here.
             let vector_stride = unsafe { NonZero::new_unchecked(self.vector_stride) };
             let item = unsafe { IterNthVectorMut::new(ptr, self.vector_len, vector_stride) };
             acc = f(acc, item);
@@ -376,7 +351,7 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         };
         // SAFETY: `vector_stride` is always `1` for major axis vectors.
         let vector_stride = unsafe { NonZero::new_unchecked(vector_stride) };
-        // When `T` is not zero-sized, `base` is dangling if and only if `matrix` is
+        // When `T` is not zero-sized, `ptr` is dangling if and only if `matrix` is
         // empty. In this case, since `axis_len > n >= 0`, `vector_len` must be `0`.
         // Therefore, the iterator is empty and the dangling pointer will never be
         // dereferenced.
@@ -401,17 +376,7 @@ impl<'a, T> IterNthVectorMut<'a, T> {
             return Err(Error::IndexOutOfBounds);
         }
 
-        if vector_len == 0 {
-            let ptr = NonNull::dangling();
-            // SAFETY: `vector_stride` is equal to `axis_len`. Since `axis_len > n >= 0`,
-            // `vector_stride` cannot be `0`.
-            let vector_stride = unsafe { NonZero::new_unchecked(vector_stride) };
-            // Safety: The iterator is empty and the dangling pointer will never be
-            // dereferenced.
-            return Ok(unsafe { Self::new(ptr, vector_len, vector_stride) });
-        }
-
-        let ptr = if size_of::<T>() == 0 {
+        let ptr = if size_of::<T>() == 0 || vector_len == 0 {
             NonNull::dangling()
         } else {
             let offset = unsafe { n.unchecked_mul(axis_stride) };
@@ -421,6 +386,10 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         // SAFETY: `vector_stride` is equal to `axis_len`. Since `axis_len > n >= 0`,
         // `vector_stride` cannot be `0`.
         let vector_stride = unsafe { NonZero::new_unchecked(vector_stride) };
+        // When `T` is not zero-sized, `ptr` is dangling if and only if `matrix` is
+        // empty. In this case, since `axis_len > n >= 0`, `vector_len` must be `0`.
+        // Therefore, the iterator is empty and the dangling pointer will never be
+        // dereferenced.
         Ok(unsafe { Self::new(ptr, vector_len, vector_stride) })
     }
 
@@ -431,7 +400,7 @@ impl<'a, T> IterNthVectorMut<'a, T> {
             ptr::null_mut()
         } else {
             let offset = unsafe { len.unchecked_sub(1).unchecked_mul(stride.get()) };
-            unsafe { ptr.as_ptr().add(offset) }
+            unsafe { ptr.add(offset).as_ptr() }
         };
         Self {
             ptr,
@@ -619,7 +588,7 @@ impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
             self.end_or_len = ptr::null_mut();
         } else {
             let offset = stride;
-            self.ptr = unsafe { ptr.byte_sub(offset) };
+            self.end_or_len = unsafe { ptr.byte_sub(offset).as_ptr() };
         }
         Some(unsafe { ptr.as_mut() })
     }
@@ -651,7 +620,6 @@ impl<T> DoubleEndedIterator for IterNthVectorMut<'_, T> {
             return init;
         }
         let mut acc = init;
-        // SAFETY: `self.end_or_len` is not null since `len > 0`.
         let mut ptr = unsafe { NonNull::new_unchecked(self.end_or_len) };
         let offset = self.stride.get();
         loop {
