@@ -63,130 +63,171 @@ where
             rhs.data.set_len(0);
         }
 
-        let lhs_base = lhs.data.as_ptr();
-        let rhs_base = rhs.data.as_ptr();
+        let lhs = lhs.data.spare_capacity_mut();
+        let rhs = rhs.data.spare_capacity_mut();
+        let dst = data.spare_capacity_mut();
 
         match LO::KIND {
             OrderKind::RowMajor => unsafe {
-                let mut lhs_reset = lhs_base;
+                let mut lhs_reset = 0;
+                let mut dst_index = 0;
 
                 for _ in 1..nrows {
-                    let mut rhs_ptr = rhs_base;
+                    let mut rhs_index = 0;
 
                     for _ in 1..ncols {
-                        let mut lhs_ptr = lhs_reset;
-                        let mut element = (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                        let mut lhs_index = lhs_reset;
+                        let mut element =
+                            lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         }
-                        data.push(element);
-                        rhs_ptr = rhs_ptr.add(1);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
+                        rhs_index = rhs_index.unchecked_add(1);
                     }
 
                     {
-                        let mut lhs_ptr = lhs_reset;
-                        let mut element = lhs_ptr.read() * (*rhs_ptr).clone();
+                        let mut lhs_index = lhs_reset;
+                        let mut element = lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                            * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + lhs_ptr.read() * (*rhs_ptr).clone();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         }
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
                     }
 
-                    lhs_reset = lhs_reset.add(inner);
+                    lhs_reset = lhs_reset.unchecked_add(inner);
                 }
 
                 {
-                    let mut rhs_ptr = rhs_base;
+                    let mut rhs_index = 0;
 
                     for _ in 1..ncols {
-                        let mut lhs_ptr = lhs_reset;
-                        let mut element = (*lhs_ptr).clone() * rhs_ptr.read();
+                        let mut lhs_index = lhs_reset;
+                        let mut element =
+                            lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + (*lhs_ptr).clone() * rhs_ptr.read();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         }
-                        data.push(element);
-                        rhs_ptr = rhs_ptr.add(1);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
+                        rhs_index = rhs_index.unchecked_add(1);
                     }
 
                     {
-                        let mut lhs_ptr = lhs_reset;
-                        let mut element = lhs_ptr.read() * rhs_ptr.read();
+                        let mut lhs_index = lhs_reset;
+                        let mut element = lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                            * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + lhs_ptr.read() * rhs_ptr.read();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         }
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
                     }
                 }
             },
 
             OrderKind::ColMajor => unsafe {
-                let mut rhs_reset = rhs_base;
+                let mut rhs_reset = 0;
+                let mut dst_index = 0;
 
                 for _ in 1..ncols {
-                    let mut lhs_ptr = lhs_base;
+                    let mut lhs_index = 0;
 
                     for _ in 1..nrows {
-                        let mut rhs_ptr = rhs_reset;
-                        let mut element = (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                        let mut rhs_index = rhs_reset;
+                        let mut element =
+                            lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
 
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         }
-                        data.push(element);
-                        lhs_ptr = lhs_ptr.add(1);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
+                        lhs_index = lhs_index.unchecked_add(1);
                     }
 
                     {
-                        let mut rhs_ptr = rhs_reset;
-                        let mut element = (*lhs_ptr).clone() * rhs_ptr.read();
+                        let mut rhs_index = rhs_reset;
+                        let mut element =
+                            lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + (*lhs_ptr).clone() * rhs_ptr.read();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         }
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
                     }
 
-                    rhs_reset = rhs_reset.add(inner);
+                    rhs_reset = rhs_reset.unchecked_add(inner);
                 }
 
                 {
-                    let mut lhs_ptr = lhs_base;
+                    let mut lhs_index = 0;
 
                     for _ in 1..nrows {
-                        let mut rhs_ptr = rhs_reset;
-                        let mut element = lhs_ptr.read() * (*rhs_ptr).clone();
+                        let mut rhs_index = rhs_reset;
+                        let mut element = lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                            * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + lhs_ptr.read() * (*rhs_ptr).clone();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         }
-                        data.push(element);
-                        lhs_ptr = lhs_ptr.add(1);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
+                        lhs_index = lhs_index.unchecked_add(1);
                     }
 
                     {
-                        let mut rhs_ptr = rhs_reset;
-                        let mut element = lhs_ptr.read() * rhs_ptr.read();
+                        let mut rhs_index = rhs_reset;
+                        let mut element = lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                            * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + lhs_ptr.read() * rhs_ptr.read();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         }
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
                     }
                 }
             },
+        }
+
+        unsafe {
+            data.set_len(size);
         }
 
         Ok(Matrix { layout, data })
@@ -253,29 +294,38 @@ where
 
         let lhs = self.with_order::<RowMajor>();
         let rhs = rhs.with_order::<ColMajor>();
+        let dst = data.spare_capacity_mut();
 
         match LO::KIND {
-            OrderKind::RowMajor => {
+            OrderKind::RowMajor => unsafe {
+                let mut dst_index = 0;
                 for row in 0..nrows {
-                    let lhs = unsafe { lhs.get_nth_major_axis_vector_unchecked(row) };
+                    let lhs = lhs.get_nth_major_axis_vector_unchecked(row);
                     for col in 0..ncols {
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
+                        let rhs = rhs.get_nth_major_axis_vector_unchecked(col);
                         let element = op(lhs, rhs);
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
                     }
                 }
-            }
+            },
 
-            OrderKind::ColMajor => {
+            OrderKind::ColMajor => unsafe {
+                let mut dst_index = 0;
                 for col in 0..ncols {
-                    let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
+                    let rhs = rhs.get_nth_major_axis_vector_unchecked(col);
                     for row in 0..nrows {
-                        let lhs = unsafe { lhs.get_nth_major_axis_vector_unchecked(row) };
+                        let lhs = lhs.get_nth_major_axis_vector_unchecked(row);
                         let element = op(lhs, rhs);
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
                     }
                 }
-            }
+            },
+        }
+
+        unsafe {
+            data.set_len(size);
         }
 
         Ok(Matrix { layout, data })
