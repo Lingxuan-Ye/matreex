@@ -32,13 +32,13 @@ where
         I: for<'a> MatrixIndex<Self, OutputMut<'a> = &'a mut T>,
         J: for<'a> MatrixIndex<Self, OutputMut<'a> = &'a mut T>,
     {
-        let x = self.get_mut(i)? as *mut T;
-        let y = self.get_mut(j)? as *mut T;
+        let x = ptr::from_mut(self.get_mut(i)?).addr();
+        let y = ptr::from_mut(self.get_mut(j)?).addr();
 
         if x != y {
             let base = self.data.as_mut_ptr();
-            let x = base.with_addr(x.addr());
-            let y = base.with_addr(y.addr());
+            let x = base.with_addr(x);
+            let y = base.with_addr(y);
             unsafe {
                 ptr::swap_nonoverlapping(x, y, 1);
             }
@@ -113,12 +113,12 @@ where
 
         let base = self.data.as_mut_ptr();
         let stride = self.stride();
-        let index = m * stride.major();
-        let jndex = n * stride.major();
+        let x = m * stride.major();
+        let y = n * stride.major();
 
         unsafe {
-            let x = base.add(index);
-            let y = base.add(jndex);
+            let x = base.add(x);
+            let y = base.add(y);
             let count = self.minor() * stride.minor();
             ptr::swap_nonoverlapping(x, y, count);
         }
@@ -140,12 +140,12 @@ where
 
         let base = self.data.as_mut_ptr();
         let stride = self.stride();
-        let index = m * stride.minor();
-        let jndex = n * stride.minor();
+        let x = m * stride.minor();
+        let y = n * stride.minor();
 
         unsafe {
-            let mut x = base.add(index);
-            let mut y = base.add(jndex);
+            let mut x = base.add(x);
+            let mut y = base.add(y);
             ptr::swap_nonoverlapping(x, y, stride.minor());
             for _ in 1..self.major() {
                 x = x.add(stride.major());
