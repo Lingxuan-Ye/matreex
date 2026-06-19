@@ -32,8 +32,10 @@ where
                     }
                     index.col += 1;
                 }
-                let ptr = Box::into_raw(output) as *mut [Box<[T]>];
-                unsafe { Box::from_raw(ptr) }
+                output
+                    .into_iter()
+                    .map(|col| unsafe { col.assume_init() })
+                    .collect()
             }
 
             OrderKind::ColMajor => {

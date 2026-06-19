@@ -39,8 +39,10 @@ where
                     }
                     index.row += 1;
                 }
-                let ptr = Box::into_raw(output) as *mut [Box<[T]>];
-                unsafe { Box::from_raw(ptr) }
+                output
+                    .into_iter()
+                    .map(|row| unsafe { row.assume_init() })
+                    .collect()
             }
         }
     }
