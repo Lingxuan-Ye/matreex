@@ -37,6 +37,47 @@ where
 
         if x != y {
             let base = self.data.as_mut_ptr();
+            // # FIXME
+            //
+            // The current implementation still contains potential undefined behavior.
+            // Consider the following case:
+            //
+            // ```
+            // struct I(Index);
+            //
+            // unsafe impl<O> MatrixIndex<Matrix<u8, O>> for I
+            // where
+            //     O: Order,
+            // {
+            //     type Output<'a>
+            //         = &'a u8
+            //     where
+            //         Matrix<u8, O>: 'a;
+            //
+            //     type OutputMut<'a>
+            //         = &'a mut u8
+            //     where
+            //         Matrix<u8, O>: 'a;
+            //
+            //     fn is_out_of_bounds(&self, matrix: &Matrix<u8, O>) -> bool {
+            //         self.0.is_out_of_bounds(matrix)
+            //     }
+            //
+            //     unsafe fn get_unchecked(self, _: &Matrix<u8, O>) -> Self::Output<'_> {
+            //         unimplemented!()
+            //     }
+            //
+            //     unsafe fn get_unchecked_mut(self, _: &mut Matrix<u8, O>) -> Self::OutputMut<'_> {
+            //         Box::leak(Box::new(0))
+            //     }
+            // }
+            // ```
+            //
+            // This implementation does not violate any safety contract, but the references
+            // returned by `get_mut` do not actually point into the underlying data of the
+            // matrix and therefore cannot inherit provenance from `base`.
+            //
+            // Fixing this may require a breaking change to `MatrixIndex`.
             let x = base.with_addr(x);
             let y = base.with_addr(y);
             unsafe {
@@ -169,13 +210,6 @@ mod tests {
         dispatch_unary! {{
             let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let i = Index::new(0, 0);
-            let j = Index::new(0, 0);
-            matrix.swap(i, j)?;
-            let expected = matrix![[1, 2, 3], [4, 5, 6]];
-            assert_eq!(matrix, expected);
-
-            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let i = Index::new(0, 0);
             let j = Index::new(1, 1);
             matrix.swap(i, j)?;
             let expected = matrix![[5, 2, 3], [4, 1, 6]];
@@ -189,8 +223,8 @@ mod tests {
             assert_eq!(matrix, expected);
 
             let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let i = Index::new(0, 0);
-            let j = WrappingIndex::new(0, 0);
+            let i = Index::new(1, 1);
+            let j = Index::new(1, 1);
             matrix.swap(i, j)?;
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
             assert_eq!(matrix, expected);
@@ -210,8 +244,8 @@ mod tests {
             assert_eq!(matrix, expected);
 
             let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let i = WrappingIndex::new(0, 0);
-            let j = Index::new(0, 0);
+            let i = Index::new(1, 1);
+            let j = WrappingIndex::new(1, 1);
             matrix.swap(i, j)?;
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
             assert_eq!(matrix, expected);
@@ -231,8 +265,8 @@ mod tests {
             assert_eq!(matrix, expected);
 
             let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let i = WrappingIndex::new(0, 0);
-            let j = WrappingIndex::new(0, 0);
+            let i = WrappingIndex::new(1, 1);
+            let j = Index::new(1, 1);
             matrix.swap(i, j)?;
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
             assert_eq!(matrix, expected);
@@ -249,6 +283,13 @@ mod tests {
             let j = WrappingIndex::new(0, 0);
             matrix.swap(i, j)?;
             let expected = matrix![[5, 2, 3], [4, 1, 6]];
+            assert_eq!(matrix, expected);
+
+            let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+            let i = WrappingIndex::new(1, 1);
+            let j = WrappingIndex::new(1, 1);
+            matrix.swap(i, j)?;
+            let expected = matrix![[1, 2, 3], [4, 5, 6]];
             assert_eq!(matrix, expected);
 
             let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
@@ -275,6 +316,47 @@ mod tests {
             assert_eq!(error, Error::IndexOutOfBounds);
             assert_eq!(matrix, unchanged);
         }}
+
+        #[cfg(miri)]
+        {
+            use alloc::boxed::Box;
+
+            struct I(Index);
+
+            unsafe impl<O> MatrixIndex<Matrix<u8, O>> for I
+            where
+                O: Order,
+            {
+                type Output<'a>
+                    = &'a u8
+                where
+                    Matrix<u8, O>: 'a;
+
+                type OutputMut<'a>
+                    = &'a mut u8
+                where
+                    Matrix<u8, O>: 'a;
+
+                fn is_out_of_bounds(&self, matrix: &Matrix<u8, O>) -> bool {
+                    self.0.is_out_of_bounds(matrix)
+                }
+
+                unsafe fn get_unchecked(self, _: &Matrix<u8, O>) -> Self::Output<'_> {
+                    unimplemented!()
+                }
+
+                unsafe fn get_unchecked_mut(self, _: &mut Matrix<u8, O>) -> Self::OutputMut<'_> {
+                    Box::leak(Box::new(0))
+                }
+            }
+
+            dispatch_unary! {{
+                let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
+                let i = I(Index::new(0, 0));
+                let j = I(Index::new(1, 1));
+                matrix.swap(i, j)?;
+            }}
+        }
 
         Ok(())
     }
