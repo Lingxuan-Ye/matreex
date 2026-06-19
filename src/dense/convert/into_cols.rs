@@ -78,8 +78,8 @@ where
                     unsafe {
                         output
                             .get_unchecked_mut(index.col)
-                            .as_mut_ptr()
-                            .add(index.row)
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(index.row)
                             .write(element);
                     }
                     index.col += 1;
