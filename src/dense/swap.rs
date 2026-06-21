@@ -29,58 +29,16 @@ where
     /// ```
     pub fn swap<I, J>(&mut self, i: I, j: J) -> Result<&mut Self>
     where
-        I: for<'a> MatrixIndex<Self, OutputMut<'a> = &'a mut T>,
-        J: for<'a> MatrixIndex<Self, OutputMut<'a> = &'a mut T>,
+        I: for<'a> MatrixIndex<Self, Output = T>,
+        J: for<'a> MatrixIndex<Self, Output = T>,
     {
-        let x = ptr::from_mut(self.get_mut(i)?).addr();
-        let y = ptr::from_mut(self.get_mut(j)?).addr();
+        i.ensure_in_bounds(self)?;
+        j.ensure_in_bounds(self)?;
 
-        if x != y {
-            let base = self.data.as_mut_ptr();
-            // # FIXME
-            //
-            // The current implementation still contains potential undefined behavior.
-            // Consider the following case:
-            //
-            // ```
-            // struct I(Index);
-            //
-            // unsafe impl<O> MatrixIndex<Matrix<u8, O>> for I
-            // where
-            //     O: Order,
-            // {
-            //     type Output<'a>
-            //         = &'a u8
-            //     where
-            //         Matrix<u8, O>: 'a;
-            //
-            //     type OutputMut<'a>
-            //         = &'a mut u8
-            //     where
-            //         Matrix<u8, O>: 'a;
-            //
-            //     fn is_out_of_bounds(&self, matrix: &Matrix<u8, O>) -> bool {
-            //         self.0.is_out_of_bounds(matrix)
-            //     }
-            //
-            //     unsafe fn get_unchecked(self, _: &Matrix<u8, O>) -> Self::Output<'_> {
-            //         unimplemented!()
-            //     }
-            //
-            //     unsafe fn get_unchecked_mut(self, _: &mut Matrix<u8, O>) -> Self::OutputMut<'_> {
-            //         Box::leak(Box::new(0))
-            //     }
-            // }
-            // ```
-            //
-            // This implementation does not violate any safety contract, but the references
-            // returned by `get_mut` do not actually point into the underlying data of the
-            // matrix and therefore cannot inherit provenance from `base`.
-            //
-            // Fixing this may require a breaking change to `MatrixIndex`.
-            let x = base.with_addr(x);
-            let y = base.with_addr(y);
-            unsafe {
+        unsafe {
+            let x = i.get_unchecked_mut(self);
+            let y = j.get_unchecked_mut(self);
+            if x != y {
                 ptr::swap_nonoverlapping(x, y, 1);
             }
         }
@@ -319,7 +277,19 @@ mod tests {
 
         #[cfg(miri)]
         {
+            extern crate std;
+
             use alloc::boxed::Box;
+            use alloc::vec::Vec;
+            use core::cell::RefCell;
+            use std::thread_local;
+
+            // Use thread-local storage here because raw pointers are not `Send`.
+            thread_local! {
+                // Leaked memory will be automatically reclaimed once the test process exits,
+                // but we free it manually only to silence Miri's leak detection.
+                static LEAKED: RefCell<Vec<*mut u8>> = const { RefCell::new(Vec::new()) };
+            }
 
             struct I(Index);
 
@@ -327,26 +297,22 @@ mod tests {
             where
                 O: Order,
             {
-                type Output<'a>
-                    = &'a u8
-                where
-                    Matrix<u8, O>: 'a;
-
-                type OutputMut<'a>
-                    = &'a mut u8
-                where
-                    Matrix<u8, O>: 'a;
+                type Output = u8;
 
                 fn is_out_of_bounds(&self, matrix: &Matrix<u8, O>) -> bool {
                     self.0.is_out_of_bounds(matrix)
                 }
 
-                unsafe fn get_unchecked(self, _: &Matrix<u8, O>) -> Self::Output<'_> {
+                unsafe fn get_unchecked(self, _: *const Matrix<u8, O>) -> *const Self::Output {
                     unimplemented!()
                 }
 
-                unsafe fn get_unchecked_mut(self, _: &mut Matrix<u8, O>) -> Self::OutputMut<'_> {
-                    Box::leak(Box::new(0))
+                unsafe fn get_unchecked_mut(self, _: *mut Matrix<u8, O>) -> *mut Self::Output {
+                    LEAKED.with(|cell| {
+                        let ptr = Box::into_raw(Box::new(0));
+                        cell.borrow_mut().push(ptr);
+                        ptr
+                    })
                 }
             }
 
@@ -356,6 +322,12 @@ mod tests {
                 let j = I(Index::new(1, 1));
                 matrix.swap(i, j)?;
             }}
+
+            let _ = LEAKED.try_with(|cell| {
+                for &ptr in cell.borrow().iter() {
+                    let _ = unsafe { Box::from_raw(ptr) };
+                }
+            });
         }
 
         Ok(())
