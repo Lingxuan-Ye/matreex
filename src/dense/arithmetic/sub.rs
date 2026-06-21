@@ -1,5 +1,5 @@
 use super::super::Matrix;
-use super::super::layout::Order;
+use super::super::order::Order;
 use core::ops::{Sub, SubAssign};
 
 impl<L, LO, R, RO, U> Sub<Matrix<R, RO>> for Matrix<L, LO>

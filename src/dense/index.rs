@@ -1,5 +1,6 @@
 use super::Matrix;
-use super::layout::{Order, OrderKind, Stride};
+use super::layout::Stride;
+use super::order::{Order, OrderKind};
 use crate::error::Result;
 use crate::index::{AsIndex, Index, MatrixIndex, WrappingIndex};
 
@@ -262,7 +263,7 @@ impl Index {
 
 #[cfg(test)]
 mod tests {
-    use super::super::layout::{ColMajor, RowMajor};
+    use super::super::order::{ColMajor, RowMajor};
     use super::*;
     use crate::error::Error;
     use crate::{dispatch_unary, matrix};

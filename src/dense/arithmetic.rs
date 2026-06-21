@@ -1,5 +1,5 @@
 use super::Matrix;
-use super::layout::Order;
+use super::order::Order;
 use crate::error::{Error, Result};
 use crate::index::Index;
 use core::ptr;

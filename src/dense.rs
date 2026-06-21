@@ -1,6 +1,7 @@
 //! Dense matrix implementation.
 
-use self::layout::{Layout, Order, Stride};
+use self::layout::{Layout, Stride};
+use self::order::Order;
 use crate::error::Result;
 use crate::index::Index;
 use crate::shape::Shape;
@@ -8,7 +9,7 @@ use alloc::vec::Vec;
 use core::hash::{Hash, Hasher};
 use core::ptr;
 
-pub mod layout;
+pub mod order;
 
 mod arithmetic;
 mod construct;
@@ -17,6 +18,7 @@ mod eq;
 mod fmt;
 mod index;
 mod iter;
+mod layout;
 mod resize;
 mod swap;
 
@@ -48,8 +50,8 @@ mod serde;
 /// types, and deserializing the serialized output of a different type itself
 /// should be considered a logical error.
 ///
-/// [`RowMajor`]: crate::dense::layout::RowMajor
-/// [`ColMajor`]: crate::dense::layout::ColMajor
+/// [`RowMajor`]: crate::dense::order::RowMajor
+/// [`ColMajor`]: crate::dense::order::ColMajor
 pub struct Matrix<T, O>
 where
     O: Order,
@@ -233,7 +235,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use matreex::dense::layout::{ColMajor, RowMajor};
+    /// use matreex::dense::{ColMajor, RowMajor};
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
@@ -262,7 +264,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use matreex::dense::layout::{ColMajor, RowMajor};
+    /// use matreex::dense::{ColMajor, RowMajor};
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]]
@@ -536,8 +538,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::order::{ColMajor, RowMajor};
     use super::*;
-    use crate::dense::layout::{ColMajor, RowMajor};
     use crate::error::Error;
     use crate::{dispatch_binary, dispatch_unary, matrix};
 

@@ -1,5 +1,5 @@
 use super::Matrix;
-use super::layout::Order;
+use super::order::Order;
 use crate::convert::{FromRowIterator, IntoRows, TryFromRows};
 use crate::error::{Error, Result};
 use alloc::boxed::Box;
@@ -342,7 +342,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::super::layout::{ColMajor, RowMajor};
+    use super::super::order::{ColMajor, RowMajor};
     use super::*;
     use crate::dispatch_unary;
     use alloc::vec;

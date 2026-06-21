@@ -1,5 +1,6 @@
 use super::super::Matrix;
-use super::super::layout::{ColMajor, Layout, Order, OrderKind, RowMajor};
+use super::super::layout::Layout;
+use super::super::order::{ColMajor, Order, OrderKind, RowMajor};
 use crate::error::{Error, Result};
 use crate::shape::Shape;
 use alloc::vec::Vec;

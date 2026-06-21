@@ -1,5 +1,5 @@
 use super::super::Matrix;
-use super::super::layout::{Order, OrderKind};
+use super::super::order::{Order, OrderKind};
 use crate::convert::IntoCols;
 use crate::index::Index;
 use alloc::boxed::Box;

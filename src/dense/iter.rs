@@ -1,6 +1,6 @@
 use self::iter_mut::IterVectorsMut;
 use super::Matrix;
-use super::layout::{Order, OrderKind};
+use super::order::{Order, OrderKind};
 use crate::error::{Error, Result};
 use crate::index::Index;
 use core::iter::{Skip, StepBy, Take};

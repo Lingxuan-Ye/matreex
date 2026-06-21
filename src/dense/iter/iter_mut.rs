@@ -1,5 +1,5 @@
 use super::super::Matrix;
-use super::super::layout::Order;
+use super::super::order::Order;
 use crate::error::{Error, Result};
 use core::iter::FusedIterator;
 use core::marker::PhantomData;

@@ -96,7 +96,7 @@ pub use self::error::{Error, Result};
 pub use self::index::{Index, WrappingIndex};
 pub use self::shape::Shape;
 
-use self::dense::layout::RowMajor;
+use self::dense::order::RowMajor;
 
 pub mod convert;
 pub mod dense;

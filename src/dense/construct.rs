@@ -1,5 +1,6 @@
 use super::Matrix;
-use super::layout::{Layout, Order};
+use super::layout::Layout;
+use super::order::Order;
 use crate::error::Result;
 use crate::index::Index;
 use crate::shape::AsShape;

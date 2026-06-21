@@ -1,5 +1,6 @@
 use super::super::Matrix;
-use super::super::layout::{ColMajor, Layout, Order};
+use super::super::layout::Layout;
+use super::super::order::{ColMajor, Order};
 use crate::convert::{FromColIterator, TryFromCols};
 use crate::error::{Error, Result};
 use crate::shape::Shape;
@@ -402,7 +403,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::super::super::layout::RowMajor;
+    use super::super::super::order::RowMajor;
     use super::*;
     use crate::convert::TryFromRows;
     use crate::dispatch_unary;

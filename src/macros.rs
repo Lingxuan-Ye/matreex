@@ -63,7 +63,7 @@ macro_rules! matrix {
 #[macro_export]
 macro_rules! dispatch_unary {
     { $block:block } => {{
-        use $crate::dense::layout::{ColMajor, RowMajor};
+        use $crate::dense::order::{ColMajor, RowMajor};
 
         {
             type O = RowMajor;
@@ -83,7 +83,7 @@ macro_rules! dispatch_unary {
 #[macro_export]
 macro_rules! dispatch_binary {
     { $block:block } => {{
-        use $crate::dense::layout::{ColMajor, RowMajor};
+        use $crate::dense::order::{ColMajor, RowMajor};
 
         {
             type O = RowMajor;

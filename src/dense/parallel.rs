@@ -1,8 +1,8 @@
 use super::Matrix;
-use super::layout::Order;
+use super::order::Order;
 use crate::error::Result;
 use crate::index::Index;
-use rayon::prelude::*;
+use crate::parallel::*;
 
 impl<T, O> Matrix<T, O>
 where

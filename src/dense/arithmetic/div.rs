@@ -1,5 +1,5 @@
 use super::super::Matrix;
-use super::super::layout::Order;
+use super::super::order::Order;
 use core::ops::{Div, DivAssign};
 
 macro_rules! impl_helper {
