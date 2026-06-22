@@ -195,7 +195,7 @@ impl_primitive_scalar_sub! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize 
 #[cfg(test)]
 mod tests {
     use crate::error::Result;
-    use crate::mock::{MockL, MockR, MockU};
+    use crate::testkit::{MockL, MockR, MockU};
     use crate::{dispatch_binary, dispatch_unary, matrix};
 
     #[test]

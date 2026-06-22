@@ -534,7 +534,7 @@ impl_primitive_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::{MockL, MockR, MockU, MockZeroSized, Scope};
+    use crate::testkit::{MockL, MockR, MockU, MockZeroSized, Scope};
     use crate::{dispatch_binary, dispatch_unary, matrix};
 
     #[test]

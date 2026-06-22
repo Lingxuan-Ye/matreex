@@ -952,8 +952,8 @@ mod tests {
     use super::*;
     use crate::dispatch_unary;
     use crate::error::Error;
-    use crate::mock::{MockZeroSized, Scope};
     use crate::shape::Shape;
+    use crate::testkit::{MockZeroSized, Scope};
 
     #[test]
     fn test_resize() -> Result<()> {

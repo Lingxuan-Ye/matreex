@@ -34,7 +34,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::mock::{MockT, MockU};
+    use crate::testkit::{MockT, MockU};
     use crate::{dispatch_unary, matrix};
 
     #[test]

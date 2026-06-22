@@ -110,7 +110,7 @@ pub mod parallel;
 mod macros;
 
 #[cfg(test)]
-mod mock;
+mod testkit;
 
 /// An alias for [`dense::Matrix<T, RowMajor>`].
 ///
