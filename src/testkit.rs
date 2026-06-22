@@ -200,3 +200,57 @@ where
         MockU(-self.0)
     }
 }
+
+#[macro_export]
+macro_rules! dispatch_unary {
+    { $block:block } => {{
+        use $crate::dense::order::{ColMajor, RowMajor};
+
+        {
+            type O = RowMajor;
+
+            $block
+        }
+
+        {
+            type O = ColMajor;
+
+            $block
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! dispatch_binary {
+    { $block:block } => {{
+        use $crate::dense::order::{ColMajor, RowMajor};
+
+        {
+            type O = RowMajor;
+            type P = RowMajor;
+
+            $block
+        }
+
+        {
+            type O = RowMajor;
+            type P = ColMajor;
+
+            $block
+        }
+
+        {
+            type O = ColMajor;
+            type P = RowMajor;
+
+            $block
+        }
+
+        {
+            type O = ColMajor;
+            type P = ColMajor;
+
+            $block
+        }
+    }};
+}
