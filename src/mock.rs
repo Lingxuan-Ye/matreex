@@ -1,8 +1,8 @@
 extern crate std;
 
-use std::cell::Cell;
-use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
+use core::cell::Cell;
+use core::marker::PhantomData;
+use core::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 use std::thread_local;
 
 thread_local! {
