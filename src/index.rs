@@ -1,4 +1,4 @@
-//! Traits and types for matrix indexing.
+//! Types and traits for matrix indexing.
 
 use crate::error::{Error, Result};
 use crate::shape::AsShape;
@@ -6,7 +6,7 @@ use crate::shape::AsShape;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A struct representing a two-dimensional index.
+/// A two-dimensional matrix index type.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Index {
@@ -100,7 +100,7 @@ impl From<[usize; 2]> for Index {
     }
 }
 
-/// A trait for types that provide row and column indices.
+/// A trait for two-dimensional matrix index types.
 ///
 /// # Examples
 ///
@@ -182,8 +182,7 @@ where
     }
 }
 
-/// A struct representing a two-dimensional index that wraps around when
-/// exceeding the valid range.
+/// A two-dimensional matrix index type with wrapping behavior.
 ///
 /// [`WrappingIndex`] is the only type that performs wrapping indexing.
 /// The design is based on the following considerations:
@@ -259,7 +258,7 @@ impl WrappingIndex {
     }
 }
 
-/// A helper trait for indexing operations on a matrix.
+/// A helper trait for matrix indexing operations.
 ///
 /// # Safety
 ///

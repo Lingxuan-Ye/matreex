@@ -25,8 +25,10 @@ where
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-    /// let result = lhs.multiply(rhs);
-    /// assert_eq!(result, Ok(matrix![[12, 12], [30, 30]]));
+    /// let output = lhs.multiply(rhs)?;
+    /// assert_eq!(output, matrix![[12, 12], [30, 30]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn multiply<R, RO, U>(self, rhs: Matrix<R, RO>) -> Result<Matrix<U, LO>>
     where
@@ -262,8 +264,10 @@ where
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-    /// let result = lhs.multiplication_like_operation(rhs, dot_product);
-    /// assert_eq!(result, Ok(matrix![[12, 12], [30, 30]]));
+    /// let output = lhs.multiplication_like_operation(rhs, dot_product)?;
+    /// assert_eq!(output, matrix![[12, 12], [30, 30]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn multiplication_like_operation<R, RO, F, U>(
         self,

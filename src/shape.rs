@@ -5,7 +5,7 @@ use crate::error::{Error, Result};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A struct representing the shape of a matrix.
+/// A matrix shape type.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy, Default, Hash, PartialEq, Eq)]
 pub struct Shape {
@@ -89,7 +89,7 @@ impl From<[usize; 2]> for Shape {
     }
 }
 
-/// A trait representing the shape of a matrix.
+/// A trait for matrix shape types.
 ///
 /// # Examples
 ///
@@ -109,8 +109,10 @@ impl From<[usize; 2]> for Shape {
 ///     }
 /// }
 ///
-/// let result = Matrix::from_value(S(2, 3), 0);
-/// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
+/// let matrix = Matrix::<i32>::from_default(S(2, 3))?;
+/// assert_eq!(matrix, matrix![[0, 0, 0], [0, 0, 0]]);
+/// #
+/// # Ok::<(), matreex::Error>(())
 /// ```
 pub trait AsShape {
     /// Returns the number of rows.

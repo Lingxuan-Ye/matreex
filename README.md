@@ -72,12 +72,8 @@ Or maybe the inverse of a matrix?
 
 Nah, we don't have that yet.
 
-## FAQs
-
-### Why named `matreex`?
-
-Hmm ... Who knows? Could be a name conflict.
+## FAQ
 
 ### Is it `no_std` compatible?
 
-This crate is `no_std` compatible if the `parallel` feature is not enabled.
+This crate is `no_std` compatible when the `parallel` feature is not enabled.

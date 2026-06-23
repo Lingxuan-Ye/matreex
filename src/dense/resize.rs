@@ -23,10 +23,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
     /// matrix.resize((2, 2), 0)?;
@@ -34,8 +32,8 @@ where
     ///
     /// matrix.resize((3, 3), 0)?;
     /// assert_eq!(matrix, matrix![[1, 2, 0], [4, 5, 0], [0, 0, 0]]);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
@@ -378,10 +376,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::{Index, matrix};
     ///
-    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![
     ///     [Index::new(0, 0), Index::new(0, 1), Index::new(0, 2)],
     ///     [Index::new(1, 0), Index::new(1, 1), Index::new(1, 2)],
@@ -405,8 +401,8 @@ where
     ///         [Index::new(2, 0), Index::new(2, 1), Index::new(2, 2)],
     ///     ]
     /// );
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow

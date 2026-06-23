@@ -8,12 +8,12 @@ use core::panic::{RefUnwindSafe, UnwindSafe};
 #[cfg(feature = "serde")]
 mod serde;
 
-/// A struct representing the memory layout of a [`Matrix<T, O>`].
+/// The memory layout of a [`Matrix<T, O>`].
 ///
 /// # Invariants
 ///
 /// - `self.major() * self.minor() <= usize::MAX`
-/// - `self.major() * self.minor() * size_of::<T>() <= isize:::MAX as usize`
+/// - `self.major() * self.minor() * size_of::<T>() <= isize::MAX as usize`
 ///
 /// [`Matrix<T, O>`]: crate::dense::Matrix
 #[derive(Debug)]
@@ -94,7 +94,7 @@ where
         }
     }
 
-    /// Converts to a layout with the specified storage orde.
+    /// Converts to a layout with the specified storage order.
     pub(super) fn with_order<P>(self) -> Layout<T, P>
     where
         P: Order,

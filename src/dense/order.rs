@@ -1,4 +1,4 @@
-//! Types for matrix storage order.
+//! Matrix storage orders.
 
 /// A marker type representing row-major order.
 ///

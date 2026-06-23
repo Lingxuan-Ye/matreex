@@ -32,7 +32,7 @@ where
     /// Applies a closure to each element in parallel, returning a new matrix with
     /// the results.
     ///
-    /// See [`par_map_ref`] for a non-consuming version.
+    /// For a non-consuming alternative see [`par_map_ref`].
     ///
     /// # Errors
     ///
@@ -44,8 +44,10 @@ where
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let result = matrix.par_map(|element| element as f64);
-    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
+    /// let output = matrix.par_map(|element| element as f64)?;
+    /// assert_eq!(output, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`par_map_ref`]: Matrix::par_map_ref
@@ -64,7 +66,7 @@ where
     /// Applies a closure to each element in parallel, returning a new matrix with
     /// the results.
     ///
-    /// See [`par_map`] for a consuming version.
+    /// For a consuming alternative see [`par_map`].
     ///
     /// # Errors
     ///
@@ -76,8 +78,10 @@ where
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let result = matrix.par_map_ref(|element| *element as f64);
-    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
+    /// let output = matrix.par_map_ref(|element| *element as f64)?;
+    /// assert_eq!(output, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`par_map`]: Matrix::par_map

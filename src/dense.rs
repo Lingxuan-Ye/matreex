@@ -28,7 +28,7 @@ mod parallel;
 #[cfg(feature = "serde")]
 mod serde;
 
-/// A struct representing a dense matrix.
+/// A heap-allocated dense matrix type.
 ///
 /// # Storage Order
 ///
@@ -45,7 +45,7 @@ mod serde;
 /// the serialized output is generally not recommended but safe: the unsound
 /// state will be rejected during deserialization.
 ///
-/// Notably, it is designed not to store the storage order when serializing.
+/// Notably, the storage order is intentionally omitted during serialization.
 /// This is because matrices with different orders are by definition different
 /// types, and deserializing the serialized output of a different type itself
 /// should be considered a logical error.
@@ -142,13 +142,11 @@ where
     ///
     /// ```
     /// use matreex::Matrix;
-    /// # use matreex::Result;
     ///
-    /// # fn main() -> Result<()> {
     /// let matrix = Matrix::<i32>::with_capacity(10)?;
     /// assert!(matrix.capacity() >= 10);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn capacity(&self) -> usize {
         self.data.capacity()
@@ -235,7 +233,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use matreex::dense::{ColMajor, RowMajor};
+    /// use matreex::dense::order::{ColMajor, RowMajor};
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
@@ -264,7 +262,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use matreex::dense::{ColMajor, RowMajor};
+    /// use matreex::dense::order::{ColMajor, RowMajor};
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]]
@@ -287,9 +285,7 @@ where
     ///
     /// ```
     /// use matreex::Matrix;
-    /// # use matreex::Result;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut matrix = Matrix::<i32>::with_capacity(10)?;
     /// assert!(matrix.capacity() >= 10);
     ///
@@ -298,8 +294,8 @@ where
     ///
     /// matrix.shrink_to_fit();
     /// assert!(matrix.capacity() >= 6);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn shrink_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
@@ -317,9 +313,7 @@ where
     ///
     /// ```
     /// use matreex::Matrix;
-    /// # use matreex::Result;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut matrix = Matrix::<i32>::with_capacity(10)?;
     /// assert!(matrix.capacity() >= 10);
     ///
@@ -331,8 +325,8 @@ where
     ///
     /// matrix.shrink_to(4);
     /// assert!(matrix.capacity() >= 6);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn shrink_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
@@ -430,7 +424,7 @@ where
 
     /// Applies a closure to each element, returning a new matrix with the results.
     ///
-    /// See [`map_ref`] for a non-consuming version.
+    /// For a non-consuming alternative see [`map_ref`].
     ///
     /// # Errors
     ///
@@ -442,8 +436,10 @@ where
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let result = matrix.map(|element| element as f64);
-    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
+    /// let output = matrix.map(|element| element as f64)?;
+    /// assert_eq!(output, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`map_ref`]: Matrix::map_ref
@@ -459,7 +455,7 @@ where
 
     /// Applies a closure to each element, returning a new matrix with the results.
     ///
-    /// See [`map`] for a consuming version.
+    /// For a consuming alternative see [`map`].
     ///
     /// # Errors
     ///
@@ -471,8 +467,10 @@ where
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let result = matrix.map_ref(|element| *element as f64);
-    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
+    /// let output = matrix.map_ref(|element| *element as f64)?;
+    /// assert_eq!(output, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`map`]: Matrix::map

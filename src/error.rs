@@ -1,21 +1,20 @@
-//! Error handling for this crate.
+//! Error handling primitives.
 
-/// An alias for [`core::result::Result`].
+/// An alias for [`core::result::Result`] with the error type [`Error`].
 pub type Result<T> = core::result::Result<T, Error>;
 
-/// An enum for error types.
+/// Error kinds.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Error when the size exceeds [`usize::MAX`].
     SizeOverflow,
 
-    /// Error when the size of the shape does not match the length of
-    /// the underlying data.
+    /// Error when the size of the shape does not match the length of the underlying
+    /// data.
     SizeMismatch,
 
-    /// Error when attempting to allocate more than [`isize::MAX`] bytes
-    /// of memory.
+    /// Error when attempting to allocate more than [`isize::MAX`] bytes of memory.
     ///
     /// See [`vec`] and *[The Rustonomicon]* for more information.
     ///
@@ -23,15 +22,15 @@ pub enum Error {
     /// [The Rustonomicon]: https://doc.rust-lang.org/stable/nomicon/vec/vec-alloc.html#allocating-memory
     CapacityOverflow,
 
-    /// Error when converting a matrix from rows or columns that have
-    /// inconsistent lengths.
+    /// Error when converting a matrix from rows or columns that have inconsistent
+    /// lengths.
     LengthInconsistent,
 
     /// Error when the index is out of bounds.
     IndexOutOfBounds,
 
-    /// Error when the shapes of two matrices are not conformable for
-    /// the intended operation.
+    /// Error when the shapes of two matrices are not conformable for the intended
+    /// operation.
     ShapeNotConformable,
 }
 

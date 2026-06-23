@@ -39,16 +39,14 @@ where
     ///
     /// ```
     /// use matreex::Matrix;
-    /// # use matreex::Result;
     ///
-    /// # fn main() -> Result<()> {
     /// let matrix = Matrix::<i32>::with_capacity(10)?;
     /// assert_eq!(matrix.nrows(), 0);
     /// assert_eq!(matrix.ncols(), 0);
     /// assert!(matrix.is_empty());
     /// assert!(matrix.capacity() >= 10);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`Error::CapacityOverflow`]: crate::error::Error::CapacityOverflow
@@ -72,8 +70,10 @@ where
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let result = Matrix::from_default((2, 3));
-    /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
+    /// let matrix = Matrix::<i32>::from_default((2, 3))?;
+    /// assert_eq!(matrix, matrix![[0, 0, 0], [0, 0, 0]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
@@ -102,8 +102,10 @@ where
     /// ```
     /// use matreex::{Matrix, matrix};
     ///
-    /// let result = Matrix::from_value((2, 3), 0);
-    /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
+    /// let matrix = Matrix::from_value((2, 3), 0)?;
+    /// assert_eq!(matrix, matrix![[0, 0, 0], [0, 0, 0]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow
@@ -131,14 +133,16 @@ where
     /// ```
     /// use matreex::{Index, Matrix, matrix};
     ///
-    /// let result = Matrix::from_fn((2, 3), |index| index);
+    /// let matrix = Matrix::from_fn((2, 3), |index| index)?;
     /// assert_eq!(
-    ///     result,
-    ///     Ok(matrix![
+    ///     matrix,
+    ///     matrix![
     ///         [Index::new(0, 0), Index::new(0, 1), Index::new(0, 2)],
     ///         [Index::new(1, 0), Index::new(1, 1), Index::new(1, 2)],
-    ///     ])
+    ///     ]
     /// );
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`Error::SizeOverflow`]: crate::error::Error::SizeOverflow

@@ -149,10 +149,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
     /// let mut row_0 = matrix.iter_nth_row(0)?;
@@ -166,8 +164,8 @@ where
     /// assert_eq!(row_1.next_back(), Some(&5));
     /// assert_eq!(row_1.next_back(), Some(&4));
     /// assert_eq!(row_1.next_back(), None);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn iter_nth_row(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match O::KIND {
@@ -185,10 +183,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
     /// let mut col_0 = matrix.iter_nth_col(0)?;
@@ -205,8 +201,8 @@ where
     /// assert_eq!(col_2.next_back(), Some(&6));
     /// assert_eq!(col_2.next_back(), Some(&3));
     /// assert_eq!(col_2.next_back(), None);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn iter_nth_col(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match O::KIND {
@@ -224,17 +220,15 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// for element in matrix.iter_nth_row_mut(1)? {
     ///    *element += 2;
     /// }
     /// assert_eq!(matrix, matrix![[1, 2, 3], [6, 7, 8]]);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn iter_nth_row_mut(
         &mut self,
@@ -255,17 +249,15 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// for element in matrix.iter_nth_col_mut(1)? {
     ///    *element += 2;
     /// }
     /// assert_eq!(matrix, matrix![[1, 4, 3], [4, 7, 6]]);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn iter_nth_col_mut(
         &mut self,
