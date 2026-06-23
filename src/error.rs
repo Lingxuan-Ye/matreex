@@ -5,6 +5,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 
 /// An enum for error types.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Error {
     /// Error when the size exceeds [`usize::MAX`].
     SizeOverflow,
