@@ -1,6 +1,6 @@
 use self::iter_mut::IterVectorsMut;
 use super::Matrix;
-use super::layout::{Order, OrderKind};
+use super::order::{Order, OrderKind};
 use crate::error::{Error, Result};
 use crate::index::Index;
 use core::iter::{Skip, StepBy, Take};
@@ -149,10 +149,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
     /// let mut row_0 = matrix.iter_nth_row(0)?;
@@ -166,8 +164,8 @@ where
     /// assert_eq!(row_1.next_back(), Some(&5));
     /// assert_eq!(row_1.next_back(), Some(&4));
     /// assert_eq!(row_1.next_back(), None);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn iter_nth_row(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match O::KIND {
@@ -185,10 +183,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     ///
     /// let mut col_0 = matrix.iter_nth_col(0)?;
@@ -205,8 +201,8 @@ where
     /// assert_eq!(col_2.next_back(), Some(&6));
     /// assert_eq!(col_2.next_back(), Some(&3));
     /// assert_eq!(col_2.next_back(), None);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn iter_nth_col(&self, n: usize) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         match O::KIND {
@@ -224,17 +220,15 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// for element in matrix.iter_nth_row_mut(1)? {
     ///    *element += 2;
     /// }
     /// assert_eq!(matrix, matrix![[1, 2, 3], [6, 7, 8]]);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn iter_nth_row_mut(
         &mut self,
@@ -255,17 +249,15 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// for element in matrix.iter_nth_col_mut(1)? {
     ///    *element += 2;
     /// }
     /// assert_eq!(matrix, matrix![[1, 4, 3], [4, 7, 6]]);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn iter_nth_col_mut(
         &mut self,
@@ -659,17 +651,17 @@ mod tests {
     }
 
     #[test]
-    fn test_iter_nth_row() {
+    fn test_iter_nth_row() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
 
-            let mut row_0 = matrix.iter_nth_row(0).unwrap();
+            let mut row_0 = matrix.iter_nth_row(0)?;
             assert_eq!(row_0.next(), Some(&1));
             assert_eq!(row_0.next(), Some(&2));
             assert_eq!(row_0.next(), Some(&3));
             assert_eq!(row_0.next(), None);
 
-            let mut row_1 = matrix.iter_nth_row(1).unwrap();
+            let mut row_1 = matrix.iter_nth_row(1)?;
             assert_eq!(row_1.next_back(), Some(&6));
             assert_eq!(row_1.next_back(), Some(&5));
             assert_eq!(row_1.next_back(), Some(&4));
@@ -680,24 +672,26 @@ mod tests {
                 Err(Error::IndexOutOfBounds)
             ));
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_iter_nth_col() {
+    fn test_iter_nth_col() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
 
-            let mut col_0 = matrix.iter_nth_col(0).unwrap();
+            let mut col_0 = matrix.iter_nth_col(0)?;
             assert_eq!(col_0.next(), Some(&1));
             assert_eq!(col_0.next(), Some(&4));
             assert_eq!(col_0.next(), None);
 
-            let mut col_1 = matrix.iter_nth_col(1).unwrap();
+            let mut col_1 = matrix.iter_nth_col(1)?;
             assert_eq!(col_1.next(), Some(&2));
             assert_eq!(col_1.next(), Some(&5));
             assert_eq!(col_1.next(), None);
 
-            let mut col_2 = matrix.iter_nth_col(2).unwrap();
+            let mut col_2 = matrix.iter_nth_col(2)?;
             assert_eq!(col_2.next_back(), Some(&6));
             assert_eq!(col_2.next_back(), Some(&3));
             assert_eq!(col_2.next_back(), None);
@@ -707,20 +701,22 @@ mod tests {
                 Err(Error::IndexOutOfBounds)
             ));
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_iter_nth_row_mut() {
+    fn test_iter_nth_row_mut() -> Result<()> {
         dispatch_unary! {{
             let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let mut count = 0;
 
-            let row_0 = matrix.iter_nth_row_mut(0).unwrap();
+            let row_0 = matrix.iter_nth_row_mut(0)?;
             for element in row_0 {
                 count += 1;
                 *element += count;
             }
-            let row_1 = matrix.iter_nth_row_mut(1).unwrap();
+            let row_1 = matrix.iter_nth_row_mut(1)?;
             for element in row_1 {
                 count += 1;
                 *element += count;
@@ -728,12 +724,12 @@ mod tests {
             let expected = matrix![[2, 4, 6], [8, 10, 12]];
             assert_eq!(matrix, expected);
 
-            let row_1 = matrix.iter_nth_row_mut(1).unwrap();
+            let row_1 = matrix.iter_nth_row_mut(1)?;
             for element in row_1.rev() {
                 *element -= count;
                 count -= 1;
             }
-            let row_0 = matrix.iter_nth_row_mut(0).unwrap();
+            let row_0 = matrix.iter_nth_row_mut(0)?;
             for element in row_0.rev() {
                 *element -= count;
                 count -= 1;
@@ -747,28 +743,30 @@ mod tests {
             ));
 
             let mut matrix = matrix![[0; 0]; 2].with_order::<O>();
-            let mut row_0 = matrix.iter_nth_row_mut(0).unwrap();
+            let mut row_0 = matrix.iter_nth_row_mut(0)?;
             assert_eq!(row_0.next(), None);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_iter_nth_col_mut() {
+    fn test_iter_nth_col_mut() -> Result<()> {
         dispatch_unary! {{
             let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let mut count = 0;
 
-            let col_0 = matrix.iter_nth_col_mut(0).unwrap();
+            let col_0 = matrix.iter_nth_col_mut(0)?;
             for element in col_0 {
                 count += 1;
                 *element += count;
             }
-            let col_1 = matrix.iter_nth_col_mut(1).unwrap();
+            let col_1 = matrix.iter_nth_col_mut(1)?;
             for element in col_1 {
                 count += 1;
                 *element += count;
             }
-            let col_2 = matrix.iter_nth_col_mut(2).unwrap();
+            let col_2 = matrix.iter_nth_col_mut(2)?;
             for element in col_2 {
                 count += 1;
                 *element += count;
@@ -776,17 +774,17 @@ mod tests {
             let expected = matrix![[2, 5, 8], [6, 9, 12]];
             assert_eq!(matrix, expected);
 
-            let col_2 = matrix.iter_nth_col_mut(2).unwrap();
+            let col_2 = matrix.iter_nth_col_mut(2)?;
             for element in col_2.rev() {
                 *element -= count;
                 count -= 1;
             }
-            let col_1 = matrix.iter_nth_col_mut(1).unwrap();
+            let col_1 = matrix.iter_nth_col_mut(1)?;
             for element in col_1.rev() {
                 *element -= count;
                 count -= 1;
             }
-            let col_0 = matrix.iter_nth_col_mut(0).unwrap();
+            let col_0 = matrix.iter_nth_col_mut(0)?;
             for element in col_0.rev() {
                 *element -= count;
                 count -= 1;
@@ -800,9 +798,11 @@ mod tests {
             ));
 
             let mut matrix = matrix![[0; 3]; 0].with_order::<O>();
-            let mut col_0 = matrix.iter_nth_col_mut(0).unwrap();
+            let mut col_0 = matrix.iter_nth_col_mut(0)?;
             assert_eq!(col_0.next(), None);
         }}
+
+        Ok(())
     }
 
     #[test]

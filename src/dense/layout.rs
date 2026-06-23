@@ -1,6 +1,4 @@
-//! Types for matrix layout.
-
-use self::internal::Sealed;
+use super::order::{Order, OrderKind};
 use crate::error::{Error, Result};
 use crate::shape::{AsShape, Shape};
 use core::hash::{Hash, Hasher};
@@ -10,56 +8,12 @@ use core::panic::{RefUnwindSafe, UnwindSafe};
 #[cfg(feature = "serde")]
 mod serde;
 
-/// A marker type representing row-major order.
-///
-/// In this order, elements are stored row by row, with consecutive
-/// elements of a row stored contiguously in memory.
-///
-/// For column-major order see [`ColMajor`].
-#[derive(Debug)]
-pub struct RowMajor;
-
-/// A marker type representing column-major order.
-///
-/// In this order, elements are stored column by column, with consecutive
-/// elements of a column stored contiguously in memory.
-///
-/// For row-major order see [`RowMajor`].
-#[derive(Debug)]
-pub struct ColMajor;
-
-/// A sealed trait restricting allowed storage orders.
-///
-/// The allowed orders are:
-///
-/// - [`RowMajor`]
-/// - [`ColMajor`]
-pub trait Order: Sealed {
-    #[doc(hidden)]
-    const KIND: OrderKind;
-}
-
-impl Order for RowMajor {
-    const KIND: OrderKind = OrderKind::RowMajor;
-}
-
-impl Order for ColMajor {
-    const KIND: OrderKind = OrderKind::ColMajor;
-}
-
-#[doc(hidden)]
-#[derive(Debug, PartialEq)]
-pub enum OrderKind {
-    RowMajor,
-    ColMajor,
-}
-
-/// A struct representing the memory layout of a [`Matrix<T, O>`].
+/// The memory layout of a [`Matrix<T, O>`].
 ///
 /// # Invariants
 ///
 /// - `self.major() * self.minor() <= usize::MAX`
-/// - `self.major() * self.minor() * size_of::<T>() <= isize:::MAX as usize`
+/// - `self.major() * self.minor() * size_of::<T>() <= isize::MAX as usize`
 ///
 /// [`Matrix<T, O>`]: crate::dense::Matrix
 #[derive(Debug)]
@@ -140,7 +94,7 @@ where
         }
     }
 
-    /// Converts to a layout with the specified storage orde.
+    /// Converts to a layout with the specified storage order.
     pub(super) fn with_order<P>(self) -> Layout<T, P>
     where
         P: Order,
@@ -148,14 +102,17 @@ where
         Layout::new_unchecked(self.major, self.minor)
     }
 
-    /// Converts to a layout with the specified element type.
+    /// Converts to a layout with the specified element type and storage order.
     ///
     /// # Errors
     ///
     /// - [`Error::CapacityOverflow`] if the required capacity in bytes for the
     ///   corresponding matrix of the returned layout exceeds [`isize::MAX`].
-    pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
-        Layout::<U, O>::check_size(self.size())?;
+    pub(super) fn cast<U, P>(self) -> Result<Layout<U, P>>
+    where
+        P: Order,
+    {
+        Layout::<U, P>::check_size(self.size())?;
         Ok(Layout::new_unchecked(self.major, self.minor))
     }
 
@@ -278,11 +235,4 @@ impl Stride {
     pub(super) fn minor(&self) -> usize {
         1
     }
-}
-
-mod internal {
-    pub trait Sealed {}
-
-    impl Sealed for super::RowMajor {}
-    impl Sealed for super::ColMajor {}
 }

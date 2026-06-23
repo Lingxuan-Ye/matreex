@@ -1,5 +1,5 @@
 use super::super::Matrix;
-use super::super::layout::Order;
+use super::super::order::Order;
 use core::ops::Neg;
 
 impl<T, O, U> Neg for Matrix<T, O>
@@ -34,7 +34,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::mock::{MockT, MockU};
+    use crate::testkit::{MockT, MockU};
     use crate::{dispatch_unary, matrix};
 
     #[test]

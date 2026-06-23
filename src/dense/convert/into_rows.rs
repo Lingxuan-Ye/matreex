@@ -1,5 +1,5 @@
 use super::super::Matrix;
-use super::super::layout::{Order, OrderKind};
+use super::super::order::{Order, OrderKind};
 use crate::convert::IntoRows;
 use crate::index::Index;
 use alloc::boxed::Box;
@@ -39,8 +39,10 @@ where
                     }
                     index.row += 1;
                 }
-                let ptr = Box::into_raw(output) as *mut [Box<[T]>];
-                unsafe { Box::from_raw(ptr) }
+                output
+                    .into_iter()
+                    .map(|row| unsafe { row.assume_init() })
+                    .collect()
             }
         }
     }
@@ -83,8 +85,8 @@ where
                     unsafe {
                         output
                             .get_unchecked_mut(index.row)
-                            .as_mut_ptr()
-                            .add(index.col)
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(index.col)
                             .write(element);
                     }
                     index.row += 1;
@@ -114,30 +116,33 @@ mod tests {
     use super::*;
     use crate::convert::TryFromRows;
     use crate::dispatch_unary;
+    use crate::error::Result;
     use alloc::vec;
 
     #[test]
-    fn test_into_rows() {
+    fn test_into_rows() -> Result<()> {
         dispatch_unary! {{
-            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]]).unwrap();
+            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]])?;
             let output: Box<[Box<[i32]>]> = matrix.into_rows();
             let expected: Box<[Box<[i32]>]> = Box::new([Box::new([1, 2, 3]), Box::new([4, 5, 6])]);
             assert_eq!(output, expected);
 
-            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]]).unwrap();
+            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]])?;
             let output: Vec<Box<[i32]>> = matrix.into_rows();
             let expected: Vec<Box<[i32]>> = vec![Box::new([1, 2, 3]), Box::new([4, 5, 6])];
             assert_eq!(output, expected);
 
-            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]]).unwrap();
+            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]])?;
             let output: Box<[Vec<i32>]> = matrix.into_rows();
             let expected: Box<[Vec<i32>]> = Box::new([vec![1, 2, 3], vec![4, 5, 6]]);
             assert_eq!(output, expected);
 
-            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]]).unwrap();
+            let matrix = Matrix::<i32, O>::try_from_rows([[1, 2, 3], [4, 5, 6]])?;
             let output: Vec<Vec<i32>> = matrix.into_rows();
             let expected: Vec<Vec<i32>> = vec![vec![1, 2, 3], vec![4, 5, 6]];
             assert_eq!(output, expected);
         }}
+
+        Ok(())
     }
 }

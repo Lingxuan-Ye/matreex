@@ -1,5 +1,6 @@
 use super::Matrix;
-use super::layout::{Layout, Order};
+use super::layout::Layout;
+use super::order::Order;
 use crate::error::Error::SizeMismatch;
 use alloc::vec::Vec;
 use core::fmt;
@@ -145,7 +146,7 @@ impl Visitor<'_> for FieldVisitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dense::layout::{ColMajor, RowMajor};
+    use crate::dense::order::{ColMajor, RowMajor};
     use crate::matrix;
     use alloc::string::ToString;
     use serde_test::{Token, assert_de_tokens, assert_de_tokens_error, assert_ser_tokens};

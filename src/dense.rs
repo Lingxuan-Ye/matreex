@@ -1,6 +1,7 @@
 //! Dense matrix implementation.
 
-use self::layout::{Layout, Order, Stride};
+use self::layout::{Layout, Stride};
+use self::order::Order;
 use crate::error::Result;
 use crate::index::Index;
 use crate::shape::Shape;
@@ -8,7 +9,7 @@ use alloc::vec::Vec;
 use core::hash::{Hash, Hasher};
 use core::ptr;
 
-pub mod layout;
+pub mod order;
 
 mod arithmetic;
 mod construct;
@@ -17,6 +18,7 @@ mod eq;
 mod fmt;
 mod index;
 mod iter;
+mod layout;
 mod resize;
 mod swap;
 
@@ -26,7 +28,7 @@ mod parallel;
 #[cfg(feature = "serde")]
 mod serde;
 
-/// A struct representing a dense matrix.
+/// A heap-allocated dense matrix type.
 ///
 /// # Storage Order
 ///
@@ -43,13 +45,13 @@ mod serde;
 /// the serialized output is generally not recommended but safe: the unsound
 /// state will be rejected during deserialization.
 ///
-/// Notably, it is designed not to store the storage order when serializing.
+/// Notably, the storage order is intentionally omitted during serialization.
 /// This is because matrices with different orders are by definition different
 /// types, and deserializing the serialized output of a different type itself
 /// should be considered a logical error.
 ///
-/// [`RowMajor`]: crate::dense::layout::RowMajor
-/// [`ColMajor`]: crate::dense::layout::ColMajor
+/// [`RowMajor`]: crate::dense::order::RowMajor
+/// [`ColMajor`]: crate::dense::order::ColMajor
 pub struct Matrix<T, O>
 where
     O: Order,
@@ -140,13 +142,11 @@ where
     ///
     /// ```
     /// use matreex::Matrix;
-    /// # use matreex::Result;
     ///
-    /// # fn main() -> Result<()> {
     /// let matrix = Matrix::<i32>::with_capacity(10)?;
     /// assert!(matrix.capacity() >= 10);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn capacity(&self) -> usize {
         self.data.capacity()
@@ -233,7 +233,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use matreex::dense::layout::{ColMajor, RowMajor};
+    /// use matreex::dense::order::{ColMajor, RowMajor};
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
@@ -262,7 +262,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use matreex::dense::layout::{ColMajor, RowMajor};
+    /// use matreex::dense::order::{ColMajor, RowMajor};
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]]
@@ -285,9 +285,7 @@ where
     ///
     /// ```
     /// use matreex::Matrix;
-    /// # use matreex::Result;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut matrix = Matrix::<i32>::with_capacity(10)?;
     /// assert!(matrix.capacity() >= 10);
     ///
@@ -296,8 +294,8 @@ where
     ///
     /// matrix.shrink_to_fit();
     /// assert!(matrix.capacity() >= 6);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn shrink_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
@@ -315,9 +313,7 @@ where
     ///
     /// ```
     /// use matreex::Matrix;
-    /// # use matreex::Result;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut matrix = Matrix::<i32>::with_capacity(10)?;
     /// assert!(matrix.capacity() >= 10);
     ///
@@ -329,8 +325,8 @@ where
     ///
     /// matrix.shrink_to(4);
     /// assert!(matrix.capacity() >= 6);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn shrink_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
@@ -428,7 +424,7 @@ where
 
     /// Applies a closure to each element, returning a new matrix with the results.
     ///
-    /// See [`map_ref`] for a non-consuming version.
+    /// For a non-consuming alternative see [`map_ref`].
     ///
     /// # Errors
     ///
@@ -440,8 +436,10 @@ where
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let result = matrix.map(|element| element as f64);
-    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
+    /// let output = matrix.map(|element| element as f64)?;
+    /// assert_eq!(output, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`map_ref`]: Matrix::map_ref
@@ -457,7 +455,7 @@ where
 
     /// Applies a closure to each element, returning a new matrix with the results.
     ///
-    /// See [`map`] for a consuming version.
+    /// For a consuming alternative see [`map`].
     ///
     /// # Errors
     ///
@@ -469,8 +467,10 @@ where
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-    /// let result = matrix.map_ref(|element| *element as f64);
-    /// assert_eq!(result, Ok(matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]));
+    /// let output = matrix.map_ref(|element| *element as f64)?;
+    /// assert_eq!(output, matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     ///
     /// [`map`]: Matrix::map
@@ -536,8 +536,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::order::{ColMajor, RowMajor};
     use super::*;
-    use crate::dense::layout::{ColMajor, RowMajor};
     use crate::error::Error;
     use crate::{dispatch_binary, dispatch_unary, matrix};
 
@@ -597,11 +597,13 @@ mod tests {
     }
 
     #[test]
-    fn test_capacity() {
+    fn test_capacity() -> Result<()> {
         dispatch_unary! {{
-            let matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
+            let matrix = Matrix::<i32, O>::with_capacity(10)?;
             assert!(matrix.capacity() >= 10);
         }}
+
+        Ok(())
     }
 
     #[test]
@@ -685,28 +687,30 @@ mod tests {
     }
 
     #[test]
-    fn test_shrink_to_fit() {
+    fn test_shrink_to_fit() -> Result<()> {
         dispatch_unary! {{
-            let mut matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
+            let mut matrix = Matrix::<i32, O>::with_capacity(10)?;
             assert!(matrix.capacity() >= 10);
 
             let shape = Shape::new(2, 3);
-            matrix.resize(shape, 0).unwrap();
+            matrix.resize(shape, 0)?;
             assert!(matrix.capacity() >= 10);
 
             matrix.shrink_to_fit();
             assert!(matrix.capacity() >= 6);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_shrink_to() {
+    fn test_shrink_to() -> Result<()> {
         dispatch_unary! {{
-            let mut matrix = Matrix::<i32, O>::with_capacity(10).unwrap();
+            let mut matrix = Matrix::<i32, O>::with_capacity(10)?;
             assert!(matrix.capacity() >= 10);
 
             let shape = Shape::new(2, 3);
-            matrix.resize(shape, 0).unwrap();
+            matrix.resize(shape, 0)?;
             assert!(matrix.capacity() >= 10);
 
             matrix.shrink_to(8);
@@ -715,6 +719,8 @@ mod tests {
             matrix.shrink_to(4);
             assert!(matrix.capacity() >= 6);
         }}
+
+        Ok(())
     }
 
     #[test]
@@ -777,10 +783,10 @@ mod tests {
     }
 
     #[test]
-    fn test_map() {
+    fn test_map() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let output = matrix.map(|element| element as f64).unwrap();
+            let output = matrix.map(|element| element as f64)?;
             let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
             assert_eq!(output, expected);
 
@@ -788,19 +794,21 @@ mod tests {
             let error = matrix.map(|_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_map_ref() {
+    fn test_map_ref() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let output = matrix.map_ref(|element| *element as f64).unwrap();
+            let output = matrix.map_ref(|element| *element as f64)?;
             let expected = matrix![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
             assert_eq!(output, expected);
 
             // Map to matrix of references.
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let output = matrix.map_ref(|element| element).unwrap();
+            let output = matrix.map_ref(|element| element)?;
             let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
             assert_eq!(output, expected);
 
@@ -808,6 +816,8 @@ mod tests {
             let error = matrix.map_ref(|_| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
+
+        Ok(())
     }
 
     #[test]

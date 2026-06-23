@@ -1,8 +1,8 @@
 extern crate std;
 
-use std::cell::Cell;
-use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
+use core::cell::Cell;
+use core::marker::PhantomData;
+use core::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 use std::thread_local;
 
 thread_local! {
@@ -199,4 +199,58 @@ where
     fn neg(self) -> Self::Output {
         MockU(-self.0)
     }
+}
+
+#[macro_export]
+macro_rules! dispatch_unary {
+    { $block:block } => {{
+        use $crate::dense::order::{ColMajor, RowMajor};
+
+        {
+            type O = RowMajor;
+
+            $block
+        }
+
+        {
+            type O = ColMajor;
+
+            $block
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! dispatch_binary {
+    { $block:block } => {{
+        use $crate::dense::order::{ColMajor, RowMajor};
+
+        {
+            type O = RowMajor;
+            type P = RowMajor;
+
+            $block
+        }
+
+        {
+            type O = RowMajor;
+            type P = ColMajor;
+
+            $block
+        }
+
+        {
+            type O = ColMajor;
+            type P = RowMajor;
+
+            $block
+        }
+
+        {
+            type O = ColMajor;
+            type P = ColMajor;
+
+            $block
+        }
+    }};
 }

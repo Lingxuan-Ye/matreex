@@ -1,5 +1,5 @@
 use super::Matrix;
-use super::layout::Order;
+use super::order::Order;
 use crate::error::{Error, Result};
 use crate::index::Index;
 use core::ptr;
@@ -28,8 +28,10 @@ where
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let scalar = 2;
-    /// let result = matrix.scalar_operation(&scalar, |x, y| x + y);
-    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// let output = matrix.scalar_operation(&scalar, |x, y| x + y)?;
+    /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn scalar_operation<'a, 'b, S, F, U>(
         &'a self,
@@ -61,8 +63,10 @@ where
     ///
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// let scalar = 2;
-    /// let result = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y);
-    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// let output = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y)?;
+    /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn scalar_operation_consume_self<'a, S, F, U>(
         self,
@@ -121,8 +125,10 @@ where
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_operation(&rhs, |x, y| x + y);
-    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// let output = lhs.elementwise_operation(&rhs, |x, y| x + y)?;
+    /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn elementwise_operation<'a, 'b, R, RO, F, U>(
         &'a self,
@@ -135,7 +141,7 @@ where
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
-        let layout = self.layout.cast::<U>()?;
+        let layout = self.layout.cast()?;
         let data = if LO::KIND == RO::KIND {
             self.data
                 .iter()
@@ -174,8 +180,10 @@ where
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y);
-    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// let output = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y)?;
+    /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn elementwise_operation_consume_self<'a, R, RO, F, U>(
         self,
@@ -188,7 +196,7 @@ where
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
-        let layout = self.layout.cast::<U>()?;
+        let layout = self.layout.cast()?;
         let data = if LO::KIND == RO::KIND {
             self.data
                 .into_iter()
@@ -227,8 +235,10 @@ where
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_operation_consume_rhs(rhs, |x, y| x + y);
-    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// let output = lhs.elementwise_operation_consume_rhs(rhs, |x, y| x + y)?;
+    /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn elementwise_operation_consume_rhs<'a, R, RO, F, U>(
         &'a self,
@@ -241,7 +251,7 @@ where
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
-        let layout = self.layout.cast::<U>()?;
+        let layout = self.layout.cast()?;
         let data = if LO::KIND == RO::KIND {
             self.data
                 .iter()
@@ -286,8 +296,10 @@ where
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-    /// let result = lhs.elementwise_operation_consume_both(rhs, |x, y| x + y);
-    /// assert_eq!(result, Ok(matrix![[3, 4, 5], [6, 7, 8]]));
+    /// let output = lhs.elementwise_operation_consume_both(rhs, |x, y| x + y)?;
+    /// assert_eq!(output, matrix![[3, 4, 5], [6, 7, 8]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn elementwise_operation_consume_both<R, RO, F, U>(
         self,
@@ -300,7 +312,7 @@ where
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
-        let layout = self.layout.cast::<U>()?;
+        let layout = self.layout.cast()?;
         let data = if LO::KIND == RO::KIND {
             self.data
                 .into_iter()
@@ -340,16 +352,14 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)?;
     /// assert_eq!(lhs, matrix![[3, 4, 5], [6, 7, 8]]);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn elementwise_operation_assign<'a, R, RO, F>(
         &mut self,
@@ -391,16 +401,14 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use matreex::Result;
     /// use matreex::matrix;
     ///
-    /// # fn main() -> Result<()> {
     /// let mut lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     /// lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)?;
     /// assert_eq!(lhs, matrix![[3, 4, 5], [6, 7, 8]]);
-    /// # Ok(())
-    /// # }
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn elementwise_operation_assign_consume_rhs<R, RO, F>(
         &mut self,
@@ -460,11 +468,11 @@ mod tests {
     use crate::{dispatch_binary, dispatch_unary, matrix};
 
     #[test]
-    fn test_scalar_operation() {
+    fn test_scalar_operation() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let scalar = 2;
-            let output = matrix.scalar_operation(&scalar, |x, y| x + y).unwrap();
+            let output = matrix.scalar_operation(&scalar, |x, y| x + y)?;
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(output, expected);
 
@@ -472,7 +480,7 @@ mod tests {
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let output = {
                 let scalar = 2;
-                matrix.scalar_operation(&scalar, |x, _| x).unwrap()
+                matrix.scalar_operation(&scalar, |x, _| x)?
             };
             let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
             assert_eq!(output, expected);
@@ -481,7 +489,7 @@ mod tests {
             let scalar = 2;
             let output = {
                 let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-                matrix.scalar_operation(&scalar, |_, y| y).unwrap()
+                matrix.scalar_operation(&scalar, |_, y| y)?
             };
             let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
             assert_eq!(output, expected);
@@ -491,25 +499,23 @@ mod tests {
             let error = matrix.scalar_operation(&scalar, |_, _| 0).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_scalar_operation_consume_self() {
+    fn test_scalar_operation_consume_self() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let scalar = 2;
-            let output = matrix
-                .scalar_operation_consume_self(&scalar, |x, y| x + y)
-                .unwrap();
+            let output = matrix.scalar_operation_consume_self(&scalar, |x, y| x + y)?;
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(output, expected);
 
             // Misuse but supposed to work.
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let scalar = 2;
-            let output = matrix
-                .scalar_operation_consume_self(&scalar, |_, y| y)
-                .unwrap();
+            let output = matrix.scalar_operation_consume_self(&scalar, |_, y| y)?;
             let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
             assert_eq!(output, expected);
 
@@ -520,10 +526,12 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_scalar_operation_assign() {
+    fn test_scalar_operation_assign() -> Result<()> {
         dispatch_unary! {{
             let mut matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let scalar = 2;
@@ -533,20 +541,22 @@ mod tests {
 
             // Misuse but supposed to work.
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let mut matrix = matrix.map_ref(|x| x).unwrap();
+            let mut matrix = matrix.map_ref(|x| x)?;
             let scalar = 2;
             matrix.scalar_operation_assign(&scalar, |x, y| *x = y);
             let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
             assert_eq!(matrix, expected);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_elementwise_operation() {
+    fn test_elementwise_operation() -> Result<()> {
         dispatch_binary! {{
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
-            let output = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap();
+            let output = lhs.elementwise_operation(&rhs, |x, y| x + y)?;
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(output, expected);
 
@@ -554,7 +564,7 @@ mod tests {
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let output = {
                 let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
-                lhs.elementwise_operation(&rhs, |x, _| x).unwrap()
+                lhs.elementwise_operation(&rhs, |x, _| x)?
             };
             let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
             assert_eq!(output, expected);
@@ -563,7 +573,7 @@ mod tests {
             let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
             let output = {
                 let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-                lhs.elementwise_operation(&rhs, |_, y| y).unwrap()
+                lhs.elementwise_operation(&rhs, |_, y| y)?
             };
             let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
             assert_eq!(output, expected);
@@ -588,25 +598,23 @@ mod tests {
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation(&rhs, |_, _| ());
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_elementwise_operation_consume_self() {
+    fn test_elementwise_operation_consume_self() -> Result<()> {
         dispatch_binary! {{
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
-            let output = lhs
-                .elementwise_operation_consume_self(&rhs, |x, y| x + y)
-                .unwrap();
+            let output = lhs.elementwise_operation_consume_self(&rhs, |x, y| x + y)?;
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(output, expected);
 
             // Misuse but supposed to work.
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
-            let output = lhs
-                .elementwise_operation_consume_self(&rhs, |_, y| y)
-                .unwrap();
+            let output = lhs.elementwise_operation_consume_self(&rhs, |_, y| y)?;
             let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
             assert_eq!(output, expected);
 
@@ -634,25 +642,23 @@ mod tests {
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_self(&rhs, |_, _| ());
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_elementwise_operation_consume_rhs() {
+    fn test_elementwise_operation_consume_rhs() -> Result<()> {
         dispatch_binary! {{
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
-            let output = lhs
-                .elementwise_operation_consume_rhs(rhs, |x, y| x + y)
-                .unwrap();
+            let output = lhs.elementwise_operation_consume_rhs(rhs, |x, y| x + y)?;
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(output, expected);
 
             // Misuse but supposed to work.
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
-            let output = lhs
-                .elementwise_operation_consume_rhs(rhs, |x, _| x)
-                .unwrap();
+            let output = lhs.elementwise_operation_consume_rhs(rhs, |x, _| x)?;
             let expected = matrix![[&1, &2, &3], [&4, &5, &6]];
             assert_eq!(output, expected);
 
@@ -680,16 +686,16 @@ mod tests {
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_rhs(rhs, |_, _| ());
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_elementwise_operation_consume_both() {
+    fn test_elementwise_operation_consume_both() -> Result<()> {
         dispatch_binary! {{
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
-            let output = lhs
-                .elementwise_operation_consume_both(rhs, |x, y| x + y)
-                .unwrap();
+            let output = lhs.elementwise_operation_consume_both(rhs, |x, y| x + y)?;
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(output, expected);
 
@@ -717,24 +723,24 @@ mod tests {
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_both(rhs, |_, _| ());
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_elementwise_operation_assign() {
+    fn test_elementwise_operation_assign() -> Result<()> {
         dispatch_binary! {{
             let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
-            lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)
-                .unwrap();
+            lhs.elementwise_operation_assign(&rhs, |x, y| *x += y)?;
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(lhs, expected);
 
             // Misuse but supposed to work.
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
-            let mut lhs = lhs.map_ref(|x| x).unwrap();
+            let mut lhs = lhs.map_ref(|x| x)?;
             let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
-            lhs.elementwise_operation_assign(&rhs, |x, y| *x = y)
-                .unwrap();
+            lhs.elementwise_operation_assign(&rhs, |x, y| *x = y)?;
             let expected = matrix![[&2, &2, &2], [&2, &2, &2]];
             assert_eq!(lhs, expected);
 
@@ -766,15 +772,16 @@ mod tests {
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_assign(&rhs, |_, _| ());
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_elementwise_operation_assign_consume_rhs() {
+    fn test_elementwise_operation_assign_consume_rhs() -> Result<()> {
         dispatch_binary! {{
             let mut lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[2, 2, 2], [2, 2, 2]].with_order::<P>();
-            lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)
-                .unwrap();
+            lhs.elementwise_operation_assign_consume_rhs(rhs, |x, y| *x += y)?;
             let expected = matrix![[3, 4, 5], [6, 7, 8]];
             assert_eq!(lhs, expected);
 
@@ -806,5 +813,7 @@ mod tests {
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());
         }}
+
+        Ok(())
     }
 }

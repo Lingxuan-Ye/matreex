@@ -1,5 +1,5 @@
 use super::Matrix;
-use super::layout::Order;
+use super::order::Order;
 use crate::index::Index;
 
 impl<L, LO, R, RO> PartialEq<Matrix<R, RO>> for Matrix<L, LO>
@@ -35,10 +35,11 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::super::layout::{ColMajor, Layout, RowMajor};
+    use super::super::layout::Layout;
+    use super::super::order::{ColMajor, RowMajor};
     use super::*;
-    use crate::mock::{MockL, MockR};
     use crate::shape::Shape;
+    use crate::testkit::{MockL, MockR};
     use alloc::vec;
 
     #[test]

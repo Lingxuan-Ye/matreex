@@ -1,5 +1,6 @@
 use super::super::Matrix;
-use super::super::layout::{ColMajor, Layout, Order, OrderKind, RowMajor};
+use super::super::layout::Layout;
+use super::super::order::{ColMajor, Order, OrderKind, RowMajor};
 use crate::error::{Error, Result};
 use crate::shape::Shape;
 use alloc::vec::Vec;
@@ -24,8 +25,10 @@ where
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-    /// let result = lhs.multiply(rhs);
-    /// assert_eq!(result, Ok(matrix![[12, 12], [30, 30]]));
+    /// let output = lhs.multiply(rhs)?;
+    /// assert_eq!(output, matrix![[12, 12], [30, 30]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn multiply<R, RO, U>(self, rhs: Matrix<R, RO>) -> Result<Matrix<U, LO>>
     where
@@ -63,130 +66,171 @@ where
             rhs.data.set_len(0);
         }
 
-        let lhs_base = lhs.data.as_ptr();
-        let rhs_base = rhs.data.as_ptr();
+        let lhs = lhs.data.spare_capacity_mut();
+        let rhs = rhs.data.spare_capacity_mut();
+        let dst = data.spare_capacity_mut();
 
         match LO::KIND {
             OrderKind::RowMajor => unsafe {
-                let mut lhs_reset = lhs_base;
+                let mut lhs_reset = 0;
+                let mut dst_index = 0;
 
                 for _ in 1..nrows {
-                    let mut rhs_ptr = rhs_base;
+                    let mut rhs_index = 0;
 
                     for _ in 1..ncols {
-                        let mut lhs_ptr = lhs_reset;
-                        let mut element = (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                        let mut lhs_index = lhs_reset;
+                        let mut element =
+                            lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         }
-                        data.push(element);
-                        rhs_ptr = rhs_ptr.add(1);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
+                        rhs_index = rhs_index.unchecked_add(1);
                     }
 
                     {
-                        let mut lhs_ptr = lhs_reset;
-                        let mut element = lhs_ptr.read() * (*rhs_ptr).clone();
+                        let mut lhs_index = lhs_reset;
+                        let mut element = lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                            * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + lhs_ptr.read() * (*rhs_ptr).clone();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         }
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
                     }
 
-                    lhs_reset = lhs_reset.add(inner);
+                    lhs_reset = lhs_reset.unchecked_add(inner);
                 }
 
                 {
-                    let mut rhs_ptr = rhs_base;
+                    let mut rhs_index = 0;
 
                     for _ in 1..ncols {
-                        let mut lhs_ptr = lhs_reset;
-                        let mut element = (*lhs_ptr).clone() * rhs_ptr.read();
+                        let mut lhs_index = lhs_reset;
+                        let mut element =
+                            lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + (*lhs_ptr).clone() * rhs_ptr.read();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         }
-                        data.push(element);
-                        rhs_ptr = rhs_ptr.add(1);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
+                        rhs_index = rhs_index.unchecked_add(1);
                     }
 
                     {
-                        let mut lhs_ptr = lhs_reset;
-                        let mut element = lhs_ptr.read() * rhs_ptr.read();
+                        let mut lhs_index = lhs_reset;
+                        let mut element = lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                            * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + lhs_ptr.read() * rhs_ptr.read();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         }
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
                     }
                 }
             },
 
             OrderKind::ColMajor => unsafe {
-                let mut rhs_reset = rhs_base;
+                let mut rhs_reset = 0;
+                let mut dst_index = 0;
 
                 for _ in 1..ncols {
-                    let mut lhs_ptr = lhs_base;
+                    let mut lhs_index = 0;
 
                     for _ in 1..nrows {
-                        let mut rhs_ptr = rhs_reset;
-                        let mut element = (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                        let mut rhs_index = rhs_reset;
+                        let mut element =
+                            lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
 
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + (*lhs_ptr).clone() * (*rhs_ptr).clone();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         }
-                        data.push(element);
-                        lhs_ptr = lhs_ptr.add(1);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
+                        lhs_index = lhs_index.unchecked_add(1);
                     }
 
                     {
-                        let mut rhs_ptr = rhs_reset;
-                        let mut element = (*lhs_ptr).clone() * rhs_ptr.read();
+                        let mut rhs_index = rhs_reset;
+                        let mut element =
+                            lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + (*lhs_ptr).clone() * rhs_ptr.read();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_ref().clone()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         }
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
                     }
 
-                    rhs_reset = rhs_reset.add(inner);
+                    rhs_reset = rhs_reset.unchecked_add(inner);
                 }
 
                 {
-                    let mut lhs_ptr = lhs_base;
+                    let mut lhs_index = 0;
 
                     for _ in 1..nrows {
-                        let mut rhs_ptr = rhs_reset;
-                        let mut element = lhs_ptr.read() * (*rhs_ptr).clone();
+                        let mut rhs_index = rhs_reset;
+                        let mut element = lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                            * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + lhs_ptr.read() * (*rhs_ptr).clone();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_ref().clone();
                         }
-                        data.push(element);
-                        lhs_ptr = lhs_ptr.add(1);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
+                        lhs_index = lhs_index.unchecked_add(1);
                     }
 
                     {
-                        let mut rhs_ptr = rhs_reset;
-                        let mut element = lhs_ptr.read() * rhs_ptr.read();
+                        let mut rhs_index = rhs_reset;
+                        let mut element = lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                            * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         for _ in 1..inner {
-                            lhs_ptr = lhs_ptr.add(1);
-                            rhs_ptr = rhs_ptr.add(1);
-                            element = element + lhs_ptr.read() * rhs_ptr.read();
+                            lhs_index = lhs_index.unchecked_add(1);
+                            rhs_index = rhs_index.unchecked_add(1);
+                            element = element
+                                + lhs.get_unchecked_mut(lhs_index).assume_init_read()
+                                    * rhs.get_unchecked_mut(rhs_index).assume_init_read();
                         }
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
                     }
                 }
             },
+        }
+
+        unsafe {
+            data.set_len(size);
         }
 
         Ok(Matrix { layout, data })
@@ -220,8 +264,10 @@ where
     ///
     /// let lhs = matrix![[1, 2, 3], [4, 5, 6]];
     /// let rhs = matrix![[2, 2], [2, 2], [2, 2]];
-    /// let result = lhs.multiplication_like_operation(rhs, dot_product);
-    /// assert_eq!(result, Ok(matrix![[12, 12], [30, 30]]));
+    /// let output = lhs.multiplication_like_operation(rhs, dot_product)?;
+    /// assert_eq!(output, matrix![[12, 12], [30, 30]]);
+    /// #
+    /// # Ok::<(), matreex::Error>(())
     /// ```
     pub fn multiplication_like_operation<R, RO, F, U>(
         self,
@@ -253,29 +299,38 @@ where
 
         let lhs = self.with_order::<RowMajor>();
         let rhs = rhs.with_order::<ColMajor>();
+        let dst = data.spare_capacity_mut();
 
         match LO::KIND {
-            OrderKind::RowMajor => {
+            OrderKind::RowMajor => unsafe {
+                let mut dst_index = 0;
                 for row in 0..nrows {
-                    let lhs = unsafe { lhs.get_nth_major_axis_vector_unchecked(row) };
+                    let lhs = lhs.get_nth_major_axis_vector_unchecked(row);
                     for col in 0..ncols {
-                        let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
+                        let rhs = rhs.get_nth_major_axis_vector_unchecked(col);
                         let element = op(lhs, rhs);
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
                     }
                 }
-            }
+            },
 
-            OrderKind::ColMajor => {
+            OrderKind::ColMajor => unsafe {
+                let mut dst_index = 0;
                 for col in 0..ncols {
-                    let rhs = unsafe { rhs.get_nth_major_axis_vector_unchecked(col) };
+                    let rhs = rhs.get_nth_major_axis_vector_unchecked(col);
                     for row in 0..nrows {
-                        let lhs = unsafe { lhs.get_nth_major_axis_vector_unchecked(row) };
+                        let lhs = lhs.get_nth_major_axis_vector_unchecked(row);
                         let element = op(lhs, rhs);
-                        data.push(element);
+                        dst.get_unchecked_mut(dst_index).write(element);
+                        dst_index = dst_index.unchecked_add(1);
                     }
                 }
-            }
+            },
+        }
+
+        unsafe {
+            data.set_len(size);
         }
 
         Ok(Matrix { layout, data })
@@ -483,11 +538,11 @@ impl_primitive_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::{MockL, MockR, MockU, MockZeroSized, Scope};
+    use crate::testkit::{MockL, MockR, MockU, MockZeroSized, Scope};
     use crate::{dispatch_binary, dispatch_unary, matrix};
 
     #[test]
-    fn test_multiply() {
+    fn test_multiply() -> Result<()> {
         #[cfg(miri)]
         let lens = [0, 1, 2, 3, 5];
         #[cfg(not(miri))]
@@ -506,8 +561,8 @@ mod tests {
 
         dispatch_binary! {{
             for &(lhs_shape, rhs_shape) in &pairs {
-                let lhs = Matrix::<_, O>::from_value(lhs_shape, MockZeroSized::new()).unwrap();
-                let rhs = Matrix::<_, P>::from_value(rhs_shape, MockZeroSized::new()).unwrap();
+                let lhs = Matrix::<_, O>::from_value(lhs_shape, MockZeroSized::new())?;
+                let rhs = Matrix::<_, P>::from_value(rhs_shape, MockZeroSized::new())?;
                 Scope::with(|scope| {
                     let output = lhs.multiply(rhs).unwrap();
                     let expected_shape = Shape::new(lhs_shape.nrows, rhs_shape.ncols);
@@ -522,19 +577,19 @@ mod tests {
 
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1, 2], [3, 4], [5, 6]].with_order::<P>();
-            let output = lhs.multiply(rhs).unwrap();
+            let output = lhs.multiply(rhs)?;
             let expected = matrix![[22, 28], [49, 64]];
             assert_eq!(output, expected);
 
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1], [2], [3]].with_order::<P>();
-            let output = lhs.multiply(rhs).unwrap();
+            let output = lhs.multiply(rhs)?;
             let expected = matrix![[14], [32]];
             assert_eq!(output, expected);
 
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]].with_order::<P>();
-            let output = lhs.multiply(rhs).unwrap();
+            let output = lhs.multiply(rhs)?;
             let expected = matrix![[30, 36, 42], [66, 81, 96]];
             assert_eq!(output, expected);
 
@@ -558,10 +613,12 @@ mod tests {
             let error = lhs.multiply(rhs).unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
+
+        Ok(())
     }
 
     #[test]
-    fn test_multiplication_like_operation() {
+    fn test_multiplication_like_operation() -> Result<()> {
         fn dot_product(lhs: &[i32], rhs: &[i32]) -> i32 {
             lhs.iter()
                 .zip(rhs)
@@ -573,19 +630,19 @@ mod tests {
         dispatch_binary! {{
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1, 2], [3, 4], [5, 6]].with_order::<P>();
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
+            let output = lhs.multiplication_like_operation(rhs, dot_product)?;
             let expected = matrix![[22, 28], [49, 64]];
             assert_eq!(output, expected);
 
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1], [2], [3]].with_order::<P>();
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
+            let output = lhs.multiplication_like_operation(rhs, dot_product)?;
             let expected = matrix![[14], [32]];
             assert_eq!(output, expected);
 
             let lhs = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let rhs = matrix![[1, 2, 3], [4, 5, 6], [7, 8, 9]].with_order::<P>();
-            let output = lhs.multiplication_like_operation(rhs, dot_product).unwrap();
+            let output = lhs.multiplication_like_operation(rhs, dot_product)?;
             let expected = matrix![[30, 36, 42], [66, 81, 96]];
             assert_eq!(output, expected);
 
@@ -617,6 +674,8 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::CapacityOverflow);
         }}
+
+        Ok(())
     }
 
     #[test]
@@ -661,7 +720,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn test_primitive_scalar_mul() {
+    fn test_primitive_scalar_mul() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let scalar = 2;
@@ -690,34 +749,36 @@ mod tests {
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = matrix * scalar;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = matrix * &scalar;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &matrix * scalar;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &matrix * &scalar;
                 assert_eq!(output, expected);
             }
         }}
+
+        Ok(())
     }
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn test_primitive_scalar_mul_rev() {
+    fn test_primitive_scalar_mul_rev() -> Result<()> {
         dispatch_unary! {{
             let matrix = matrix![[1, 2, 3], [4, 5, 6]].with_order::<O>();
             let scalar = 2;
@@ -746,29 +807,31 @@ mod tests {
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = scalar * matrix;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &scalar * matrix;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = scalar * &matrix;
                 assert_eq!(output, expected);
             }
 
             {
-                let matrix = matrix.map_ref(|x| x).unwrap();
+                let matrix = matrix.map_ref(|x| x)?;
                 let output = &scalar * &matrix;
                 assert_eq!(output, expected);
             }
         }}
+
+        Ok(())
     }
 
     #[test]

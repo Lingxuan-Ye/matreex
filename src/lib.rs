@@ -78,15 +78,11 @@
 //!
 //! Nah, we don't have that yet.
 //!
-//! # FAQs
-//!
-//! ## Why named `matreex`?
-//!
-//! Hmm ... Who knows? Could be a name conflict.
+//! # FAQ
 //!
 //! ## Is it `no_std` compatible?
 //!
-//! This crate is `no_std` compatible if the `parallel` feature is not enabled.
+//! This crate is `no_std` compatible when the `parallel` feature is not enabled.
 
 #![no_std]
 
@@ -96,7 +92,7 @@ pub use self::error::{Error, Result};
 pub use self::index::{Index, WrappingIndex};
 pub use self::shape::Shape;
 
-use self::dense::layout::RowMajor;
+use self::dense::order::RowMajor;
 
 pub mod convert;
 pub mod dense;
@@ -110,7 +106,7 @@ pub mod parallel;
 mod macros;
 
 #[cfg(test)]
-mod mock;
+mod testkit;
 
 /// An alias for [`dense::Matrix<T, RowMajor>`].
 ///

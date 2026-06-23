@@ -1,4 +1,5 @@
-use super::{Layout, Order};
+use super::super::order::Order;
+use super::Layout;
 use core::fmt;
 use core::marker::PhantomData;
 use serde::de::{Deserialize, Deserializer, Error, MapAccess, SeqAccess, Visitor};

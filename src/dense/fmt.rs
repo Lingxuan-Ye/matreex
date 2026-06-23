@@ -1,5 +1,5 @@
 use super::Matrix;
-use super::layout::Order;
+use super::order::Order;
 use crate::index::Index;
 use alloc::boxed::Box;
 use alloc::collections::VecDeque;
