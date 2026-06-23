@@ -102,14 +102,17 @@ where
         Layout::new_unchecked(self.major, self.minor)
     }
 
-    /// Converts to a layout with the specified element type.
+    /// Converts to a layout with the specified element type and storage order.
     ///
     /// # Errors
     ///
     /// - [`Error::CapacityOverflow`] if the required capacity in bytes for the
     ///   corresponding matrix of the returned layout exceeds [`isize::MAX`].
-    pub(super) fn cast<U>(self) -> Result<Layout<U, O>> {
-        Layout::<U, O>::check_size(self.size())?;
+    pub(super) fn cast<U, P>(self) -> Result<Layout<U, P>>
+    where
+        P: Order,
+    {
+        Layout::<U, P>::check_size(self.size())?;
         Ok(Layout::new_unchecked(self.major, self.minor))
     }
 
