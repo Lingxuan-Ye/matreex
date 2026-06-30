@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// A two-dimensional matrix index type.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, Hash, PartialEq, Eq)]
 pub struct Index {
     /// The row index.
     pub row: usize,
@@ -193,7 +193,7 @@ where
 ///   distinguishable from their `usize` counterparts, which would
 ///   introduce ambiguity and require explicit type annotations.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, Hash, PartialEq, Eq)]
 pub struct WrappingIndex {
     /// The row index.
     pub row: isize,
