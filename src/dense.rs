@@ -10,13 +10,13 @@ use core::hash::{Hash, Hasher};
 use core::ptr;
 
 pub mod order;
+pub mod index;
 
 mod arithmetic;
 mod construct;
 mod convert;
 mod eq;
 mod fmt;
-mod index;
 mod iter;
 mod layout;
 mod resize;
