@@ -97,7 +97,7 @@ where
                 if col != 0 {
                     f.write_str(element::SEPARATOR)?;
                 }
-                let index = Index::new(row, col).to_flattened::<O>(stride);
+                let index = Index::new(row, col).to_linear::<O>(stride);
                 f.write_index(index, index_width)?;
                 f.write_str(element::INDEX_GAP)?;
                 match cache[index].next() {
@@ -120,7 +120,7 @@ where
                     if col != 0 {
                         f.write_str(element::SEPARATOR_PADDING)?;
                     }
-                    let index = Index::new(row, col).to_flattened::<O>(stride);
+                    let index = Index::new(row, col).to_linear::<O>(stride);
                     f.write_str(&index_padding)?;
                     f.write_str(element::INDEX_GAP)?;
                     match cache[index].next() {
@@ -182,7 +182,7 @@ where
                 if col != 0 {
                     f.write_str(element::SEPARATOR)?;
                 }
-                let index = Index::new(row, col).to_flattened::<O>(stride);
+                let index = Index::new(row, col).to_linear::<O>(stride);
                 match cache[index].next() {
                     None if element_width > 0 => f.write_str(&element_padding)?,
                     Some(line) => f.write_element_line(&line, element_width)?,
@@ -201,7 +201,7 @@ where
                     if col != 0 {
                         f.write_str(element::SEPARATOR_PADDING)?;
                     }
-                    let index = Index::new(row, col).to_flattened::<O>(stride);
+                    let index = Index::new(row, col).to_linear::<O>(stride);
                     match cache[index].next() {
                         None if element_width > 0 => f.write_str(&element_padding)?,
                         Some(line) => f.write_element_line(&line, element_width)?,

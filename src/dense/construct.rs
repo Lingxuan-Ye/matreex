@@ -156,7 +156,7 @@ where
         let stride = layout.stride();
         let mut data = Vec::with_capacity(size);
         for index in 0..size {
-            let index = Index::from_flattened::<O>(index, stride);
+            let index = Index::from_linear::<O>(index, stride);
             let element = f(index);
             data.push(element);
         }
@@ -262,13 +262,13 @@ mod tests {
             ];
             assert_eq!(matrix, expected);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let shape = Shape::new(2, 0);
             let matrix = Matrix::<Index, O>::from_fn(shape, |index| index)?;
             let expected = matrix![[Index::default(); 0]; 2];
             assert_eq!(matrix, expected);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let shape = Shape::new(0, 3);
             let matrix = Matrix::<Index, O>::from_fn(shape, |index| index)?;
             let expected = matrix![[Index::default(); 3]; 0];

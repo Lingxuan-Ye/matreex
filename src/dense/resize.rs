@@ -433,7 +433,7 @@ where
                 let tail_len = new_size;
                 MemRange::new(tail_start, tail_len).init_with(|offset| {
                     let index = tail_start_index + offset;
-                    let index = Index::from_flattened::<O>(index, new_stride);
+                    let index = Index::from_linear::<O>(index, new_stride);
                     f(index)
                 });
                 self.layout = new_layout;
@@ -518,7 +518,7 @@ where
                             let tail_start = base.add(tail_start_index);
                             MemRange::new(tail_start, tail_len).init_with(|offset| {
                                 let index = tail_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
+                                let index = Index::from_linear::<O>(index, new_stride);
                                 f(index)
                             });
                         } else {
@@ -540,7 +540,7 @@ where
                             let tail_start = new_base.add(tail_start_index);
                             MemRange::new(tail_start, tail_len).init_with(|offset| {
                                 let index = tail_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
+                                let index = Index::from_linear::<O>(index, new_stride);
                                 f(index)
                             });
                             self.data = new_data;
@@ -575,7 +575,7 @@ where
                         let tail_len = additional;
                         MemRange::new(tail_start, tail_len).init_with(|offset| {
                             let index = tail_start_index + offset;
-                            let index = Index::from_flattened::<O>(index, new_stride);
+                            let index = Index::from_linear::<O>(index, new_stride);
                             f(index)
                         });
                         self.layout = new_layout;
@@ -610,7 +610,7 @@ where
                                 let to_init_start = base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
                             }
@@ -618,7 +618,7 @@ where
                             let to_init_start = base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
+                                let index = Index::from_linear::<O>(index, new_stride);
                                 f(index)
                             });
                         } else {
@@ -634,7 +634,7 @@ where
                                 let to_init_start = new_base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
                             }
@@ -645,7 +645,7 @@ where
                             let to_init_start = new_base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
+                                let index = Index::from_linear::<O>(index, new_stride);
                                 f(index)
                             });
                             self.data = new_data;
@@ -666,7 +666,7 @@ where
                                 let to_init_start = base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
                             }
@@ -674,7 +674,7 @@ where
                             let to_init_start = base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
+                                let index = Index::from_linear::<O>(index, new_stride);
                                 f(index)
                             });
                         } else {
@@ -691,7 +691,7 @@ where
                                 let to_init_start = new_base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
                             }
@@ -702,7 +702,7 @@ where
                             let to_init_start = new_base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
+                                let index = Index::from_linear::<O>(index, new_stride);
                                 f(index)
                             });
                             self.data = new_data;
@@ -718,7 +718,7 @@ where
                             let tail_start = base.add(tail_start_index);
                             MemRange::new(tail_start, tail_len).init_with(|offset| {
                                 let index = tail_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
+                                let index = Index::from_linear::<O>(index, new_stride);
                                 f(index)
                             });
                             let mut src = base.add(old_size);
@@ -731,7 +731,7 @@ where
                                 let to_init_start = base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
                             }
@@ -739,7 +739,7 @@ where
                             let to_init_start = base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
+                                let index = Index::from_linear::<O>(index, new_stride);
                                 f(index)
                             });
                         } else {
@@ -749,7 +749,7 @@ where
                             let tail_start = new_base.add(tail_start_index);
                             MemRange::new(tail_start, tail_len).init_with(|offset| {
                                 let index = tail_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
+                                let index = Index::from_linear::<O>(index, new_stride);
                                 f(index)
                             });
                             let mut src = old_base.add(old_size);
@@ -762,7 +762,7 @@ where
                                 let to_init_start = new_base.add(to_init_start_index);
                                 MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                     let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
                             }
@@ -773,7 +773,7 @@ where
                             let to_init_start = new_base.add(to_init_start_index);
                             MemRange::new(to_init_start, to_init_len).init_with(|offset| {
                                 let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
+                                let index = Index::from_linear::<O>(index, new_stride);
                                 f(index)
                             });
                             self.data = new_data;

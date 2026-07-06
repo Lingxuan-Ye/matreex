@@ -156,14 +156,14 @@ where
     unsafe fn get_unchecked(self, matrix: *const Matrix<T, O>) -> *const Self::Output {
         let matrix = unsafe { &*matrix };
         let stride = matrix.stride();
-        let index = Index::new(self.row(), self.col()).to_flattened::<O>(stride);
+        let index = Index::new(self.row(), self.col()).to_linear::<O>(stride);
         unsafe { matrix.data.as_ptr().add(index) }
     }
 
     unsafe fn get_unchecked_mut(self, matrix: *mut Matrix<T, O>) -> *mut Self::Output {
         let matrix = unsafe { &mut *matrix };
         let stride = matrix.stride();
-        let index = Index::new(self.row(), self.col()).to_flattened::<O>(stride);
+        let index = Index::new(self.row(), self.col()).to_linear::<O>(stride);
         unsafe { matrix.data.as_mut_ptr().add(index) }
     }
 }
@@ -231,12 +231,12 @@ where
 }
 
 impl Index {
-    /// Creates a new [`Index`] from a flattened index.
+    /// Creates a new [`Index`] from a linear index.
     ///
     /// # Panics
     ///
     /// Panics if `stride.major() == 0`.
-    pub(super) fn from_flattened<O>(index: usize, stride: Stride) -> Self
+    pub(super) fn from_linear<O>(index: usize, stride: Stride) -> Self
     where
         O: Order,
     {
@@ -248,8 +248,12 @@ impl Index {
         }
     }
 
-    /// Converts this index to a flattened index.
-    pub(super) fn to_flattened<O>(self, stride: Stride) -> usize
+    /// Converts this index to a linear index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if overflow occurs.
+    pub(super) fn to_linear<O>(self, stride: Stride) -> usize
     where
         O: Order,
     {

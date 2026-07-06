@@ -17,8 +17,7 @@ where
             let lhs_stride = self.stride();
             let rhs_stride = other.stride();
             self.data.iter().enumerate().all(|(index, lhs)| {
-                let index =
-                    Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
+                let index = Index::from_linear::<LO>(index, lhs_stride).to_linear::<RO>(rhs_stride);
                 let rhs = unsafe { other.data.get_unchecked(index) };
                 lhs == rhs
             })

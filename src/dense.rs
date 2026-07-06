@@ -211,9 +211,9 @@ where
         for index in 0..size {
             unsafe {
                 let src = old_base.add(index);
-                let index = Index::from_flattened::<O>(index, old_stride)
+                let index = Index::from_linear::<O>(index, old_stride)
                     .swap()
-                    .to_flattened::<O>(new_stride);
+                    .to_linear::<O>(new_stride);
                 let dst = new_base.add(index);
                 ptr::copy_nonoverlapping(src, dst, 1);
             }
@@ -619,13 +619,13 @@ mod tests {
             let expected = matrix![[1, 2, 3], [4, 5, 6]];
             assert_eq!(matrix, expected);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let mut matrix = matrix![[0; 0]; 2];
             matrix.transpose();
             let expected = matrix![[0; 2]; 0];
             assert_eq!(matrix, expected);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let mut matrix = matrix![[0; 3]; 0];
             matrix.transpose();
             let expected = matrix![[0; 0]; 3];
