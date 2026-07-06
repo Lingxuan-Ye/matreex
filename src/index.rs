@@ -1,4 +1,4 @@
-//! Types and traits for matrix indexing.
+//! Matrix index representations.
 
 use crate::error::{Error, Result};
 use crate::shape::AsShape;
@@ -6,7 +6,7 @@ use crate::shape::AsShape;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A two-dimensional matrix index type.
+/// A two-dimensional index type.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy, Default, Hash, PartialEq, Eq)]
 pub struct Index {
@@ -100,29 +100,7 @@ impl From<[usize; 2]> for Index {
     }
 }
 
-/// A trait for two-dimensional matrix index types.
-///
-/// # Examples
-///
-/// ```
-/// use matreex::index::AsIndex;
-/// use matreex::matrix;
-///
-/// struct I(usize, usize);
-///
-/// impl AsIndex for I {
-///     fn row(&self) -> usize {
-///         self.0
-///     }
-///
-///     fn col(&self) -> usize {
-///         self.1
-///     }
-/// }
-///
-/// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
-/// assert_eq!(matrix[I(1, 1)], 5);
-/// ```
+/// A trait for two-dimensional index types.
 pub trait AsIndex {
     /// Returns the row index.
     fn row(&self) -> usize;
@@ -182,7 +160,7 @@ where
     }
 }
 
-/// A two-dimensional matrix index type with wrapping behavior.
+/// A two-dimensional index type with wrapping behavior.
 ///
 /// [`WrappingIndex`] is the only type that performs wrapping indexing.
 /// The design is based on the following considerations:

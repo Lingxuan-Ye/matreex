@@ -15,7 +15,7 @@ where
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if `self.ncols() != rhs.nrows()`.
-    /// - [`Error::SizeOverflow`] if the computed size of the output matrix exceeds [`usize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size of the output matrix exceeds [`usize::MAX`].
     /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
@@ -241,7 +241,7 @@ where
     /// # Errors
     ///
     /// - [`Error::ShapeNotConformable`] if `self.ncols() != rhs.nrows()`.
-    /// - [`Error::SizeOverflow`] if the computed size of the output matrix exceeds [`usize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size of the output matrix exceeds [`usize::MAX`].
     /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Notes
