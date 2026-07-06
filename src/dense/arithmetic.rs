@@ -155,8 +155,8 @@ where
                 .iter()
                 .enumerate()
                 .map(|(index, lhs)| {
-                    let index = Index::from_flattened::<LO>(index, lhs_stride)
-                        .to_flattened::<RO>(rhs_stride);
+                    let index =
+                        Index::from_linear::<LO>(index, lhs_stride).to_linear::<RO>(rhs_stride);
                     let rhs = unsafe { rhs.data.get_unchecked(index) };
                     op(lhs, rhs)
                 })
@@ -210,8 +210,8 @@ where
                 .into_iter()
                 .enumerate()
                 .map(|(index, lhs)| {
-                    let index = Index::from_flattened::<LO>(index, lhs_stride)
-                        .to_flattened::<RO>(rhs_stride);
+                    let index =
+                        Index::from_linear::<LO>(index, lhs_stride).to_linear::<RO>(rhs_stride);
                     let rhs = unsafe { rhs.data.get_unchecked(index) };
                     op(lhs, rhs)
                 })
@@ -270,8 +270,8 @@ where
                 .iter()
                 .enumerate()
                 .map(|(index, lhs)| {
-                    let index = Index::from_flattened::<LO>(index, lhs_stride)
-                        .to_flattened::<RO>(rhs_stride);
+                    let index =
+                        Index::from_linear::<LO>(index, lhs_stride).to_linear::<RO>(rhs_stride);
                     let rhs = unsafe { ptr::read(rhs_base.add(index)) };
                     op(lhs, rhs)
                 })
@@ -331,8 +331,8 @@ where
                 .into_iter()
                 .enumerate()
                 .map(|(index, lhs)| {
-                    let index = Index::from_flattened::<LO>(index, lhs_stride)
-                        .to_flattened::<RO>(rhs_stride);
+                    let index =
+                        Index::from_linear::<LO>(index, lhs_stride).to_linear::<RO>(rhs_stride);
                     let rhs = unsafe { ptr::read(rhs_base.add(index)) };
                     op(lhs, rhs)
                 })
@@ -381,8 +381,7 @@ where
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();
             self.data.iter_mut().enumerate().for_each(|(index, lhs)| {
-                let index =
-                    Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
+                let index = Index::from_linear::<LO>(index, lhs_stride).to_linear::<RO>(rhs_stride);
                 let rhs = unsafe { rhs.data.get_unchecked(index) };
                 op(lhs, rhs);
             });
@@ -435,8 +434,7 @@ where
             let lhs_stride = self.stride();
             let rhs_stride = rhs.stride();
             self.data.iter_mut().enumerate().for_each(|(index, lhs)| {
-                let index =
-                    Index::from_flattened::<LO>(index, lhs_stride).to_flattened::<RO>(rhs_stride);
+                let index = Index::from_linear::<LO>(index, lhs_stride).to_linear::<RO>(rhs_stride);
                 let rhs = unsafe { ptr::read(rhs_base.add(index)) };
                 op(lhs, rhs);
             });
@@ -588,12 +586,12 @@ mod tests {
             let error = lhs.elementwise_operation(&rhs, |x, y| x + y).unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let lhs = matrix![[0; 0]; 3].with_order::<O>();
             let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation(&rhs, |_, _| ());
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let lhs = matrix![[0; 2]; 0].with_order::<O>();
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation(&rhs, |_, _| ());
@@ -632,12 +630,12 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let lhs = matrix![[0; 0]; 3].with_order::<O>();
             let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_self(&rhs, |_, _| ());
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let lhs = matrix![[0; 2]; 0].with_order::<O>();
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_self(&rhs, |_, _| ());
@@ -676,12 +674,12 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let lhs = matrix![[0; 0]; 3].with_order::<O>();
             let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_rhs(rhs, |_, _| ());
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let lhs = matrix![[0; 2]; 0].with_order::<O>();
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_rhs(rhs, |_, _| ());
@@ -713,12 +711,12 @@ mod tests {
                 .unwrap_err();
             assert_eq!(error, Error::ShapeNotConformable);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let lhs = matrix![[0; 0]; 3].with_order::<O>();
             let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_both(rhs, |_, _| ());
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let lhs = matrix![[0; 2]; 0].with_order::<O>();
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_consume_both(rhs, |_, _| ());
@@ -762,12 +760,12 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
             assert_eq!(lhs, unchanged);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let mut lhs = matrix![[0; 0]; 3].with_order::<O>();
             let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation_assign(&rhs, |_, _| ());
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let mut lhs = matrix![[0; 2]; 0].with_order::<O>();
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_assign(&rhs, |_, _| ());
@@ -803,12 +801,12 @@ mod tests {
             assert_eq!(error, Error::ShapeNotConformable);
             assert_eq!(lhs, unchanged);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let mut lhs = matrix![[0; 0]; 3].with_order::<O>();
             let rhs = matrix![[0; 0]; 3].with_order::<P>();
             let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let mut lhs = matrix![[0; 2]; 0].with_order::<O>();
             let rhs = matrix![[0; 2]; 0].with_order::<P>();
             let _ = lhs.elementwise_operation_assign_consume_rhs(rhs, |_, _| ());

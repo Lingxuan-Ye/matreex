@@ -2,9 +2,8 @@ use super::Matrix;
 use super::order::Order;
 use crate::index::Index;
 use alloc::boxed::Box;
-use alloc::collections::VecDeque;
 use alloc::format;
-use alloc::string::ToString;
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::fmt;
 
@@ -54,15 +53,9 @@ where
         let mut element_hight = 0;
         let mut cache = Vec::with_capacity(size);
         for element in &self.data {
-            let lines = Lines::from_debug(element);
-            let width = lines.width();
-            if width > element_width {
-                element_width = width;
-            }
-            let height = lines.height();
-            if height > element_hight {
-                element_hight = height;
-            }
+            let lines = Lines::from(format!("{element:?}"));
+            element_width = usize::max(element_width, lines.width);
+            element_hight = usize::max(element_hight, lines.height);
             cache.push(lines);
         }
         let index_padding = whitespace::SPACE.repeat(index_width);
@@ -97,12 +90,12 @@ where
                 if col != 0 {
                     f.write_str(element::SEPARATOR)?;
                 }
-                let index = Index::new(row, col).to_flattened::<O>(stride);
+                let index = Index::new(row, col).to_linear::<O>(stride);
                 f.write_index(index, index_width)?;
                 f.write_str(element::INDEX_GAP)?;
-                match cache[index].next() {
+                match cache[index].next_line() {
                     None if element_width > 0 => f.write_str(&element_padding)?,
-                    Some(line) => f.write_element_line(&line, element_width)?,
+                    Some(line) => f.write_element_line(line, element_width)?,
                     _ => (),
                 }
             }
@@ -120,12 +113,12 @@ where
                     if col != 0 {
                         f.write_str(element::SEPARATOR_PADDING)?;
                     }
-                    let index = Index::new(row, col).to_flattened::<O>(stride);
+                    let index = Index::new(row, col).to_linear::<O>(stride);
                     f.write_str(&index_padding)?;
                     f.write_str(element::INDEX_GAP)?;
-                    match cache[index].next() {
+                    match cache[index].next_line() {
                         None if element_width > 0 => f.write_str(&element_padding)?,
-                        Some(line) => f.write_element_line(&line, element_width)?,
+                        Some(line) => f.write_element_line(line, element_width)?,
                         _ => (),
                     }
                 }
@@ -158,15 +151,9 @@ where
         let mut element_hight = 0;
         let mut cache = Vec::with_capacity(size);
         for element in &self.data {
-            let lines = Lines::from_display(element);
-            let width = lines.width();
-            if width > element_width {
-                element_width = width;
-            }
-            let height = lines.height();
-            if height > element_hight {
-                element_hight = height;
-            }
+            let lines = Lines::from(format!("{element}"));
+            element_width = usize::max(element_width, lines.width);
+            element_hight = usize::max(element_hight, lines.height);
             cache.push(lines);
         }
         let element_padding = whitespace::SPACE.repeat(element_width);
@@ -182,10 +169,10 @@ where
                 if col != 0 {
                     f.write_str(element::SEPARATOR)?;
                 }
-                let index = Index::new(row, col).to_flattened::<O>(stride);
-                match cache[index].next() {
+                let index = Index::new(row, col).to_linear::<O>(stride);
+                match cache[index].next_line() {
                     None if element_width > 0 => f.write_str(&element_padding)?,
-                    Some(line) => f.write_element_line(&line, element_width)?,
+                    Some(line) => f.write_element_line(line, element_width)?,
                     _ => (),
                 }
             }
@@ -201,10 +188,10 @@ where
                     if col != 0 {
                         f.write_str(element::SEPARATOR_PADDING)?;
                     }
-                    let index = Index::new(row, col).to_flattened::<O>(stride);
-                    match cache[index].next() {
+                    let index = Index::new(row, col).to_linear::<O>(stride);
+                    match cache[index].next_line() {
                         None if element_width > 0 => f.write_str(&element_padding)?,
-                        Some(line) => f.write_element_line(&line, element_width)?,
+                        Some(line) => f.write_element_line(line, element_width)?,
                         _ => (),
                     }
                 }
@@ -219,52 +206,51 @@ where
 }
 
 #[derive(Debug)]
-struct Lines(VecDeque<Box<str>>);
+struct Lines {
+    width: usize,
+    height: usize,
+    index: usize,
+    string: Box<str>,
+}
 
 impl Lines {
-    fn from_debug<T>(element: T) -> Self
-    where
-        T: fmt::Debug,
-    {
-        Self(format!("{element:?}").lines().map(Box::from).collect())
-    }
-
-    fn from_display<T>(element: T) -> Self
-    where
-        T: fmt::Display,
-    {
-        Self(format!("{element}").lines().map(Box::from).collect())
-    }
-
-    fn width(&self) -> usize {
-        self.0
-            .iter()
-            .map(|line| line.chars().count())
-            .max()
-            .unwrap_or(0)
-    }
-
-    fn height(&self) -> usize {
-        self.0.len()
+    fn next_line(&mut self) -> Option<&str> {
+        let len = self.string.len();
+        if self.index == len {
+            return None;
+        }
+        let slice = &self.string[self.index..];
+        match slice.find('\n') {
+            None => {
+                self.index = len;
+                Some(slice)
+            }
+            Some(index) => {
+                self.index += index + 1;
+                let slice = &slice[..index];
+                slice.strip_suffix('\r').or(Some(slice))
+            }
+        }
     }
 }
 
-impl Iterator for Lines {
-    type Item = Box<str>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.pop_front()
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = self.0.len();
-        (len, Some(len))
-    }
-}
-
-impl ExactSizeIterator for Lines {
-    fn len(&self) -> usize {
-        self.0.len()
+impl From<String> for Lines {
+    fn from(value: String) -> Self {
+        let mut width = 0;
+        let mut height = 0;
+        for line in value.lines() {
+            let line_width = line.chars().count();
+            width = usize::max(width, line_width);
+            height += 1;
+        }
+        let index = 0;
+        let string = value.into_boxed_str();
+        Self {
+            width,
+            height,
+            index,
+            string,
+        }
     }
 }
 

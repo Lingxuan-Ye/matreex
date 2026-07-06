@@ -350,7 +350,7 @@ where
     ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &T)> {
         let stride = self.stride();
         self.data.iter().enumerate().map(move |(index, element)| {
-            let index = Index::from_flattened::<O>(index, stride);
+            let index = Index::from_linear::<O>(index, stride);
             (index, element)
         })
     }
@@ -382,7 +382,7 @@ where
             .iter_mut()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Index::from_flattened::<O>(index, stride);
+                let index = Index::from_linear::<O>(index, stride);
                 (index, element)
             })
     }
@@ -415,7 +415,7 @@ where
             .into_iter()
             .enumerate()
             .map(move |(index, element)| {
-                let index = Index::from_flattened::<O>(index, stride);
+                let index = Index::from_linear::<O>(index, stride);
                 (index, element)
             })
     }
@@ -845,11 +845,11 @@ mod tests {
                     assert_eq!(element, &matrix[index]);
                 });
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let matrix = matrix![[0; 0]; 2].with_order::<O>();
             matrix.iter_elements_with_index().for_each(|_| ());
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let matrix = matrix![[0; 3]; 0].with_order::<O>();
             matrix.iter_elements_with_index().for_each(|_| ());
         }}
@@ -867,11 +867,11 @@ mod tests {
             let expected = matrix![[1, 3, 5], [5, 7, 9]];
             assert_eq!(matrix, expected);
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let mut matrix = matrix![[0; 0]; 2].with_order::<O>();
             matrix.iter_elements_mut_with_index().for_each(|_| ());
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let mut matrix = matrix![[0; 3]; 0].with_order::<O>();
             matrix.iter_elements_mut_with_index().for_each(|_| ());
         }}
@@ -888,11 +888,11 @@ mod tests {
                     assert_eq!(element, matrix[index]);
                 });
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let matrix = matrix![[0; 0]; 2].with_order::<O>();
             matrix.into_iter_elements_with_index().for_each(|_| ());
 
-            // Assert no panic from unflattening indices occurs.
+            // Assert no panic from unraveling indices occurs.
             let matrix = matrix![[0; 3]; 0].with_order::<O>();
             matrix.into_iter_elements_with_index().for_each(|_| ());
         }}

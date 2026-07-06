@@ -6,6 +6,7 @@ use crate::index::Index;
 use crate::shape::AsShape;
 use alloc::vec::Vec;
 use core::cmp::Ordering;
+use core::mem::MaybeUninit;
 use core::ptr;
 
 impl<T, O> Matrix<T, O>
@@ -17,8 +18,8 @@ where
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size of the shape exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -84,9 +85,10 @@ where
 
             (0, _) => unsafe {
                 self.data.reserve(new_size);
-                let tail_start = self.data.as_mut_ptr();
-                let tail_len = new_size;
-                MemRange::new(tail_start, tail_len).init(value);
+                self.data
+                    .spare_capacity_mut()
+                    .get_unchecked_mut(..new_size)
+                    .init(value);
                 self.layout = new_layout;
                 self.data.set_len(new_size);
                 return Ok(self);
@@ -95,9 +97,10 @@ where
             (_, 0) => unsafe {
                 self.layout = new_layout;
                 self.data.set_len(new_size);
-                let tail_start = self.data.as_mut_ptr();
-                let tail_len = old_size;
-                MemRange::new(tail_start, tail_len).drop_in_place();
+                self.data
+                    .spare_capacity_mut()
+                    .get_unchecked_mut(..old_size)
+                    .assume_init_drop();
                 return Ok(self);
             },
 
@@ -123,77 +126,118 @@ where
                 match major_len_cmp {
                     Ordering::Less => {
                         let base = self.data.as_mut_ptr();
-                        let mut src = base;
-                        let mut dst = base;
-                        let to_drop_start = src.add(to_copy_len);
-                        MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                        let mut src = 0;
+                        let mut dst = 0;
+                        let to_drop_start = to_copy_len;
+                        let to_drop = to_drop_start..(old_layout.minor() * minor_stride);
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(to_drop)
+                            .assume_init_drop();
                         for _ in 1..new_layout.major() {
-                            src = src.add(old_stride.major());
-                            dst = dst.add(new_stride.major());
-                            MemRange::new(src, to_copy_len).copy_to(dst);
-                            let to_drop_start = src.add(to_copy_len);
-                            MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                            src += old_stride.major();
+                            dst += new_stride.major();
+                            ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                            let to_drop_start = src + to_copy_len;
+                            let to_drop = to_drop_start..(to_drop_start + to_drop_len);
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_drop)
+                                .assume_init_drop();
                         }
-                        let tail_start_index = new_layout.major() * old_stride.major();
-                        let tail_start = base.add(tail_start_index);
-                        let tail_len = old_size - tail_start_index;
-                        MemRange::new(tail_start, tail_len).drop_in_place();
+                        let tail_start = new_layout.major() * old_stride.major();
+                        let tail = tail_start..old_size;
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(tail)
+                            .assume_init_drop();
                     }
 
                     Ordering::Equal => {
                         let base = self.data.as_mut_ptr();
-                        let mut src = base;
-                        let mut dst = base;
-                        let to_drop_start = src.add(to_copy_len);
-                        MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                        let mut src = 0;
+                        let mut dst = 0;
+                        let to_drop_start = to_copy_len;
+                        let to_drop = to_drop_start..(old_layout.minor() * minor_stride);
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(to_drop)
+                            .assume_init_drop();
                         for _ in 1..new_layout.major() {
-                            src = src.add(old_stride.major());
-                            dst = dst.add(new_stride.major());
-                            MemRange::new(src, to_copy_len).copy_to(dst);
-                            let to_drop_start = src.add(to_copy_len);
-                            MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                            src += old_stride.major();
+                            dst += new_stride.major();
+                            ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                            let to_drop_start = src + to_copy_len;
+                            let to_drop = to_drop_start..(to_drop_start + to_drop_len);
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_drop)
+                                .assume_init_drop();
                         }
                     }
 
                     Ordering::Greater => {
-                        let tail_start_index = old_layout.major() * new_stride.major();
-                        let tail_len = new_size - tail_start_index;
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
-                            let mut src = base;
-                            let mut dst = base;
-                            let to_drop_start = src.add(to_copy_len);
-                            MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                            let mut src = 0;
+                            let mut dst = 0;
+                            let to_drop_start = to_copy_len;
+                            let to_drop = to_drop_start..(old_layout.minor() * minor_stride);
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_drop)
+                                .assume_init_drop();
                             for _ in 1..old_layout.major() {
-                                src = src.add(old_stride.major());
-                                dst = dst.add(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to(dst);
-                                let to_drop_start = src.add(to_copy_len);
-                                MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                                src += old_stride.major();
+                                dst += new_stride.major();
+                                ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                                let to_drop_start = src + to_copy_len;
+                                let to_drop = to_drop_start..(to_drop_start + to_drop_len);
+                                self.data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_drop)
+                                    .assume_init_drop();
                             }
-                            let tail_start = base.add(tail_start_index);
-                            MemRange::new(tail_start, tail_len).init(value);
+                            let tail_start = old_layout.major() * new_stride.major();
+                            let tail = tail_start..new_size;
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(tail)
+                                .init(value);
                         } else {
-                            // Manually reallocate to avoid unnecessary memory copying.
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let old_base = self.data.as_mut_ptr();
                             let new_base = new_data.as_mut_ptr();
-                            let mut src = old_base;
-                            let mut dst = new_base;
-                            // `src` and `dst` will never overlap because
-                            // they belong to different allocated objects.
-                            MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            let to_drop_start = src.add(to_copy_len);
-                            MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                            let mut src = 0;
+                            let mut dst = 0;
+                            ptr::copy_nonoverlapping(old_base, new_base, to_copy_len);
+                            let to_drop_start = to_copy_len;
+                            let to_drop = to_drop_start..(old_layout.minor() * minor_stride);
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_drop)
+                                .assume_init_drop();
                             for _ in 1..old_layout.major() {
-                                src = src.add(old_stride.major());
-                                dst = dst.add(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                let to_drop_start = src.add(to_copy_len);
-                                MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                                src += old_stride.major();
+                                dst += new_stride.major();
+                                ptr::copy_nonoverlapping(
+                                    old_base.add(src),
+                                    new_base.add(dst),
+                                    to_copy_len,
+                                );
+                                let to_drop_start = src + to_copy_len;
+                                let to_drop = to_drop_start..(to_drop_start + to_drop_len);
+                                self.data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_drop)
+                                    .assume_init_drop();
                             }
-                            let tail_start = new_base.add(tail_start_index);
-                            MemRange::new(tail_start, tail_len).init(value);
+                            let tail_start = old_layout.major() * new_stride.major();
+                            let tail = tail_start..new_size;
+                            new_data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(tail)
+                                .init(value);
                             self.data = new_data;
                         }
                     }
@@ -208,11 +252,10 @@ where
                     Ordering::Less => {
                         self.layout = new_layout;
                         self.data.set_len(new_size);
-                        let base = self.data.as_mut_ptr();
-                        let tail_start_index = new_size;
-                        let tail_start = base.add(tail_start_index);
-                        let tail_len = old_size - tail_start_index;
-                        MemRange::new(tail_start, tail_len).drop_in_place();
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(0..(old_size - new_size))
+                            .assume_init_drop();
                     }
 
                     Ordering::Equal => (),
@@ -220,11 +263,10 @@ where
                     Ordering::Greater => {
                         let additional = new_size - old_size;
                         self.data.reserve(additional);
-                        let base = self.data.as_mut_ptr();
-                        let tail_start_index = old_size;
-                        let tail_start = base.add(tail_start_index);
-                        let tail_len = additional;
-                        MemRange::new(tail_start, tail_len).init(value);
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(0..additional)
+                            .init(value);
                         self.layout = new_layout;
                         self.data.set_len(new_size);
                     }
@@ -240,40 +282,61 @@ where
 
                 match major_len_cmp {
                     Ordering::Less => {
-                        let base = self.data.as_mut_ptr();
-                        let tail_start_index = new_layout.major() * old_stride.major();
-                        let tail_start = base.add(tail_start_index);
-                        let tail_len = old_size - tail_start_index;
-                        MemRange::new(tail_start, tail_len).drop_in_place();
+                        let tail_start = new_layout.major() * old_stride.major();
+                        let tail = tail_start..old_size;
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(tail)
+                            .assume_init_drop();
                         if new_size <= self.capacity() {
+                            let base = self.data.as_mut_ptr();
                             let mut src = tail_start;
-                            let mut dst = base.add(new_size);
+                            let mut dst = new_size;
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to(dst);
-                                let to_init_start = dst.add(to_copy_len);
-                                MemRange::new(to_init_start, to_init_len).init(value.clone());
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                self.data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init(value.clone());
                             }
-                            let to_init_start = dst.sub(to_init_len);
-                            MemRange::new(to_init_start, to_init_len).init(value);
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init(value);
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
+                            let old_base = self.data.as_mut_ptr();
                             let new_base = new_data.as_mut_ptr();
                             let mut src = tail_start;
-                            let mut dst = new_base.add(new_size);
+                            let mut dst = new_size;
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                let to_init_start = dst.add(to_copy_len);
-                                MemRange::new(to_init_start, to_init_len).init(value.clone());
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy_nonoverlapping(
+                                    old_base.add(src),
+                                    new_base.add(dst),
+                                    to_copy_len,
+                                );
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                new_data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init(value.clone());
                             }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
-                            MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            let to_init_start = dst.add(to_copy_len);
-                            MemRange::new(to_init_start, to_init_len).init(value);
+                            ptr::copy_nonoverlapping(old_base, new_base, to_copy_len);
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            new_data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init(value);
                             self.data = new_data;
                         }
                     }
@@ -281,77 +344,119 @@ where
                     Ordering::Equal => {
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
-                            let mut src = base.add(old_size);
-                            let mut dst = base.add(new_size);
+                            let mut src = old_size;
+                            let mut dst = new_size;
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to(dst);
-                                let to_init_start = dst.add(to_copy_len);
-                                MemRange::new(to_init_start, to_init_len).init(value.clone());
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                self.data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init(value.clone());
                             }
-                            let to_init_start = dst.sub(to_init_len);
-                            MemRange::new(to_init_start, to_init_len).init(value);
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init(value);
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let old_base = self.data.as_mut_ptr();
                             let new_base = new_data.as_mut_ptr();
-                            let mut src = old_base.add(old_size);
-                            let mut dst = new_base.add(new_size);
+                            let mut src = old_size;
+                            let mut dst = new_size;
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                let to_init_start = dst.add(to_copy_len);
-                                MemRange::new(to_init_start, to_init_len).init(value.clone());
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy_nonoverlapping(
+                                    old_base.add(src),
+                                    new_base.add(dst),
+                                    to_copy_len,
+                                );
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                new_data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init(value.clone());
                             }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
-                            MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            let to_init_start = dst.add(to_copy_len);
-                            MemRange::new(to_init_start, to_init_len).init(value);
+                            ptr::copy_nonoverlapping(old_base, new_base, to_copy_len);
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            new_data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init(value);
                             self.data = new_data;
                         }
                     }
 
                     Ordering::Greater => {
-                        let tail_start_index = old_layout.major() * new_stride.major();
-                        let tail_len = new_size - tail_start_index;
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
-                            let tail_start = base.add(tail_start_index);
-                            MemRange::new(tail_start, tail_len).init(value.clone());
-                            let mut src = base.add(old_size);
+                            let tail_start = old_layout.major() * new_stride.major();
+                            let tail = tail_start..new_size;
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(tail)
+                                .init(value.clone());
+                            let mut src = old_size;
                             let mut dst = tail_start;
                             for _ in 1..old_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to(dst);
-                                let to_init_start = dst.add(to_copy_len);
-                                MemRange::new(to_init_start, to_init_len).init(value.clone());
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                self.data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init(value.clone());
                             }
-                            let to_init_start = dst.sub(to_init_len);
-                            MemRange::new(to_init_start, to_init_len).init(value);
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init(value);
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let old_base = self.data.as_mut_ptr();
                             let new_base = new_data.as_mut_ptr();
-                            let tail_start = new_base.add(tail_start_index);
-                            MemRange::new(tail_start, tail_len).init(value.clone());
-                            let mut src = old_base.add(old_size);
+                            let tail_start = old_layout.major() * new_stride.major();
+                            let tail = tail_start..new_size;
+                            new_data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(tail)
+                                .init(value.clone());
+                            let mut src = old_size;
                             let mut dst = tail_start;
                             for _ in 1..old_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                let to_init_start = dst.add(to_copy_len);
-                                MemRange::new(to_init_start, to_init_len).init(value.clone());
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy_nonoverlapping(
+                                    old_base.add(src),
+                                    new_base.add(dst),
+                                    to_copy_len,
+                                );
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                new_data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init(value.clone());
                             }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
-                            MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            let to_init_start = dst.add(to_copy_len);
-                            MemRange::new(to_init_start, to_init_len).init(value);
+                            ptr::copy_nonoverlapping(old_base, new_base, to_copy_len);
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            new_data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init(value);
                             self.data = new_data;
                         }
                     }
@@ -370,8 +475,8 @@ where
     ///
     /// # Errors
     ///
-    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
-    /// - [`Error::CapacityOverflow`] if required capacity in bytes exceeds [`isize::MAX`].
+    /// - [`Error::SizeOverflow`] if the size of the shape exceeds [`usize::MAX`].
+    /// - [`Error::CapacityOverflow`] if the required capacity in bytes exceeds [`isize::MAX`].
     ///
     /// # Examples
     ///
@@ -428,14 +533,13 @@ where
 
             (0, _) => unsafe {
                 self.data.reserve(new_size);
-                let tail_start_index = 0;
-                let tail_start = self.data.as_mut_ptr();
-                let tail_len = new_size;
-                MemRange::new(tail_start, tail_len).init_with(|offset| {
-                    let index = tail_start_index + offset;
-                    let index = Index::from_flattened::<O>(index, new_stride);
-                    f(index)
-                });
+                self.data
+                    .spare_capacity_mut()
+                    .get_unchecked_mut(..new_size)
+                    .init_with(|index| {
+                        let index = Index::from_linear::<O>(index, new_stride);
+                        f(index)
+                    });
                 self.layout = new_layout;
                 self.data.set_len(new_size);
                 return Ok(self);
@@ -444,9 +548,10 @@ where
             (_, 0) => unsafe {
                 self.layout = new_layout;
                 self.data.set_len(new_size);
-                let tail_start = self.data.as_mut_ptr();
-                let tail_len = old_size;
-                MemRange::new(tail_start, tail_len).drop_in_place();
+                self.data
+                    .spare_capacity_mut()
+                    .get_unchecked_mut(..old_size)
+                    .assume_init_drop();
                 return Ok(self);
             },
 
@@ -467,82 +572,126 @@ where
                 match major_len_cmp {
                     Ordering::Less => {
                         let base = self.data.as_mut_ptr();
-                        let mut src = base;
-                        let mut dst = base;
-                        let to_drop_start = src.add(to_copy_len);
-                        MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                        let mut src = 0;
+                        let mut dst = 0;
+                        let to_drop_start = to_copy_len;
+                        let to_drop = to_drop_start..(old_layout.minor() * minor_stride);
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(to_drop)
+                            .assume_init_drop();
                         for _ in 1..new_layout.major() {
-                            src = src.add(old_stride.major());
-                            dst = dst.add(new_stride.major());
-                            MemRange::new(src, to_copy_len).copy_to(dst);
-                            let to_drop_start = src.add(to_copy_len);
-                            MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                            src += old_stride.major();
+                            dst += new_stride.major();
+                            ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                            let to_drop_start = src + to_copy_len;
+                            let to_drop = to_drop_start..(to_drop_start + to_drop_len);
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_drop)
+                                .assume_init_drop();
                         }
-                        let tail_start_index = new_layout.major() * old_stride.major();
-                        let tail_start = base.add(tail_start_index);
-                        let tail_len = old_size - tail_start_index;
-                        MemRange::new(tail_start, tail_len).drop_in_place();
+                        let tail_start = new_layout.major() * old_stride.major();
+                        let tail = tail_start..old_size;
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(tail)
+                            .assume_init_drop();
                     }
 
                     Ordering::Equal => {
                         let base = self.data.as_mut_ptr();
-                        let mut src = base;
-                        let mut dst = base;
-                        let to_drop_start = src.add(to_copy_len);
-                        MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                        let mut src = 0;
+                        let mut dst = 0;
+                        let to_drop_start = to_copy_len;
+                        let to_drop = to_drop_start..(old_layout.minor() * minor_stride);
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(to_drop)
+                            .assume_init_drop();
                         for _ in 1..new_layout.major() {
-                            src = src.add(old_stride.major());
-                            dst = dst.add(new_stride.major());
-                            MemRange::new(src, to_copy_len).copy_to(dst);
-                            let to_drop_start = src.add(to_copy_len);
-                            MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                            src += old_stride.major();
+                            dst += new_stride.major();
+                            ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                            let to_drop_start = src + to_copy_len;
+                            let to_drop = to_drop_start..(to_drop_start + to_drop_len);
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_drop)
+                                .assume_init_drop();
                         }
                     }
 
                     Ordering::Greater => {
-                        let tail_start_index = old_layout.major() * new_stride.major();
-                        let tail_len = new_size - tail_start_index;
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
-                            let mut src = base;
-                            let mut dst = base;
-                            let to_drop_start = src.add(to_copy_len);
-                            MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                            let mut src = 0;
+                            let mut dst = 0;
+                            let to_drop_start = to_copy_len;
+                            let to_drop = to_drop_start..(old_layout.minor() * minor_stride);
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_drop)
+                                .assume_init_drop();
                             for _ in 1..old_layout.major() {
-                                src = src.add(old_stride.major());
-                                dst = dst.add(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to(dst);
-                                let to_drop_start = src.add(to_copy_len);
-                                MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                                src += old_stride.major();
+                                dst += new_stride.major();
+                                ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                                let to_drop_start = src + to_copy_len;
+                                let to_drop = to_drop_start..(to_drop_start + to_drop_len);
+                                self.data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_drop)
+                                    .assume_init_drop();
                             }
-                            let tail_start = base.add(tail_start_index);
-                            MemRange::new(tail_start, tail_len).init_with(|offset| {
-                                let index = tail_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
-                                f(index)
-                            });
+                            let tail_start = old_layout.major() * new_stride.major();
+                            let tail = tail_start..new_size;
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(tail)
+                                .init_with(|offset| {
+                                    let index = tail_start + offset;
+                                    let index = Index::from_linear::<O>(index, new_stride);
+                                    f(index)
+                                });
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let old_base = self.data.as_mut_ptr();
                             let new_base = new_data.as_mut_ptr();
-                            let mut src = old_base;
-                            let mut dst = new_base;
-                            MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            let to_drop_start = src.add(to_copy_len);
-                            MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                            let mut src = 0;
+                            let mut dst = 0;
+                            ptr::copy_nonoverlapping(old_base, new_base, to_copy_len);
+                            let to_drop_start = to_copy_len;
+                            let to_drop = to_drop_start..(old_layout.minor() * minor_stride);
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_drop)
+                                .assume_init_drop();
                             for _ in 1..old_layout.major() {
-                                src = src.add(old_stride.major());
-                                dst = dst.add(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                let to_drop_start = src.add(to_copy_len);
-                                MemRange::new(to_drop_start, to_drop_len).drop_in_place();
+                                src += old_stride.major();
+                                dst += new_stride.major();
+                                ptr::copy_nonoverlapping(
+                                    old_base.add(src),
+                                    new_base.add(dst),
+                                    to_copy_len,
+                                );
+                                let to_drop_start = src + to_copy_len;
+                                let to_drop = to_drop_start..(to_drop_start + to_drop_len);
+                                self.data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_drop)
+                                    .assume_init_drop();
                             }
-                            let tail_start = new_base.add(tail_start_index);
-                            MemRange::new(tail_start, tail_len).init_with(|offset| {
-                                let index = tail_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
-                                f(index)
-                            });
+                            let tail_start = old_layout.major() * new_stride.major();
+                            let tail = tail_start..new_size;
+                            new_data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(tail)
+                                .init_with(|offset| {
+                                    let index = tail_start + offset;
+                                    let index = Index::from_linear::<O>(index, new_stride);
+                                    f(index)
+                                });
                             self.data = new_data;
                         }
                     }
@@ -557,11 +706,10 @@ where
                     Ordering::Less => {
                         self.layout = new_layout;
                         self.data.set_len(new_size);
-                        let base = self.data.as_mut_ptr();
-                        let tail_start_index = new_size;
-                        let tail_start = base.add(tail_start_index);
-                        let tail_len = old_size - tail_start_index;
-                        MemRange::new(tail_start, tail_len).drop_in_place();
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(0..(old_size - new_size))
+                            .assume_init_drop();
                     }
 
                     Ordering::Equal => (),
@@ -569,15 +717,14 @@ where
                     Ordering::Greater => {
                         let additional = new_size - old_size;
                         self.data.reserve(additional);
-                        let base = self.data.as_mut_ptr();
-                        let tail_start_index = old_size;
-                        let tail_start = base.add(tail_start_index);
-                        let tail_len = additional;
-                        MemRange::new(tail_start, tail_len).init_with(|offset| {
-                            let index = tail_start_index + offset;
-                            let index = Index::from_flattened::<O>(index, new_stride);
-                            f(index)
-                        });
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(0..additional)
+                            .init_with(|offset| {
+                                let index = old_size + offset;
+                                let index = Index::from_linear::<O>(index, new_stride);
+                                f(index)
+                            });
                         self.layout = new_layout;
                         self.data.set_len(new_size);
                     }
@@ -593,189 +740,237 @@ where
 
                 match major_len_cmp {
                     Ordering::Less => {
-                        let base = self.data.as_mut_ptr();
-                        let tail_start_index = new_layout.major() * old_stride.major();
-                        let tail_start = base.add(tail_start_index);
-                        let tail_len = old_size - tail_start_index;
-                        MemRange::new(tail_start, tail_len).drop_in_place();
-                        let mut to_init_start_index = new_size + to_copy_len;
+                        let tail_start = new_layout.major() * old_stride.major();
+                        let tail = tail_start..old_size;
+                        self.data
+                            .spare_capacity_mut()
+                            .get_unchecked_mut(tail)
+                            .assume_init_drop();
                         if new_size <= self.capacity() {
+                            let base = self.data.as_mut_ptr();
                             let mut src = tail_start;
-                            let mut dst = base.add(new_size);
+                            let mut dst = new_size;
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to(dst);
-                                to_init_start_index -= new_stride.major();
-                                let to_init_start = base.add(to_init_start_index);
-                                MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                    let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                self.data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init_with(|offset| {
+                                        let index = to_init_start + offset;
+                                        let index = Index::from_linear::<O>(index, new_stride);
+                                        f(index)
+                                    });
+                            }
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init_with(|offset| {
+                                    let index = to_init_start + offset;
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
-                            }
-                            to_init_start_index -= new_stride.major();
-                            let to_init_start = base.add(to_init_start_index);
-                            MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
-                                f(index)
-                            });
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
+                            let old_base = self.data.as_mut_ptr();
                             let new_base = new_data.as_mut_ptr();
                             let mut src = tail_start;
-                            let mut dst = new_base.add(new_size);
+                            let mut dst = new_size;
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                to_init_start_index -= new_stride.major();
-                                let to_init_start = new_base.add(to_init_start_index);
-                                MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                    let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy_nonoverlapping(
+                                    old_base.add(src),
+                                    new_base.add(dst),
+                                    to_copy_len,
+                                );
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                new_data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init_with(|offset| {
+                                        let index = to_init_start + offset;
+                                        let index = Index::from_linear::<O>(index, new_stride);
+                                        f(index)
+                                    });
+                            }
+                            ptr::copy_nonoverlapping(old_base, new_base, to_copy_len);
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            new_data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init_with(|offset| {
+                                    let index = to_init_start + offset;
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
-                            }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
-                            MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            to_init_start_index -= new_stride.major();
-                            let to_init_start = new_base.add(to_init_start_index);
-                            MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
-                                f(index)
-                            });
                             self.data = new_data;
                         }
                     }
 
                     Ordering::Equal => {
-                        let mut to_init_start_index = new_size + to_copy_len;
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
-                            let mut src = base.add(old_size);
-                            let mut dst = base.add(new_size);
+                            let mut src = old_size;
+                            let mut dst = new_size;
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to(dst);
-                                to_init_start_index -= new_stride.major();
-                                let to_init_start = base.add(to_init_start_index);
-                                MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                    let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                self.data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init_with(|offset| {
+                                        let index = to_init_start + offset;
+                                        let index = Index::from_linear::<O>(index, new_stride);
+                                        f(index)
+                                    });
+                            }
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init_with(|offset| {
+                                    let index = to_init_start + offset;
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
-                            }
-                            to_init_start_index -= new_stride.major();
-                            let to_init_start = base.add(to_init_start_index);
-                            MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
-                                f(index)
-                            });
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let old_base = self.data.as_mut_ptr();
                             let new_base = new_data.as_mut_ptr();
-                            let mut src = old_base.add(old_size);
-                            let mut dst = new_base.add(new_size);
+                            let mut src = old_size;
+                            let mut dst = new_size;
                             for _ in 1..new_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                to_init_start_index -= new_stride.major();
-                                let to_init_start = new_base.add(to_init_start_index);
-                                MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                    let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy_nonoverlapping(
+                                    old_base.add(src),
+                                    new_base.add(dst),
+                                    to_copy_len,
+                                );
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                new_data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init_with(|offset| {
+                                        let index = to_init_start + offset;
+                                        let index = Index::from_linear::<O>(index, new_stride);
+                                        f(index)
+                                    });
+                            }
+                            ptr::copy_nonoverlapping(old_base, new_base, to_copy_len);
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            new_data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init_with(|offset| {
+                                    let index = to_init_start + offset;
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
-                            }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
-                            MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            to_init_start_index -= new_stride.major();
-                            let to_init_start = new_base.add(to_init_start_index);
-                            MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
-                                f(index)
-                            });
                             self.data = new_data;
                         }
                     }
 
                     Ordering::Greater => {
-                        let tail_start_index = old_layout.major() * new_stride.major();
-                        let tail_len = new_size - tail_start_index;
-                        let mut to_init_start_index = tail_start_index + to_copy_len;
                         if new_size <= self.capacity() {
                             let base = self.data.as_mut_ptr();
-                            let tail_start = base.add(tail_start_index);
-                            MemRange::new(tail_start, tail_len).init_with(|offset| {
-                                let index = tail_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
-                                f(index)
-                            });
-                            let mut src = base.add(old_size);
-                            let mut dst = tail_start;
-                            for _ in 1..old_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to(dst);
-                                to_init_start_index -= new_stride.major();
-                                let to_init_start = base.add(to_init_start_index);
-                                MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                    let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                            let tail_start = old_layout.major() * new_stride.major();
+                            let tail = tail_start..new_size;
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(tail)
+                                .init_with(|offset| {
+                                    let index = tail_start + offset;
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
+                            let mut src = old_size;
+                            let mut dst = tail_start;
+                            for _ in 1..old_layout.major() {
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy(base.add(src), base.add(dst), to_copy_len);
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                self.data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init_with(|offset| {
+                                        let index = to_init_start + offset;
+                                        let index = Index::from_linear::<O>(index, new_stride);
+                                        f(index)
+                                    });
                             }
-                            to_init_start_index -= new_stride.major();
-                            let to_init_start = base.add(to_init_start_index);
-                            MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
-                                f(index)
-                            });
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            self.data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init_with(|offset| {
+                                    let index = to_init_start + offset;
+                                    let index = Index::from_linear::<O>(index, new_stride);
+                                    f(index)
+                                });
                         } else {
                             let mut new_data = Vec::<T>::with_capacity(new_size);
                             let old_base = self.data.as_mut_ptr();
                             let new_base = new_data.as_mut_ptr();
-                            let tail_start = new_base.add(tail_start_index);
-                            MemRange::new(tail_start, tail_len).init_with(|offset| {
-                                let index = tail_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
-                                f(index)
-                            });
-                            let mut src = old_base.add(old_size);
-                            let mut dst = tail_start;
-                            for _ in 1..old_layout.major() {
-                                src = src.sub(old_stride.major());
-                                dst = dst.sub(new_stride.major());
-                                MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                                to_init_start_index -= new_stride.major();
-                                let to_init_start = new_base.add(to_init_start_index);
-                                MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                    let index = to_init_start_index + offset;
-                                    let index = Index::from_flattened::<O>(index, new_stride);
+                            let tail_start = old_layout.major() * new_stride.major();
+                            let tail = tail_start..new_size;
+                            new_data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(tail)
+                                .init_with(|offset| {
+                                    let index = tail_start + offset;
+                                    let index = Index::from_linear::<O>(index, new_stride);
                                     f(index)
                                 });
+                            let mut src = old_size;
+                            let mut dst = tail_start;
+                            for _ in 1..old_layout.major() {
+                                src -= old_stride.major();
+                                dst -= new_stride.major();
+                                ptr::copy_nonoverlapping(
+                                    old_base.add(src),
+                                    new_base.add(dst),
+                                    to_copy_len,
+                                );
+                                let to_init_start = dst + to_copy_len;
+                                let to_init = to_init_start..(to_init_start + to_init_len);
+                                new_data
+                                    .spare_capacity_mut()
+                                    .get_unchecked_mut(to_init)
+                                    .init_with(|offset| {
+                                        let index = to_init_start + offset;
+                                        let index = Index::from_linear::<O>(index, new_stride);
+                                        f(index)
+                                    });
                             }
-                            src = src.sub(old_stride.major());
-                            dst = dst.sub(new_stride.major());
-                            MemRange::new(src, to_copy_len).copy_to_nonoverlapping(dst);
-                            to_init_start_index -= new_stride.major();
-                            let to_init_start = new_base.add(to_init_start_index);
-                            MemRange::new(to_init_start, to_init_len).init_with(|offset| {
-                                let index = to_init_start_index + offset;
-                                let index = Index::from_flattened::<O>(index, new_stride);
-                                f(index)
-                            });
+                            ptr::copy_nonoverlapping(old_base, new_base, to_copy_len);
+                            let to_init_start = dst - to_init_len;
+                            let to_init = to_init_start..dst;
+                            new_data
+                                .spare_capacity_mut()
+                                .get_unchecked_mut(to_init)
+                                .init_with(|offset| {
+                                    let index = to_init_start + offset;
+                                    let index = Index::from_linear::<O>(index, new_stride);
+                                    f(index)
+                                });
                             self.data = new_data;
                         }
                     }
@@ -790,156 +985,64 @@ where
     }
 }
 
-/// A struct representing a memory range.
-///
-/// The memory range may be partially or completely uninitialized. Reading
-/// uninitialized parts of the memory range is *[undefined behavior]*.
-///
-/// # Invariants
-///
-/// - The memory range is contained within a single allocated object.
-/// - The memory range is [valid] for both reads and writes.
-/// - The memory range is properly aligned, even if `T` is zero-sized.
-///
-/// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-/// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
-#[derive(Debug)]
-struct MemRange<T>(*mut [T]);
+trait MaybeUninitSliceExt {
+    type Item;
 
-impl<T> MemRange<T> {
-    /// Creates a [`MemRange`].
-    ///
-    /// # Safety
-    ///
-    /// Behavior is undefined if any of the following conditions are violated:
-    ///
-    /// - `start` must be non-null.
-    /// - `start` must be properly aligned.
-    /// - The memory range beginning at `start` with a size of `len * size_of::<T>()`
-    ///   bytes must be contained within a single allocated object.
-    /// - The memory range beginning at `start` with a size of `len * size_of::<T>()`
-    ///   bytes must be [valid] for both reads and writes.
-    ///
-    /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
-    unsafe fn new(start: *mut T, len: usize) -> Self {
-        Self(ptr::slice_from_raw_parts_mut(start, len))
-    }
-
-    /// Returns a pointer to the start of the memory range.
-    ///
-    /// Note that if the length of the memory range is `0`, the returned pointer is
-    /// still inside the provenance of the allocated object, but may have `0` bytes
-    /// it can read/write.
-    fn start(&self) -> *mut T {
-        self.0.cast()
-    }
-
-    /// Returns the length of the memory range.
-    fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    /// Initializes the memory range with the given value.
-    ///
-    /// # Safety
-    ///
-    /// Behavior is undefined if the length of the memory range is `0`.
-    ///
-    /// If any part of the memory range has already been initialized, the original
-    /// values will leak. However, this is considered safe.
-    unsafe fn init(&mut self, value: T)
+    unsafe fn init(&mut self, value: Self::Item)
     where
-        T: Clone,
+        Self::Item: Clone;
+
+    fn init_with<F>(&mut self, f: F)
+    where
+        F: FnMut(usize) -> Self::Item;
+}
+
+impl<T> MaybeUninitSliceExt for [MaybeUninit<T>] {
+    type Item = T;
+
+    /// Initializes the slice with the given value.
+    ///
+    /// If any part of the slice has already been initialized, the original values
+    /// will leak. However, this is considered safe.
+    ///
+    /// # Safety
+    ///
+    /// This caller must ensure that `self.len() > 0`.
+    unsafe fn init(&mut self, value: Self::Item)
+    where
+        Self::Item: Clone,
     {
         debug_assert_ne!(self.len(), 0);
 
-        let mut to_init = self.start();
+        let last = self.len() - 1;
 
-        for _ in 1..self.len() {
+        for index in 0..last {
+            let value = value.clone();
             unsafe {
-                let value = value.clone();
-                to_init.write(value);
-                to_init = to_init.add(1);
+                self.get_unchecked_mut(index).write(value);
             }
         }
 
         unsafe {
-            to_init.write(value);
+            self.get_unchecked_mut(last).write(value);
         }
     }
 
-    /// Initializes the memory range with values generated based on their
-    /// corresponding offsets.
+    /// Initializes the slice with values generated based on their corresponding
+    /// offsets.
     ///
-    /// If any part of the memory range has already been initialized, the original
-    /// values will leak. However, this is considered safe.
+    /// If any part of the slice has already been initialized, the original values
+    /// will leak. However, this is considered safe.
     fn init_with<F>(&mut self, mut f: F)
     where
-        F: FnMut(usize) -> T,
+        F: FnMut(usize) -> Self::Item,
     {
-        let mut to_init = self.start();
-
-        for offset in 0..self.len() {
+        for index in 0..self.len() {
+            let value = f(index);
             unsafe {
-                let value = f(offset);
-                to_init.write(value);
-                to_init = to_init.add(1);
+                self.get_unchecked_mut(index).write(value);
             }
         }
-    }
-
-    /// Copies `self.len() * size_of::<T>()` bytes from `self` to `dst`. The source
-    /// and destination may overlap.
-    ///
-    /// # Safety
-    ///
-    /// Behavior is undefined if any of the following conditions are violated:
-    ///
-    /// - `dst` must be [valid] for writes of `self.len() * size_of::<T>()` bytes,
-    ///   and must remain valid even when `self` is read. (This means if the memory
-    ///   ranges overlap, the `dst` pointer must not be invalidated by `src` reads.)
-    /// - `dst` must be properly aligned.
-    ///
-    /// If `T` is not [`Copy`], the memory range of source that does not overlap
-    /// with destination is considered uninitialized.
-    ///
-    /// [valid]: https://doc.rust-lang.org/core/ptr/index.html#safety
-    unsafe fn copy_to(self, dst: *mut T) {
-        let src = self.start();
-        let count = self.len();
-        unsafe { src.copy_to(dst, count) }
-    }
-
-    /// Copies `self.len() * size_of::<T>()` bytes from `self` to `dst`. The source
-    /// and destination may *not* overlap.
-    ///
-    /// # Safety
-    ///
-    /// Behavior is undefined if any of the following conditions are violated:
-    ///
-    /// - `dst` must be [valid] for writes of `self.len() * size_of::<T>()` bytes.
-    /// - `dst` must be properly aligned.
-    /// - `self` must not overlap with the memory range beginning at `dst` with a
-    ///   size of `self.len() * size_of::<T>()` bytes.
-    ///
-    /// If `T` is not [`Copy`], the memory range of source is consider uninitialized.
-    unsafe fn copy_to_nonoverlapping(self, dst: *mut T) {
-        let src = self.start();
-        let count = self.len();
-        unsafe { src.copy_to_nonoverlapping(dst, count) }
-    }
-
-    /// Drops all values in the memory range in-place.
-    ///
-    /// # Safety
-    ///
-    /// Behavior is undefined if the memory range is not fully initialized.
-    ///
-    /// See [`ptr::drop_in_place`] for more exhaustive safety concerns.
-    ///
-    /// [`ptr::drop_in_place`]: core::ptr::drop_in_place
-    unsafe fn drop_in_place(self) {
-        unsafe { self.0.drop_in_place() }
     }
 }
 

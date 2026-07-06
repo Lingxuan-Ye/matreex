@@ -1,7 +1,7 @@
 use super::Matrix;
+use super::index::MatrixIndex;
 use super::order::{Order, OrderKind};
 use crate::error::{Error, Result};
-use crate::index::MatrixIndex;
 use core::ptr;
 
 impl<T, O> Matrix<T, O>
@@ -27,11 +27,12 @@ where
     /// ```
     pub fn swap<I, J>(&mut self, i: I, j: J) -> Result<&mut Self>
     where
-        I: for<'a> MatrixIndex<Self, Output = T>,
-        J: for<'a> MatrixIndex<Self, Output = T>,
+        I: for<'a> MatrixIndex<T, O, Output = T>,
+        J: for<'a> MatrixIndex<T, O, Output = T>,
     {
-        i.ensure_in_bounds(self)?;
-        j.ensure_in_bounds(self)?;
+        if i.is_out_of_bounds(self) || j.is_out_of_bounds(self) {
+            return Err(Error::IndexOutOfBounds);
+        }
 
         unsafe {
             let x = i.get_unchecked_mut(self);
@@ -287,7 +288,7 @@ mod tests {
 
             struct I(Index);
 
-            unsafe impl<O> MatrixIndex<Matrix<u8, O>> for I
+            unsafe impl<O> MatrixIndex<u8, O> for I
             where
                 O: Order,
             {
