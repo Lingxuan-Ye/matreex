@@ -9,8 +9,8 @@ use alloc::vec::Vec;
 use core::hash::{Hash, Hasher};
 use core::ptr;
 
-pub mod order;
 pub mod index;
+pub mod order;
 
 mod arithmetic;
 mod construct;
