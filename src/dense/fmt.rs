@@ -272,7 +272,7 @@ where
     #[cfg(feature = "pretty-debug")]
     fn write_index(&mut self, index: usize, width: usize) -> fmt::Result {
         let plain = format!("{index:>width$}");
-        let style = owo_colors::Style::new().green().dimmed();
+        let style = owo_colors::Style::new().green();
         let styled = style.style(plain);
         write!(self, "{styled}")
     }
