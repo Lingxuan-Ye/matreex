@@ -11,7 +11,7 @@ impl<T, O> Matrix<T, O>
 where
     O: Order,
 {
-    /// Creates a new, empty [`Matrix<T, O>`].
+    /// Constructs a new, empty [`Matrix<T, O>`].
     ///
     /// # Examples
     ///
@@ -29,7 +29,7 @@ where
         Self { layout, data }
     }
 
-    /// Creates a new, empty [`Matrix<T, O>`] with at least the specified capacity.
+    /// Constructs a new, empty [`Matrix<T, O>`] with at least the specified capacity.
     ///
     /// # Errors
     ///
@@ -57,7 +57,7 @@ where
         Ok(Self { layout, data })
     }
 
-    /// Creates a new [`Matrix<T, O>`] with the specified shape, filled with the
+    /// Constructs a new [`Matrix<T, O>`] with the specified shape, filled with the
     /// default value.
     ///
     /// # Errors
@@ -89,7 +89,7 @@ where
         Ok(Self { layout, data })
     }
 
-    /// Creates a new [`Matrix<T, O>`] with the specified shape, filled with the
+    /// Constructs a new [`Matrix<T, O>`] with the specified shape, filled with the
     /// given value.
     ///
     /// # Errors
@@ -120,8 +120,8 @@ where
         Ok(Self { layout, data })
     }
 
-    /// Creates a new [`Matrix<T, O>`] with the specified shape, filled with values
-    /// generated based on their corresponding indices.
+    /// Constructs a new [`Matrix<T, O>`] with the specified shape, filled with
+    /// values generated based on their corresponding indices.
     ///
     /// # Errors
     ///

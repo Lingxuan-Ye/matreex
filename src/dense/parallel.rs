@@ -142,7 +142,7 @@ where
         self.data.par_iter_mut()
     }
 
-    /// Creates a parallel consuming iterator, that is, one that moves each element
+    /// Returns a parallel consuming iterator, that is, one that moves each element
     /// out of the matrix.
     ///
     /// # Examples
@@ -224,7 +224,7 @@ where
             })
     }
 
-    /// Creates a parallel consuming iterator, that is, one that moves each element
+    /// Returns a parallel consuming iterator, that is, one that moves each element
     /// out of the matrix along with its index.
     ///
     /// # Examples

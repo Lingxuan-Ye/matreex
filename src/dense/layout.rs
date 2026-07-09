@@ -31,7 +31,7 @@ impl<T, O> Layout<T, O>
 where
     O: Order,
 {
-    /// Creates a new [`Layout<T, O>`] with the specified axis lengths, returning
+    /// Constructs a new [`Layout<T, O>`] with the specified axis lengths, returning
     /// the layout and its size.
     ///
     /// # Errors
@@ -45,7 +45,7 @@ where
         Ok((Self::new_unchecked(major, minor), size))
     }
 
-    /// Creates a new [`Layout<T, O>`] with the specified axis lengths, without
+    /// Constructs a new [`Layout<T, O>`] with the specified axis lengths, without
     /// performing any invariant checking.
     fn new_unchecked(major: usize, minor: usize) -> Self {
         Self {
@@ -56,8 +56,8 @@ where
         }
     }
 
-    /// Creates a new [`Layout<T, O>`] with the specified shape, returning
-    /// the layout and its size.
+    /// Constructs a new [`Layout<T, O>`] with the specified shape, returning the
+    /// layout and its size.
     ///
     /// # Errors
     ///
@@ -74,7 +74,7 @@ where
         }
     }
 
-    /// Creates a new [`Layout<T, O>`] with the specified shape, without
+    /// Constructs a new [`Layout<T, O>`] with the specified shape, without
     /// performing any invariant checking.
     pub(super) fn from_shape_unchecked<S>(shape: S) -> Self
     where

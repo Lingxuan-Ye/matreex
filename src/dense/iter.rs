@@ -307,7 +307,7 @@ where
         self.data.iter_mut()
     }
 
-    /// Creates a consuming iterator, that is, one that moves each element out of
+    /// Returns a consuming iterator, that is, one that moves each element out of
     /// the matrix.
     ///
     /// # Notes
@@ -387,7 +387,7 @@ where
             })
     }
 
-    /// Creates a consuming iterator, that is, one that moves each element out of
+    /// Returns a consuming iterator, that is, one that moves each element out of
     /// the matrix along with its index.
     ///
     /// # Notes

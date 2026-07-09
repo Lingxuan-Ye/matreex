@@ -327,7 +327,7 @@ where
 }
 
 impl Index {
-    /// Creates a new [`Index`] from a linear index.
+    /// Constructs a new [`Index`] from a linear index.
     ///
     /// # Panics
     ///

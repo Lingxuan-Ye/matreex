@@ -17,7 +17,7 @@ pub struct Index {
 }
 
 impl Index {
-    /// Creates a new [`Index`].
+    /// Constructs a new [`Index`].
     ///
     /// # Examples
     ///
@@ -33,7 +33,7 @@ impl Index {
         Self { row, col }
     }
 
-    /// Creates a new [`Index`] from a [`WrappingIndex`].
+    /// Constructs a new [`Index`] from a [`WrappingIndex`].
     ///
     /// # Panics
     ///
@@ -180,7 +180,7 @@ pub struct WrappingIndex {
 }
 
 impl WrappingIndex {
-    /// Creates a new [`WrappingIndex`].
+    /// Constructs a new [`WrappingIndex`].
     ///
     /// # Examples
     ///

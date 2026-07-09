@@ -17,7 +17,7 @@ pub struct Shape {
 }
 
 impl Shape {
-    /// Creates a new [`Shape`].
+    /// Constructs a new [`Shape`].
     ///
     /// # Examples
     ///
