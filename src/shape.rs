@@ -29,7 +29,7 @@ impl Shape {
     /// assert_eq!(shape.ncols, 3);
     /// ```
     #[inline]
-    pub fn new(nrows: usize, ncols: usize) -> Self {
+    pub const fn new(nrows: usize, ncols: usize) -> Self {
         Self { nrows, ncols }
     }
 
@@ -51,8 +51,11 @@ impl Shape {
     /// assert_eq!(shape.size(), Err(Error::SizeOverflow));
     /// ```
     #[inline]
-    pub fn size(&self) -> Result<usize> {
-        AsShape::size(self)
+    pub const fn size(&self) -> Result<usize> {
+        match self.nrows.checked_mul(self.ncols) {
+            None => Err(Error::SizeOverflow),
+            Some(size) => Ok(size),
+        }
     }
 
     /// Swaps the numbers of rows and columns.
@@ -67,7 +70,7 @@ impl Shape {
     /// assert_eq!(shape, Shape::new(3, 2));
     /// ```
     #[inline]
-    pub fn swap(&mut self) -> &mut Self {
+    pub const fn swap(&mut self) -> &mut Self {
         (self.nrows, self.ncols) = (self.ncols, self.nrows);
         self
     }
@@ -132,9 +135,7 @@ pub trait AsShape {
     /// Overriding the default implementation is not recommended.
     #[inline]
     fn size(&self) -> Result<usize> {
-        self.nrows()
-            .checked_mul(self.ncols())
-            .ok_or(Error::SizeOverflow)
+        Shape::new(self.nrows(), self.ncols()).size()
     }
 }
 

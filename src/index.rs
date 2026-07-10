@@ -29,7 +29,7 @@ impl Index {
     /// assert_eq!(index.col, 3);
     /// ```
     #[inline]
-    pub fn new(row: usize, col: usize) -> Self {
+    pub const fn new(row: usize, col: usize) -> Self {
         Self { row, col }
     }
 
@@ -77,7 +77,7 @@ impl Index {
     /// assert_eq!(index, Index::new(3, 2));
     /// ```
     #[inline]
-    pub fn swap(&mut self) -> &mut Self {
+    pub const fn swap(&mut self) -> &mut Self {
         (self.row, self.col) = (self.col, self.row);
         self
     }
@@ -192,7 +192,7 @@ impl WrappingIndex {
     /// assert_eq!(index.col, 3);
     /// ```
     #[inline]
-    pub fn new(row: isize, col: isize) -> Self {
+    pub const fn new(row: isize, col: isize) -> Self {
         Self { row, col }
     }
 
@@ -229,7 +229,7 @@ impl WrappingIndex {
     /// assert_eq!(index, WrappingIndex::new(3, 2));
     /// ```
     #[inline]
-    pub fn swap(&mut self) -> &mut Self {
+    pub const fn swap(&mut self) -> &mut Self {
         (self.row, self.col) = (self.col, self.row);
         self
     }

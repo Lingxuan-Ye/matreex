@@ -23,8 +23,8 @@ where
     /// assert_eq!(matrix.ncols(), 0);
     /// assert!(matrix.is_empty());
     /// ```
-    pub fn new() -> Self {
-        let layout = Layout::default();
+    pub const fn new() -> Self {
+        let layout = Layout::DEFAULT;
         let data = Vec::new();
         Self { layout, data }
     }

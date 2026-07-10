@@ -106,7 +106,7 @@ where
     /// }
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
-    pub fn iter_rows_mut(
+    pub const fn iter_rows_mut(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
     {
@@ -130,7 +130,7 @@ where
     ///     }
     /// }
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
-    pub fn iter_cols_mut(
+    pub const fn iter_cols_mut(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
     {
