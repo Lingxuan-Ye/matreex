@@ -76,7 +76,7 @@ where
     /// assert_eq!(shape.nrows, 2);
     /// assert_eq!(shape.ncols, 3);
     /// ```
-    pub fn shape(&self) -> Shape {
+    pub const fn shape(&self) -> Shape {
         self.layout.to_shape()
     }
 
@@ -90,7 +90,7 @@ where
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert_eq!(matrix.nrows(), 2);
     /// ```
-    pub fn nrows(&self) -> usize {
+    pub const fn nrows(&self) -> usize {
         self.shape().nrows
     }
 
@@ -104,7 +104,7 @@ where
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert_eq!(matrix.ncols(), 3);
     /// ```
-    pub fn ncols(&self) -> usize {
+    pub const fn ncols(&self) -> usize {
         self.shape().ncols
     }
 
@@ -118,7 +118,7 @@ where
     /// let matrix = matrix![[1, 2, 3], [4, 5, 6]];
     /// assert_eq!(matrix.size(), 6);
     /// ```
-    pub fn size(&self) -> usize {
+    pub const fn size(&self) -> usize {
         self.data.len()
     }
 
@@ -132,7 +132,7 @@ where
     /// let matrix = Matrix::<i32>::new();
     /// assert!(matrix.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
@@ -148,22 +148,22 @@ where
     /// #
     /// # Ok::<(), matreex::Error>(())
     /// ```
-    pub fn capacity(&self) -> usize {
+    pub const fn capacity(&self) -> usize {
         self.data.capacity()
     }
 
     /// Returns the major axis length.
-    fn major(&self) -> usize {
+    const fn major(&self) -> usize {
         self.layout.major()
     }
 
     /// Returns the minor axis length.
-    fn minor(&self) -> usize {
+    const fn minor(&self) -> usize {
         self.layout.minor()
     }
 
     /// Returns the stride.
-    fn stride(&self) -> Stride {
+    const fn stride(&self) -> Stride {
         self.layout.stride()
     }
 }

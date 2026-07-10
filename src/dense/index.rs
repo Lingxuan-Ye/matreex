@@ -327,12 +327,12 @@ where
 }
 
 impl Index {
-    /// Creates a new [`Index`] from a linear index.
+    /// Constructs a new [`Index`] from a linear index.
     ///
     /// # Panics
     ///
     /// Panics if `stride.major() == 0`.
-    pub(super) fn from_linear<O>(index: usize, stride: Stride) -> Self
+    pub(super) const fn from_linear<O>(index: usize, stride: Stride) -> Self
     where
         O: Order,
     {
@@ -349,7 +349,7 @@ impl Index {
     /// # Panics
     ///
     /// Panics if overflow occurs.
-    pub(super) fn to_linear<O>(self, stride: Stride) -> usize
+    pub(super) const fn to_linear<O>(self, stride: Stride) -> usize
     where
         O: Order,
     {

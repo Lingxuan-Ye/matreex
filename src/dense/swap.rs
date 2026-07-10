@@ -62,7 +62,7 @@ where
     /// #
     /// # Ok::<(), matreex::Error>(())
     /// ```
-    pub fn swap_rows(&mut self, m: usize, n: usize) -> Result<&mut Self> {
+    pub const fn swap_rows(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         match O::KIND {
             OrderKind::RowMajor => self.swap_major_axis_vectors(m, n),
             OrderKind::ColMajor => self.swap_minor_axis_vectors(m, n),
@@ -86,7 +86,7 @@ where
     /// #
     /// # Ok::<(), matreex::Error>(())
     /// ```
-    pub fn swap_cols(&mut self, m: usize, n: usize) -> Result<&mut Self> {
+    pub const fn swap_cols(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         match O::KIND {
             OrderKind::RowMajor => self.swap_minor_axis_vectors(m, n),
             OrderKind::ColMajor => self.swap_major_axis_vectors(m, n),
@@ -98,7 +98,7 @@ where
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if either index is out of bounds.
-    fn swap_major_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
+    const fn swap_major_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         if m >= self.major() || n >= self.major() {
             return Err(Error::IndexOutOfBounds);
         } else if m == n || self.minor() == 0 {
@@ -125,7 +125,7 @@ where
     /// # Errors
     ///
     /// - [`Error::IndexOutOfBounds`] if either index is out of bounds.
-    fn swap_minor_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
+    const fn swap_minor_axis_vectors(&mut self, m: usize, n: usize) -> Result<&mut Self> {
         if m >= self.minor() || n >= self.minor() {
             return Err(Error::IndexOutOfBounds);
         } else if m == n || self.major() == 0 {
@@ -141,7 +141,9 @@ where
             let mut x = base.add(x);
             let mut y = base.add(y);
             ptr::swap_nonoverlapping(x, y, stride.minor());
-            for _ in 1..self.major() {
+            let mut major = 1;
+            while major < self.major() {
+                major += 1;
                 x = x.add(stride.major());
                 y = y.add(stride.major());
                 ptr::swap_nonoverlapping(x, y, stride.minor());

@@ -106,7 +106,7 @@ where
     /// }
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
     /// ```
-    pub fn iter_rows_mut(
+    pub const fn iter_rows_mut(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
     {
@@ -130,7 +130,7 @@ where
     ///     }
     /// }
     /// assert_eq!(matrix, matrix![[3, 4, 5], [6, 7, 8]]);
-    pub fn iter_cols_mut(
+    pub const fn iter_cols_mut(
         &mut self,
     ) -> impl ExactSizeDoubleEndedIterator<Item = impl ExactSizeDoubleEndedIterator<Item = &mut T>>
     {
@@ -307,7 +307,7 @@ where
         self.data.iter_mut()
     }
 
-    /// Creates a consuming iterator, that is, one that moves each element out of
+    /// Returns a consuming iterator, that is, one that moves each element out of
     /// the matrix.
     ///
     /// # Notes
@@ -387,7 +387,7 @@ where
             })
     }
 
-    /// Creates a consuming iterator, that is, one that moves each element out of
+    /// Returns a consuming iterator, that is, one that moves each element out of
     /// the matrix along with its index.
     ///
     /// # Notes

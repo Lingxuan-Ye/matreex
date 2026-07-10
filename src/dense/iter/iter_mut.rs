@@ -18,7 +18,7 @@ pub(super) struct IterVectorsMut<'a, T> {
 }
 
 impl<'a, T> IterVectorsMut<'a, T> {
-    pub(super) fn over_major_axis<O>(matrix: &'a mut Matrix<T, O>) -> Self
+    pub(super) const fn over_major_axis<O>(matrix: &'a mut Matrix<T, O>) -> Self
     where
         O: Order,
     {
@@ -31,7 +31,7 @@ impl<'a, T> IterVectorsMut<'a, T> {
         unsafe { Self::new(base, axis_len, axis_stride, vector_len, vector_stride) }
     }
 
-    pub(super) fn over_minor_axis<O>(matrix: &'a mut Matrix<T, O>) -> Self
+    pub(super) const fn over_minor_axis<O>(matrix: &'a mut Matrix<T, O>) -> Self
     where
         O: Order,
     {
@@ -44,7 +44,7 @@ impl<'a, T> IterVectorsMut<'a, T> {
         unsafe { Self::new(base, axis_len, axis_stride, vector_len, vector_stride) }
     }
 
-    unsafe fn new(
+    const unsafe fn new(
         base: NonNull<T>,
         axis_len: usize,
         axis_stride: usize,
@@ -324,7 +324,10 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// This is an alternative to [`Matrix::iter_nth_major_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
-    pub(super) fn over_major_axis_vector<O>(matrix: &'a mut Matrix<T, O>, n: usize) -> Result<Self>
+    pub(super) const fn over_major_axis_vector<O>(
+        matrix: &'a mut Matrix<T, O>,
+        n: usize,
+    ) -> Result<Self>
     where
         O: Order,
     {
@@ -361,7 +364,10 @@ impl<'a, T> IterNthVectorMut<'a, T> {
     /// This is an alternative to [`Matrix::iter_nth_minor_axis_vector_mut`],
     /// but slightly slower.
     #[allow(dead_code)]
-    pub(super) fn over_minor_axis_vector<O>(matrix: &'a mut Matrix<T, O>, n: usize) -> Result<Self>
+    pub(super) const fn over_minor_axis_vector<O>(
+        matrix: &'a mut Matrix<T, O>,
+        n: usize,
+    ) -> Result<Self>
     where
         O: Order,
     {
@@ -393,7 +399,7 @@ impl<'a, T> IterNthVectorMut<'a, T> {
         Ok(unsafe { Self::new(ptr, vector_len, vector_stride) })
     }
 
-    unsafe fn new(ptr: NonNull<T>, len: usize, stride: NonZero<usize>) -> Self {
+    const unsafe fn new(ptr: NonNull<T>, len: usize, stride: NonZero<usize>) -> Self {
         let end_or_len = if size_of::<T>() == 0 {
             ptr::without_provenance_mut(len)
         } else if len == 0 {
