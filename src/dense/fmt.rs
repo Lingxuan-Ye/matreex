@@ -4,7 +4,6 @@ use crate::index::Index;
 use alloc::boxed::Box;
 use alloc::format;
 use alloc::string::{String, ToString};
-use alloc::vec::Vec;
 use core::fmt;
 
 mod whitespace {
@@ -47,17 +46,19 @@ where
 
         let stride = self.stride();
         let shape = self.shape();
-        let size = self.size();
-        let index_width = size.to_string().chars().count();
+        let index_width = self.size().to_string().chars().count();
         let mut element_width = 0;
         let mut element_hight = 0;
-        let mut cache = Vec::with_capacity(size);
-        for element in &self.data {
-            let lines = Lines::from(format!("{element:?}"));
-            element_width = usize::max(element_width, lines.width);
-            element_hight = usize::max(element_hight, lines.height);
-            cache.push(lines);
-        }
+        let mut cache: Box<[Lines]> = self
+            .data
+            .iter()
+            .map(|element| {
+                let (lines, info) = Lines::new(format!("{element:?}"));
+                element_width = usize::max(element_width, info.width);
+                element_hight = usize::max(element_hight, info.height);
+                lines
+            })
+            .collect();
         let index_padding = whitespace::SPACE.repeat(index_width);
         let element_padding = whitespace::SPACE.repeat(element_width);
 
@@ -146,16 +147,18 @@ where
 
         let stride = self.stride();
         let shape = self.shape();
-        let size = self.size();
         let mut element_width = 0;
         let mut element_hight = 0;
-        let mut cache = Vec::with_capacity(size);
-        for element in &self.data {
-            let lines = Lines::from(format!("{element}"));
-            element_width = usize::max(element_width, lines.width);
-            element_hight = usize::max(element_hight, lines.height);
-            cache.push(lines);
-        }
+        let mut cache: Box<[Lines]> = self
+            .data
+            .iter()
+            .map(|element| {
+                let (lines, info) = Lines::new(format!("{element}"));
+                element_width = usize::max(element_width, info.width);
+                element_hight = usize::max(element_hight, info.height);
+                lines
+            })
+            .collect();
         let element_padding = whitespace::SPACE.repeat(element_width);
 
         f.write_str(matrix::DELIMITER_LEFT)?;
@@ -207,13 +210,32 @@ where
 
 #[derive(Debug)]
 struct Lines {
-    width: usize,
-    height: usize,
     index: usize,
     string: Box<str>,
 }
 
+#[derive(Debug)]
+struct LinesInfo {
+    width: usize,
+    height: usize,
+}
+
 impl Lines {
+    fn new(string: String) -> (Self, LinesInfo) {
+        let index = 0;
+        let string = string.into_boxed_str();
+        let mut width = 0;
+        let mut height = 0;
+        for line in string.lines() {
+            let line_width = line.chars().count();
+            width = usize::max(width, line_width);
+            height += 1;
+        }
+        let lines = Self { index, string };
+        let info = LinesInfo { width, height };
+        (lines, info)
+    }
+
     fn next_line(&mut self) -> Option<&str> {
         let len = self.string.len();
         if self.index == len {
@@ -230,26 +252,6 @@ impl Lines {
                 let slice = &slice[..index];
                 slice.strip_suffix('\r').or(Some(slice))
             }
-        }
-    }
-}
-
-impl From<String> for Lines {
-    fn from(value: String) -> Self {
-        let mut width = 0;
-        let mut height = 0;
-        for line in value.lines() {
-            let line_width = line.chars().count();
-            width = usize::max(width, line_width);
-            height += 1;
-        }
-        let index = 0;
-        let string = value.into_boxed_str();
-        Self {
-            width,
-            height,
-            index,
-            string,
         }
     }
 }
