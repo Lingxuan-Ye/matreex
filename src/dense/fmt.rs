@@ -102,9 +102,8 @@ where
                 f.write_index(index, index_width)?;
                 f.write_str(element::INDEX_GAP)?;
                 match cache[index].next_line() {
-                    None if element_width > 0 => f.write_str(&element_padding)?,
+                    None => f.write_str(&element_padding)?,
                     Some(line) => f.write_element_line(line, element_width)?,
-                    _ => (),
                 }
             }
             f.write_str(row::DELIMITER_RIGHT)?;
@@ -125,9 +124,8 @@ where
                     f.write_str(&index_padding)?;
                     f.write_str(element::INDEX_GAP)?;
                     match cache[index].next_line() {
-                        None if element_width > 0 => f.write_str(&element_padding)?,
+                        None => f.write_str(&element_padding)?,
                         Some(line) => f.write_element_line(line, element_width)?,
-                        _ => (),
                     }
                 }
                 f.write_str(row::DELIMITER_PADDING)?;
@@ -188,9 +186,8 @@ where
                 }
                 let index = Index::new(row, col).to_linear::<O>(stride);
                 match cache[index].next_line() {
-                    None if element_width > 0 => f.write_str(&element_padding)?,
+                    None => f.write_str(&element_padding)?,
                     Some(line) => f.write_element_line(line, element_width)?,
-                    _ => (),
                 }
             }
             f.write_str(row::DELIMITER_RIGHT)?;
@@ -207,9 +204,8 @@ where
                     }
                     let index = Index::new(row, col).to_linear::<O>(stride);
                     match cache[index].next_line() {
-                        None if element_width > 0 => f.write_str(&element_padding)?,
+                        None => f.write_str(&element_padding)?,
                         Some(line) => f.write_element_line(line, element_width)?,
-                        _ => (),
                     }
                 }
                 f.write_str(row::DELIMITER_PADDING)?;
