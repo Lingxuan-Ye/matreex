@@ -53,7 +53,12 @@ where
             .data
             .iter()
             .map(|element| {
-                let (lines, info) = Lines::new(format!("{element:?}"));
+                let string = if f.alternate() {
+                    format!("{element:#?}")
+                } else {
+                    format!("{element:?}")
+                };
+                let (lines, info) = Lines::new(string);
                 element_width = usize::max(element_width, info.width);
                 element_hight = usize::max(element_hight, info.height);
                 lines
@@ -153,7 +158,8 @@ where
             .data
             .iter()
             .map(|element| {
-                let (lines, info) = Lines::new(format!("{element}"));
+                let string = format!("{element}");
+                let (lines, info) = Lines::new(string);
                 element_width = usize::max(element_width, info.width);
                 element_hight = usize::max(element_hight, info.height);
                 lines
