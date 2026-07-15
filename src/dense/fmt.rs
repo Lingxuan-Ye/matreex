@@ -44,8 +44,10 @@ where
             return Ok(());
         }
 
-        let stride = self.stride();
+        let alternate = f.alternate();
+
         let shape = self.shape();
+        let stride = self.stride();
         let index_width = self.size().to_string().chars().count();
         let mut element_width = 0;
         let mut element_hight = 0;
@@ -53,7 +55,7 @@ where
             .data
             .iter()
             .map(|element| {
-                let string = if f.alternate() {
+                let string = if alternate {
                     format!("{element:#?}")
                 } else {
                     format!("{element:?}")
@@ -100,9 +102,8 @@ where
                 f.write_index(index, index_width)?;
                 f.write_str(element::INDEX_GAP)?;
                 match cache[index].next_line() {
-                    None if element_width > 0 => f.write_str(&element_padding)?,
+                    None => f.write_str(&element_padding)?,
                     Some(line) => f.write_element_line(line, element_width)?,
-                    _ => (),
                 }
             }
             f.write_str(row::DELIMITER_RIGHT)?;
@@ -123,9 +124,8 @@ where
                     f.write_str(&index_padding)?;
                     f.write_str(element::INDEX_GAP)?;
                     match cache[index].next_line() {
-                        None if element_width > 0 => f.write_str(&element_padding)?,
+                        None => f.write_str(&element_padding)?,
                         Some(line) => f.write_element_line(line, element_width)?,
-                        _ => (),
                     }
                 }
                 f.write_str(row::DELIMITER_PADDING)?;
@@ -150,15 +150,21 @@ where
             return Ok(());
         }
 
-        let stride = self.stride();
+        let alternate = f.alternate();
+
         let shape = self.shape();
+        let stride = self.stride();
         let mut element_width = 0;
         let mut element_hight = 0;
         let mut cache: Box<[Lines]> = self
             .data
             .iter()
             .map(|element| {
-                let string = format!("{element}");
+                let string = if alternate {
+                    format!("{element:#}")
+                } else {
+                    format!("{element}")
+                };
                 let (lines, info) = Lines::new(string);
                 element_width = usize::max(element_width, info.width);
                 element_hight = usize::max(element_hight, info.height);
@@ -180,9 +186,8 @@ where
                 }
                 let index = Index::new(row, col).to_linear::<O>(stride);
                 match cache[index].next_line() {
-                    None if element_width > 0 => f.write_str(&element_padding)?,
+                    None => f.write_str(&element_padding)?,
                     Some(line) => f.write_element_line(line, element_width)?,
-                    _ => (),
                 }
             }
             f.write_str(row::DELIMITER_RIGHT)?;
@@ -199,9 +204,8 @@ where
                     }
                     let index = Index::new(row, col).to_linear::<O>(stride);
                     match cache[index].next_line() {
-                        None if element_width > 0 => f.write_str(&element_padding)?,
+                        None => f.write_str(&element_padding)?,
                         Some(line) => f.write_element_line(line, element_width)?,
-                        _ => (),
                     }
                 }
                 f.write_str(row::DELIMITER_PADDING)?;
