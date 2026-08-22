@@ -1247,7 +1247,7 @@ mod tests {
         Ok(())
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Default)]
     struct Count {
         init: usize,
         drop: usize,
@@ -1259,47 +1259,49 @@ mod tests {
             let old_ncols = old_shape.ncols();
             let new_nrows = new_shape.nrows();
             let new_ncols = new_shape.ncols();
-            let init;
-            let drop;
+
+            let mut count = Self::default();
+
             match (new_nrows.cmp(&old_nrows), new_ncols.cmp(&old_ncols)) {
                 (Ordering::Less, Ordering::Less) => {
-                    init = 0;
-                    drop = old_nrows * old_ncols - new_nrows * new_ncols;
+                    count.init = 0;
+                    count.drop = old_nrows * old_ncols - new_nrows * new_ncols;
                 }
                 (Ordering::Less, Ordering::Equal) => {
-                    init = 0;
-                    drop = (old_nrows - new_nrows) * old_ncols;
+                    count.init = 0;
+                    count.drop = (old_nrows - new_nrows) * old_ncols;
                 }
                 (Ordering::Less, Ordering::Greater) => {
-                    init = (new_ncols - old_ncols) * new_nrows;
-                    drop = (old_nrows - new_nrows) * old_ncols;
+                    count.init = (new_ncols - old_ncols) * new_nrows;
+                    count.drop = (old_nrows - new_nrows) * old_ncols;
                 }
                 (Ordering::Equal, Ordering::Less) => {
-                    init = 0;
-                    drop = (old_ncols - new_ncols) * old_nrows;
+                    count.init = 0;
+                    count.drop = (old_ncols - new_ncols) * old_nrows;
                 }
                 (Ordering::Equal, Ordering::Equal) => {
-                    init = 0;
-                    drop = 0;
+                    count.init = 0;
+                    count.drop = 0;
                 }
                 (Ordering::Equal, Ordering::Greater) => {
-                    init = (new_ncols - old_ncols) * old_nrows;
-                    drop = 0;
+                    count.init = (new_ncols - old_ncols) * old_nrows;
+                    count.drop = 0;
                 }
                 (Ordering::Greater, Ordering::Less) => {
-                    init = (new_nrows - old_nrows) * new_ncols;
-                    drop = (old_ncols - new_ncols) * old_nrows;
+                    count.init = (new_nrows - old_nrows) * new_ncols;
+                    count.drop = (old_ncols - new_ncols) * old_nrows;
                 }
                 (Ordering::Greater, Ordering::Equal) => {
-                    init = (new_nrows - old_nrows) * new_ncols;
-                    drop = 0;
+                    count.init = (new_nrows - old_nrows) * new_ncols;
+                    count.drop = 0;
                 }
                 (Ordering::Greater, Ordering::Greater) => {
-                    init = new_nrows * new_ncols - old_nrows * old_ncols;
-                    drop = 0;
+                    count.init = new_nrows * new_ncols - old_nrows * old_ncols;
+                    count.drop = 0;
                 }
             }
-            Self { init, drop }
+
+            count
         }
     }
 }
