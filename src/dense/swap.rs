@@ -27,8 +27,8 @@ where
     /// ```
     pub fn swap<I, J>(&mut self, i: I, j: J) -> Result<&mut Self>
     where
-        I: for<'a> MatrixIndex<T, O, Output = T>,
-        J: for<'a> MatrixIndex<T, O, Output = T>,
+        I: MatrixIndex<T, O, Output = T>,
+        J: MatrixIndex<T, O, Output = T>,
     {
         if i.is_out_of_bounds(self) || j.is_out_of_bounds(self) {
             return Err(Error::IndexOutOfBounds);
